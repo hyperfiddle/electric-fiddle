@@ -39,7 +39,7 @@ At the REPL:
 ```
 
 1. Navigate to [http://localhost:8080](http://localhost:8080)
-2. Corresponding source code is in `src-fiddles/hello_world`
+2. Corresponding source code is in `src-fiddles/hello_fiddle`
 
 ## Load more fiddles
 
@@ -61,7 +61,7 @@ In your browser, a new entry entry for `electric-fiddle` popped up.
 
 Optional:
 ```clojure
-(dev/unload-fiddle! 'hello-world)
+(dev/unload-fiddle! 'hello-fiddle)
 ```
 
 ## Roll your own
@@ -132,4 +132,3 @@ $ clojure -X:build:prod uberjar :hyperfiddle/domain hello-fiddle :build/jar-name
 ```shell
 $ fly deploy --remote-only --config src/hello_fiddle/fly.toml
 ```
-
