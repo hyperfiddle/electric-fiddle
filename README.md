@@ -130,6 +130,6 @@ $ clojure -X:build:prod uberjar :hyperfiddle/domain hello-fiddle :build/jar-name
 # Fly.io deployment
 
 ```shell
-$ fly deploy --remote-only --config src/hello_fiddle/fly.toml
+$ fly deploy --remote-only --config src-fiddles/hello_fiddle/fly.toml
 ```
 
