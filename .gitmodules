@@ -7,3 +7,6 @@
 [submodule "vendor/rcf"]
 	path = vendor/rcf
 	url = git@github.com:hyperfiddle/rcf.git
+[submodule "src/scratch"]
+	path = src/scratch
+	url = git@github.com:hyperfiddle/scratch.git

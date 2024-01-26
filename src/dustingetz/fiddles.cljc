@@ -12,7 +12,6 @@
             [dustingetz.y-fib :refer [Y-fib]]
             [dustingetz.y-dir :refer [Y-dir]]
             [dustingetz.essay :refer [Essay]]
-            [dustingetz.painter :refer [Painter]]
 
             [electric-fiddle.main]
             #?(:clj models.teeshirt-orders-datomic)
@@ -28,7 +27,6 @@
    `Teeshirt-orders-4 (With-HFQL-Bindings. Teeshirt-orders-4)
    `Teeshirt-orders-5 (With-HFQL-Bindings. Teeshirt-orders-5)
    `DirectoryExplorer-HFQL (With-HFQL-Bindings. DirectoryExplorer-HFQL)
-   `Painter Painter
    `dustingetz.scratch/Scratch dustingetz.scratch/Scratch})
 
 #?(:clj
