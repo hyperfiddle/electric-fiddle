@@ -3,6 +3,8 @@
 
 You need [Datomic pro](https://docs.datomic.com/pro/releases.html) (now free!) to run this demo.
 
+https://user-images.githubusercontent.com/124158/219978031-939344eb-4489-4b97-af9f-4b2df38c70db.mp4
+
 ## Getting started
 
 ```shell
