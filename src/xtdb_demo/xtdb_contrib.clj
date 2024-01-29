@@ -1,4 +1,4 @@
-(ns xtdb-starter.xtdb-contrib
+(ns xtdb-demo.xtdb-contrib
   (:require [missionary.core :as m]
             [xtdb.api :as xt]))
 

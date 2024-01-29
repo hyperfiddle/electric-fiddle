@@ -1,6 +1,6 @@
-(ns xtdb-starter.todo-list
+(ns xtdb-demo.todo-list
   (:require
-   #?(:clj [xtdb-starter.xtdb-contrib :as db])
+   #?(:clj [xtdb-demo.xtdb-contrib :as db])
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
    [hyperfiddle.electric-ui4 :as ui]
@@ -65,7 +65,7 @@
 
 (e/defn Todo-list [!xtdb]
   (e/server
-    (binding [xtdb-starter.todo-list/!xtdb !xtdb
+    (binding [xtdb-demo.todo-list/!xtdb !xtdb
               db (new (db/latest-db> !xtdb))]
       (e/client
         (dom/link (dom/props {:rel :stylesheet :href "/todo-list.css"}))

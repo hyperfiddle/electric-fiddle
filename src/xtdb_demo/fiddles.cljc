@@ -1,9 +1,9 @@
-(ns xtdb-starter.fiddles
+(ns xtdb-demo.fiddles
   (:require #?(:clj [clojure.java.io :as io])
             #?(:clj [xtdb.api :as xt])
             [hyperfiddle.electric-dom2 :as dom]
             [hyperfiddle.electric :as e]
-            [xtdb-starter.todo-list :refer [Todo-list]]))
+            [xtdb-demo.todo-list :refer [Todo-list]]))
 
 #?(:clj (defonce !xtdb-node (atom nil)))
 
@@ -20,7 +20,7 @@
               :xtdb/document-store (kv-store "data/dev/doc-store")
               :xtdb/index-store (kv-store "data/dev/index-store")}))))))
 
-(e/defn XTDB-Starter []
+(e/defn XTDB-Demo []
   (e/server
     (if-let [!xtdb (try (e/offload #(start-xtdb!))
                           (catch hyperfiddle.electric.Pending _
@@ -29,12 +29,12 @@
       (e/client
         (dom/p (dom/text "XTDB is starting ..."))))))
 
-(e/def fiddles {`XTDB-Starter XTDB-Starter})
+(e/def fiddles {`XTDB-Demo XTDB-Demo})
 
 (e/defn FiddleMain [ring-request]
   (e/client
     (binding [dom/node js/document.body]
-      (XTDB-Starter.))))
+      (XTDB-Demo.))))
 
 (comment
   (.close @!xtdb-node)

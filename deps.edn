@@ -68,7 +68,7 @@
   {:extra-deps
    {com.datomic/peer {:mvn/version "1.0.7075"}}}
 
-  :xtdb-starter ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-starter:...`
+  :xtdb-demo ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-demo:...`
   {:extra-deps
    {com.xtdb/xtdb-core {:mvn/version "1.23.0"}
     com.xtdb/xtdb-rocksdb {:mvn/version "1.23.0"}}
