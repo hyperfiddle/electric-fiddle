@@ -68,6 +68,13 @@
   {:extra-deps
    {com.datomic/peer {:mvn/version "1.0.7075"}}}
 
+  :xtdb-starter ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-starter:...`
+  {:extra-deps
+   {com.xtdb/xtdb-core {:mvn/version "1.23.0"}
+    com.xtdb/xtdb-rocksdb {:mvn/version "1.23.0"}}
+   :jvm-opts [;; the following option is required for JDK 16 and 17 (https://github.com/xtdb/xtdb/issues/1462)
+              "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED"]}
+
   :uix-demo
   {:extra-deps {com.pitch/uix.core {:mvn/version "1.0.1"}
                 com.pitch/uix.dom {:mvn/version "1.0.1"}}}
