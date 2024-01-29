@@ -124,7 +124,6 @@
        (println ";; This file reflects the state of loaded fiddles, from the REPL or from config.")
        (println ";; At the REPL, shadow will recompile and reload this file whenever it changes, driven by Electric Fiddle.")
        (println)
-       (println ";; For git to ignore/track this file run `git update-index --skip-worktree | --no-skip-worktree src-dev/fiddles.cljc`.")
        (pprint/with-pprint-dispatch pprint/code-dispatch
          (print (add-require-macros (with-out-str (pprint/pprint (gen-ns-form fiddles)))))
          (println)
