@@ -19,9 +19,8 @@ Begin with an example "Hello World" fiddle:
 ```shell
 $ clj -A:dev
 ```
-At the REPL:
+The REPL should print:
 ```clojure
-(dev/-main)
 ;; => INFO  dev: {:host "0.0.0.0", :port 8080, :resources-path "public", :manifest-path "public/js/manifest.edn"}
 ;; => INFO  dev: Starting Electric compiler and server...
 ;; => shadow-cljs - nREPL server started on port 9001
@@ -45,7 +44,6 @@ $ clj -A:dev:electric-tutorial
 ```
 At the REPL:
 ```clojure
-(dev/-main)
 ;; => ...
 ;; => INFO  electric-fiddle.server: 👉 http://0.0.0.0:8080
 
