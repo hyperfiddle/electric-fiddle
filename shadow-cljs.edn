@@ -9,10 +9,7 @@
    :output-dir "resources/public/js"
    :asset-path "/js"
    :modules {:main {:entries [dev] :init-fn dev/start!}}
-   :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks/reload-clj)
-                 (shadow.cljs.build-report/hook {:output-to "target/build_report.html"})
-                 #_(user/rcf-shadow-hook)]}
-  
+   :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks/reload-clj)]}
   :prod
   {:target :browser
    :output-dir "resources/public/js"
