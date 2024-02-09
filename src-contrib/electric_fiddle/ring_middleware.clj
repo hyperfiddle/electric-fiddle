@@ -9,7 +9,8 @@
    [ring.middleware.content-type :refer [wrap-content-type]]
    [ring.middleware.cookies :as cookies]
    [ring.middleware.resource :refer [wrap-resource]]
-   [ring.util.response :as res]))
+   [ring.util.response :as res]
+   [ring.websocket :as ws]))
 
 (defn authenticate [username _password] username) ; demo (accept-all) authentication
 
@@ -72,8 +73,35 @@ information."
 (defn http-middleware [config]
   ;; these compose as functions, so are applied bottom up
   (-> not-found-handler
-    (wrap-index-page config) ; 5. otherwise fallback to default page file
-    (wrap-resource (:resources-path config)) ; 4. serve static file from classpath
-    (wrap-content-type) ; 3. detect content (e.g. for index.html)
-    (wrap-demo-router) ; 2. route
+    (wrap-index-page config) ; 4. otherwise fallback to default page file
+    (wrap-resource (:resources-path config)) ; 3. serve static file from classpath
+    (wrap-content-type) ; 2. detect content (e.g. for index.html)
+    (wrap-demo-router) ; 1. route
     ))
+
+(defn wrap-gate
+  "Allows ring requests to pass through to the `next-ring-handler` when `(open-fn? ring-request)` is true.
+  Otherwise, return the value of `(on-closed-fn ring-request)`."
+  [next-ring-handler {::keys [open-fn? on-closed-fn]
+                      :or    {open-fn?     (constantly true)
+                              on-closed-fn (constantly {:status 423, :body "Locked"})}}] ; HTTP 423 Locked, browsers interprets it as a generic 400
+  (fn [ring-request]
+    (if (open-fn? ring-request)
+      (next-ring-handler ring-request)
+      (on-closed-fn ring-request))))
+
+(defn wrap-allow-ws-connect
+  "Allow websocket upgrade requests to pass through if `(accept-ws-connect-fn ring-request)` is true.
+  Use case: prevent electric client to connect to a dev server until the server is ready."
+  [next-handler accept-ws-connect-fn]
+  (wrap-gate next-handler
+    {::open-fn?    (if-not accept-ws-connect-fn
+                     (constantly true)
+                     (fn [ring-request]
+                       (if (ws/upgrade-request? ring-request)
+                         (accept-ws-connect-fn ring-request)
+                         true)))
+     ::on-closed-fn (fn [_ring-request] {:status 423 ; HTTP 423 Locked, not using 503 because it's not an error. Browsers interprets 423 as a generic 403.
+                                         :body "Server is not ready to accept WS connections. Try again later."})
+     }))
+

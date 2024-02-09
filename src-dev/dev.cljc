@@ -27,6 +27,16 @@
 
      (def load-fiddle! #'fiddle-manager/load-fiddle!)
      (def unload-fiddle! #'fiddle-manager/unload-fiddle!)
+     (def !cljs-is-compiling (atom false)) ; tracks if shadow watch is compiling
+
+     (defn pause-websocket-reconnect-while-compiling ; Shadow hook registered in `shadow-cljs.edn`
+       {:shadow.build/stages #{:compile-prepare :flush}}
+       [build-state]
+       (case (:shadow.build/stage build-state)
+         :compile-prepare (reset! !cljs-is-compiling true)
+         :flush (reset! !cljs-is-compiling false)
+         nil)
+       build-state)
 
      (defn -main [& args]
        (alter-var-root #'config #(merge % (first args)))
@@ -39,7 +49,8 @@
        (@shadow-watch :dev)
                                         ; todo block until finished?
        (comment (@shadow-stop!))
-       (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/FiddleMain ring-req)) config))
+       (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/FiddleMain ring-req))
+                    (assoc config :electric-fiddle.ring-middleware/accept-ws-connect-fn (fn [_] (not @!cljs-is-compiling)))))
        (comment
          (.stop server) ; jetty
          (server)       ; httpkit

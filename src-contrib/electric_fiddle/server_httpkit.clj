@@ -35,8 +35,12 @@
     (wrap-params))) ; 1. parse query params
 
 (defn middleware [config entrypoint]
-  (-> (middleware/http-middleware config)  ; 2. serve regular http content
-    (electric-websocket-middleware config entrypoint))) ; 1. intercept electric websocket
+  (-> (middleware/http-middleware config)  ; 3. serve regular http content
+    (electric-websocket-middleware config entrypoint) ; 2. intercept electric websocket
+    (middleware/wrap-allow-ws-connect (::middleware/accept-ws-connect-fn config)) ; 1. reject ws connections until server is ready.
+    ;; To prevent stale electric clients to reconnect in dev mode.
+    ))
+
 
 (defn start-server! [entrypoint
                      {:keys [port host]
