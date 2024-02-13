@@ -1,23 +1,29 @@
 (ns fiddle-manager
   (:require
-   [clojure.pprint :as pprint]
+   [clojure.java.io :as io]
+   [clojure.tools.deps :as deps]
+   [clojure.tools.logging :as log]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-local-def :as local]
-   [clojure.string :as str]
-   [clojure.tools.deps :as deps]
-   ;; [clojure.repl.deps]
-   [clojure.java.io :as io]
-   [hyperfiddle.rcf :as rcf]
-   [clojure.tools.logging :as log])
+   [hyperfiddle.rcf :as rcf])
   (:import
    (hyperfiddle.electric Pending)
    (missionary Cancelled)))
 
-(defonce !FIDDLES ; "Contains the set of loaded fiddles, by namespace symbols."
+(defonce ^{:doc "Contains the set of loaded fiddles. A set of namespace symbols."}
+  !FIDDLES
   (atom #{}))
 
 (defn fiddle-entrypoint-ns [fiddle-sym] (symbol (str (name fiddle-sym) ".fiddles")))
 (defn fiddle-entrypoint [fiddle-sym] (symbol (str (fiddle-entrypoint-ns fiddle-sym)) "fiddles"))
+
+(defn loaded-fiddles "Return a list symbols, representing currently loaded fiddles' namespaces"
+  []
+  (map fiddle-entrypoint-ns @!FIDDLES))
+
+(defn loaded-fiddles-entrypoints "Return a list symbols, representing currently loaded fiddles' entrypoints."
+  []
+  (map fiddle-entrypoint @!FIDDLES))
 
 (defn load-fiddle! [& ns-syms]
   (assert (every? simple-symbol? ns-syms))
@@ -28,11 +34,6 @@
 (defn fiddle-extra-deps [fiddle-ns-sym]
   (when-let [deps (deps/slurp-deps (io/file "deps.edn"))]
     (some-> deps :aliases (get (keyword fiddle-ns-sym)) :extra-deps)))
-
-;; (defn add-libs-for-fiddle [fiddle-ns-sym]
-;;   (when-let [extra-deps (fiddle-extra-deps fiddle-ns-sym)]
-;;     (when-let [added-libs (binding [*repl* true] (clojure.repl.deps/add-libs extra-deps))]
-;;       (println "Those libraries were loaded on demand:" (keys extra-deps)))))
 
 (defn explain-error [fiddle error]
   (cond
@@ -83,57 +84,11 @@
            (finally
              (rcf/enable! rcf-state))))))
 
-
-
-(def default-cljs-loader-ns '(ns cljs-fiddles-loader))
-
-(defn gen-ns-form [fiddles]
-  (list 'ns 'fiddles 
-    `(:require ~'[hyperfiddle.electric :as e]
-               ~'[hyperfiddle :as hf]
-               ~'electric-fiddle.main
-               ~@(map fiddle-entrypoint-ns fiddles))))
-
-(defn gen-index-form [fiddles]
-  `(~'e/def ~'fiddles (merge ~@(map fiddle-entrypoint fiddles))))
-
-(defn gen-entrypoint []
-  '(e/defn FiddleMain [ring-req]
-     (e/client
-       (binding [hf/pages fiddles]
-         (e/server
-           (electric-fiddle.main/Main. ring-req))))))
-
-(defn add-require-macros [ns-form-str]
-  (str/replace ns-form-str #"\)\n$" "\n  #?(:cljs (:require-macros [fiddles])))\n"))
-
-(with-out-str
-  (pprint/with-pprint-dispatch pprint/code-dispatch
-    (pprint/pprint '(ns foo (:require bar baz baz baz)))))
-
-(defn write-loader-file
-  ([path] (write-loader-file path ()))
-  ([path fiddles]
-   (spit path
-     (with-out-str ; Couldn't make it work with (with-open [*out* (io/writer …)] …)
-       (println ";; DO NOT EDIT MANUALLY")
-       (println ";; This file is generated and managed by Electric Fiddle")
-       (println ";; Use `dev/load-fiddle!`, `dev/unload-fiddle!` at the REPL or edit your fiddle configuration.")
-       (println ";; Use `dev/load-fiddle!` and `dev/unload-fiddle!` instead.")
-       (println)
-       (println ";; This file reflects the state of loaded fiddles, from the REPL or from config.")
-       (println ";; At the REPL, shadow will recompile and reload this file whenever it changes, driven by Electric Fiddle.")
-       (println)
-       (pprint/with-pprint-dispatch pprint/code-dispatch
-         (print (add-require-macros (with-out-str (pprint/pprint (gen-ns-form fiddles)))))
-         (println)
-         (pprint/pprint (gen-index-form fiddles))
-         (println)
-         (pprint/pprint (gen-entrypoint)))))))
-
-(comment
-  (write-loader-file "./src-dev/fiddles.cljc" '(hello-fiddle))
-  )
+(defn touch! "Create or mark a file as modified." [file-or-filepath]
+  (let [file (io/as-file file-or-filepath)]
+    (if-not (.exists file)
+      (.createNewFile file)
+      (.setLastModified file (System/currentTimeMillis)))))
 
 (local/defn FiddleLoader [path fiddles]
   (e/server
@@ -146,8 +101,8 @@
                              (catch hyperfiddle.electric.Pending _
                                false)))]
       (when (not-any? false? loaded-fiddles)
-        (write-loader-file path fiddles)))
-    (e/on-unmount #(write-loader-file path ()))))
+        ((fn [_] (touch! path)) loaded-fiddles))) ; rerun fn whenever `loaded-fiddles` changes
+    (e/on-unmount #(touch! path))))
 
 
 (local/defn FiddleManager [{:keys [loader-path] :as _config}]
@@ -183,16 +138,8 @@
   (stop!)
   )
 
-
-(comment
-  ;; Failed experiment to inject requires in an ns as a macro
-  (defmacro loaded-fiddles [] (vec (map fiddle-entrypoint @!FIDDLES)))
-
-  (defn requires [ns-tail]
-    (rest (first (filter #(= :require (first %)) ns-tail))))
-
-  (defmacro gen-ns [ns & body]
-    (let [requires (concat (requires body) (map fiddle-entrypoint-ns @!FIDDLES))]
-      `(~'ns ~ns ~@body
-        ~@(when-some [reqs (seq requires)] `[(:require ~@reqs)]))))
-  )
+;; Experimental: load fiddle deps at runtime
+;; (defn add-libs-for-fiddle [fiddle-ns-sym]
+;;   (when-let [extra-deps (fiddle-extra-deps fiddle-ns-sym)]
+;;     (when-let [added-libs (binding [*repl* true] (clojure.repl.deps/add-libs extra-deps))]
+;;       (println "Those libraries were loaded on demand:" (keys extra-deps)))))

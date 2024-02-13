@@ -58,7 +58,11 @@
 
        (load-fiddle! 'hello-fiddle)
 
-       (rcf/enable!))))
+       (rcf/enable!))
+
+     ;; autostart
+     (future (-main)) ; wrapped in future to not block user REPL
+     ))
 
 #?(:cljs
    (do
