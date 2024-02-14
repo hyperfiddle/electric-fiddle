@@ -82,30 +82,26 @@ If your fiddle requires extra dependencies:
 
 Deploys one fiddle at a time.
 
-## "Hello World" prod build
-
 ```shell
-$ clojure -X:build:prod build-client :hyperfiddle/domain hello-fiddle # :debug false :verbose false :optimize true
-$ clj -M:prod -m prod
-```
+# "Hello World" prod build
 
-## With extra dependencies
-```shell
-$ npm install
-$ clojure -X:build:prod:electric-tutorial build-client :hyperfiddle/domain electric-tutorial
-$ clj -M:prod:electric-tutorial -m prod
+clojure -X:build:prod build-client :hyperfiddle/domain hello-fiddle
+clojure -X:build:prod build-client :hyperfiddle/domain hello-fiddle :debug false :verbose false :optimize true
+clj -M:prod -m prod
+
+# With extra dependencies
+
+npm install
+clojure -X:build:prod:electric-tutorial build-client :hyperfiddle/domain electric-tutorial
+clj -M:prod:electric-tutorial -m prod
 # http://localhost:8080/electric-tutorial.tutorial!%54utorial/electric-tutorial.demo-two-clocks!%54wo%43locks
-```
 
 # Uberjar
 
-```shell
-$ clojure -X:build:prod uberjar :hyperfiddle/domain hello-fiddle :build/jar-name "app.jar"
-$ java -cp app.jar clojure.main -m prod
-```
+clojure -X:build:prod uberjar :hyperfiddle/domain hello-fiddle :build/jar-name "app.jar"
+java -cp app.jar clojure.main -m prod
 
 # Fly.io deployment
 
-```shell
-$ fly deploy --remote-only --config src/hello_fiddle/fly.toml
+fly deploy --remote-only --config src/hello_fiddle/fly.toml
 ```
