@@ -8,6 +8,8 @@ This repo is structured to allow multiple "fiddles" (little apps) to run simulta
 
 * **prod**: the [prod entrypoint](src-prod/prod.cljc) runs only one fiddle at a time, with an isolated classpath. Prod has a mandatory [build](src-build/build.clj), which bakes the Electric application client program. At compile time, both the electric user application version number (derived from git) and the fiddle entrypoint namespace are known statically, and built into both the client assets and also the server asset `resources/electric-manifest.edn`. At runtime, the prod entrypoint uses the reader trick to lookup the name of the entrypoint to run.
 
+This is all done in a rather tiny amount of LOC, so we feel it is reasonable to expect you to understand it.
+
 For a minimalist starter example, see https://github.com/hyperfiddle/electric-starter-app which is able to hardcode the electric user application entrypoint functions and thereby eliminate some of this dynamism.
 
 ## Quick Start
