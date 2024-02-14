@@ -8,16 +8,13 @@ Begin with an example "Hello World" fiddle:
 
 ```shell
 $ clj -A:dev
-```
-The REPL should print:
-```clojure
-;; => INFO  dev: {:host "0.0.0.0", :port 8080, :resources-path "public", :manifest-path "public/js/manifest.edn"}
-;; => INFO  dev: Starting Electric compiler and server...
-;; => shadow-cljs - nREPL server started on port 9001
-;; => [:dev] Configuring build.
-;; => [:dev] Compiling ...
-;; => [:dev] Build completed. (231 files, 2 compiled, 0 warnings, 2.46s)
-;; => INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
+INFO  dev: {:host "0.0.0.0", :port 8080, :resources-path "public", :manifest-path "public/js/manifest.edn"}
+INFO  dev: Starting Electric compiler and server...
+shadow-cljs - nREPL server started on port 9001
+[:dev] Configuring build.
+[:dev] Compiling ...
+[:dev] Build completed. (231 files, 2 compiled, 0 warnings, 2.46s)
+INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
 ```
 
 1. Navigate to [http://localhost:8080](http://localhost:8080)
@@ -25,7 +22,7 @@ The REPL should print:
 
 ## Load more fiddles
 
-In `electric-fiddle.edn`, add `electric-tutorial` under `:loaded-fiddles`:
+In `electric-fiddle.edn`, under `:loaded-fiddles`, add `electric-tutorial`:
 
 ```diff
  {:loaded-fiddles [hello-fiddle
@@ -36,16 +33,16 @@ In `electric-fiddle.edn`, add `electric-tutorial` under `:loaded-fiddles`:
 
 Restart your REPL with the required dependencies:
 ```shell
-$ npm install
-$ clj -A:dev:electric-tutorial
+npm install
+clj -A:dev:electric-tutorial
 ```
 
 Navigate to [http://localhost:8080](http://localhost:8080) (or refresh your browser tab). The pages shows a new entry for `electric-tutorial`.
 
 ## Roll your own
 
-1. `mkdir src/my_fiddle`
-3. Add the following to `src/my_fiddle/fiddles.cljc`:
+- `mkdir src/my_fiddle`
+- Add the following to `src/my_fiddle/fiddles.cljc`:
 ```clojure
 (ns my-fiddle.fiddles
   (:require [hyperfiddle.electric :as e]
@@ -66,17 +63,9 @@ Navigate to [http://localhost:8080](http://localhost:8080) (or refresh your brow
           (MyFiddle.)))))
 ```
 
-Add `my-fiddle` to `electric-fiddle.edn` > `:loaded-fiddles`.
-
-If your fiddle requires extra dependencies:
-
-- add them as an alias in `deps.edn`:
-
-```clojure
-{:aliases {:my-fiddle {:extra-deps {my.extra/dependency {:mvn/version "123"}}}}}
-```
-
-- Restart your REPL with the new alias: `$ clj -A:dev:my-fiddle`
+- Add `my-fiddle` to `electric-fiddle.edn` > `:loaded-fiddles`.
+- add your dependencies to deps.edn (under an alias) and package.json
+- Restart your REPL with your new deps alias
 
 # Prod build
 
