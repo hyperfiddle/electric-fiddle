@@ -2,11 +2,8 @@
   (:require [hyperfiddle.electric :as e]
             [hyperfiddle :as hf]
             electric-fiddle.main
-            ;; Injects loaded fiddles namespaces, ensures clj and cljs stays in sync
-            ;; - `#?@` will splice a list in-place
-            ;; - `:default` means "for all languages" (e.g. both :clj and :cljs)
-            ;;   - clojure doesn't have #@ (aka. read splicing), so we resort to #?@(:default ...)
-            ;; - `#=` evals the next form at read time
+            ;; Inject fiddle namespaces, keeping clj and cljs builds in sync
+            ;; :clj doesn't have #@ (read splicing), so we resort to #?@(:default ...)
             #?@(:default #=(config/loaded-fiddles))))
 
 (e/def fiddles (merge #?@(:default #=(config/loaded-fiddles-entrypoints)))) ; ensures clj and cljs stays in sync
