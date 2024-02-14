@@ -7,9 +7,9 @@
             ;; - `:default` means "for all languages" (e.g. both :clj and :cljs)
             ;;   - clojure doesn't have #@ (aka. read splicing), so we resort to #?@(:default ...)
             ;; - `#=` evals the next form at read time
-            #?@(:default #=(fiddle-manager/loaded-fiddles))))
+            #?@(:default #=(config/loaded-fiddles))))
 
-(e/def fiddles (merge #?@(:default #=(fiddle-manager/loaded-fiddles-entrypoints)))) ; ensures clj and cljs stays in sync
+(e/def fiddles (merge #?@(:default #=(config/loaded-fiddles-entrypoints)))) ; ensures clj and cljs stays in sync
 
 (e/defn FiddleMain [ring-req]
   (e/client

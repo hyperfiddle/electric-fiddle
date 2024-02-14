@@ -3,8 +3,7 @@
    #?(:clj [clojure.tools.logging :as log])
    [hyperfiddle.electric :as e]
    [hyperfiddle.rcf :as rcf]
-
-   #?(:clj fiddle-manager)
+   #?(:clj config)
    fiddles))
 
 (comment (-main)) ; repl entrypoint
@@ -25,8 +24,6 @@
 
      (declare server)
 
-     (def load-fiddle! #'fiddle-manager/load-fiddle!)
-     (def unload-fiddle! #'fiddle-manager/unload-fiddle!)
      (def !cljs-is-compiling (atom false)) ; tracks if shadow watch is compiling
 
      (defn pause-websocket-reconnect-while-compiling ; Shadow hook registered in `shadow-cljs.edn`
@@ -38,12 +35,10 @@
          nil)
        build-state)
 
-     (defn -main [& args]
-       (alter-var-root #'config #(merge % (first args)))
+     (defn -main [& [extra-config]]
+       (alter-var-root #'config #(merge % extra-config))
        (log/info (pr-str config))
        (log/info "Starting Electric compiler and server...") ; run after REPL redirects stdout
-       (fiddle-manager/start! {:loader-path "./src-dev/fiddles.cljc"})
-       (comment (fiddle-manager/stop!))
 
        (@shadow-start!)
        (@shadow-watch :dev)
@@ -56,9 +51,8 @@
          (server)       ; httpkit
          )
 
-       (load-fiddle! 'hello-fiddle)
-
-       (rcf/enable!))
+       (rcf/enable!)
+       )
 
      ;; autostart
      (future (-main)) ; wrapped in future to not block user REPL

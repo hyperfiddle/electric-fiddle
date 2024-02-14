@@ -1,16 +1,6 @@
 # Electric Fiddle
 
-The easiest way to get started with Electric Clojure.
-
-This is how we fiddle around with stuff at work. All our demos are here.<br>
-This is how we recommend you start, because it’s all self contained.
-
-One day your app will have grown and you’ll be ready to eject it. <br>
-You’ll delete what you don’t need (there’s not much anyway) and you’ll be good to go.
-
-You can fork this repo or clone it and have your own branch.
-We’ll continue to update the main branch.<br>
-You’ll be able to track changes and merge them as needed.
+This is how we fiddle around with stuff at work. All our demos are here.
 
 ## Quick Start
 
@@ -27,36 +17,30 @@ The REPL should print:
 ;; => [:dev] Configuring build.
 ;; => [:dev] Compiling ...
 ;; => [:dev] Build completed. (231 files, 2 compiled, 0 warnings, 2.46s)
-;; => INFO  electric-fiddle.server: 👉 http://0.0.0.0:8080
-;; => Loading fiddle: hello-fiddle
-;; => Loaded: hello-fiddle.fiddles
+;; => INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
 ```
 
 1. Navigate to [http://localhost:8080](http://localhost:8080)
-2. Corresponding source code is in `src/hello_world`
+2. Corresponding source code is in `src/hello_fiddle`
 
 ## Load more fiddles
 
-Let’s load the Electric Tutorial fiddle. It requires some extra dependencies.
+In `electric-fiddle.edn`, add `electric-tutorial` under `:loaded-fiddles`:
+
+```diff
+ {:loaded-fiddles [hello-fiddle
++                  electric-tutorial ; requires :electric-tutorial alias and `npm install`
+                   ]
+ }
+```
+
+Restart your REPL with the required dependencies:
 ```shell
 $ npm install
 $ clj -A:dev:electric-tutorial
 ```
-At the REPL:
-```clojure
-;; => ...
-;; => INFO  electric-fiddle.server: 👉 http://0.0.0.0:8080
 
-(dev/load-fiddle! 'electric-tutorial)
-;; => Loading fiddle: electric-tutorial
-;; => Loaded: electric-tutorial.fiddle
-```
-In your browser, a new entry entry for `electric-fiddle` popped up.
-
-Optional:
-```clojure
-(dev/unload-fiddle! 'hello-fiddle)
-```
+Navigate to [http://localhost:8080](http://localhost:8080) (or refresh your browser tab). The pages shows a new entry for `electric-tutorial`.
 
 ## Roll your own
 
@@ -82,10 +66,7 @@ Optional:
           (MyFiddle.)))))
 ```
 
-At the REPL:
-```clojure
-(dev/load-fiddle! 'my-fiddle)
-```
+Add `my-fiddle` to `electric-fiddle.edn` > `:loaded-fiddles`.
 
 If your fiddle requires extra dependencies:
 
