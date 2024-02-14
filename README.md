@@ -22,7 +22,7 @@ INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
 
 ## Load more fiddles
 
-In `electric-fiddle.edn`, under `:loaded-fiddles`, add `electric-tutorial`:
+In [`electric-fiddle.edn`](electric-fiddle.edn), under `:loaded-fiddles`, add `electric-tutorial`:
 
 ```diff
  {:loaded-fiddles [hello-fiddle
