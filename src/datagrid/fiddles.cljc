@@ -4,7 +4,7 @@
    #?(:clj [contrib.str])
    [datagrid.parser :as parser]
    #?(:clj [datagrid.writer])
-   [clojure.edn :as edn]
+   ;; [clojure.edn :as edn]
    [clojure.string :as str]
    [datagrid.collection-editor :as ce]
    [datagrid.datagrid :as dg]
@@ -25,57 +25,22 @@
        (when (.exists file)
          (slurp file)))))
 
+#?(:clj
+   (defn save-hosts-file! [content-str]
+     (when content-str
+       (datagrid.writer/write-hosts-file! content-str))))
 
 (defn diff [editor-state] (::ce/current-diff editor-state))
 (defn patch [coll diff] (incseq/patch-vec coll diff))
-;; (defn editor [hosts-ast] (ce/collection-editor (count hosts-ast)))
-
-(defn zip-hosts [aliases hosts]
-  (let [only-spaces (filter #(= :blank (first %)) aliases)
-        hosts       (map #(vector :hostname %) hosts)
-        num-spaces  (count only-spaces)]
-    (concat (interleave (take num-spaces hosts) only-spaces) (interpose [:blank " "] (drop num-spaces hosts)))
-    ))
-
-(comment
-  (zip-hosts [[:hostname "foo"] [:blank "  "] [:hostname "bar"] [:blank "  "]] ["baz" #_#_#_"asdf" "fdsa" "123"])
-  := '([:hostname "baz"] [:blank "  "])
-  (zip-hosts [[:hostname "foo"] [:blank "  "] [:hostname "bar"] [:blank "  "]] ["baz" "asdf" "fdsa" "123"])
-  := '([:hostname "baz"] [:blank "  "] [:hostname "asdf"] [:blank "  "] [:hostname "fdsa"] [:blank " "] [:hostname "123"])
 
 
-  (interleave [:a :b :c :d] [" " " "]))
-
-(defn set-hosts [entry hosts] (update entry :aliases zip-hosts hosts))
-(defn set-ip [entry ip] (assoc entry :ip ip))
-
-(defn set-line! [editor index text]
-  ((::ce/change! editor) index (parser/parse-line text)))
 
 (defn toggle-entry [[type _value :as entry]]
   (case type
-    :blank   entry
-    :comment entry
+    :blank           entry
+    :comment         entry
     :commented-entry (parser/parse-line (str/replace (parser/serialize-line entry) #"^#\s+" ""))
-    :entry   (parser/parse-line (str "# " (parser/serialize-line entry)))))
-
-(defn toogle-entry! [editor coll index]
-  (let [entry (get (patch coll (diff @(::ce/!state editor))) index)]
-    ((::ce/change! editor) index (toggle-entry entry))))
-
-(comment
-  (let [coll (parser/parse (slurp "/etc/hosts"))
-        {::ce/keys [create! delete! change! rotate! !state] :as editor} (editor coll)]
-    ;; (change! 1 [:comment "# hello"])
-    ;; (set-line! editor 0 "::2 local2 localhost2")
-    ;; (rotate! 0 1)
-    (def _editor editor)
-    (toogle-entry! editor coll 6)
-    (toogle-entry! editor coll 6)
-    ;; (create!)
-    (change! 14 (parser/parse-line "::1 foo bar"))
-    (print (parser/serialize (patch coll (diff @!state))))))
-
+    :entry           (parser/parse-line (str "# " (parser/serialize-line entry)))))
 
 (defn find-input-horizontal [direction node]
   (let [step (case direction
@@ -264,7 +229,7 @@
               (vs/virtual-scroll {::vs/row-height  30
                                   ::vs/padding-top 30
                                   ::vs/rows-count  (e/server (count rows))}
-                (dom/props {:style {:max-height "330px"}})
+                (dom/props {:style {:max-height (str (* 15 30) "px")}})
                 (dg/datagrid {::dg/row-height 30}
                   (dom/props {:style    {:grid-auto-columns "auto"
                                          ;; :width             "100%"
@@ -371,14 +336,6 @@
                                               (dom/text (parser/serialize-line row)))))))))))
                   (map second rows))))))))))
 
-(defn reset!* [atom value]
-  (when value
-    (reset! atom value)))
-
-#?(:clj (defn save-hosts-file! [content-str]
-          (when content-str
-            (prn (datagrid.writer/write-hosts-file! content-str)))))
-
 (e/defn HostFile-Editor []
   (e/client
     (dom/h1 (dom/text "/etc/hosts editor"))
@@ -393,17 +350,17 @@
                             (HostsGrid. ast
                               (e/fn* [edited-ast]
                                 (let [content-str (parser/serialize edited-ast)]
-                                  (e/client (reset! !hosts content-str))
-                                  #_(case (e/offload-task #(save-hosts-file! content-str))
+                                  #_(e/client (reset! !hosts content-str))
+                                  (case (e/offload-task #(save-hosts-file! content-str))
                                     (e/client (reset! !hosts (e/server (read-hosts-file))))))))
                             (catch Pending _))))
-               (dom/textarea (dom/props {:style {:overflow    :scroll
+               #_(dom/textarea (dom/props {:style {:overflow    :scroll
                                                  :grid-column 1
                                                  :grid-row    2}})
                              (dom/text hosts)
                              (dom/on! "keyup" (fn [^js e]
                                                 (reset! !hosts (.. e -target -value)))))
-               (dom/textarea (dom/props {:style {:overflow    :scroll
+               #_(dom/textarea (dom/props {:style {:overflow    :scroll
                                                  :grid-column 2
                                                  :grid-row    2}
                                          :rows  25})
@@ -429,3 +386,37 @@
       (e/client
         (binding [dom/node js/document.body] ; where to mount dom elements
           (HostFile-Editor.))))))
+
+
+
+(comment
+  (defn zip-hosts [aliases hosts]
+    (let [only-spaces (filter #(= :blank (first %)) aliases)
+          hosts       (map #(vector :hostname %) hosts)
+          num-spaces  (count only-spaces)]
+      (concat (interleave (take num-spaces hosts) only-spaces) (interpose [:blank " "] (drop num-spaces hosts)))
+      ))
+
+  (zip-hosts [[:hostname "foo"] [:blank "  "] [:hostname "bar"] [:blank "  "]] ["baz" #_#_#_"asdf" "fdsa" "123"])
+  := '([:hostname "baz"] [:blank "  "])
+  (zip-hosts [[:hostname "foo"] [:blank "  "] [:hostname "bar"] [:blank "  "]] ["baz" "asdf" "fdsa" "123"])
+  := '([:hostname "baz"] [:blank "  "] [:hostname "asdf"] [:blank "  "] [:hostname "fdsa"] [:blank " "] [:hostname "123"])
+
+  (interleave [:a :b :c :d] [" " " "]))
+
+(comment
+  (defn toogle-entry! [editor coll index]
+    (let [entry (get (patch coll (diff @(::ce/!state editor))) index)]
+      ((::ce/change! editor) index (toggle-entry entry))))
+
+  (let [coll (parser/parse (slurp "/etc/hosts"))
+        {::ce/keys [create! delete! change! rotate! !state] :as editor} (editor coll)]
+    ;; (change! 1 [:comment "# hello"])
+    ;; (set-line! editor 0 "::2 local2 localhost2")
+    ;; (rotate! 0 1)
+    (def _editor editor)
+    (toogle-entry! editor coll 6)
+    (toogle-entry! editor coll 6)
+    ;; (create!)
+    (change! 14 (parser/parse-line "::1 foo bar"))
+    (print (parser/serialize (patch coll (diff @!state))))))
