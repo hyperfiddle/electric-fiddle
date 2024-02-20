@@ -13,15 +13,26 @@
 
 (s/def ::blank blank-string?)
 (s/def ::token (s/and string? #(re-matches #"\S+" %)))
-(s/def ::ip ::token)
+(s/def ::ip-v6 (s/and string? #(re-matches #"([a-f0-9:]+:+)+[a-f0-9]+" (str/lower-case %))))
+(s/def ::ip-v4 (s/and string? #(re-matches #"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" %)))
+(s/def ::ip (s/or :v4 ::ip-v4, :v6 ::ip-v6))
 (s/def ::alias (s/or :hostname ::token, :blank ::blank))
 (s/def ::comment (s/and string? #(str/starts-with? % "#")))
 
+(s/conform ::ip "FE80:0000:0000:0000:0202:B3FF:FE1E:8329")
+(s/conform ::ip "::1")
+(s/conform ::ip "127.0.0.1")
+
 (defn conform-entry [value] (s/conform (s/cat :ip ::ip, :aliases (s/* ::alias)) (read-tokens value)))
-(defn unform-entry [{:keys [ip aliases]}] (str ip (str/join "" (map second aliases))))
+(defn unform-entry [{:keys [ip aliases]}] (str (second ip) (str/join "" (map second aliases))))
 (s/def ::entry (s/conformer conform-entry unform-entry))
 
-(s/def ::line (s/or :blank ::blank, :comment ::comment, :entry ::entry))
+(s/def ::commented-entry (s/and ::comment #(s/valid? ::entry (str/triml (subs % 1)))))
+
+;; (s/conform ::commented-entry "# Hello world 127.0.0.1 localhost")
+;; (s/conform ::commented-entry "# 127.0.0.1 localhost")
+
+(s/def ::line (s/or :blank ::blank, :commented-entry ::commented-entry, :comment ::comment, :entry ::entry))
 (s/def ::file (s/coll-of ::line))
 
 (comment

@@ -55,7 +55,8 @@
 (defn toggle-entry [[type _value :as entry]]
   (case type
     :blank   entry
-    :comment (parser/parse-line (str/replace (parser/serialize-line entry) #"^#\s+" ""))
+    :comment entry
+    :commented-entry (parser/parse-line (str/replace (parser/serialize-line entry) #"^#\s+" ""))
     :entry   (parser/parse-line (str "# " (parser/serialize-line entry)))))
 
 (defn toogle-entry! [editor coll index]
@@ -165,7 +166,7 @@
           (let [#_#_!dirty      (atom false)
                 output-rows (Body. rows)]
             (when (or (not= rows output-rows) #_(e/watch !dirty))
-              (prn "not=" (not= rows output-rows) "dirty" #_(e/watch !dirty))
+              #_(prn "not=" (not= rows output-rows) "dirty" #_(e/watch !dirty))
               ;; (reset! !dirty true)
               (try (OnChange. output-rows)
                    nil
@@ -209,10 +210,7 @@
     (RowChangeMonitor. {::rows rows, ::OnChange OnChange}
       (e/fn* [rows]
         (e/client
-          (let [indexed-rows (->> rows
-                               (map-indexed vector)
-                               ;; (filter #(= :entry (first (second %))))
-                               (vec))
+          (let [indexed-rows (vec (map-indexed vector rows))
                 {::ce/keys [rows change! create! delete! #_undo! #_redo!]} (ce/CollectionEditor. indexed-rows)
                 rows (map-indexed (fn [idx row] (or row [idx [:blank ""]])) rows)]
             (cm/menu {::cm/context-menu? true}
@@ -349,10 +347,11 @@
                                                          :display         :flex
                                                          :align-items     :center
                                                          :justify-content :center}})
-                                     (ui/checkbox (= :entry (first row))
-                                         (e/fn* [checked?]
-                                           (change! idx [idx (toggle-entry (e/snapshot row))]))
-                                       (dom/props {:checked (= :entry (first row))})))
+                                     (when (#{:entry :commented-entry} (first row))
+                                       (ui/checkbox (= :entry (first row))
+                                           (e/fn* [checked?]
+                                             (change! idx [idx (toggle-entry (e/snapshot row))]))
+                                         (dom/props {:checked (= :entry (first row))}))))
                             (e/for-by identity [column ["Entry"]]
                               (dg/cell
                                 (dom/props {:class "focus-within:border-blue-600" ;; TODO migrate
