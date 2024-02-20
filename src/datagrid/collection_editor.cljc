@@ -13,6 +13,9 @@
       [(dec degree) (incseq/combine (assoc event :permutation rotation) deletion)]
       [(dec degree) deletion])))
 
+(defn change [index value degree]
+  [degree (assoc (incseq/empty-diff degree) :change {index value})])
+
 (defn create!
   ([degree] (create! degree degree))
   ([index degree] ; create at the end
@@ -21,10 +24,11 @@
          diff (if (= index degree)
                 grow
                 (incseq/combine grow (assoc base :permutation (incseq/rotation degree (inc index)))))]
-     [(inc degree) diff])))
-
-(defn change [index value degree]
-  [degree (assoc (incseq/empty-diff degree) :change {index value})])
+     [(inc degree) diff]))
+  ([index value degree]
+   (let [[degree create-diff] (create! index degree)
+         [degree change-diff] (change (inc index) value degree)]
+     [degree (incseq/combine create-diff change-diff)])))
 
 (defn undo! [{::keys [prev-states current-degree current-diff] :as current-state}]
   (if-some [prev (first prev-states)]
@@ -58,12 +62,20 @@
                    nil)]
     {::rotate! (fn [from to] (perform! (partial rotate from to)))
      ::create! (fn ([] (perform! create!))
-                 ([index] (perform! (partial create! index))))
+                 ([index] (perform! (partial create! index)))
+                 ([index value] (perform! (partial create! index value))))
      ::delete! (fn [index] (perform! (partial delete! index)))
      ::change! (fn [index value] (perform! (partial change index value)))
      ::undo!   (fn [] (swap! !state undo!) nil)
      ::redo!   (fn [] (swap! !state redo!) nil)
      ::!state  !state}))
+
+(comment
+  (let [{::keys [create! !state]} (collection-editor 0)]
+    (create! 0 "hello")
+    (create! 1 )
+    (incseq/patch-vec [] (::current-diff @!state)))
+  )
 
 (e/defn* CollectionEditor [collection]
   (let [coll-count (count collection)
