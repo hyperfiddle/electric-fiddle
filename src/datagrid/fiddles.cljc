@@ -15,7 +15,8 @@
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
    [hyperfiddle.electric-ui4 :as ui]
-   [hyperfiddle.incseq :as incseq])
+   [hyperfiddle.incseq :as incseq]
+   [heroicons.electric.v24.outline :as icons])
   (:import [hyperfiddle.electric Pending]))
 
 #?(:clj
@@ -152,6 +153,7 @@
                  (dom/on! "input" (fn [^js e] (stage/stage! (.. e -target -value))))))))
 
 (def SHADOW "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);")
+(def SHADOW-LG "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)")
 
 (e/def loading? false)
 
@@ -172,6 +174,36 @@
                        (reset! !loading? true)
                        (e/on-unmount #(reset! !loading? false))))))))))))
 
+(e/defn* PlusUpIcon []
+  (e/client
+    (dom/div
+      (dom/props {:style {:position :relative
+                          :width    "1rem"
+                          :height   "1rem"}})
+      (icons/chevron-up (dom/props {:style {:position :absolute
+                                              :width    "1rem"
+                                              :height   "1rem"
+                                              :top   "-0.45rem"}}))
+      (icons/plus (dom/props {:style {:position  :absolute
+                                      :width     "1rem"
+                                      :height    "1rem"
+                                      :transform "scale(0.8)"}})))))
+
+(e/defn* PlusDownIcon []
+  (e/client
+    (dom/div
+      (dom/props {:style {:position :relative
+                          :width    "1rem"
+                          :height   "1rem"}})
+      (icons/chevron-down (dom/props {:style {:position :absolute
+                                              :width    "1rem"
+                                              :height   "1rem"
+                                              :bottom   "-0.45rem"}}))
+      (icons/plus (dom/props {:style {:position  :absolute
+                                      :width     "1rem"
+                                      :height    "1rem"
+                                      :transform "scale(0.8)"}})))))
+
 (e/defn HostsGrid [rows OnChange]
   (e/server
     (RowChangeMonitor. {::rows rows, ::OnChange OnChange}
@@ -183,26 +215,52 @@
                                (vec))
                 {::ce/keys [rows change! create! delete! #_undo! #_redo!]} (ce/CollectionEditor. indexed-rows)
                 rows (map-indexed (fn [idx row] (or row [idx [:blank ""]])) rows)]
-            (prn "rows" rows)
             (cm/menu {::cm/context-menu? true}
               (dom/on! "click" cm/close!)
               (dom/on! js/window "keydown" cm/close!)
               (cm/items
-                (dom/props {:class "z-10 shadow-lg rounded flex flex-col gap-[1px] bg-gray-100 border border-gray-50"})
+                (dom/props {:style {:z-index          10
+                                    :box-shadow       SHADOW-LG
+                                    :border-radius    "0.25rem"
+                                    :display          :flex
+                                    :flex-direction   :column
+                                    :gap              "1px"
+                                    :background-color "rgb(244, 244, 245)" ; bg-gray-100
+                                    :border           "1px rgb(249, 250, 251) solid" ; border-gray-50
+                                    }})
                 (let [row-number (:row-number cm/context)]
                   (cm/item
-                    (dom/props {:class "px-4 py-2 cursor-pointer bg-white hover:bg-gray-100 flex gap-2 items-center"})
-                    ;; (PlusUpIcon.)
+                    (dom/props {:class "hover:bg-gray-100"
+                                :style {:padding          "0.75rem 0.5rem"
+                                        :cursor           :pointer
+                                        :background-color :white
+                                        :display          :flex
+                                        :gap              "0.5rem"
+                                        :align-items      :center}}
+                      )
+                    (PlusUpIcon.)
                     (dom/text "Insert row above")
                     (dom/on! "click" (fn [_] (create! (dec row-number) [(dec row-number) [:blank ""]]))))
                   (cm/item
-                    (dom/props {:class "px-4 py-2 cursor-pointer bg-white hover:bg-gray-100 flex gap-2 items-center"})
-                    ;; (icons/x-mark (dom/props {:class "w-4 h-4"}))
+                    (dom/props {:class "hover:bg-gray-100"
+                                :style {:padding          "0.75rem 0.5rem"
+                                        :cursor           :pointer
+                                        :background-color :white
+                                        :display          :flex
+                                        :gap              "0.5rem"
+                                        :align-items      :center}})
+                    (icons/x-mark (dom/props {:style {:width "1rem", :height "1rem"}}))
                     (dom/text "Delete row")
                     (dom/on! "click" (fn [_] (delete! row-number))))
                   (cm/item
-                    (dom/props {:class "px-4 py-2 cursor-pointer bg-white hover:bg-gray-100 flex gap-2 items-center"})
-                    ;; (PlusDownIcon.)
+                    (dom/props {:class "hover:bg-gray-100"
+                                :style {:padding          "0.75rem 0.5rem"
+                                        :cursor           :pointer
+                                        :background-color :white
+                                        :display          :flex
+                                        :gap              "0.5rem"
+                                        :align-items      :center}})
+                    (PlusDownIcon.)
                     (dom/text "Insert row below")
                     (dom/on! "click" (fn [_] (create! row-number [row-number [:blank ""]]))))))
               (vs/virtual-scroll {::vs/row-height  30
