@@ -14,6 +14,7 @@
    [datagrid.virtual-scroll :as vs]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
+   [hyperfiddle.electric-css :as css]
    [hyperfiddle.electric-ui4 :as ui]
    [hyperfiddle.incseq :as incseq]
    [heroicons.electric.v24.outline :as icons])
@@ -92,16 +93,44 @@
          (focus-next-input (flip-axis axis) direction node)
          (.blur node)))))
 
+(e/defn* CellsStyle []
+  (e/client
+    (css/scoped-style
+      (css/rule ".cell-input"
+        {:padding     "1px 0"
+         :width       "100%"
+         :height      "100%"
+         :border      :none
+         :white-space :pre
+         :font-family :monospace})
+      (css/rule ".number-cell"
+        {:font-variant-numeric "tabular-nums"
+         :border               "1px #E1E1E1 solid"
+         :font-size            "0.75rem"
+         :line-height          "1rem"
+         :display              :flex
+         :align-items          :center
+         :justify-content      :center})
+      (css/rule ".checkbox-cell"
+        {:border          "1px #E1E1E1 solid"
+         :font-size       "0.75rem"
+         :line-height     "1rem"
+         :display         :flex
+         :align-items     :center
+         :justify-content :center})
+      (css/rule ".entry-cell"
+        {:display       :block
+         :overflow      :hidden
+         :text-overflow :ellipsis
+         :white-space   :nowrap
+         :border        "1px #E1E1E1 solid"})
+      (css/rule ".entry-cell:focus-within"
+        {:border-color "rgb(37 99 235)" #_ "border-blue-600"}))))
+
 (e/defn* CellInput [value OnCommit]
   (e/client
     (stage/staged OnCommit
-      (dom/input (dom/props {:type  :text
-                             :style {:padding "1px 0"
-                                     :width   "100%"
-                                     :height  "100%"
-                                     :border  :none
-                                     :white-space :pre
-                                     :font-family :monospace}})
+      (dom/input (dom/props {:type :text :class "cell-input"})
                  (set! (.-value dom/node) value)
                  (dom/on "blur" (e/fn* [_] (when (some? stage/stage) (stage/Commit. stage/stage))))
                  (dom/on! "keydown" (fn [^js e]
@@ -118,7 +147,7 @@
                                           nil))))
                  (dom/on! "input" (fn [^js e] (stage/stage! (.. e -target -value))))))))
 
-(def SHADOW "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);")
+(def SHADOW "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)")
 (def SHADOW-LG "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)")
 
 (e/def loading? false)
@@ -170,171 +199,138 @@
                                       :height    "1rem"
                                       :transform "scale(0.8)"}})))))
 
+(e/defn* MenuStyle []
+  (e/client
+    (css/style
+      (css/rule ".datagrid_fiddles__menu-items"
+        {:z-index          10
+         :box-shadow       SHADOW-LG
+         :border-radius    "0.25rem"
+         :display          :flex
+         :flex-direction   :column
+         :gap              "1px"
+         :background-color "rgb(244, 244, 245)" ; bg-gray-100
+         :border           "1px rgb(249, 250, 251) solid" ; border-gray-50
+         })
+      (css/rule ".datagrid_fiddles__menu-item"
+        {:padding          "0.75rem 0.5rem"
+         :cursor           :pointer
+         :background-color :white
+         :display          :flex
+         :gap              "0.5rem"
+         :align-items      :center})
+      (css/rule ".datagrid_fiddles__menu-item:hover"
+        {:background-color "rgb(243 244 246)" #_ "bg-gray-100"}))))
+
+(e/defn Menu [create! delete! Body]
+  (e/client
+    (cm/menu {::cm/context-menu? true}
+      (MenuStyle.)
+      (dom/on! "click" cm/close!)
+      (dom/on! js/window "keydown" cm/close!)
+      (cm/items
+        (dom/props {:class "datagrid_fiddles__menu-items"})
+        (let [row-number (:row-number cm/context)]
+          (cm/item
+            (dom/props {:class "datagrid_fiddles__menu-item"})
+            (PlusUpIcon.)
+            (dom/text "Insert row above")
+            (dom/on! "click" (fn [_] (create! (dec row-number) [(dec row-number) [:blank ""]]))))
+          (cm/item
+            (dom/props {:class "datagrid_fiddles__menu-item"})
+            (icons/x-mark (dom/props {:style {:width "1rem", :height "1rem"}}))
+            (dom/text "Delete row")
+            (dom/on! "click" (fn [_] (delete! row-number))))
+          (cm/item
+            (dom/props {:class "datagrid_fiddles__menu-item"})
+            (PlusDownIcon.)
+            (dom/text "Insert row below")
+            (dom/on! "click" (fn [_] (create! row-number [row-number [:blank ""]]))))))
+      (Body.))))
+
 (e/defn HostsGrid [rows OnChange]
   (e/server
     (RowChangeMonitor. {::rows rows, ::OnChange OnChange}
       (e/fn* [rows]
         (e/client
-          (let [indexed-rows (vec (map-indexed vector rows))
+          (let [indexed-rows                                               (vec (map-indexed vector rows))
                 {::ce/keys [rows change! create! delete! #_undo! #_redo!]} (ce/CollectionEditor. indexed-rows)
-                rows (map-indexed (fn [idx row] (or row [idx [:blank ""]])) rows)]
-            (cm/menu {::cm/context-menu? true}
-              (dom/on! "click" cm/close!)
-              (dom/on! js/window "keydown" cm/close!)
-              (cm/items
-                (dom/props {:style {:z-index          10
-                                    :box-shadow       SHADOW-LG
-                                    :border-radius    "0.25rem"
-                                    :display          :flex
-                                    :flex-direction   :column
-                                    :gap              "1px"
-                                    :background-color "rgb(244, 244, 245)" ; bg-gray-100
-                                    :border           "1px rgb(249, 250, 251) solid" ; border-gray-50
-                                    }})
-                (let [row-number (:row-number cm/context)]
-                  (cm/item
-                    (dom/props {:class "hover:bg-gray-100"
-                                :style {:padding          "0.75rem 0.5rem"
-                                        :cursor           :pointer
-                                        :background-color :white
-                                        :display          :flex
-                                        :gap              "0.5rem"
-                                        :align-items      :center}}
-                      )
-                    (PlusUpIcon.)
-                    (dom/text "Insert row above")
-                    (dom/on! "click" (fn [_] (create! (dec row-number) [(dec row-number) [:blank ""]]))))
-                  (cm/item
-                    (dom/props {:class "hover:bg-gray-100"
-                                :style {:padding          "0.75rem 0.5rem"
-                                        :cursor           :pointer
-                                        :background-color :white
-                                        :display          :flex
-                                        :gap              "0.5rem"
-                                        :align-items      :center}})
-                    (icons/x-mark (dom/props {:style {:width "1rem", :height "1rem"}}))
-                    (dom/text "Delete row")
-                    (dom/on! "click" (fn [_] (delete! row-number))))
-                  (cm/item
-                    (dom/props {:class "hover:bg-gray-100"
-                                :style {:padding          "0.75rem 0.5rem"
-                                        :cursor           :pointer
-                                        :background-color :white
-                                        :display          :flex
-                                        :gap              "0.5rem"
-                                        :align-items      :center}})
-                    (PlusDownIcon.)
-                    (dom/text "Insert row below")
-                    (dom/on! "click" (fn [_] (create! row-number [row-number [:blank ""]]))))))
-              (vs/virtual-scroll {::vs/row-height  30
-                                  ::vs/padding-top 30
-                                  ::vs/rows-count  (e/server (count rows))}
-                (dom/props {:style {:max-height (str (* 15 30) "px")}})
-                (dg/datagrid {::dg/row-height 30}
-                  (dom/props {:style    {:grid-auto-columns "auto"
-                                         ;; :width             "100%"
-                                         :border-collapse   :collapse}
-                              :tabIndex "1"})
-                  #_(dom/on "keydown" (e/fn* [^js e] ; undo/redo (Ctrl-z / Shift-Ctrl-z)
-                                        (when (and (or (.-ctrlKey e) (.-metaKey e)) (= "z" (.-key e)))
-                                          (if (.-shiftKey e)
-                                            (redo!)
-                                            (undo!)))))
-                  (dom/element :style
-                    (dom/text (str "#" dg/id " td:focus-within {outline: 1px lightgray solid;}")
-                              (str "#" dg/id " tr td {background-color: white}")
-                              (str "#" dg/id " tr.header td > * {background-color: lightgray}")))
-                  (dg/header
-                    (dg/row
-                      (dom/props {:style {:box-shadow SHADOW
-                                          :z-index    10}})
-                      (dg/column {::dg/frozen? true}
-                        (dom/props {:style {:font-size        "0.75rem"
-                                            :line-height      "1rem"
-                                            :display          :flex
-                                            :align-items      :center
-                                            :justify-content  :center
-                                            :background-color "#EFEFEF"
-                                            :height           "30px"
-                                            :grid-column      1
-                                            :min-width        "6ch"
-                                            :width            :min-content
-                                            :resize           :none}})
-                        (when (or loading? dg/loading?)
-                          (spinner/Spinner. {})))
-                      (dg/column {::dg/frozen? true}
-                        (dom/props {:style {:font-size        "0.75rem"
-                                            :line-height      "1rem"
-                                            :display          :flex
-                                            :align-items      :center
-                                            :justify-content  :center
-                                            :background-color "#EFEFEF"
-                                            :height           "30px"
-                                            :grid-column      2
-                                            :min-width        "3ch"
-                                            :width            :min-content
-                                            :resize           :none}})
-                        )
-                      (e/for-by second [[idx column] (map-indexed vector ["Entry"])]
-                        (dg/column {}
-                          (dom/props {:style {:padding          "0 1rem"
-                                              :resize           :horizontal
-                                              :background-color "#EFEFEF"
-                                              :height           "30px"
-                                              :grid-column      (+ 3 idx)}})
-                          (dom/text column)))))
-                  (vs/ClientSidePagination. rows
-                    (e/fn* [[idx row]]
-                      (let [row-number vs/row-number]
-                        (e/client
-                          (dg/row
-                            (dg/cell (dom/props {:style     {:font-variant-numeric "tabular-nums"
-                                                             :border               "1px #E1E1E1 solid"
-                                                             :font-size            "0.75rem"
-                                                             :line-height          "1rem"
-                                                             :display              :flex
-                                                             :align-items          :center
-                                                             :justify-content      :center}
-                                                 :draggable false #_editable?})
-                                     (dom/text (inc row-number))
-                                     (when true #_editable?
-                                           (dom/on! "contextmenu" (fn [event] (cm/open! {:row-number row-number} event)))
-                                           #_(dom/on! "dragstart" (fn [^js e]
-                                                                    (set! (.. e -dataTransfer -dropEffect) "move")
-                                                                    (.. e -dataTransfer (setDragImage (.. e -target (closest "tr")) 0 0))
-                                                                    (.. e -dataTransfer (setData "text/plain" row-number))))
-                                           #_(dom/on! "dragover" (fn [^js e] (.preventDefault e))) ; recommended by MDN
-                                           #_(dom/on "drop" (e/fn* [^js e] (let [from (js/parseInt (.. e -dataTransfer (getData "text/plain")))]
-                                                                             (e/server (rotate! from row-number)))))))
-                            (dg/cell (dom/props {:style {:border          "1px #E1E1E1 solid"
-                                                         :font-size       "0.75rem"
-                                                         :line-height     "1rem"
-                                                         :display         :flex
-                                                         :align-items     :center
-                                                         :justify-content :center}})
-                                     (when (#{:entry :commented-entry} (first row))
-                                       (ui/checkbox (= :entry (first row))
-                                           (e/fn* [checked?]
-                                             (change! idx [idx (toggle-entry (e/snapshot row))]))
-                                         (dom/props {:checked (= :entry (first row))}))))
-                            (e/for-by identity [column ["Entry"]]
-                              (dg/cell
-                                (dom/props {:class "focus-within:border-blue-600" ;; TODO migrate
-                                            :style {:display       :block
-                                                    :overflow      :hidden
-                                                    :text-overflow :ellipsis
-                                                    :white-space   :nowrap
-                                                    :border        "1px #E1E1E1 solid"}})
-                                (if true #_editable?
-                                    (CellInput. (parser/serialize-line row)
-                                      (e/fn* [new-value]
-                                        (change! idx [idx (parser/parse-line new-value)])))
-                                    (dom/span (dom/props {:style {:padding "1px 0"
-                                                                  :width   "100%"
-                                                                  :height  "100%"
-                                                                  :border  :none}})
-                                              (dom/text (parser/serialize-line row)))))))))))
-                  (map second rows))))))))))
+                rows                                                       (map-indexed (fn [idx row] (or row [idx [:blank ""]])) rows)]
+           (Menu. create! delete!
+             (e/fn* []
+               (vs/virtual-scroll {::vs/row-height  30
+                                   ::vs/padding-top 30
+                                   ::vs/rows-count  (e/server (count rows))}
+                 (dom/props {:style {:max-height (str (* 15 30) "px")}})
+                 (dg/datagrid {::dg/row-height 30}
+                   (dom/props {:tabIndex "1"})
+                   #_(dom/on "keydown" (e/fn* [^js e] ; undo/redo (Ctrl-z / Shift-Ctrl-z)
+                                         (when (and (or (.-ctrlKey e) (.-metaKey e)) (= "z" (.-key e)))
+                                           (if (.-shiftKey e)
+                                             (redo!)
+                                             (undo!)))))
+                   (dom/props {:class (css/scoped-style
+                                        (css/rule {:grid-auto-columns "auto", :border-collapse :collapse})
+                                        (css/rule "td:focus-within" {:outline "1px lightgray solid"})
+                                        (css/rule "tr td" {:background-color :white})
+                                        (css/rule "tr.header td > *" {:background-color :lightgray}))})
+                   (dg/header
+                     (dg/row
+                       (dom/props {:style {:box-shadow SHADOW :z-index 10}
+                                   :class (css/scoped-style
+                                            (css/rule "th" {:font-size        "0.75rem"
+                                                            :line-height      "1rem"
+                                                            :display          :flex
+                                                            :align-items      :center
+                                                            :justify-content  :center
+                                                            :background-color "#EFEFEF"
+                                                            :height           "30px"}))})
+                       (dg/column {::dg/frozen? true}
+                         (dom/props {:style {:grid-column 1, :min-width "6ch", :width :min-content}})
+                         (when (or loading? dg/loading?)
+                           (spinner/Spinner. {})))
+                       (dg/column {::dg/frozen? true}
+                         (dom/props {:style {:grid-column 2, :min-width "3ch", :width :min-content}}))
+                       (dg/column {}
+                         (dom/props {:style {:font-size "1rem" :grid-column 3, :padding "0 1rem", :resize :horizontal}})
+                         (dom/text "Entry"))))
+                   (dom/props {:class (CellsStyle.)})
+                   (vs/ClientSidePagination. rows
+                     (e/fn* [[idx row]]
+                       (let [row-number vs/row-number]
+                         (e/client
+                           (dg/row
+                             (dg/cell (dom/props {:class     "number-cell"
+                                                  :draggable false #_editable?})
+                                      (dom/text (inc row-number))
+                                      (when true #_editable?
+                                            (dom/on! "contextmenu" (fn [event] (cm/open! {:row-number row-number} event)))
+                                            #_(dom/on! "dragstart" (fn [^js e]
+                                                                     (set! (.. e -dataTransfer -dropEffect) "move")
+                                                                     (.. e -dataTransfer (setDragImage (.. e -target (closest "tr")) 0 0))
+                                                                     (.. e -dataTransfer (setData "text/plain" row-number))))
+                                            #_(dom/on! "dragover" (fn [^js e] (.preventDefault e))) ; recommended by MDN
+                                            #_(dom/on "drop" (e/fn* [^js e] (let [from (js/parseInt (.. e -dataTransfer (getData "text/plain")))]
+                                                                              (e/server (rotate! from row-number)))))))
+                             (dg/cell (dom/props {:class "checkbox-cell"})
+                                      (when (#{:entry :commented-entry} (first row))
+                                        (ui/checkbox (= :entry (first row))
+                                            (e/fn* [checked?]
+                                              (change! idx [idx (toggle-entry (e/snapshot row))]))
+                                          (dom/props {:checked (= :entry (first row))}))))
+                             (e/for-by identity [column ["Entry"]]
+                               (dg/cell
+                                 (dom/props {:class "entry-cell"})
+                                 (if true #_editable?
+                                     (CellInput. (parser/serialize-line row)
+                                       (e/fn* [new-value]
+                                         (change! idx [idx (parser/parse-line new-value)])))
+                                     (dom/span (dom/props {:style {:padding "1px 0"
+                                                                   :width   "100%"
+                                                                   :height  "100%"
+                                                                   :border  :none}})
+                                               (dom/text (parser/serialize-line row)))))))))))
+                   (map second rows)))))))))))
 
 (e/defn HostFile-Editor []
   (e/client
@@ -386,8 +382,6 @@
       (e/client
         (binding [dom/node js/document.body] ; where to mount dom elements
           (HostFile-Editor.))))))
-
-
 
 (comment
   (defn zip-hosts [aliases hosts]

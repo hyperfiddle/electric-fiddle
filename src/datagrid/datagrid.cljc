@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [datagrid.virtual-scroll :as vs]
             [missionary.core :as m]
-            [contrib.missionary-contrib :as mx])
+            [contrib.missionary-contrib :as mx]
+            [hyperfiddle.electric-css :as css])
   #?(:cljs (:require-macros [datagrid.datagrid]))
   (:import [hyperfiddle.electric Pending]))
 
@@ -86,6 +87,30 @@
        (when (.contains node activeElement)
          (.blur activeElement)))))
 
+(e/defn* GridStyle [id columns]
+  (e/client
+    (css/style
+      (css/rule ".datagrid_datagrid__row"
+        {:display               :grid
+         :grid-template-columns :subgrid
+         :grid-column           "1 / -1"
+         :transform             "scale(1)"})
+      (css/rule ".datagrid_datagrid__column"
+        {:position      :sticky
+         :top           0
+         :display       :block
+         :overflow      :hidden
+         :text-overflow :ellipsis
+         :white-space   :nowrap})
+      (css/rule (str "#" id " th") {:z-index 2})
+      (e/for [{::keys [position] :as column} (filter ::frozen? columns)]
+        (css/rule (str "#" id " th:nth-child(" position ")") {:postition :sticky
+                                                              :left      (str (column-offset columns column) "px")
+                                                              :z-index   3})
+        (css/rule (str "#" id " td:nth-child(" position ")") {:postition :sticky
+                                                              :left      (str (column-offset columns column) "px")
+                                                              :z-index   2})))))
+
 (e/defn* DataGrid [{::keys [row-height]} Body]
   (e/client
     (let [!loading? (atom false)]
@@ -118,7 +143,8 @@
 
               ;; TODO hook on virtualscroll scroll state to freeze column sizes
               ;; (dom/on! dom/node "wheel" #(reset! !sizing-mode ::manual))
-              (dom/element :style
+              (GridStyle. id columns)
+              #_(dom/element :style ; TODO migrate to electric-css
                 (dom/text
                   #_(str/join "\n" (map (fn [{::keys [position width]}]
                                           (str "#" id " td:nth-child(" position "){ max-width:" (width-px width "none") ";}"))
@@ -164,18 +190,11 @@
                       (.observe observer node)
                       #(.unobserve observer node)))))))
 
-
-
 (e/defn* Column [{::keys [frozen?]} Body]
   (e/client
     (dom/th
       (let [{::keys [id] :as column} (make-column dom/node frozen?)]
-        (dom/props {:style {:position      :sticky
-                            :top           0
-                            :display :block
-                            :overflow      :hidden
-                            :text-overflow :ellipsis
-                            :white-space   :nowrap}})
+        (dom/props {:class "datagrid_datagrid__column"})
         (ColumnStateMachine. column)
         (swap! !columns-index (fn [columns-index]
                                 (-> (assoc columns-index id column)
@@ -189,18 +208,17 @@
 
 #?(:cljs
    (let [supported? (.supports js/CSS "grid-template-columns:subgrid")]
-     (defn subgrid? [then else]
-       (if supported? then else))))
+     (defn subgrid?
+       ([] supported?)
+       ([then else] ; to save on an electric conditional
+        (if supported? then else)))))
 
 (e/defn* Row [Body]
   (e/client
     (dom/tr
-      (dom/props {:style (subgrid?
-                           {:display :grid
-                            :grid-template-columns :subgrid
-                            :grid-column "1 / -1"
-                            :transform "scale(1)"}
-                           {:display :contents})})
+      (if (subgrid?)
+        (dom/props {:class "datagrid_datagrid__row"})
+        (dom/props {:style {:display :contents}}))
       (Body.))))
 
 (defmacro row [& body]
