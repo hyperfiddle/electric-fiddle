@@ -258,3 +258,53 @@
                 (cell [] (dom/text "aaaa" i))
                 (cell [] (dom/text "b" i))
                 (cell [] (dom/text "c" i))))))))))
+
+(defn find-input-horizontal [direction node]
+  (let [step (case direction
+               ::forwards  #(.-nextElementSibling %)
+               ::backwards #(.-previousElementSibling %))
+        cell (.closest node "td")]
+    (if-let [next-input (loop [next-cell (step cell)]
+                          (when next-cell
+                            (if-let [next-input (.querySelector next-cell "input")]
+                              next-input
+                              (recur (step next-cell)))))]
+      [::same-line next-input]
+      (let [row (.closest cell "tr")]
+        (loop [next-row (step row)]
+          (when next-row
+            (if-let [next-input (.querySelector next-row "input")]
+              [::other-line next-input]
+              (recur (step next-row)))))))))
+
+(defn find-input-vertical [direction node]
+  (let [cell    (.closest node "td")
+        row     (.closest node "tr")
+        y-index (max 0 (dec (count (take-while some? (iterate #(.-previousElementSibling %) cell)))))]
+    (when-let [next-row (case direction
+                          ::forwards  (.-nextElementSibling row)
+                          ::backwards (.-previousElementSibling row))]
+      (let [next-row-cells-count (.-childElementCount next-row)
+            next-cell            (aget (.-childNodes next-row) (min next-row-cells-count y-index))]
+        (when-let [next-input (.querySelector next-cell "input")]
+          [::other-line next-input])))))
+
+(defn find-next-input [axis direction node]
+  (case axis
+    ::horizontal (find-input-horizontal direction node)
+    ::vertical   (find-input-vertical direction node)))
+
+(def flip-axis {::horizontal ::vertical
+                ::vertical   ::horizontal})
+
+#?(:cljs
+   (defn focus-next-input [axis direction node]
+     (if-let [found (find-next-input axis direction node)]
+       (let [[location next-input] found]
+         (when (= ::other-line location)
+           (set! (.-scrollLeft (.closest node ".virtual-scroll")) 0))
+         (.scrollIntoView next-input #js{:block "nearest", :inline "nearest"})
+         (.setTimeout js/window #(.focus next-input) 50))
+       (if (find-next-input (flip-axis axis) direction node)
+         (focus-next-input (flip-axis axis) direction node)
+         (.blur node)))))

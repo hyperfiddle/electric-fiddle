@@ -2,22 +2,21 @@
   (:require
    #?(:clj [clojure.java.io :as io])
    #?(:clj [contrib.str])
-   [datagrid.parser :as parser]
    #?(:clj [datagrid.writer])
-   ;; [clojure.edn :as edn]
    [clojure.string :as str]
    [datagrid.collection-editor :as ce]
+   [datagrid.context-menu :as cm]
    [datagrid.datagrid :as dg]
+   [datagrid.parser :as parser]
    [datagrid.spinner :as spinner]
    [datagrid.stage :as stage]
-   [datagrid.context-menu :as cm]
    [datagrid.virtual-scroll :as vs]
+   [heroicons.electric.v24.outline :as icons]
    [hyperfiddle.electric :as e]
-   [hyperfiddle.electric-dom2 :as dom]
    [hyperfiddle.electric-css :as css]
+   [hyperfiddle.electric-dom2 :as dom]
    [hyperfiddle.electric-ui4 :as ui]
-   [hyperfiddle.incseq :as incseq]
-   [heroicons.electric.v24.outline :as icons])
+   [hyperfiddle.incseq :as incseq])
   (:import [hyperfiddle.electric Pending]))
 
 #?(:clj
@@ -34,64 +33,12 @@
 (defn diff [editor-state] (::ce/current-diff editor-state))
 (defn patch [coll diff] (incseq/patch-vec coll diff))
 
-
-
 (defn toggle-entry [[type _value :as entry]]
   (case type
     :blank           entry
     :comment         entry
     :commented-entry (parser/parse-line (str/replace (parser/serialize-line entry) #"^#\s+" ""))
     :entry           (parser/parse-line (str "# " (parser/serialize-line entry)))))
-
-(defn find-input-horizontal [direction node]
-  (let [step (case direction
-               ::forwards  #(.-nextElementSibling %)
-               ::backwards #(.-previousElementSibling %))
-        cell (.closest node "td")]
-    (if-let [next-input (loop [next-cell (step cell)]
-                          (when next-cell
-                            (if-let [next-input (.querySelector next-cell "input")]
-                              next-input
-                              (recur (step next-cell)))))]
-      [::same-line next-input]
-      (let [row (.closest cell "tr")]
-        (loop [next-row (step row)]
-          (when next-row
-            (if-let [next-input (.querySelector next-row "input")]
-              [::other-line next-input]
-              (recur (step next-row)))))))))
-
-(defn find-input-vertical [direction node]
-  (let [cell    (.closest node "td")
-        row     (.closest node "tr")
-        y-index (max 0 (dec (count (take-while some? (iterate #(.-previousElementSibling %) cell)))))]
-    (when-let [next-row (case direction
-                          ::forwards  (.-nextElementSibling row)
-                          ::backwards (.-previousElementSibling row))]
-      (let [next-row-cells-count (.-childElementCount next-row)
-            next-cell            (aget (.-childNodes next-row) (min next-row-cells-count y-index))]
-        (when-let [next-input (.querySelector next-cell "input")]
-          [::other-line next-input])))))
-
-(defn find-next-input [axis direction node]
-  (case axis
-    ::horizontal (find-input-horizontal direction node)
-    ::vertical   (find-input-vertical direction node)))
-
-(def flip-axis {::horizontal ::vertical
-                ::vertical   ::horizontal})
-
-#?(:cljs
-   (defn focus-next-input [axis direction node]
-     (if-let [found (find-next-input axis direction node)]
-       (let [[location next-input] found]
-         (when (= ::other-line location)
-           (set! (.-scrollLeft (.closest node ".virtual-scroll")) 0))
-         (.scrollIntoView next-input #js{:block "nearest", :inline "nearest"})
-         (.setTimeout js/window #(.focus next-input) 50))
-       (if (find-next-input (flip-axis axis) direction node)
-         (focus-next-input (flip-axis axis) direction node)
-         (.blur node)))))
 
 (e/defn* CellsStyle []
   (e/client
@@ -139,16 +86,13 @@
                                         nil)
                                       (let [direction (if (.-shiftKey e) ::backwards ::forwards)]
                                         (case (.-key e)
-                                          "Enter"  (focus-next-input ::vertical direction dom/node)
-                                          "Tab"    (focus-next-input ::horizontal direction dom/node)
+                                          "Enter"  (dg/focus-next-input ::vertical direction dom/node)
+                                          "Tab"    (dg/focus-next-input ::horizontal direction dom/node)
                                           "Escape" (do (stage/discard!)
                                                        (set! (.-value dom/node) value)
                                                        (.focus (.closest dom/node "table")))
                                           nil))))
                  (dom/on! "input" (fn [^js e] (stage/stage! (.. e -target -value))))))))
-
-(def SHADOW "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)")
-(def SHADOW-LG "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)")
 
 (e/def loading? false)
 
@@ -157,11 +101,8 @@
     (let [!loading? (atom false)]
       (binding [loading? (e/watch !loading?)]
         (e/server
-          (let [#_#_!dirty      (atom false)
-                output-rows (Body. rows)]
-            (when (or (not= rows output-rows) #_(e/watch !dirty))
-              #_(prn "not=" (not= rows output-rows) "dirty" #_(e/watch !dirty))
-              ;; (reset! !dirty true)
+          (let [output-rows (Body. rows)]
+            (when (or (not= rows output-rows))
               (try (OnChange. output-rows)
                    nil
                    (catch Pending _
@@ -169,35 +110,39 @@
                        (reset! !loading? true)
                        (e/on-unmount #(reset! !loading? false))))))))))))
 
+(e/def IconStyle
+  "Return a unique, generated class name to apply to multiple icons."
+  (e/client
+    (e/singleton
+      (css/scoped-style
+        (css/rule {:width "1rem", :height "1rem"})))))
+
 (e/defn* PlusUpIcon []
   (e/client
     (dom/div
-      (dom/props {:style {:position :relative
-                          :width    "1rem"
-                          :height   "1rem"}})
-      (icons/chevron-up (dom/props {:style {:position :absolute
-                                              :width    "1rem"
-                                              :height   "1rem"
-                                              :top   "-0.45rem"}}))
-      (icons/plus (dom/props {:style {:position  :absolute
-                                      :width     "1rem"
-                                      :height    "1rem"
+      (dom/props {:class (IconStyle.)
+                  :style {:position :relative}})
+      (icons/chevron-up (dom/props {:class (IconStyle.)
+                                    :style {:position :absolute
+                                            :top   "-0.45rem"}}))
+      (icons/plus (dom/props {:class (IconStyle.)
+                              :style {:position  :absolute
                                       :transform "scale(0.8)"}})))))
 
 (e/defn* PlusDownIcon []
   (e/client
     (dom/div
-      (dom/props {:style {:position :relative
-                          :width    "1rem"
-                          :height   "1rem"}})
-      (icons/chevron-down (dom/props {:style {:position :absolute
-                                              :width    "1rem"
-                                              :height   "1rem"
+      (dom/props {:class (IconStyle.)
+                  :style {:position :relative}})
+      (icons/chevron-down (dom/props {:class (IconStyle.)
+                                      :style {:position :absolute
                                               :bottom   "-0.45rem"}}))
-      (icons/plus (dom/props {:style {:position  :absolute
-                                      :width     "1rem"
-                                      :height    "1rem"
+      (icons/plus (dom/props {:class (IconStyle.)
+                              :style {:position  :absolute
                                       :transform "scale(0.8)"}})))))
+
+(def SHADOW "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)")
+(def SHADOW-LG "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)")
 
 (e/defn* MenuStyle []
   (e/client
@@ -346,30 +291,9 @@
                             (HostsGrid. ast
                               (e/fn* [edited-ast]
                                 (let [content-str (parser/serialize edited-ast)]
-                                  #_(e/client (reset! !hosts content-str))
                                   (case (e/offload-task #(save-hosts-file! content-str))
                                     (e/client (reset! !hosts (e/server (read-hosts-file))))))))
-                            (catch Pending _))))
-               #_(dom/textarea (dom/props {:style {:overflow    :scroll
-                                                 :grid-column 1
-                                                 :grid-row    2}})
-                             (dom/text hosts)
-                             (dom/on! "keyup" (fn [^js e]
-                                                (reset! !hosts (.. e -target -value)))))
-               #_(dom/textarea (dom/props {:style {:overflow    :scroll
-                                                 :grid-column 2
-                                                 :grid-row    2}
-                                         :rows  25})
-                        (dom/text (contrib.str/pprint-str ast))
-                        (dom/on "keyup" (e/fn [^js e]
-                                          (let [ast-text (.. e -target -value)]
-                                            (e/server
-                                              (try
-                                                (let [hosts (parser/serialize (edn/read-string ast-text))]
-                                                  (e/client (reset! !hosts hosts)))
-                                                (catch Throwable t
-                                                  (let [m (ex-message t)]
-                                                    (e/client (prn m))))))))))))))
+                            (catch Pending _))))))))
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
