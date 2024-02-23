@@ -100,7 +100,7 @@
                                     :position :relative
                                     ;; --virtual-scroll-row-height: 30px; TODO migrate
                                     }})
-                (dom/element "style"
+                (dom/element "style" ;; todo migrate to electric-css. Missing @media support.
                   (dom/text
                     "
 @media print{
@@ -134,7 +134,8 @@
 (e/def index 0)
 (e/def row-number 0)
 
-(e/defn Paginate [rows RenderRow]
+(e/defn Paginate "Call render RenderRow for each row if the virtual scroll window. Doesn't require a keyfn to paginate, as pagination happens on an internal row index."
+  [rows RenderRow]
   (let [rows-index (zipmap (range) (slice rows (e/client first-row-index) (e/client mounted-rows-count)))]
     (e/for [idx (sort (keys rows-index))]
       (binding [index      idx

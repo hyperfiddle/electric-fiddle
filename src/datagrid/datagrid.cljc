@@ -134,6 +134,7 @@
                                   :font-variant-numeric  "tabular-nums"
                                   :grid-template-columns (grid-template-columns sizing-mode columns)
                                   :grid-auto-rows        (str row-height "px")}})
+              (GridStyle. id columns)
               ;; @media print{
               ;;  .hyperfiddle.subgrid-row
               ;;  , .hyperfiddle .datagrid tr {
@@ -143,20 +144,6 @@
 
               ;; TODO hook on virtualscroll scroll state to freeze column sizes
               ;; (dom/on! dom/node "wheel" #(reset! !sizing-mode ::manual))
-              (GridStyle. id columns)
-              #_(dom/element :style ; TODO migrate to electric-css
-                (dom/text
-                  #_(str/join "\n" (map (fn [{::keys [position width]}]
-                                          (str "#" id " td:nth-child(" position "){ max-width:" (width-px width "none") ";}"))
-                                     columns-index))
-                  (str "#"id " th {z-index: 2;}")
-                  (str/join "\n" (map (fn [{::keys [position] :as column}]
-                                        (str "#" id " th:nth-child(" position ")"
-                                          "{position: sticky; left:" (column-offset columns column) "px; z-index:3;}"
-                                          "#" id " td:nth-child(" position ")"
-                                          "{position: sticky; left:" (column-offset columns column) "px; z-index:2;}"))
-                                   (filter ::frozen? columns)
-                                   ))))
               (try (Body.)
                    (catch Pending p
                      (reset! !loading? true)
@@ -308,3 +295,22 @@
        (if (find-next-input (flip-axis axis) direction node)
          (focus-next-input (flip-axis axis) direction node)
          (.blur node)))))
+
+;; How to do Undo/redo with a CollectionEditor
+#_(dom/on "keydown" (e/fn* [^js e] ; undo/redo (Ctrl-z / Shift-Ctrl-z)
+                      (when (and (or (.-ctrlKey e) (.-metaKey e)) (= "z" (.-key e)))
+                        (if (.-shiftKey e)
+                          (redo!)
+                          (undo!)))))
+
+;; How to do rows drag-n-drop
+;; Usually implemented on the row index column (the leftmost one)
+;; Row numbers usually are the handle.
+#_(dom/on! "contextmenu" (fn [event] (cm/open! {:row-number row-number} event)))
+#_(dom/on! "dragstart" (fn [^js e]
+                         (set! (.. e -dataTransfer -dropEffect) "move")
+                         (.. e -dataTransfer (setDragImage (.. e -target (closest "tr")) 0 0))
+                         (.. e -dataTransfer (setData "text/plain" row-number))))
+#_(dom/on! "dragover" (fn [^js e] (.preventDefault e))) ; recommended by MDN
+#_(dom/on "drop" (e/fn* [^js e] (let [from (js/parseInt (.. e -dataTransfer (getData "text/plain")))]
+                                  (e/server (rotate! from row-number)))))

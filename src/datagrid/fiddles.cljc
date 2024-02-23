@@ -1,78 +1,143 @@
 (ns datagrid.fiddles
   (:require
    #?(:clj [clojure.java.io :as io])
-   #?(:clj [contrib.str])
-   #?(:clj [datagrid.writer])
+   #?(:clj [clojure.java.shell :as shell])
+   #?(:clj [clojure.spec.alpha :as s]
+      :cljs [cljs.spec.alpha :as s])
    [clojure.string :as str]
+   #?(:clj [contrib.str])
+   #?(:clj [contrib.datafy-fs :as dfs])
    [datagrid.collection-editor :as ce]
-   [datagrid.context-menu :as cm]
    [datagrid.datagrid :as dg]
-   [datagrid.parser :as parser]
    [datagrid.spinner :as spinner]
+   [datagrid.styles :as styles]
    [datagrid.stage :as stage]
    [datagrid.virtual-scroll :as vs]
-   [heroicons.electric.v24.outline :as icons]
    [hyperfiddle.electric :as e]
-   [hyperfiddle.electric-css :as css]
    [hyperfiddle.electric-dom2 :as dom]
-   [hyperfiddle.electric-ui4 :as ui]
-   [hyperfiddle.incseq :as incseq])
+   [hyperfiddle.electric-ui4 :as ui])
   (:import [hyperfiddle.electric Pending]))
 
-#?(:clj
-   (defn read-hosts-file []
-     (let [file (io/file "/etc/hosts")]
-       (when (.exists file)
-         (slurp file)))))
+;;; Hosts file manipulation
+
+(def WHITE-SPACES #"[\p{Zs}\s]*") ; \p{Zs} means all space-like chars (e.g. NBSP, list: https://jkorpela.fi/chars/spaces.html)
+(def WHITE-SPACES+ #"[\p{Zs}\s]+")
+(defn blank-string? [str] (and (string? str) (boolean (re-matches WHITE-SPACES str))))
+(defn read-tokens [str] (map first (re-seq #"(\S+)|([\p{Zs}\s]+)" str))) ; \S is equivalent to [^\s]
+
+(s/def ::blank blank-string?)
+(s/def ::token (s/and string? #(re-matches #"\S+" %)))
+(s/def ::ip-v6 (s/and string? #(re-matches #"([a-f0-9:]+:+)+[a-f0-9]+" (str/lower-case %))))
+(s/def ::ip-v4 (s/and string? #(re-matches #"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" %)))
+(s/def ::ip (s/or :v4 ::ip-v4, :v6 ::ip-v6))
+(s/def ::alias (s/or :hostname ::token, :blank ::blank))
+
+(defn conform-entry [value] (s/conform (s/cat :ip ::ip, :aliases (s/* ::alias)) (read-tokens value)))
+(defn unform-entry [{:keys [ip aliases]}] (str (second ip) (str/join "" (map second aliases))))
+(s/def ::entry (s/conformer conform-entry unform-entry))
+
+(defn blank-line? [str]
+  (or (str/blank? str)
+    (boolean (re-matches WHITE-SPACES+ str))))
+
+(defn comment? [str] (re-matches #"^\s*#.*$" str))
+
+(defn entry? [str] (s/valid? ::entry str))
+(defn commented-entry? [str]
+  (and (comment? str)
+    (entry? (str/replace-first str #"^\s*#\s+" ""))))
+
+(defn line-type [str]
+  (cond
+    (commented-entry? str) ::commented-entry
+    (entry? str)           ::entry
+    (comment? str)         ::comment
+    :else                  ::raw))
+
+(defn line-ip [str]
+  (let [segments (str/split str WHITE-SPACES+ 3)]
+    (if (= "#" (first segments))
+      (second segments)
+      (first segments))))
+
+(defn set-line-ip [row-str ip-str]
+  (let [segments (str/split row-str WHITE-SPACES+ 3)]
+    (if (= "#" (first segments))
+      (str "# " ip-str " " (nth segments 2))
+      (str ip-str " " (second segments)))))
+
+(defn line-hostnames [str]
+  (last (str/split str WHITE-SPACES+ (if (str/starts-with? str "#") 3 2))))
+
+(defn set-line-hostnames [row-str hostnames-str]
+  (if (str/starts-with? row-str "#")
+    (str "# " (line-ip row-str) " " hostnames-str)
+    (str (line-ip row-str) " " hostnames-str)))
+
+(defn toggle-comment [line]
+  (cond (entry? line)           (str "# " line)
+        (commented-entry? line) (str/replace-first line #"[\s#]*" "")
+        :else                   line))
 
 #?(:clj
-   (defn save-hosts-file! [content-str]
+   (defrecord HostsFileEntry [^String line]
+     ccp/Datafiable
+     (datafy [this]
+       (case (line-type line)
+         (::comment ::raw)
+         line
+         (::entry ::commented-entry)
+         (let [ip            (line-ip line)
+               hostnames     (line-hostnames line)
+               hostnames-seq (re-seq #"\w+" hostnames)
+               InetAdress    (java.net.InetAddress/getByName ip)]
+           (with-meta
+             {::ip ip, ::hostnames hostnames}
+             {`ccp/nav
+              (fn [xs k v]
+                (case k
+                  ::ip        InetAdress
+                  ::hostnames hostnames-seq))}))))))
+
+#?(:clj
+   (defn read-hosts-file
+     ([] (read-hosts-file (io/file "/etc/hosts")))
+     ([^File file]
+      (when (.exists file)
+        (slurp file)))))
+
+(defn copy-command [source-path destination-path] (str "cat " source-path " | sudo dd of=" destination-path))
+(defn sudo-command [command] (str "/usr/bin/osascript -e 'do shell script \"" command " 2>&1 \" with administrator privileges'"))
+#?(:clj
+   (defn run-command! [command] (shell/sh "bash" "-c" command)))
+
+#?(:clj
+   (defn write-hosts-file! [content-str]
      (when content-str
-       (datagrid.writer/write-hosts-file! content-str))))
+       (let [source-path "/tmp/electric_hosts_editor.hosts"
+             target-path "/etc/hosts"
+             command (sudo-command (copy-command source-path target-path))]
+         (spit source-path content-str)
+         (println "Will run command with sudo rights: " command)
+         (run-command! command)))))
 
-(defn diff [editor-state] (::ce/current-diff editor-state))
-(defn patch [coll diff] (incseq/patch-vec coll diff))
+;; ------
 
-(defn toggle-entry [[type _value :as entry]]
-  (case type
-    :blank           entry
-    :comment         entry
-    :commented-entry (parser/parse-line (str/replace (parser/serialize-line entry) #"^#\s+" ""))
-    :entry           (parser/parse-line (str "# " (parser/serialize-line entry)))))
+(e/def loading? false)
 
-(e/defn* CellsStyle []
+(e/defn RowChangeMonitor [{::keys [rows OnChange]} Body]
   (e/client
-    (css/scoped-style
-      (css/rule ".cell-input"
-        {:padding     "1px 0"
-         :width       "100%"
-         :height      "100%"
-         :border      :none
-         :white-space :pre
-         :font-family :monospace})
-      (css/rule ".number-cell"
-        {:font-variant-numeric "tabular-nums"
-         :border               "1px #E1E1E1 solid"
-         :font-size            "0.75rem"
-         :line-height          "1rem"
-         :display              :flex
-         :align-items          :center
-         :justify-content      :center})
-      (css/rule ".checkbox-cell"
-        {:border          "1px #E1E1E1 solid"
-         :font-size       "0.75rem"
-         :line-height     "1rem"
-         :display         :flex
-         :align-items     :center
-         :justify-content :center})
-      (css/rule ".entry-cell"
-        {:display       :block
-         :overflow      :hidden
-         :text-overflow :ellipsis
-         :white-space   :nowrap
-         :border        "1px #E1E1E1 solid"})
-      (css/rule ".entry-cell:focus-within"
-        {:border-color "rgb(37 99 235)" #_ "border-blue-600"}))))
+    (let [!loading? (atom false)]
+      (binding [loading? (e/watch !loading?)]
+        (e/server
+          (let [output-rows (Body. rows)]
+            (when (not= rows output-rows)
+              (try (OnChange. output-rows)
+                   nil
+                   (catch Pending _
+                     (e/client
+                       (reset! !loading? true)
+                       (e/on-unmount #(reset! !loading? false))))))))))))
 
 (e/defn* CellInput [value OnCommit]
   (e/client
@@ -84,216 +149,90 @@
                                       (case (.-key e)
                                         ("Enter" "Tab" "Escape") (.preventDefault e)
                                         nil)
-                                      (let [direction (if (.-shiftKey e) ::backwards ::forwards)]
+                                      (let [direction (if (.-shiftKey e) ::dg/backwards ::dg/forwards)]
                                         (case (.-key e)
-                                          "Enter"  (dg/focus-next-input ::vertical direction dom/node)
-                                          "Tab"    (dg/focus-next-input ::horizontal direction dom/node)
+                                          "Enter"  (dg/focus-next-input ::dg/vertical direction dom/node)
+                                          "Tab"    (dg/focus-next-input ::dg/horizontal direction dom/node)
                                           "Escape" (do (stage/discard!)
                                                        (set! (.-value dom/node) value)
                                                        (.focus (.closest dom/node "table")))
                                           nil))))
                  (dom/on! "input" (fn [^js e] (stage/stage! (.. e -target -value))))))))
 
-(e/def loading? false)
-
-(e/defn RowChangeMonitor [{::keys [rows OnChange]} Body]
-  (e/client
-    (let [!loading? (atom false)]
-      (binding [loading? (e/watch !loading?)]
-        (e/server
-          (let [output-rows (Body. rows)]
-            (when (or (not= rows output-rows))
-              (try (OnChange. output-rows)
-                   nil
-                   (catch Pending _
-                     (e/client
-                       (reset! !loading? true)
-                       (e/on-unmount #(reset! !loading? false))))))))))))
-
-(e/def IconStyle
-  "Return a unique, generated class name to apply to multiple icons."
-  (e/client
-    (e/singleton
-      (css/scoped-style
-        (css/rule {:width "1rem", :height "1rem"})))))
-
-(e/defn* PlusUpIcon []
-  (e/client
-    (dom/div
-      (dom/props {:class (IconStyle.)
-                  :style {:position :relative}})
-      (icons/chevron-up (dom/props {:class (IconStyle.)
-                                    :style {:position :absolute
-                                            :top   "-0.45rem"}}))
-      (icons/plus (dom/props {:class (IconStyle.)
-                              :style {:position  :absolute
-                                      :transform "scale(0.8)"}})))))
-
-(e/defn* PlusDownIcon []
-  (e/client
-    (dom/div
-      (dom/props {:class (IconStyle.)
-                  :style {:position :relative}})
-      (icons/chevron-down (dom/props {:class (IconStyle.)
-                                      :style {:position :absolute
-                                              :bottom   "-0.45rem"}}))
-      (icons/plus (dom/props {:class (IconStyle.)
-                              :style {:position  :absolute
-                                      :transform "scale(0.8)"}})))))
-
-(def SHADOW "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)")
-(def SHADOW-LG "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)")
-
-(e/defn* MenuStyle []
-  (e/client
-    (css/style
-      (css/rule ".datagrid_fiddles__menu-items"
-        {:z-index          10
-         :box-shadow       SHADOW-LG
-         :border-radius    "0.25rem"
-         :display          :flex
-         :flex-direction   :column
-         :gap              "1px"
-         :background-color "rgb(244, 244, 245)" ; bg-gray-100
-         :border           "1px rgb(249, 250, 251) solid" ; border-gray-50
-         })
-      (css/rule ".datagrid_fiddles__menu-item"
-        {:padding          "0.75rem 0.5rem"
-         :cursor           :pointer
-         :background-color :white
-         :display          :flex
-         :gap              "0.5rem"
-         :align-items      :center})
-      (css/rule ".datagrid_fiddles__menu-item:hover"
-        {:background-color "rgb(243 244 246)" #_ "bg-gray-100"}))))
-
-(e/defn Menu [create! delete! Body]
-  (e/client
-    (cm/menu {::cm/context-menu? true}
-      (MenuStyle.)
-      (dom/on! "click" cm/close!)
-      (dom/on! js/window "keydown" cm/close!)
-      (cm/items
-        (dom/props {:class "datagrid_fiddles__menu-items"})
-        (let [row-number (:row-number cm/context)]
-          (cm/item
-            (dom/props {:class "datagrid_fiddles__menu-item"})
-            (PlusUpIcon.)
-            (dom/text "Insert row above")
-            (dom/on! "click" (fn [_] (create! (dec row-number) [(dec row-number) [:blank ""]]))))
-          (cm/item
-            (dom/props {:class "datagrid_fiddles__menu-item"})
-            (icons/x-mark (dom/props {:style {:width "1rem", :height "1rem"}}))
-            (dom/text "Delete row")
-            (dom/on! "click" (fn [_] (delete! row-number))))
-          (cm/item
-            (dom/props {:class "datagrid_fiddles__menu-item"})
-            (PlusDownIcon.)
-            (dom/text "Insert row below")
-            (dom/on! "click" (fn [_] (create! row-number [row-number [:blank ""]]))))))
-      (Body.))))
-
 (e/defn HostsGrid [rows OnChange]
   (e/server
     (RowChangeMonitor. {::rows rows, ::OnChange OnChange}
       (e/fn* [rows]
-        (e/client
-          (let [indexed-rows                                               (vec (map-indexed vector rows))
-                {::ce/keys [rows change! create! delete! #_undo! #_redo!]} (ce/CollectionEditor. indexed-rows)
-                rows                                                       (map-indexed (fn [idx row] (or row [idx [:blank ""]])) rows)]
-           (Menu. create! delete!
-             (e/fn* []
-               (vs/virtual-scroll {::vs/row-height  30
-                                   ::vs/padding-top 30
-                                   ::vs/rows-count  (e/server (count rows))}
-                 (dom/props {:style {:max-height (str (* 15 30) "px")}})
-                 (dg/datagrid {::dg/row-height 30}
-                   (dom/props {:tabIndex "1"})
-                   #_(dom/on "keydown" (e/fn* [^js e] ; undo/redo (Ctrl-z / Shift-Ctrl-z)
-                                         (when (and (or (.-ctrlKey e) (.-metaKey e)) (= "z" (.-key e)))
-                                           (if (.-shiftKey e)
-                                             (redo!)
-                                             (undo!)))))
-                   (dom/props {:class (css/scoped-style
-                                        (css/rule {:grid-auto-columns "auto", :border-collapse :collapse})
-                                        (css/rule "td:focus-within" {:outline "1px lightgray solid"})
-                                        (css/rule "tr td" {:background-color :white})
-                                        (css/rule "tr.header td > *" {:background-color :lightgray}))})
-                   (dg/header
-                     (dg/row
-                       (dom/props {:style {:box-shadow SHADOW :z-index 10}
-                                   :class (css/scoped-style
-                                            (css/rule "th" {:font-size        "0.75rem"
-                                                            :line-height      "1rem"
-                                                            :display          :flex
-                                                            :align-items      :center
-                                                            :justify-content  :center
-                                                            :background-color "#EFEFEF"
-                                                            :height           "30px"}))})
-                       (dg/column {::dg/frozen? true}
-                         (dom/props {:style {:grid-column 1, :min-width "6ch", :width :min-content}})
-                         (when (or loading? dg/loading?)
-                           (spinner/Spinner. {})))
-                       (dg/column {::dg/frozen? true}
-                         (dom/props {:style {:grid-column 2, :min-width "3ch", :width :min-content}}))
-                       (dg/column {}
-                         (dom/props {:style {:font-size "1rem" :grid-column 3, :padding "0 1rem", :resize :horizontal}})
-                         (dom/text "Entry"))))
-                   (dom/props {:class (CellsStyle.)})
-                   (vs/Paginate. rows
-                     (e/fn* [[idx row]]
-                       (let [row-number vs/row-number]
-                         (e/client
-                           (dg/row
-                             (dg/cell (dom/props {:class     "number-cell"
-                                                  :draggable false #_editable?})
-                                      (dom/text (inc row-number))
-                                      (when true #_editable?
-                                            (dom/on! "contextmenu" (fn [event] (cm/open! {:row-number row-number} event)))
-                                            #_(dom/on! "dragstart" (fn [^js e]
-                                                                     (set! (.. e -dataTransfer -dropEffect) "move")
-                                                                     (.. e -dataTransfer (setDragImage (.. e -target (closest "tr")) 0 0))
-                                                                     (.. e -dataTransfer (setData "text/plain" row-number))))
-                                            #_(dom/on! "dragover" (fn [^js e] (.preventDefault e))) ; recommended by MDN
-                                            #_(dom/on "drop" (e/fn* [^js e] (let [from (js/parseInt (.. e -dataTransfer (getData "text/plain")))]
-                                                                              (e/server (rotate! from row-number)))))))
-                             (dg/cell (dom/props {:class "checkbox-cell"})
-                                      (when (#{:entry :commented-entry} (first row))
-                                        (ui/checkbox (= :entry (first row))
-                                            (e/fn* [checked?]
-                                              (change! idx [idx (toggle-entry (e/snapshot row))]))
-                                          (dom/props {:checked (= :entry (first row))}))))
-                             (e/for-by identity [column ["Entry"]]
-                               (dg/cell
-                                 (dom/props {:class "entry-cell"})
-                                 (if true #_editable?
-                                     (CellInput. (parser/serialize-line row)
-                                       (e/fn* [new-value]
-                                         (change! idx [idx (parser/parse-line new-value)])))
-                                     (dom/span (dom/props {:style {:padding "1px 0"
-                                                                   :width   "100%"
-                                                                   :height  "100%"
-                                                                   :border  :none}})
-                                               (dom/text (parser/serialize-line row)))))))))))
-                   (map second rows)))))))))))
+        (let [{::ce/keys [rows change!]} (ce/CollectionEditor. (vec (map-indexed vector rows)))]
+          (e/client
+            (vs/virtual-scroll {::vs/row-height  30
+                                ::vs/padding-top 30
+                                ::vs/rows-count  (e/server (count rows))}
+              (dom/props {:style {:max-height (str (* 15 30) "px")}})
+              (dg/datagrid {::dg/row-height 30}
+                (dom/props {:tabIndex "1", :class [(styles/GridStyle.) (styles/CellsStyle.)]})
+                (dg/header
+                  (dg/row
+                    (dg/column {::dg/frozen? true}
+                      (dom/props {:style {:grid-column 1, :min-width "3ch", :width :min-content}})
+                      (when (or loading? dg/loading?)
+                        (spinner/Spinner. {})))
+                    (dg/column {}
+                      (dom/props {:style {:grid-column 2, :width :fit-content, :min-width "15ch", :font-size "1rem" :padding "0 1rem", :resize :horizontal}})
+                      (dom/text "IP"))
+                    (dg/column {}
+                      (dom/props {:style {:grid-column 3, :font-size "1rem" :padding "0 1rem", :resize :horizontal}})
+                      (dom/text "Hosts"))))
+                (e/server
+                  (vs/Paginate. rows
+                    (e/fn* [[idx row]]
+                      (let [line-type (line-type row)]
+                        (e/client
+                          (dg/row
+                            (dg/cell (dom/props {:class "checkbox-cell"})
+                                     (when (#{::entry ::commented-entry} line-type)
+                                       (let [checked? (= ::entry line-type)]
+                                         (ui/checkbox checked?
+                                             (e/fn* [checked?]
+                                               (e/server
+                                                 (change! idx [idx (toggle-comment (e/snapshot row))])))
+                                             (dom/props {:checked checked?})))))
+                            (case line-type
+                              (::entry ::commented-entry)
+                              (do (dg/cell (dom/props {:class "entry-cell"
+                                                       :style {:width :fit-content}})
+                                           (CellInput. (line-ip row)
+                                             (e/fn* [new-value]
+                                               (e/server
+                                                 (change! idx [idx (set-line-ip row new-value)])))))
+                                  (dg/cell (dom/props {:class "entry-cell"})
+                                           (CellInput. (line-hostnames row)
+                                             (e/fn* [new-value]
+                                               (e/server
+                                                 (change! idx [idx (set-line-hostnames row new-value)]))))))
+                              ;; else
+                              (dg/cell (dom/props {:class "entry-cell"
+                                                   :style {:grid-column "2 / 4"}})
+                                       (CellInput. row
+                                         (e/fn* [new-value]
+                                           (e/server
+                                             (change! idx [idx new-value])))))))))))))))
+          (map second rows))))))
 
 (e/defn HostFile-Editor []
   (e/client
     (dom/h1 (dom/text "/etc/hosts editor"))
-    (let [!hosts (atom (e/server (read-hosts-file)))
-          hosts  (e/watch !hosts)
-          ast    (parser/parse hosts)]
-      (dom/div (dom/props {:style {:display :grid, :grid-template-columns "1fr 1fr"
-                                   :width   "100%"}})
-               (dom/div (dom/props {:style {:grid-column "1/3"}})
-                        (e/server
-                          (try
-                            (HostsGrid. ast
-                              (e/fn* [edited-ast]
-                                (let [content-str (parser/serialize edited-ast)]
-                                  (case (e/offload-task #(save-hosts-file! content-str))
-                                    (e/client (reset! !hosts (e/server (read-hosts-file))))))))
-                            (catch Pending _))))))))
+    (e/server
+      (let [!file-content (atom (read-hosts-file))
+            lines (str/split-lines (e/watch !file-content))]
+        (try
+          (HostsGrid. lines
+            (e/fn* [edited-lines]
+              (let [new-file-content (str/join "\n" edited-lines)]
+                #_(case (e/offload-task #(write-hosts-file! new-file-content)))
+                (println new-file-content)
+                (reset! !file-content new-file-content #_(read-hosts-file)))))
+          (catch Pending _))))))
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
@@ -307,34 +246,4 @@
         (binding [dom/node js/document.body] ; where to mount dom elements
           (HostFile-Editor.))))))
 
-(comment
-  (defn zip-hosts [aliases hosts]
-    (let [only-spaces (filter #(= :blank (first %)) aliases)
-          hosts       (map #(vector :hostname %) hosts)
-          num-spaces  (count only-spaces)]
-      (concat (interleave (take num-spaces hosts) only-spaces) (interpose [:blank " "] (drop num-spaces hosts)))
-      ))
 
-  (zip-hosts [[:hostname "foo"] [:blank "  "] [:hostname "bar"] [:blank "  "]] ["baz" #_#_#_"asdf" "fdsa" "123"])
-  := '([:hostname "baz"] [:blank "  "])
-  (zip-hosts [[:hostname "foo"] [:blank "  "] [:hostname "bar"] [:blank "  "]] ["baz" "asdf" "fdsa" "123"])
-  := '([:hostname "baz"] [:blank "  "] [:hostname "asdf"] [:blank "  "] [:hostname "fdsa"] [:blank " "] [:hostname "123"])
-
-  (interleave [:a :b :c :d] [" " " "]))
-
-(comment
-  (defn toogle-entry! [editor coll index]
-    (let [entry (get (patch coll (diff @(::ce/!state editor))) index)]
-      ((::ce/change! editor) index (toggle-entry entry))))
-
-  (let [coll (parser/parse (slurp "/etc/hosts"))
-        {::ce/keys [create! delete! change! rotate! !state] :as editor} (editor coll)]
-    ;; (change! 1 [:comment "# hello"])
-    ;; (set-line! editor 0 "::2 local2 localhost2")
-    ;; (rotate! 0 1)
-    (def _editor editor)
-    (toogle-entry! editor coll 6)
-    (toogle-entry! editor coll 6)
-    ;; (create!)
-    (change! 14 (parser/parse-line "::1 foo bar"))
-    (print (parser/serialize (patch coll (diff @!state))))))
