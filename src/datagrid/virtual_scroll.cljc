@@ -88,7 +88,7 @@
   - `rows-count`: total number of rows to paginate over - pagination over an infinite sequence is not supported.
   - `row-height`: individual row height, in px. - all rows are assumed to be the same height. Dynamic row height is not supported.
   - `padding-top`: containers’s top padding in px, to offset the scroll position - usually for rendering a table header in place of the first row(s).
-  - `body` arbitrary electric code, usually a dom/table or dom/ul into which one need to call either `ServerSidePagination` or `ClientSidePagination`.
+  - `body` arbitrary electric code, usually a dom/table or dom/ul into which one need to call `Paginate`.
   "
   [{::keys [rows-count row-height padding-top] :or {padding-top 0}} & body]
   `(e/client
@@ -134,44 +134,12 @@
 (e/def index 0)
 (e/def row-number 0)
 
-(e/defn* ^:deprecated ServerSidePagination
-  "Paginates a collection of `rows` on the server side, in the current `virtual-scroll` context. Takes:
-  - `rows`: a collection of rows to paginate over. `(count rows)` must match `::rows-count` passed to `virtual-scroll`
-  - `RenderRow`: an Electric function of one argument (a row) and usually rendering a dom/tr or dom/li.
-                 Two dynamic bindings are made available in RenderRow:
-                 - `index`: the current row index (0..n) relative to the window. i.e. if 10 rows are rendered, index will respectively be [0..9]
-                 - `row-number`: the current row index (0..n) relative to the collection being paginated over. i.e. row numbers on the left of an excel sheet. O-based."
-  [rows RenderRow]
-  (e/client
-    (let [first-row-index    first-row-index ; binding unification hack
-          mounted-rows-count mounted-rows-count]
-      (try
-        (e/server
-          (let [rows-index (zipmap (range) (slice rows first-row-index mounted-rows-count))]
-            (e/for [idx (sort (keys rows-index))]
-              (binding [index      idx
-                        row-number (+ first-row-index idx)]
-                (RenderRow. (get rows-index idx))))))
-        (catch Pending _) ; Ensures smooth scrolling - otherwise rows’s content will mount/unmount on scroll and slow the scroll behavior down
-        ))))
-
-(e/defn* ^:deprecated ClientSidePagination
-  "Paginates a collection `rows` on the client side, in the current `virtual-scroll` context. See `ServerSidePagination`."
-  [rows RenderRow]
-  (e/client
-    (let [rows-index (zipmap (range) (slice rows first-row-index mounted-rows-count))]
-      (e/for [idx (sort (keys rows-index))]
-        (binding [index      idx
-                  row-number (+ first-row-index idx)]
-          (RenderRow. (get rows-index idx)))))))
-
-;; TODO replaces ClientSidePagination and ServerSidePagination
-;; (e/defn Paginate [rows RenderRow]
-;;   (let [rows-index (zipmap (range) (slice rows (e/client first-row-index) (e/client mounted-rows-count)))]
-;;     (e/for [idx (sort (keys rows-index))]
-;;       (binding [index      idx
-;;                 row-number (+ first-row-index idx)]
-;;         (RenderRow. (get rows-index idx))))))
+(e/defn Paginate [rows RenderRow]
+  (let [rows-index (zipmap (range) (slice rows (e/client first-row-index) (e/client mounted-rows-count)))]
+    (e/for [idx (sort (keys rows-index))]
+      (binding [index      idx
+                row-number (+ first-row-index idx)]
+        (RenderRow. (get rows-index idx))))))
 
 ;; ; example: paginated picker options list, window of 10 rows. Each row is 30px tall.
 ;; (e/server
@@ -182,7 +150,7 @@
 ;;         (dom/props {:style {:min-height "30px" :height (str (* 30 (min 10 num-rows)))}})
 ;;         (dg/datagrid {::dg/row-height 30} ; renders a dom/table on steroids
 ;;           (e/server
-;;             (vs/ServerSidePagination. rows ; paginate on the server
+;;             (vs/Paginate. rows ; pagination happens on the server because of e/server above
 ;;               (e/fn [{:keys [id value]}] ; render one row
 ;;                 (e/client
 ;;                   (dg/row ; datagrid row UI component, usually a dom/tr

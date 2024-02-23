@@ -240,7 +240,7 @@
                          (dom/props {:style {:font-size "1rem" :grid-column 3, :padding "0 1rem", :resize :horizontal}})
                          (dom/text "Entry"))))
                    (dom/props {:class (CellsStyle.)})
-                   (vs/ClientSidePagination. rows
+                   (vs/Paginate. rows
                      (e/fn* [[idx row]]
                        (let [row-number vs/row-number]
                          (e/client
