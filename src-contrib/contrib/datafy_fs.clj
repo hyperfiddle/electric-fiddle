@@ -3,11 +3,14 @@
   (:require [clojure.core.protocols :as ccp :refer [nav]]
             [clojure.datafy :refer [datafy]]
             [clojure.spec.alpha :as s]
-            [hyperfiddle.rcf :refer [tests]])
+            [hyperfiddle.rcf :refer [tests]]
+            [clojure.java.io :as io])
   (:import [java.nio.file Path Paths Files]
            java.io.File
            java.nio.file.LinkOption
-           [java.nio.file.attribute BasicFileAttributes FileTime]))
+           [java.nio.file.attribute BasicFileAttributes FileTime]
+           [org.apache.tika Tika] ; mime type detection
+           ))
 
 ; spec the data, not the object
 (s/def ::name string?)
@@ -43,7 +46,7 @@
 
 (comment
   "java.io.File interop"
-  (def h (clojure.java.io/file "node_modules/"))
+  (def h (clojure.java.io/file "src"))
 
   (sort (.listFiles h))
 
@@ -66,8 +69,8 @@
   (-> (datafy Path) :members keys)
   (-> p .getRoot str) := "/"
   (-> p .getFileName str) := "src"
-  (-> p .getParent .getFileName str) := "electric"
-  (-> p .getParent .toFile .getName) := "electric"
+  (-> p .getParent .getFileName str) := "electric-fiddle"
+  (-> p .getParent .toFile .getName) := "electric-fiddle"
   #_(-> p .getParent .toFile datafy))
 
 (defn path-attrs [^Path p]
@@ -93,6 +96,16 @@
   java.nio.file.attribute.FileTime
   (datafy [o] (-> o .toInstant java.util.Date/from)))
 
+(defonce TIKA (org.apache.tika.Tika.))
+
+(defn detect-mime-type [^File file] (.detect TIKA file))
+(defn detect-mime-type-no-access [^String file-name] (.detect TIKA file-name))
+
+(defmulti datafy-file-content detect-mime-type)
+
+(defmethod datafy-file-content "text/plain" [^File f] (line-seq (io/reader f)))
+(defmethod datafy-file-content :default [^File f] (io/reader f))
+
 (extend-protocol ccp/Datafiable
   java.io.File
   (datafy [^File f]
@@ -101,7 +114,8 @@
     ; nav is ability to resolve back to the underlying object pointers
     ; they compose to navigate display views of objects like a link
     (let [attrs (file-attrs f)
-          n (.getName f)]
+          n (.getName f)
+          mime-type (detect-mime-type-no-access n)]
       (as-> {::name n
              ::kind (cond (.isDirectory attrs) ::dir
                           (.isSymbolicLink attrs) ::symlink
@@ -114,7 +128,8 @@
              ::created (-> attrs .creationTime .toInstant java.util.Date/from)
              ::accessed (-> attrs .lastAccessTime .toInstant java.util.Date/from)
              ::modified (-> attrs .lastModifiedTime .toInstant java.util.Date/from)
-             ::size (.size attrs)} %
+             ::size (.size attrs)
+             ::mime-type mime-type} %
             (merge % (if (= ::dir (::kind %))
                        {::children (lazy-seq (sort (.listFiles f)))
                         ::parent `...}))
@@ -127,23 +142,24 @@
                               ::accessed (.lastAccessTime attrs)
                               ::children (some-> v vec)
                               ::parent (-> f file-path .getParent .toFile)
+                              ::content (datafy-file-content f)
                               v))})))))
 
 (tests
-  ; careful, calling seq loses metas on the underlying
-  (def h (clojure.java.io/file "src/"))
+                                        ; careful, calling seq loses metas on the underlying
+  (def h (clojure.java.io/file "src-contrib/"))
   (type h) := java.io.File
   "(datafy file) returns an EDN-ready data view that is one layer deep"
   (datafy h)
-  := #:user.datafy-fs{:name "src",
-                      :absolute-path _,
-                      :size _,
-                      :modified _,
-                      :created _,
-                      :accessed _,
-                      :kind ::dir,
-                      :children _
-                      :parent ...})
+  := #:contrib.datafy-fs{:name "src-contrib",
+                         :absolute-path _,
+                         :size _,
+                         :modified _,
+                         :created _,
+                         :accessed _,
+                         :kind ::dir,
+                         :children _
+                         :parent ...})
 
 (tests
   "datafy of a directory includes a Clojure coll of children, but child elements are native file
@@ -167,24 +183,24 @@
         (nav % ::children (::children %))
         (datafy %) ; can skip - simple data
         (map datafy %)
-        (vec (filter #(= (::name %) "hyperfiddle") %)) ; stabilize test
+        (vec (filter #(= (::name %) "contrib") %)) ; stabilize test
         (nav % 0 (% 0))
         (datafy %)
         #_(s/conform ::file %))
-  := #:user.datafy-fs{:name "hyperfiddle",
-                      :absolute-path _,
-                      :size _,
-                      :modified _,
-                      :created _,
-                      :accessed _,
-                      :kind ::dir,
-                      :children _
-                      :parent ...})
+  := #:contrib.datafy-fs{:name "contrib",
+                         :absolute-path _,
+                         :size _,
+                         :modified _,
+                         :created _,
+                         :accessed _,
+                         :kind ::dir,
+                         :children _
+                         :parent ...})
 
 (tests
   "nav into children and back up via parent ref"
   (def m (datafy h))
-  (::name m) := "src"
+  (::name m) := "src-contrib"
   (as-> m %
         (nav % ::children (::children %))
         (datafy %) ; dir
@@ -193,7 +209,7 @@
         (nav % ::parent (::parent %)) ; dir (skip level on way up)
         (datafy %)
         (::name %))
-  := "src")
+  := "src-contrib")
 
 (defn absolute-path [^String path-str & more]
   (str (.toAbsolutePath (java.nio.file.Path/of ^String path-str (into-array String more)))))

@@ -20,12 +20,15 @@
 
 ;;; Column model
 
-(defn make-column [node frozen?]
-  {::id        (gensym "column_")
-   ::node      node
-   ::width     0
-   ::position  0
-   ::frozen?   frozen?})
+(defn make-column
+  ([node frozen?] (make-column node frozen? nil))
+  ([node frozen? extra-kvs]
+   (merge {::id        (gensym "column_")
+           ::node      node
+           ::width     0
+           ::position  0
+           ::frozen?   frozen?}
+     extra-kvs)))
 
 (defn column-range [columns start end]
   (->> columns
@@ -111,6 +114,10 @@
                                                               :left      (str (column-offset columns column) "px")
                                                               :z-index   2})))))
 
+(e/def columns-key-index)
+
+(e/defn CellPosition [column-key] (get-in columns-key-index [column-key ::position] 0))
+
 (e/defn* DataGrid [{::keys [row-height]} Body]
   (e/client
     (let [!loading? (atom false)]
@@ -121,7 +128,8 @@
                 datagrid.datagrid/row-height row-height]
         (binding [columns-index (e/watch !columns-index)
                   sizing-mode (e/watch !sizing-mode)]
-          (binding [columns (ordered-columns (vals columns-index))]
+          (binding [columns (ordered-columns (vals columns-index))
+                    columns-key-index (into {} (map (juxt ::key identity) (filter ::key (vals columns-index))))]
             (dom/table
               (vs/RegisterScrollWatch. #(do (reset! !sizing-mode ::manual)
                                             (blur-focused-element dom/node)))
@@ -169,7 +177,7 @@
                     (! nil)
                     (let [observer (new js/ResizeObserver (fn [entries]
                                                             (doseq [e entries]
-                                                              (! (Math/ceil (if-let [cbs (.-borderBoxSize e)]
+                                                              (! (Math/floor (if-let [cbs (.-borderBoxSize e)]
                                                                                (if-let [dimentions (aget cbs 0)]
                                                                                  (.-inlineSize dimentions)
                                                                                  (.-inlineSize cbs))
@@ -177,10 +185,10 @@
                       (.observe observer node)
                       #(.unobserve observer node)))))))
 
-(e/defn* Column [{::keys [frozen?]} Body]
+(e/defn* Column [{::keys [frozen? key]} Body]
   (e/client
     (dom/th
-      (let [{::keys [id] :as column} (make-column dom/node frozen?)]
+      (let [{::keys [id] :as column} (make-column dom/node frozen? {::key key})]
         (dom/props {:class "datagrid_datagrid__column"})
         (ColumnStateMachine. column)
         (swap! !columns-index (fn [columns-index]
@@ -211,16 +219,16 @@
 (defmacro row [& body]
   `(new Row (e/fn* [] ~@body)))
 
-(e/defn* Cell [Body]
+(e/defn* Cell [{::keys [column]} Body]
   (e/client
     (dom/td
-      (dom/props {:style {:padding 0, :margin 0}})
+      (dom/props {:style {:padding 0, :margin 0, :grid-column (CellPosition. column)}})
       (when row-height ; TODO delegate to CSS engine by setting a CSS variable instead
         (dom/props {:style {:height (str row-height "px")}}))
       (Body.))))
 
-(defmacro cell [& body]
-  `(new Cell (e/fn* [] ~@body)))
+(defmacro cell [props & body]
+  `(new Cell ~props (e/fn* [] ~@body)))
 
 (comment
   (e/defn Test []

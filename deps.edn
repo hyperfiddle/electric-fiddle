@@ -86,5 +86,7 @@
 
   :datagrid
   {:extra-deps
-   {com.hyperfiddle/heroicons-electric {:mvn/version "79c4d15" :exclusions [com.hyperfiddle/electric]}}}
+   {com.hyperfiddle/heroicons-electric {:mvn/version "79c4d15" :exclusions [com.hyperfiddle/electric]}
+    org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
+    }}
   }}

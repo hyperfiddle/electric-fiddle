@@ -55,15 +55,7 @@
          :line-height     "1rem"
          :display         :flex
          :align-items     :center
-         :justify-content :center})
-      (css/rule ".entry-cell"
-        {:display       :block
-         :overflow      :hidden
-         :text-overflow :ellipsis
-         :white-space   :nowrap
-         :border        "1px #E1E1E1 solid"})
-      (css/rule ".entry-cell:focus-within"
-        {:border-color "rgb(37 99 235)" #_ "border-blue-600"}))))
+         :justify-content :center}))))
 
 (e/defn* GridStyle []
   (e/client
@@ -79,4 +71,13 @@
                                :align-items      :center
                                :justify-content  :center
                                :background-color "#EFEFEF"
-                               :height           "30px"}))))
+                               :height           "30px"})
+      (css/rule ".cell"
+        {:display       :block
+         :overflow      :hidden
+         :text-overflow :ellipsis
+         :white-space   :nowrap
+         :border        "1px #E1E1E1 solid"})
+      (css/rule ".cell:focus-within"
+        {:border-color "rgb(37 99 235)" #_ "border-blue-600"})
+      )))

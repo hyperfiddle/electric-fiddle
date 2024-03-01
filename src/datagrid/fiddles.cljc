@@ -6,8 +6,9 @@
       :cljs [cljs.spec.alpha :as s])
    [clojure.string :as str]
    #?(:clj [contrib.str])
-   #?(:clj [contrib.datafy-fs :as dfs])
+   [contrib.datafy-fs #?(:clj :as, :cljs :as-alias) dfs]
    [datagrid.collection-editor :as ce]
+   [datagrid.datafy-renderer :as r]
    [datagrid.datagrid :as dg]
    [datagrid.spinner :as spinner]
    [datagrid.styles :as styles]
@@ -15,8 +16,11 @@
    [datagrid.virtual-scroll :as vs]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
-   [hyperfiddle.electric-ui4 :as ui])
-  (:import [hyperfiddle.electric Pending]))
+   [hyperfiddle.electric-ui4 :as ui]
+   [clojure.core.protocols :as ccp]
+   [clojure.datafy :refer [datafy nav]])
+  (:import [hyperfiddle.electric Pending]
+           #?(:clj [java.io File])))
 
 ;;; Hosts file manipulation
 
@@ -83,28 +87,32 @@
    (defrecord HostsFileEntry [^String line]
      ccp/Datafiable
      (datafy [this]
-       (case (line-type line)
-         (::comment ::raw)
-         line
-         (::entry ::commented-entry)
-         (let [ip            (line-ip line)
-               hostnames     (line-hostnames line)
-               hostnames-seq (re-seq #"\w+" hostnames)
-               InetAdress    (java.net.InetAddress/getByName ip)]
-           (with-meta
-             {::ip ip, ::hostnames hostnames}
-             {`ccp/nav
-              (fn [xs k v]
-                (case k
-                  ::ip        InetAdress
-                  ::hostnames hostnames-seq))}))))))
+       (let [type (line-type line)]
+         (case type
+           (::comment ::raw)
+           {::type ::text, ::text line}
+           (::entry ::commented-entry)
+           (let [ip            (line-ip line)
+                 hostnames     (line-hostnames line)
+                 hostnames-seq (re-seq #"\w+" hostnames)
+                 InetAdress    (java.net.InetAddress/getByName ip)]
+             (with-meta
+               {::type ::entry, ::ip ip, ::hostnames hostnames, ::enabled? (= ::entry type)}
+               {`ccp/nav
+                (fn [xs k v]
+                  (case k
+                    ::ip        InetAdress
+                    ::hostnames hostnames-seq
+                    v))})))))))
 
 #?(:clj
    (defn read-hosts-file
      ([] (read-hosts-file (io/file "/etc/hosts")))
      ([^File file]
       (when (.exists file)
-        (slurp file)))))
+        (as-> (datafy file) %
+          (nav % ::dfs/content ())
+          (map ->HostsFileEntry %))))))
 
 (defn copy-command [source-path destination-path] (str "cat " source-path " | sudo dd of=" destination-path))
 (defn sudo-command [command] (str "/usr/bin/osascript -e 'do shell script \"" command " 2>&1 \" with administrator privileges'"))
@@ -116,123 +124,58 @@
      (when content-str
        (let [source-path "/tmp/electric_hosts_editor.hosts"
              target-path "/etc/hosts"
-             command (sudo-command (copy-command source-path target-path))]
+             command     (sudo-command (copy-command source-path target-path))]
          (spit source-path content-str)
          (println "Will run command with sudo rights: " command)
          (run-command! command)))))
 
 ;; ------
 
-(e/def loading? false)
-
-(e/defn RowChangeMonitor [{::keys [rows OnChange]} Body]
-  (e/client
-    (let [!loading? (atom false)]
-      (binding [loading? (e/watch !loading?)]
-        (e/server
-          (let [output-rows (Body. rows)]
-            (when (not= rows output-rows)
-              (try (OnChange. output-rows)
-                   nil
-                   (catch Pending _
-                     (e/client
-                       (reset! !loading? true)
-                       (e/on-unmount #(reset! !loading? false))))))))))))
-
-(e/defn* CellInput [value OnCommit]
-  (e/client
-    (stage/staged OnCommit
-      (dom/input (dom/props {:type :text :class "cell-input"})
-                 (set! (.-value dom/node) value)
-                 (dom/on "blur" (e/fn* [_] (when (some? stage/stage) (stage/Commit. stage/stage))))
-                 (dom/on! "keydown" (fn [^js e]
-                                      (case (.-key e)
-                                        ("Enter" "Tab" "Escape") (.preventDefault e)
-                                        nil)
-                                      (let [direction (if (.-shiftKey e) ::dg/backwards ::dg/forwards)]
-                                        (case (.-key e)
-                                          "Enter"  (dg/focus-next-input ::dg/vertical direction dom/node)
-                                          "Tab"    (dg/focus-next-input ::dg/horizontal direction dom/node)
-                                          "Escape" (do (stage/discard!)
-                                                       (set! (.-value dom/node) value)
-                                                       (.focus (.closest dom/node "table")))
-                                          nil))))
-                 (dom/on! "input" (fn [^js e] (stage/stage! (.. e -target -value))))))))
-
-(e/defn HostsGrid [rows OnChange]
-  (e/server
-    (RowChangeMonitor. {::rows rows, ::OnChange OnChange}
-      (e/fn* [rows]
-        (let [{::ce/keys [rows change!]} (ce/CollectionEditor. (vec (map-indexed vector rows)))]
-          (e/client
-            (vs/virtual-scroll {::vs/row-height  30
-                                ::vs/padding-top 30
-                                ::vs/rows-count  (e/server (count rows))}
-              (dom/props {:style {:max-height (str (* 15 30) "px")}})
-              (dg/datagrid {::dg/row-height 30}
-                (dom/props {:tabIndex "1", :class [(styles/GridStyle.) (styles/CellsStyle.)]})
-                (dg/header
+(e/defn CustomRow [row]
+  (let [e    vs/index ; default row identifier is the virtual scroll row index
+        data (datafy row)]
+    (try
+      (case (::type data)
+        ::text  (e/client
                   (dg/row
-                    (dg/column {::dg/frozen? true}
-                      (dom/props {:style {:grid-column 1, :min-width "3ch", :width :min-content}})
-                      (when (or loading? dg/loading?)
-                        (spinner/Spinner. {})))
-                    (dg/column {}
-                      (dom/props {:style {:grid-column 2, :width :fit-content, :min-width "15ch", :font-size "1rem" :padding "0 1rem", :resize :horizontal}})
-                      (dom/text "IP"))
-                    (dg/column {}
-                      (dom/props {:style {:grid-column 3, :font-size "1rem" :padding "0 1rem", :resize :horizontal}})
-                      (dom/text "Hosts"))))
-                (e/server
-                  (vs/Paginate. rows
-                    (e/fn* [[idx row]]
-                      (let [line-type (line-type row)]
-                        (e/client
-                          (dg/row
-                            (dg/cell (dom/props {:class "checkbox-cell"})
-                                     (when (#{::entry ::commented-entry} line-type)
-                                       (let [checked? (= ::entry line-type)]
-                                         (ui/checkbox checked?
-                                             (e/fn* [checked?]
-                                               (e/server
-                                                 (change! idx [idx (toggle-comment (e/snapshot row))])))
-                                             (dom/props {:checked checked?})))))
-                            (case line-type
-                              (::entry ::commented-entry)
-                              (do (dg/cell (dom/props {:class "entry-cell"
-                                                       :style {:width :fit-content}})
-                                           (CellInput. (line-ip row)
-                                             (e/fn* [new-value]
-                                               (e/server
-                                                 (change! idx [idx (set-line-ip row new-value)])))))
-                                  (dg/cell (dom/props {:class "entry-cell"})
-                                           (CellInput. (line-hostnames row)
-                                             (e/fn* [new-value]
-                                               (e/server
-                                                 (change! idx [idx (set-line-hostnames row new-value)]))))))
-                              ;; else
-                              (dg/cell (dom/props {:class "entry-cell"
-                                                   :style {:grid-column "2 / 4"}})
-                                       (CellInput. row
-                                         (e/fn* [new-value]
-                                           (e/server
-                                             (change! idx [idx new-value])))))))))))))))
-          (map second rows))))))
+                    (e/server
+                      (r/Cell. {:style {:grid-column "2 / -1"}} e ::text (::text data)))))
+        ::entry (r/Row. row)) ; fallback to default impl
+      (catch Pending _
+        #_(prn "pending 1")))))
 
 (e/defn HostFile-Editor []
   (e/client
     (dom/h1 (dom/text "/etc/hosts editor"))
     (e/server
-      (let [!file-content (atom (read-hosts-file))
-            lines (str/split-lines (e/watch !file-content))]
+      (let [!entries (atom (read-hosts-file))]
         (try
-          (HostsGrid. lines
-            (e/fn* [edited-lines]
-              (let [new-file-content (str/join "\n" edited-lines)]
-                #_(case (e/offload-task #(write-hosts-file! new-file-content)))
-                (println new-file-content)
-                (reset! !file-content new-file-content #_(read-hosts-file)))))
+          (r/grid {::r/row-height-px 25
+                   ::r/max-height-px (* 14 25) ; 15 25px tall lines
+                   ::r/rows          (e/watch !entries)
+                   ::r/OnChange      (e/fn* [edited-entries] (prn "edited entries" edited-entries))
+                   ::r/RenderRow     CustomRow}
+            (e/client
+              (dom/props {:style {:grid-template-columns "min-content auto auto"}})
+              (r/header {}
+                (r/column {::r/key ::enabled?}
+                  (dom/props {:style {:min-width "3ch" :width :min-content}})
+                  (when (or r/loading? dg/loading?)
+                    (spinner/Spinner. {}))
+                  #_(dom/text ""))
+                (r/column {::r/key ::ip}
+                  (dom/text "IP"))
+                (r/column {::r/key ::hostnames}
+                  ;; (dom/props {:style {:width "1fr"}})
+                  (dom/text "Hosts")))))
           (catch Pending _))))))
+
+#_
+(let [new-file-content (str/join "\n" (map entry->line edited-entries))]
+  #_(case (e/offload-task #(write-hosts-file! content-str)))
+  (println new-file-content)
+  (reset! !entries edited-entries #_(read-hosts-file)))
+
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
@@ -247,3 +190,4 @@
           (HostFile-Editor.))))))
 
 
+;; Idea: What would this look like as a datafy impl over a hosts file

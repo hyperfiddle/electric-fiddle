@@ -98,6 +98,7 @@
        (dom/div (dom/props {:class "virtual-scroll"
                             :style {:overflow :auto
                                     :position :relative
+                                    :overscroll-behavior-y :none
                                     ;; --virtual-scroll-row-height: 30px; TODO migrate
                                     }})
                 (dom/element "style" ;; todo migrate to electric-css. Missing @media support.
