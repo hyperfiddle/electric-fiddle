@@ -7,7 +7,7 @@
 
 (e/def SpinnerStyle
   (e/client
-    (e/singleton
+    (e/share
       (css/scoped-style
         (css/rule {:width "1rem", :height "1rem"})))))
 
