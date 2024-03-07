@@ -7,16 +7,13 @@
    [clojure.string :as str]
    #?(:clj [contrib.str])
    [contrib.datafy-fs #?(:clj :as, :cljs :as-alias) dfs]
-   [datagrid.collection-editor :as ce]
    [datagrid.datafy-renderer :as r]
    [datagrid.datagrid :as dg]
    [datagrid.spinner :as spinner]
-   [datagrid.styles :as styles]
    [datagrid.stage :as stage]
    [datagrid.virtual-scroll :as vs]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
-   [hyperfiddle.electric-ui4 :as ui]
    [clojure.core.protocols :as ccp]
    [clojure.datafy :refer [datafy nav]])
   (:import [hyperfiddle.electric Pending]
@@ -94,15 +91,14 @@
            (::entry ::commented-entry)
            (let [ip            (line-ip line)
                  hostnames     (line-hostnames line)
-                 hostnames-seq (re-seq #"\w+" hostnames)
-                 InetAdress    (java.net.InetAddress/getByName ip)]
+                 hostnames-seq (map first (re-seq #"(\w+|\.)+" hostnames))]
              (with-meta
                {::type ::entry, ::ip ip, ::hostnames hostnames, ::enabled? (= ::entry type)}
                {`ccp/nav
                 (fn [xs k v]
                   (case k
-                    ::ip        InetAdress
-                    ::hostnames hostnames-seq
+                    ::ip        ip
+                    ::hostnames hostnames-seq ; TODO render as taglist
                     v))})))))))
 
 #?(:clj
@@ -131,44 +127,54 @@
 
 ;; ------
 
-(e/defn CustomRow [row]
-  (let [e    vs/index ; default row identifier is the virtual scroll row index
-        data (datafy row)]
-    (try
-      (case (::type data)
-        ::text  (e/client
-                  (dg/row
-                    (e/server
-                      (r/Cell. {:style {:grid-column "2 / -1"}} e ::text (::text data)))))
-        ::entry (r/Row. row)) ; fallback to default impl
-      (catch Pending _
-        #_(prn "pending 1")))))
+(e/defn RenderCustomRow [props e a V] ; to get a dynamic layout
+  (let [e vs/index ; default row identifier is the virtual scroll row index
+        V (e/share (r/JoinValue. (V.)))
+        v (V.)]
+    (case (::type v)
+      ::text  (e/client
+                (dg/row
+                  (e/server
+                    (r/RenderCell. {::dom/props {:style {:grid-column "2 / -1"}}}
+                      e                     ; e
+                      ::text                ; a
+                      (e/fn* [] (::text v)) ; V
+                      ))))
+      ::entry (r/DefaultRowRenderer. props e a V)) ; fallback to default impl
+    ))
 
 (e/defn HostFile-Editor []
   (e/client
     (dom/h1 (dom/text "/etc/hosts editor"))
-    (e/server
-      (let [!entries (atom (read-hosts-file))]
-        (try
-          (r/grid {::r/row-height-px 25
-                   ::r/max-height-px (* 14 25) ; 15 25px tall lines
-                   ::r/rows          (e/watch !entries)
-                   ::r/OnChange      (e/fn* [edited-entries] (prn "edited entries" edited-entries))
-                   ::r/RenderRow     CustomRow}
-            (e/client
-              (dom/props {:style {:grid-template-columns "min-content auto auto"}})
-              (r/header {}
-                (r/column {::r/key ::enabled?}
-                  (dom/props {:style {:min-width "3ch" :width :min-content}})
-                  (when (or r/loading? dg/loading?)
-                    (spinner/Spinner. {}))
-                  #_(dom/text ""))
-                (r/column {::r/key ::ip}
-                  (dom/text "IP"))
-                (r/column {::r/key ::hostnames}
-                  ;; (dom/props {:style {:width "1fr"}})
-                  (dom/text "Hosts")))))
-          (catch Pending _))))))
+    (stage/staged (e/fn* [x] (prn "Staged!" x))
+      (e/server
+        (let [!entries (atom (read-hosts-file))]
+          (binding [r/Render          r/SchemaRenderer
+                    r/RenderRow       RenderCustomRow
+                    r/schema-registry (r/registry
+                                        {::enabled?                 :boolean
+                                         ::ip                       :string
+                                         ::text                     :string
+                                         ::hostnames                [:sequential {:cardinality :one} :string]
+                                         :contrib.datafy-fs/content [:sequential {:cardinality :many} :any] ; FIXME specify :any
+                                         })]
+            (r/Render.
+              {::r/row-height-px 25
+               ::r/max-height-px (* 14 25) ; 15 25px tall lines
+               ::r/columns       [{::r/attribute ::enabled?
+                                   ::r/title     ""
+                                   ::r/Body      (e/fn* []
+                                                   (e/client
+                                                     (when (or r/loading? dg/loading?)
+                                                       (spinner/Spinner. {}))))}
+                                  {::r/attribute ::ip}
+                                  {::r/attribute ::hostnames}]
+               ::dom/props       {:style {:grid-template-columns "min-content auto auto"}}}
+              nil ; (java.io.File "/etc/hosts") ; e
+              :contrib.datafy-fs/content        ; a
+              (e/fn* [] (e/watch !entries))     ; V
+              ))))
+      (dom/pre (dom/text (contrib.str/pprint-str stage/stage))))))
 
 #_
 (let [new-file-content (str/join "\n" (map entry->line edited-entries))]
@@ -189,5 +195,3 @@
         (binding [dom/node js/document.body] ; where to mount dom elements
           (HostFile-Editor.))))))
 
-
-;; Idea: What would this look like as a datafy impl over a hosts file
