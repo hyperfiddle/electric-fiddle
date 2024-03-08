@@ -1,6 +1,7 @@
 (ns datagrid.datagrid
   (:require [hyperfiddle.electric :as e]
             [hyperfiddle.electric-dom2 :as dom]
+            #?(:cljs [hyperfiddle.electric-dom2.batch :as batch])
             [clojure.string :as str]
             [datagrid.virtual-scroll :as vs]
             [missionary.core :as m]
@@ -191,9 +192,11 @@
       (let [{::keys [id] :as column} (make-column dom/node frozen? {::key key})]
         (dom/props {:class "datagrid_datagrid__column"})
         (ColumnStateMachine. column)
-        (swap! !columns-index (fn [columns-index]
-                                (-> (assoc columns-index id column)
-                                  (update-vals update-column))))
+        (batch/schedule!
+          (fn [] ; measure column postion after column is inserted in the DOM
+            (swap! !columns-index (fn [columns-index]
+                                    (-> (assoc columns-index id column)
+                                      (update-vals update-column))))))
         (swap! !columns-index update id assoc ::width (new (column-size column)))
         (e/on-unmount #(swap! !columns-index dissoc id))
         (Body.)))))
