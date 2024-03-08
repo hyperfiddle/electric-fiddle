@@ -8,8 +8,9 @@
 (e/def SpinnerStyle
   (e/client
     (e/share
-      (css/scoped-style
-        (css/rule {:width "1rem", :height "1rem"})))))
+      (e/fn* []
+        (css/scoped-style
+          (css/rule {:width "1rem", :height "1rem"}))))))
 
 (e/defn* Spinner [props]
   (svg/svg (dom/props {:class [(SpinnerStyle.) "animate-spin"] ; TODO migrate to electric-css. Require @keyframes support. See definition below.

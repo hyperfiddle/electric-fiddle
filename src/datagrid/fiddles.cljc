@@ -129,7 +129,7 @@
 
 (e/defn RenderCustomRow [props e a V] ; to get a dynamic layout
   (let [e vs/index ; default row identifier is the virtual scroll row index
-        V (e/share (r/JoinValue. (V.)))
+        V (e/share (e/fn* [] (r/JoinValue. (V.))))
         v (V.)]
     (case (::type v)
       ::text  (e/client
