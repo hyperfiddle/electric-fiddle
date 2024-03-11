@@ -42,13 +42,22 @@
 (e/def schema-registry (reg/registry {}))
 (e/def Render)
 
+(e/defn JoinValue [v] (datafy v))
+(e/defn Nav [v a] (nav v a (get v a)))
+
+(e/def stack ())
+(e/defn* PushEAV [e a V Continuation]
+  (let [V (e/share (e/Comp. JoinValue V))]
+    (binding [stack (conj stack [e a V])]
+      (Continuation. e a V))))
+
 (e/defn DefaultRenderer [props e a V]
-  (let [v (V.)]
+  (let [v (JoinValue. (V.))]
     (e/client
       (dom/text (pr-str v)))))
 
 (e/defn RenderBoolean [props e a V]
-  (let [v (V.)]
+  (let [v (JoinValue. (V.))]
     (e/client
       (let [stage! stage/stage!]
         (ui/checkbox v
@@ -57,7 +66,7 @@
                 [[::retract e a v] [::add e a v']])))))))
 
 (e/defn RenderString [props e a V]
-  (let [v (V.)]
+  (let [v (new (e/Comp. JoinValue V))]
     (e/client
       (let [stage! stage/stage!]
         (CellInput. v
@@ -67,7 +76,7 @@
                [::add e a v']])))))))
 
 (e/defn RenderSeq [props e a V] ; basic impl, should work on ordered sets
-  (let [v (V.)]
+  (let [v (JoinValue. (V.))]
     (e/client
       (let [stage! stage/stage!]
         (CellInput. (str/join " " v)
@@ -83,9 +92,6 @@
       (dom/props props)
       (e/server (Render. {} e a V)))))
 
-(e/defn JoinValue [v] (datafy v))
-(e/defn Nav [v a] (nav v a (get v a)))
-
 ;; - TODO
 ;; - find how to pass props
 ;; - abstract over nav
@@ -98,7 +104,9 @@
       (dg/row
         (e/for-by identity [a (map ::dg/key dg/columns)]
           (e/server
-            (RenderCell. {} e a (e/fn* [] (Nav. v a))))))))) ;; TODO generalize nav
+            (PushEAV. e a (e/fn* [] (Nav. v a))
+              (e/fn* [e a V]
+                (RenderCell. {} e a V)))))))))
 
 (e/def RenderRow DefaultRowRenderer)
 
@@ -166,7 +174,9 @@
     (grid {::row-height-px row-height-px
            ::max-height-px max-height-px
            ::rows          (V.)
-           ::RenderRow     (e/fn* [row] (RenderRow. {} e a (e/fn* [] row)))}
+           ::RenderRow     (e/fn* [row]
+                             (PushEAV. e a (e/fn* [] row)
+                               (e/fn* [e a V] (RenderRow. {} e a V))))}
       (e/client
         (dom/props props)
         (header {}
