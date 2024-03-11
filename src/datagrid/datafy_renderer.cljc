@@ -208,9 +208,9 @@
   ([registry renderers a default-renderer]
    (if-let [schema (schema registry a)]
      (or
+       (get renderers a)
        (get renderers [(schema-type schema) (cardinality schema)])
        (get renderers (schema-type schema))
-       (get renderers a)
        default-renderer)
      default-renderer)))
 
