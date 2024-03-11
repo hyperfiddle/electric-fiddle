@@ -146,10 +146,10 @@
     (binding [!header-height-px (atom row-height-px)
               row-height        row-height-px]
       (binding [header-height-px (e/watch !header-height-px)]
-        (vs/virtual-scroll {::vs/row-height  row-height-px
+        (vs/virtual-scroll {::vs/row-height-px  row-height-px
+                            ::vs/max-height-px  max-height-px
                             ::vs/padding-top header-height-px
                             ::vs/rows-count  (e/server (count rows))}
-          (dom/props {:style {:max-height (str max-height-px "px")}}) ; total max-height is 1 header
           (dg/datagrid {::dg/row-height row-height-px}
             (dom/props {:tabIndex "1", :class [(styles/GridStyle.) (styles/CellsStyle.)]})
             (e/server

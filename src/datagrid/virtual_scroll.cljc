@@ -90,20 +90,15 @@
   - `padding-top`: containers’s top padding in px, to offset the scroll position - usually for rendering a table header in place of the first row(s).
   - `body` arbitrary electric code, usually a dom/table or dom/ul into which one need to call `Paginate`.
   "
-  [{::keys [rows-count row-height padding-top] :or {padding-top 0}} & body]
+  [{::keys [rows-count row-height-px max-height-px padding-top] :or {padding-top 0}} & body]
   `(e/client
      (binding [rows-count (or ~rows-count 0)
-               row-height (or ~row-height 30)
+               row-height (or ~row-height-px 30)
                !scroll-watchers (atom #{})]
-       (dom/div (dom/props {:class "virtual-scroll"
-                            :style {:overflow :auto
-                                    :position :relative
-                                    :overscroll-behavior-y :none
-                                    ;; --virtual-scroll-row-height: 30px; TODO migrate
-                                    }})
-                (dom/element "style" ;; todo migrate to electric-css. Missing @media support.
-                  (dom/text
-                    "
+       (dom/div (dom/props {:class "virtual-scroll"})
+         (dom/element "style" ;; todo migrate to electric-css. Missing @media support.
+           (dom/text
+             "
 @media print{
   ::-webkit-scrollbar{
     display: none;
@@ -118,19 +113,27 @@
   top:0;
 }
 "))
-                (dom/on! "scroll" (partial notify-scroll-watches (e/watch !scroll-watchers)))
-                (let [[scrollTop# ~'_ ~'_] (new (ui/scroll-state< dom/node))
-                      clientHeight#        (second (new ResizeObserver dom/node))
-                      [scrollable-height# first-row-index# mounted-rows-count#]
-                      (window row-height (or ~padding-top 0) rows-count (js/Math.floor scrollTop#) clientHeight#)
-                      scrollbar-padding# (if (inc (> scrollable-height# clientHeight#)) scrollbar-thinkness 0)]
-                  (dom/props {:style {:height                      (str (+ scrollable-height# scrollbar-padding#) "px")
-                                      :--virtual-scroll-row-height (str row-height "px")}})
-                  (dom/div (dom/props {:style {:position :absolute,:min-width "1px", :height (str scrollable-height# "px") :visibility :hidden}
-                                       :aria-hidden true}))
-                  (binding [first-row-index    first-row-index#
-                            mounted-rows-count mounted-rows-count#]
-                    ~@body))))))
+         (dom/on! "scroll" (partial notify-scroll-watches (e/watch !scroll-watchers)))
+         (case ;; ensures overflow and max-heigth related props are set on the
+               ;; element BEFORE rendering anything depending on its dimensions
+             (dom/props {:style {:overflow :auto
+                                 :position :relative
+                                 :overscroll-behavior-y :none
+                                 :max-height (str (or ~max-height-px (* row-height 10)) "px")
+                                 ;; --virtual-scroll-row-height: 30px; TODO migrate
+                                 }})
+           (let [[scrollTop# ~'_ ~'_] (new (ui/scroll-state< dom/node))
+                 clientHeight#        (second (new ResizeObserver dom/node))
+                 [scrollable-height# first-row-index# mounted-rows-count#]
+                 (window row-height (or ~padding-top 0) rows-count (js/Math.floor scrollTop#) clientHeight#)
+                 scrollbar-padding# (if (inc (> scrollable-height# clientHeight#)) scrollbar-thinkness 0)]
+             (dom/props {:style {:height                      (str (+ scrollable-height# scrollbar-padding#) "px")
+                                 :--virtual-scroll-row-height (str row-height "px")}})
+             (dom/div (dom/props {:style {:position :absolute,:min-width "1px", :height (str scrollable-height# "px") :visibility :hidden}
+                                  :aria-hidden true}))
+             (binding [first-row-index    first-row-index#
+                       mounted-rows-count mounted-rows-count#]
+               ~@body)))))))
 
 (e/def index 0)
 (e/def row-number 0)
