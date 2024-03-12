@@ -197,6 +197,7 @@
                         :flex-direction :column}
                 :class [(css/scoped-style
                           (css/rule ".virtual-scroll" {:flex 1}))]})
+    (dom/h1 (dom/text (e/server (::dfs/absolute-path (datafy file)))))
     (try
       (e/server
         (binding [r/Render          r/SchemaRenderer
