@@ -1,19 +1,17 @@
 (ns datagrid.datafy-renderer
   (:require
    [clojure.datafy :refer [datafy nav]]
-   [datagrid.collection-editor :as ce]
    [datagrid.datagrid :as dg]
    [datagrid.stage :as stage]
    [datagrid.styles :as styles]
    [datagrid.virtual-scroll :as vs]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
+   [hyperfiddle.electric-css :as css]
    [hyperfiddle.electric-ui4 :as ui]
    [clojure.string :as str]
    [malli.core :as malli]
    [malli.registry :as reg])
-  (:import
-   (hyperfiddle.electric Pending))
   #?(:cljs (:require-macros datagrid.datafy-renderer)))
 
 
@@ -68,7 +66,8 @@
 (e/defn RenderString [props e a V]
   (let [v (new (e/Comp. JoinValue V))]
     (e/client
-      (let [stage! stage/stage!]
+      (dom/text v)
+      #_(let [stage! stage/stage!]
         (CellInput. v
           (e/fn* [v']
             (stage!
@@ -189,6 +188,29 @@
                   (e/server
                     (when Body (Body.))))))))))))
 
+(e/def FormStyle
+  (e/client
+    (e/share (e/fn* []
+               (css/scoped-style
+                 (css/rule {:display :grid
+                            :grid-template-columns "auto 1fr"
+                            :gap "0 0.5rem"}))))))
+
+(e/defn RenderForm [props e a V]
+  (e/client
+    (dom/form
+      (dom/props {:class (FormStyle.)})
+      (dom/on! "submit" (fn [e] (.preventDefault e)))
+      (e/server
+        (let [v (JoinValue. (V.))]
+          (e/for-by identity [a (::attributes props)]
+            (let [id (str (gensym "field_"))]
+              (e/client
+                (dom/label (dom/props {:for id})
+                           (dom/text (name a))))
+              (PushEAV. e a (e/fn* [] (Nav. v a))
+                (e/fn* [e a V] (Render. {::id id} e a V))))))))))
+
 (e/def renderers {:string             RenderString
                   :boolean            RenderBoolean
                   [:sequential :one]  RenderSeq
@@ -216,12 +238,11 @@
   ([registry renderers a]
    (resolve-renderer registry renderers a nil))
   ([registry renderers a default-renderer]
-   (if-let [schema (schema registry a)]
-     (or
-       (get renderers a)
-       (get renderers [(schema-type schema) (cardinality schema)])
-       (get renderers (schema-type schema))
-       default-renderer)
+   (or
+     (get renderers a)
+     (when-let [schema (schema registry a)]
+       (or (get renderers [(schema-type schema) (cardinality schema)])
+           (get renderers (schema-type schema))))
      default-renderer)))
 
 (e/defn SchemaRenderer [props e a V]

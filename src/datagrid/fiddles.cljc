@@ -14,8 +14,11 @@
    [datagrid.virtual-scroll :as vs]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
+   [hyperfiddle.router :as router]
    [clojure.core.protocols :as ccp]
-   [clojure.datafy :refer [datafy nav]])
+   [clojure.datafy :refer [datafy nav]]
+   [hyperfiddle.electric-css :as css]
+   )
   (:import [hyperfiddle.electric Pending]
            #?(:clj [java.io File])))
 
@@ -152,29 +155,92 @@
           (binding [r/Render          r/SchemaRenderer
                     r/RenderRow       RenderCustomRow
                     r/schema-registry (r/registry
-                                        {::enabled?                 :boolean
-                                         ::ip                       :string
-                                         ::text                     :string
-                                         ::hostnames                [:sequential {:cardinality :one} :string]
-                                         :contrib.datafy-fs/content [:sequential {:cardinality :many} :any] ; FIXME specify :any
+                                        {::enabled?    :boolean
+                                         ::ip          :string
+                                         ::text        :string
+                                         ::hostnames   [:sequential {:cardinality :one} :string]
+                                         ::dfs/content [:sequential {:cardinality :many} :any] ; FIXME specify :any
+                                         ::dfs/name    :string
                                          })]
-            (r/Render.
-              {::r/row-height-px 25
-               ::r/max-height-px (* 14 25) ; 15 25px tall lines
-               ::r/columns       [{::r/attribute ::enabled?
-                                   ::r/title     ""
-                                   ::r/Body      (e/fn* []
-                                                   (e/client
-                                                     (when (or r/loading? dg/loading?)
-                                                       (spinner/Spinner. {}))))}
-                                  {::r/attribute ::ip}
-                                  {::r/attribute ::hostnames}]
-               ::dom/props       {:style {:grid-template-columns "min-content auto auto"}}}
-              nil ; (java.io.File "/etc/hosts") ; e
-              :contrib.datafy-fs/content        ; a
-              (e/fn* [] (e/watch !entries))     ; V
-              ))))
+            (r/PushEAV. nil ::dfs/content (e/fn* [] (e/watch !entries))
+              (e/fn* [e a V]
+                (r/Render.
+                  {::r/row-height-px 25
+                   ::r/max-height-px (* 14 25) ; 15 25px tall lines
+                   ::r/columns       [{::r/attribute ::enabled?
+                                       ::r/title     ""
+                                       ::r/Body      (e/fn* []
+                                                       (e/client
+                                                         (when (or r/loading? dg/loading?)
+                                                           (spinner/Spinner. {}))))}
+                                      {::r/attribute ::ip}
+                                      {::r/attribute ::hostnames}]
+                   ::dom/props       {:style {:grid-template-columns "min-content auto auto"}}}
+                  e a V))))))
       (dom/pre (dom/text (contrib.str/pprint-str stage/stage))))))
+
+(e/defn RenderName [props e a V]
+  (let [[[e a V]  [e⁻¹ a⁻¹ V⁻¹]] r/stack
+        row                      (V⁻¹.)
+        absolute-path            (::dfs/absolute-path row)
+        v                        (V.)]
+    (e/client
+      (router/link ['.. (list `FileExplorer absolute-path)] (dom/text v)))))
+
+(e/defn DirectoryViewer [file]
+  (e/client
+    (dom/props {:style {:height         "100vh"
+                        :padding-bottom 0
+                        :box-sizing     :border-box
+                        :margin         0
+                        :display        :flex
+                        :flex-direction :column}
+                :class [(css/scoped-style
+                          (css/rule ".virtual-scroll" {:flex 1}))]})
+    (try
+      (e/server
+        (binding [r/Render          r/SchemaRenderer
+                  r/schema-registry (r/registry
+                                      {::dfs/content   [:sequential {:cardinality :many} :any] ; FIXME specify :any, recursive?
+                                       ::dfs/name      :string
+                                       ::dfs/children  [:sequential {:cardinality :many} :any] ; FIXME specify :any, recursive?
+                                       ::dfs/accessed  :string
+                                       ::dfs/modified  :string
+                                       ::dfs/created   :string
+                                       ::dfs/size      :string
+                                       ::dfs/mime-type :string
+                                       ::dfs/kind      :string})
+                  r/renderers       (assoc r/renderers ::dfs/name RenderName)]
+          (r/PushEAV. file ::dfs/children (e/fn* [] (r/Nav. (datafy file) ::dfs/children))
+            (e/fn* [e a V]
+              (r/Render.
+                {::r/row-height-px 25
+                 ::r/max-height-px "100%"
+                 ::r/columns       [{::r/attribute ::dfs/name}
+                                    {::r/attribute ::dfs/size}
+                                    {::r/attribute ::dfs/mime-type}]}
+                e a V)))))
+      (catch Pending _))))
+
+(e/defn FileViewer [file]
+  (e/server
+    (binding [r/Render          r/SchemaRenderer
+              r/schema-registry (r/registry {::dfs/name :string})
+              r/renderers       (assoc r/renderers ::dfs/file r/RenderForm, ::dfs/name RenderName)]
+      (r/PushEAV. file ::dfs/file (e/fn* [] file)
+        (e/fn* [e a V]
+          (r/Render. {::r/attributes [::dfs/name ::dfs/size ::dfs/mime-type ::dfs/kind ::dfs/accessed ::dfs/modified ::dfs/created]} e a V))))))
+
+(e/defn FileExplorer [& [path]]
+  (e/server
+    (let [path (or path ".")
+          file (io/as-file path)]
+      (if-not (.exists file)
+        (e/client
+          (dom/p (dom/text "No such file " path)))
+        (if (.isDirectory file)
+          (DirectoryViewer. file)
+          (FileViewer. file))))))
 
 #_
 (let [new-file-content (str/join "\n" (map entry->line edited-entries))]
@@ -185,7 +251,8 @@
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
-(e/def fiddles {`HostsFile-Editor HostFile-Editor})
+(e/def fiddles {`HostsFile-Editor HostFile-Editor
+                `FileExplorer FileExplorer})
 
 ;; Prod entrypoint, called by `prod.clj`
 (e/defn FiddleMain [ring-request]
@@ -193,5 +260,4 @@
     (binding [e/http-request ring-request] ; make ring request available through the app
       (e/client
         (binding [dom/node js/document.body] ; where to mount dom elements
-          (HostFile-Editor.))))))
-
+          (FileExplorer.))))))
