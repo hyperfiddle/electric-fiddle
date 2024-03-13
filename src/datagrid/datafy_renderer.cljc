@@ -61,7 +61,8 @@
         (ui/checkbox v
             (e/fn* [v']
               (stage!
-                [[::retract e a v] [::add e a v']])))))))
+                [[::retract e a v] [::add e a v']]))
+          (set! (.-checked dom/node) v))))))
 
 (e/defn RenderString [props e a V]
   (let [v (new (e/Comp. JoinValue V))]
