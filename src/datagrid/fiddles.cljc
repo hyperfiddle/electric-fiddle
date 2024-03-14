@@ -17,6 +17,7 @@
    [hyperfiddle.router :as router]
    [clojure.core.protocols :as ccp]
    [clojure.datafy :refer [datafy nav]]
+   [datagrid.datomic-browser]
    [hyperfiddle.electric-css :as css]
    )
   (:import [hyperfiddle.electric Pending]
@@ -253,7 +254,8 @@
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
 (e/def fiddles {`HostsFile-Editor HostFile-Editor
-                `FileExplorer FileExplorer})
+                `FileExplorer FileExplorer
+                `DatomicBrowser datagrid.datomic-browser/DatomicBrowser})
 
 ;; Prod entrypoint, called by `prod.clj`
 (e/defn FiddleMain [ring-request]
