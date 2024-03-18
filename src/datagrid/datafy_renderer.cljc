@@ -10,8 +10,7 @@
    [hyperfiddle.electric-css :as css]
    [hyperfiddle.electric-ui4 :as ui]
    [clojure.string :as str]
-   [malli.core :as malli]
-   [malli.registry :as reg])
+   [datagrid.schema :as schema])
   #?(:cljs (:require-macros datagrid.datafy-renderer)))
 
 
@@ -37,7 +36,7 @@
                                           nil))))
                  (dom/on! "input" (fn [^js e] (stage/stage! (.. e -target -value))))))))
 
-(e/def schema-registry (reg/registry {}))
+(e/def schema-registry (schema/registry))
 (e/def Render)
 
 (e/defn JoinValue [v] (datafy v))
@@ -136,10 +135,19 @@
   `(new Header ~props (e/fn* [] ~@body)))
 
 (e/defn Column [{::keys [attribute title]} Body]
+  #_(e/server
+    (prn {:schema-registry schema-registry
+          :attribute attribute
+          :schema (schema/schema schema-registry attribute)}))
+  (e/server
+    (def _reg schema-registry)
+    (prn attribute (schema/schema-type (schema/schema schema-registry attribute))))
   (e/client
     (dg/column {::dg/key attribute}
-      (dom/props {:style {:height (str header-height-px "px")}})
-      (dom/text (or title (name attribute)))
+      (dom/props {:style {:height (str header-height-px "px")}
+                  :title (str attribute " " (e/server (schema/schema-type (schema/schema schema-registry attribute))))
+                  :data-title "my-title"})
+      (dom/text (or title (name (or attribute ""))))
       (Body.))))
 
 (defmacro column [props & body]
@@ -197,6 +205,11 @@
                             :grid-template-columns "auto 1fr"
                             :gap "0 0.5rem"}))))))
 
+(e/defn Sequence [coll]
+  (->> (seq coll)
+    (map (fn [[k v]] {::key k, ::value v}))))
+
+#_
 (e/defn RenderForm [props e a V]
   (e/client
     (dom/form
@@ -212,28 +225,37 @@
               (PushEAV. e a (e/fn* [] (Nav. v a))
                 (e/fn* [e a V] (Render. {::id id} e a V))))))))))
 
-(e/def renderers {:string             RenderString
-                  :boolean            RenderBoolean
-                  [:sequential :one]  RenderSeq
-                  [:sequential :many] RenderGrid})
+(defn pad [rank]
+  (str/join "" (repeat rank "    "))) ; Non-breaking space
 
-(defn registry [m] (reg/registry (update-vals m malli/schema)))
+(e/defn RenderFormKey [props e a V]
+  (e/server
+    (let [[_ [_e _a V⁻¹]] stack
+          row (V⁻¹.)
+          rank (::rank row 0)
+          v (JoinValue. (V.))]
+      (e/client
+        (dom/label
+          (dom/props {:title (str v " " (e/server (schema/schema-type (schema/schema schema-registry v))
+                                                  )
+                               " " (e/server (schema/cardinality (schema/schema schema-registry v))))})
+          (dom/text (pad rank)) (dom/text v))))))
 
-(defn schema [registry a] (reg/schema registry a))
-(defn schema-props [schema] (malli/properties schema))
-(defn cardinality [schema] (:cardinality (schema-props schema) :one))
-(defn schema-form [schema] (malli/form schema))
-(defn schema-type [schema] (let [form (schema-form schema)]
-                             (cond (vector? form) (first form)
-                                   (map? form)    (:type form)
-                                   :else          form)))
+(e/defn RenderForm [props e a V]
+  ;; TODO link label with ::value column through :for attribute
+  (RenderGrid. (-> props (update ::dom/props assoc :role "form")
+                 (update-in [::dom/props :style] assoc :grid-template-columns "auto 1fr")
+                 (assoc ::columns [{::attribute ::key}
+                                   {::attribute ::value}]))
+    e a (e/fn* []
+          (Sequence. (JoinValue. (V.))))))
 
-
-
-(comment
-  (schema-type (malli/schema [:sequential {:foo :bar} :string]))
-  (malli.util/equals (malli/schema [:sequential {:foo :bar} :string]) [:sequential :string]))
-
+(e/def renderers {:string                     RenderString
+                  :boolean                    RenderBoolean
+                  ;; [:sequential ::schema/one]  RenderSeq
+                  ;; [:sequential ::schema/many] RenderGrid
+                  ::schema/many               RenderGrid
+                  ::key                       RenderFormKey})
 
 (defn resolve-renderer
   ([registry renderers a]
@@ -241,10 +263,13 @@
   ([registry renderers a default-renderer]
    (or
      (get renderers a)
-     (when-let [schema (schema registry a)]
-       (or (get renderers [(schema-type schema) (cardinality schema)])
-           (get renderers (schema-type schema))))
+     (when-let [schema (schema/schema registry a)]
+       (or (get renderers [(schema/schema-type schema) (schema/cardinality schema)])
+           (get renderers (schema/schema-type schema))
+           (get renderers (schema/cardinality schema))))
      default-renderer)))
 
 (e/defn SchemaRenderer [props e a V]
   (new (resolve-renderer schema-registry renderers a DefaultRenderer) props e a V))
+
+

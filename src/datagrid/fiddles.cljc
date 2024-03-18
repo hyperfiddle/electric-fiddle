@@ -11,6 +11,7 @@
    [datagrid.datagrid :as dg]
    [datagrid.spinner :as spinner]
    [datagrid.stage :as stage]
+   [datagrid.schema :as schema]
    [datagrid.virtual-scroll :as vs]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
@@ -19,7 +20,8 @@
    [clojure.datafy :refer [datafy nav]]
    [datagrid.datomic-browser]
    [hyperfiddle.electric-css :as css]
-   )
+
+   #?(:clj [contrib.datafy-fs :as dfs]))
   (:import [hyperfiddle.electric Pending]
            #?(:clj [java.io File])))
 
@@ -155,7 +157,7 @@
         (let [!entries (atom (read-hosts-file))]
           (binding [r/Render          r/SchemaRenderer
                     r/RenderRow       RenderCustomRow
-                    r/schema-registry (r/registry
+                    r/schema-registry (schema/registry
                                         {::enabled?    :boolean
                                          ::ip          :string
                                          ::text        :string
@@ -198,11 +200,10 @@
                         :flex-direction :column}
                 :class [(css/scoped-style
                           (css/rule ".virtual-scroll" {:flex 1}))]})
-    (dom/h1 (dom/text (e/server (::dfs/absolute-path (datafy file)))))
     (try
       (e/server
         (binding [r/Render          r/SchemaRenderer
-                  r/schema-registry (r/registry
+                  r/schema-registry (schema/registry
                                       {::dfs/content   [:sequential {:cardinality :many} :any] ; FIXME specify :any, recursive?
                                        ::dfs/name      :string
                                        ::dfs/children  [:sequential {:cardinality :many} :any] ; FIXME specify :any, recursive?
@@ -227,11 +228,14 @@
 (e/defn FileViewer [file]
   (e/server
     (binding [r/Render          r/SchemaRenderer
-              r/schema-registry (r/registry {::dfs/name :string})
+              r/schema-registry (schema/registry {::dfs/name :string})
               r/renderers       (assoc r/renderers ::dfs/file r/RenderForm, ::dfs/name RenderName)]
       (r/PushEAV. file ::dfs/file (e/fn* [] file)
         (e/fn* [e a V]
-          (r/Render. {::r/attributes [::dfs/name ::dfs/size ::dfs/mime-type ::dfs/kind ::dfs/accessed ::dfs/modified ::dfs/created]} e a V))))))
+          (r/Render. {#_#_::r/attributes [::dfs/name ::dfs/size ::dfs/mime-type ::dfs/kind ::dfs/accessed ::dfs/modified ::dfs/created]
+                      ::r/row-height-px 25
+                      ::r/max-height-px "100%"}
+            e a V))))))
 
 (e/defn FileExplorer [& [path]]
   (e/server
