@@ -64,11 +64,17 @@
   (or (::type (schema-props schema))
     (when-let [form (schema-form schema)]
       (cond (vector? form) (let [[type & _] form]
-                             (if (= :schema type)
+                             (if (= :malli.core/schema type)
                                (schema-type (first (malli.core/children schema)))
                                type))
             (map? form)    (:type form)
             :else          form))))
+
+(defn schema-types "return a stack (list) of types from schema, recursively up to the primitive type.
+  e.g. (:MyBoolean :db.type/boolean :boolean)" [schema]
+  (if schema
+    (cons (schema-type schema) (schema-types (first (malli.core/children schema))))
+    ()))
 
 (comment
   (schema-type (malli/schema [:sequential {:foo :bar} :string]))

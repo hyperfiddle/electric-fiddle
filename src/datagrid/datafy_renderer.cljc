@@ -139,7 +139,7 @@
     (prn {:schema-registry schema-registry
           :attribute attribute
           :schema (schema/schema schema-registry attribute)}))
-  (e/server
+  #_(e/server
     (def _reg schema-registry)
     (prn attribute (schema/schema-type (schema/schema schema-registry attribute))))
   (e/client
@@ -209,22 +209,6 @@
   (->> (seq coll)
     (map (fn [[k v]] {::key k, ::value v}))))
 
-#_
-(e/defn RenderForm [props e a V]
-  (e/client
-    (dom/form
-      (dom/props {:class (FormStyle.)})
-      (dom/on! "submit" (fn [e] (.preventDefault e)))
-      (e/server
-        (let [v (JoinValue. (V.))]
-          (e/for-by identity [a (::attributes props)]
-            (let [id (str (gensym "field_"))]
-              (e/client
-                (dom/label (dom/props {:for id})
-                           (dom/text (name a))))
-              (PushEAV. e a (e/fn* [] (Nav. v a))
-                (e/fn* [e a V] (Render. {::id id} e a V))))))))))
-
 (defn pad [rank]
   (str/join "" (repeat rank "    "))) ; Non-breaking space
 
@@ -236,16 +220,23 @@
           v (JoinValue. (V.))]
       (e/client
         (dom/label
-          (dom/props {:title (str v " " (e/server (schema/schema-type (schema/schema schema-registry v))
-                                                  )
+          (dom/props {:title (str v
+                               " " (e/server (schema/schema-type (schema/schema schema-registry v)))
                                " " (e/server (schema/cardinality (schema/schema schema-registry v))))})
-          (dom/text (pad rank)) (dom/text v))))))
+
+          (dom/text (pad rank))
+          (e/server
+            (if-let [RenderKey (::Render props)]
+              (RenderKey. row) ;; TODO
+              (e/client
+                (dom/text v)))))))))
 
 (e/defn RenderForm [props e a V]
   ;; TODO link label with ::value column through :for attribute
   (RenderGrid. (-> props (update ::dom/props assoc :role "form")
                  (update-in [::dom/props :style] assoc :grid-template-columns "auto 1fr")
-                 (assoc ::columns [{::attribute ::key}
+                 (assoc ::columns [{::attribute ::key
+                                    ::Render (::RenderKey props)}
                                    {::attribute ::value}]))
     e a (e/fn* []
           (Sequence. (JoinValue. (V.))))))
@@ -257,6 +248,10 @@
                   ::schema/many               RenderGrid
                   ::key                       RenderFormKey})
 
+(defn get-first "like `clojure.core/get` but return the first key found in map `m`"
+  [m keys]
+  (first (remove nil? (map #(get m %) keys))))
+
 (defn resolve-renderer
   ([registry renderers a]
    (resolve-renderer registry renderers a nil))
@@ -264,10 +259,19 @@
    (or
      (get renderers a)
      (when-let [schema (schema/schema registry a)]
+       ;; (prn a (schema/schema-types schema))
+       (def _schema schema)
        (or (get renderers [(schema/schema-type schema) (schema/cardinality schema)])
-           (get renderers (schema/schema-type schema))
-           (get renderers (schema/cardinality schema))))
+           (get-first renderers (schema/schema-types schema)) ; try with type at point
+           #_(get renderers (schema/resolve-type schema)) ; try with primitive type
+           #_(get renderers (schema/cardinality schema)) ; not sure if it make sense?
+           ))
      default-renderer)))
+
+(comment
+  _schema
+  (schema/schema-types _schema)
+  )
 
 (e/defn SchemaRenderer [props e a V]
   (new (resolve-renderer schema-registry renderers a DefaultRenderer) props e a V))
