@@ -144,7 +144,10 @@
 
 (e/defn RenderRef [props e a V]
   (e/server
-    (RenderKeyword. props e a V) ;; TODO account for db/id and lookup refs
+    (let [V (e/share V)
+          v (V.)]
+      (cond (keyword? v) (RenderKeyword. props e a V)
+            :else  (r/DefaultRenderer. props e a V))) ;; TODO account for db/id and lookup refs
     ))
 
 (e/def RenderSmartRef (MapV. Human-Friendly-Identity RenderRef))
@@ -239,13 +242,21 @@
         (e/fn* [] ; V
           (QueryRecentTxs. db))))))
 
+(e/defn MaybeRenderLink [target props e a V]
+  (e/server
+    (let [V (e/share V)
+          v (V.)]
+      (if (and (keyword? v) (schema/schema r/schema-registry v))
+        (RenderLink. target props e a V)
+        (RenderSmartRef. props e a V)))))
+
 (e/defn EntityDetail [e] ; TODO render keys as attributes links
   (e/client
     (dom/h1 (dom/text "Entity detail: " e)) ; treeview on the entity
     (router/focus [`EntityDetail]
       (e/server
         (binding [r/Sequence (e/fn* [entity] (tree-seq-entity (new (dx/schema> db)) entity))
-                  r/RenderKey (e/partial 5 RenderLink ::attribute)] ;; FIXME wrong layer due to router/focus
+                  r/RenderKey (e/partial 5 MaybeRenderLink ::attribute)] ;; FIXME wrong layer due to router/focus
           (r/RenderForm. {::r/row-height-px 25
                           ::r/max-height-px "100%"}
             nil ; e

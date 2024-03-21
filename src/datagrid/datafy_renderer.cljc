@@ -136,13 +136,6 @@
   `(new Header ~props (e/fn* [] ~@body)))
 
 (e/defn Column [{::keys [attribute title sortable]} Body]
-  #_(e/server
-    (prn {:schema-registry schema-registry
-          :attribute attribute
-          :schema (schema/schema schema-registry attribute)}))
-  #_(e/server
-    (def _reg schema-registry)
-    (prn attribute (schema/schema-type (schema/schema schema-registry attribute))))
   (e/client
     (dg/column {::dg/key attribute
                 ::dg/sortable sortable}
@@ -253,8 +246,7 @@
   ;; TODO link label with ::value column through :for attribute
   (RenderGrid. (-> props (update ::dom/props assoc :role "form")
                  (update-in [::dom/props :style] assoc :grid-template-columns "auto 1fr")
-                 (assoc ::columns [{::attribute ::key
-                                    ::Render (::RenderKey props)}
+                 (assoc ::columns [{::attribute ::key}
                                    {::attribute ::value}]))
     e a (e/fn* []
           (Sequence. (JoinValue. (V.))))))
