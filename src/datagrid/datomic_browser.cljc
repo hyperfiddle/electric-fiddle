@@ -15,12 +15,12 @@
 #?(:clj
    (extend-type datomic.query.EntityMap
      ccp/Datafiable
-     (datafy [^datomic.query.EntityMap this]
+     (datafy [^datomic.query.EntityMap entity]
        (with-meta
-         (.cache this) ; a map of already realized entries, don't force new entries
+         (.cache entity) ; a map of already realized entries, don't force new entries
          {`ccp/nav
           (fn [map k v] ; nav on the entity
-            (get this k v))}))))
+            (get entity k v))}))))
 
 (e/def conn)
 (e/def db)
@@ -31,15 +31,36 @@
 ;;; Queries
 
 #?(:clj
-   (defn query-attributes> [db]
-     (->> (dx/attributes> db) ; pull based
-       (m/eduction (map #(datomic.api/entity db (:db/ident %)))) ; map to entity for lazy nav
+   (defn query-attributes> [db pull-pattern]
+     (->> (dx/attributes> db pull-pattern) ; pull based
+       ;; (m/eduction (map #(datomic.api/entity db (:db/ident %)))) ; map to entity for lazy nav
        (m/reductions conj [])
        (m/relieve {}))))
 
+(defn compare-nil-last [x y]
+  (cond
+    (and (nil? x) (nil? y)) 0
+    (nil? x) 1
+    (nil? y) -1
+    :else (compare x y)))
+
+(defn smart-compare [a b]
+  (if (and (map? a) (map? b))
+    (smart-compare (:db/ident a) (:db/ident b))
+    (compare-nil-last a b)))
+
+(defn smart-sort-by [column direction coll]
+  (sort-by column
+    (case direction
+      (nil ::r/asc) smart-compare
+      ::r/desc #(smart-compare %2 %1))
+    coll))
+
 (e/defn QueryAttributes [db pull-pattern]
   (e/server
-    (sort-by :db/ident (new (query-attributes> db #_pull-pattern)))) )
+    (let [[column direction] (e/client (first r/column-sort-spec))]
+      (smart-sort-by (or column :db/ident) direction
+        (new (query-attributes> db pull-pattern))))) )
 
 (e/defn QueryAttributeDetails [db a]
   (e/server
@@ -76,19 +97,13 @@
 
 ;;; Progressive Enhancement
 
-(e/defn RenderAttribute [props e a V]
+(e/defn RenderKeyword [props e a V]
   (e/server
     (let [v (V.)]
       (e/client
-        (router/link ['.. [::attribute v]] (dom/text v))))))
+        (dom/text (if (= :db/ident a) v (name (or v ""))))))))
 
-(e/defn RenderKeyword [props e a V]
-  (e/server
-    (when-let [v (V.)]
-      (e/client
-        (dom/text (name v))))))
-
-(e/defn RenderLink [target props e a V]
+(e/defn RenderLink [target props e a V] ;; TODO move link directive to props, add MapProps
   (e/server
     (let [v (V.)]
       (e/client
@@ -100,31 +115,80 @@
     (e/client
       (router/link ['.. [::tx tx]] (dom/text tx)))))
 
+#?(:clj
+   (defn human-friendly-identity-value [entity-like]
+     (if (or (map? entity-like)
+           (instance? datomic.query.EntityMap entity-like))
+       (or (:db/ident entity-like) ; highest precedence
+         ;; TODO pick a human friendly lookup ref based on a :db.unique/identity attr
+         (:db/id entity-like)) ; lowest precedence
+       entity-like)))
+
+#?(:clj
+   (defn human-friendly-identity [db entity-like]
+     (cond (instance? datomic.query.EntityMap entity-like)
+           (human-friendly-identity-value entity-like)
+
+           (map? entity-like)
+           (human-friendly-identity-value
+             (datomic.api/entity db (human-friendly-identity-value entity-like)))
+
+           :else entity-like)))
+
+(e/defn Human-Friendly-Identity [V]
+  (e/server (e/fn* [] (r/JoinValue. (human-friendly-identity db (V.))))))
+
+(e/defn MapV [T F]
+  (e/fn [props e a V]
+    (F. props e a (T. V))))
+
+(e/defn RenderRef [props e a V]
+  (e/server
+    (RenderKeyword. props e a V) ;; TODO account for db/id and lookup refs
+    ))
+
+(e/def RenderSmartRef (MapV. Human-Friendly-Identity RenderRef))
+
+(e/defn RenderRefLink [props e a V]
+  (e/server
+    (let [V (e/share V)
+          v (V.)]
+      (case a
+        :db/id (e/client
+                 (router/link ['.. [::entity v]]
+                   (e/server
+                     (RenderRef. props e a V))))
+        (e/client
+          (router/link ['.. [::attribute v]]
+            (e/server
+              (RenderRef. props e a V))))))))
+
+(e/def RenderSmartRefLink (MapV. Human-Friendly-Identity RenderRefLink))
+
 ;;; Pages
 
 (e/defn Attributes []
   (e/server
-    (binding [r/renderers (assoc r/renderers
-                            ;; :db/ident RenderAttribute
-                            :db/valueType RenderKeyword
-                            :db/cardinality RenderKeyword
-                            :db/unique RenderKeyword
-                            )]
-      (r/RenderGrid. {::r/row-height-px 25
-                      ::r/max-height-px "100%"
-                      ::r/columns       [{::r/attribute :db/ident}
-                                         {::r/attribute :db/valueType}
-                                         {::r/attribute :db/cardinality}
-                                         {::r/attribute :db/unique}
-                                         {::r/attribute :db/isComponent}]}
-          nil ; e
-          nil ; a
-          (e/fn* [] ;; V
-            (QueryAttributes. db [:db/ident
-                                  {:db/valueType [:db/ident]}
-                                  :db/cardinality
-                                  :db/unique
-                                  :db/isComponent]))))))
+    (r/RenderGrid. {::r/row-height-px 25
+                    ::r/max-height-px "100%"
+                    ::r/columns       [{::r/attribute :db/ident
+                                        ::r/sortable true}
+                                       {::r/attribute :db/valueType
+                                        ::r/sortable true}
+                                       {::r/attribute :db/cardinality
+                                        ::r/sortable false}
+                                       {::r/attribute :db/unique
+                                        ::r/sortable true}
+                                       {::r/attribute :db/isComponent
+                                        ::r/sortable true}]}
+      nil ; e
+      nil ; a
+      (e/fn* [] ;; V
+        (QueryAttributes. db [:db/ident
+                              {:db/valueType [:db/ident]}
+                              {:db/cardinality [:db/ident]}
+                              {:db/unique [:db/ident]}
+                              :db/isComponent])))))
 
 (e/defn AttributeDetail [a]
   (e/client (dom/h1 (dom/text "Attribute detail: " a)))
@@ -148,16 +212,14 @@
   (e/client (dom/h1 (dom/text "Db stats")))
   (e/server
     ;; (binding [r/renderers (assoc r/renderers ::r/key )])
-    (r/RenderForm. {::r/row-height-px 25
-                    ::r/max-height-px "100%"
-                    ::dom/props {:style {:grid-template-columns "20rem auto"}}
-                    ::r/RenderKey (e/fn [row]
-                                    (e/client
-                                      (dom/text "hello")))}
-      nil ; e
-      nil ; a
-      (e/fn* [] ; V
-        (QueryDbStats. db)))))
+    (binding [r/RenderKey (e/partial 5 RenderLink ::attribute)]
+      (r/RenderForm. {::r/row-height-px 25
+                      ::r/max-height-px "100%"
+                      ::dom/props {:style {:grid-template-columns "20rem auto"}}}
+        nil ; e
+        nil ; a
+        (e/fn* [] ; V
+          (QueryDbStats. db))))))
 
 (e/defn RecentTx []
   (e/client (dom/h1 (dom/text "Recent Txs")))
@@ -182,7 +244,8 @@
     (dom/h1 (dom/text "Entity detail: " e)) ; treeview on the entity
     (router/focus [`EntityDetail]
       (e/server
-        (binding [r/Sequence (e/fn* [entity] (tree-seq-entity (new (dx/schema> db)) entity))]
+        (binding [r/Sequence (e/fn* [entity] (tree-seq-entity (new (dx/schema> db)) entity))
+                  r/RenderKey (e/partial 5 RenderLink ::attribute)] ;; FIXME wrong layer due to router/focus
           (r/RenderForm. {::r/row-height-px 25
                           ::r/max-height-px "100%"}
             nil ; e
@@ -200,7 +263,8 @@
                 db                db
                 r/schema-registry (Schema. db)
                 r/Render          r/SchemaRenderer
-                r/renderers       (merge r/renderers {:db/ident RenderAttribute})]
+                r/renderers       (merge r/renderers {:db/ident RenderSmartRefLink
+                                                      :db.type/ref RenderSmartRef})]
         (e/client
           (dom/props {:style {:height         "100vh"
                               :padding-bottom 0

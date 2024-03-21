@@ -1,6 +1,7 @@
 (ns datagrid.datafy-renderer
   (:require
    [clojure.datafy :refer [datafy nav]]
+   [contrib.data :as data]
    [datagrid.datagrid :as dg]
    [datagrid.stage :as stage]
    [datagrid.styles :as styles]
@@ -134,7 +135,7 @@
 (defmacro header [props & body]
   `(new Header ~props (e/fn* [] ~@body)))
 
-(e/defn Column [{::keys [attribute title]} Body]
+(e/defn Column [{::keys [attribute title sortable]} Body]
   #_(e/server
     (prn {:schema-registry schema-registry
           :attribute attribute
@@ -143,7 +144,8 @@
     (def _reg schema-registry)
     (prn attribute (schema/schema-type (schema/schema schema-registry attribute))))
   (e/client
-    (dg/column {::dg/key attribute}
+    (dg/column {::dg/key attribute
+                ::dg/sortable sortable}
       (dom/props {:style {:height (str header-height-px "px")}
                   :title (str attribute " " (e/server (schema/schema-type (schema/schema schema-registry attribute))))
                   :data-title "my-title"})
@@ -175,27 +177,43 @@
 (defmacro grid [props & body]
   `(new Grid ~props (e/fn* [] ~@body)))
 
+(e/def column-sort-spec "A map of column key to ::asc, ::desc, or nil." {})
+
+(defn requalify-kw [ns-to-ns-map k]
+  (if (qualified-keyword? k)
+    (if-let [ns (get ns-to-ns-map (namespace k))]
+      (data/qualify ns (data/unqualify k))
+      k)
+    k))
+
+(defn get-ns [named] (when (ident? named) (namespace named)))
+
 (e/defn RenderGrid [{::keys [row-height-px max-height-px columns]
                      ::dom/keys [props]}
                     e a V]
-  (e/server
-    (grid {::row-height-px row-height-px
-           ::max-height-px max-height-px
-           ::rows          (V.)
-           ::RenderRow     (e/fn* [row]
-                             (PushEAV. e a (e/fn* [] row)
-                               (e/fn* [e a V] (RenderRow. {} e a V))))}
-      (e/client
-        (dom/props props)
-        (header {}
+  (e/client
+    (dg/SortController.
+      (e/fn* []
+        (binding [column-sort-spec (update-vals dg/column-sort-spec (partial requalify-kw {(get-ns ::dg/_) (get-ns ::_)}))]
           (e/server
-            (e/for-by ::key [{::keys [attribute title Body] ::dom/keys [props]} columns]
+            (grid {::row-height-px row-height-px
+                   ::max-height-px max-height-px
+                   ::rows          (V.)
+                   ::RenderRow     (e/fn* [row]
+                                     (PushEAV. e a (e/fn* [] row)
+                                       (e/fn* [e a V] (RenderRow. {} e a V))))}
               (e/client
-                (column {::attribute attribute
-                         ::title     title}
-                  (when props (dom/props props))
+                (dom/props props)
+                (header {}
                   (e/server
-                    (when Body (Body.))))))))))))
+                    (e/for-by ::key [{::keys [attribute title sortable Body] ::dom/keys [props]} columns]
+                      (e/client
+                        (column {::attribute attribute
+                                 ::title     title
+                                 ::sortable  sortable}
+                          (when props (dom/props props))
+                          (e/server
+                            (when Body (Body.))))))))))))))))
 
 (e/def FormStyle
   (e/client
@@ -212,12 +230,15 @@
 (defn pad [rank]
   (str/join "" (repeat rank "    "))) ; Non-breaking space
 
+(e/def RenderKey DefaultRenderer)
+
 (e/defn RenderFormKey [props e a V]
   (e/server
     (let [[_ [_e _a V⁻¹]] stack
           row (V⁻¹.)
           rank (::rank row 0)
-          v (JoinValue. (V.))]
+          V (e/Comp. JoinValue V)
+          v (V.)]
       (e/client
         (dom/label
           (dom/props {:title (str v
@@ -226,10 +247,7 @@
 
           (dom/text (pad rank))
           (e/server
-            (if-let [RenderKey (::Render props)]
-              (RenderKey. row) ;; TODO
-              (e/client
-                (dom/text v)))))))))
+            (RenderKey. props e a V)))))))
 
 (e/defn RenderForm [props e a V]
   ;; TODO link label with ::value column through :for attribute

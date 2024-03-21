@@ -119,6 +119,20 @@
 
 (e/defn CellPosition [column-key] (get-in columns-key-index [column-key ::position] 0))
 
+
+(e/def toggle-column-sort-spec! (constantly nil))
+(e/def column-sort-spec "A map of column key to either ::asc, ::desc, or nil" {})
+
+(defn toggle-sort [!atom column-key]
+  (swap! !atom (fn [atom] (-> (select-keys atom [column-key])
+                            (update column-key #(case % (::asc nil) ::desc ::desc ::asc))))))
+
+(e/defn SortController [Body]
+  (let [!column-sort-spec (atom {})]
+    (binding [toggle-column-sort-spec! (partial toggle-sort !column-sort-spec)
+              column-sort-spec (e/watch !column-sort-spec)]
+      (Body.))))
+
 (e/defn* DataGrid [{::keys [row-height]} Body]
   (e/client
     (let [!loading? (atom false)]
@@ -186,7 +200,7 @@
                       (.observe observer node)
                       #(.unobserve observer node)))))))
 
-(e/defn* Column [{::keys [frozen? key]} Body]
+(e/defn* Column [{::keys [frozen? key sortable]} Body]
   (e/client
     (dom/th
       (let [{::keys [id] :as column} (make-column dom/node frozen? {::key key})]
@@ -199,7 +213,16 @@
                                       (update-vals update-column))))))
         (swap! !columns-index update id assoc ::width (new (column-size column)))
         (e/on-unmount #(swap! !columns-index dissoc id))
-        (Body.)))))
+        (let [b (Body.)]
+          (when sortable ;; TODO move this bit of UI out of Column, make it part of Body, not a prop
+            (dom/button (dom/props {:style {:position :absolute
+                                            :right 0}})
+                        (dom/text (case (get column-sort-spec key)
+                                    nil "-"
+                                    ::asc "^"
+                                    ::desc "v"))
+                        (dom/on! "click" #(toggle-column-sort-spec! key))))
+          b)))))
 
 (defmacro column [props & body]
   `(new Column ~props (e/fn* [] ~@body)))
