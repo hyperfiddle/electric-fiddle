@@ -94,7 +94,6 @@
 
 ;; - TODO
 ;; - find how to pass props
-;; - abstract over nav
 ;; - find the cell entity based on row
 
 (e/defn DefaultRowRenderer [props e a V]
@@ -269,8 +268,6 @@
    (or
      (get renderers a)
      (when-let [schema (schema/schema registry a)]
-       ;; (prn a (schema/schema-types schema))
-       (def _schema schema)
        (or (get renderers [(schema/schema-type schema) (schema/cardinality schema)])
            (get-first renderers (schema/schema-types schema)) ; try with type at point
            #_(get renderers (schema/resolve-type schema)) ; try with primitive type
