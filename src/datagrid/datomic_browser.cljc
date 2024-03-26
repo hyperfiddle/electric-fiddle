@@ -139,6 +139,9 @@
            (human-friendly-identity-value
              (datomic.api/entity db (human-friendly-identity-value entity-like)))
 
+           (number? entity-like)
+           (human-friendly-identity-value (datomic.api/entity db entity-like))
+
            :else entity-like)))
 
 (e/defn Human-Friendly-Identity [V]
@@ -213,6 +216,8 @@
     (RouterInput. {::dom/placeholder "Pour l’amour…"} :v)
     (binding [r/renderers (assoc r/renderers
                             :e (e/partial 5 RenderLink ::entity)
+                            :a RenderSmartRef
+                            :v RenderSmartRef ; FIXME render to a ref iff :a's valueType is db.type/ref
                             :tx (e/partial 5 RenderLink ::tx))
               #_#_r/schema-registry (schema/registry r/schema-registry {:v :string}) ; TODO v's render type depends on a's valueType
               ]
