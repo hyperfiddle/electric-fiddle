@@ -70,13 +70,7 @@
 (e/defn RenderString [props e a V]
   (let [v (new (e/Comp. JoinValue V))]
     (e/client
-      (dom/text v)
-      #_(let [stage! stage/stage!]
-        (CellInput. v
-          (e/fn* [v']
-            (stage!
-              [[::retract e a v]
-               [::add e a v']])))))))
+      (dom/text v))))
 
 (e/defn RenderSeq [props e a V] ; basic impl, should work on ordered sets
   (let [v (JoinValue. (V.))]
@@ -95,12 +89,8 @@
       (dom/props props)
       (e/server (Render. {} e a V)))))
 
-;; - TODO
-;; - find how to pass props
-;; - find the cell entity based on row
-
 (e/defn DefaultRowRenderer [props e a V]
-  (let [e vs/index ; TODO find a better entity
+  (let [e vs/index ; TODO find a better identity
         v (JoinValue. (V.))]
     (e/client
       (dg/row

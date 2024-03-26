@@ -348,21 +348,6 @@
 ;; ** Not obvious how to customize form fields rendering
 ;;    i.e `:db/id 1234` 1234 should render as a link, but attribute at point is ::value (not :db/id)
 ;;    See Format-entity
-;;
-;; * TODO
-;; - [X] derive malli schema from datomic schema (queries)
-;; - [X] Add tooltips on attributes
-;; - [ ] Form renderer is in charge of rendering keys and values
-;;   - [ ] Passes through to user-defined renderers
-;; - [X] Factor out queries
-;; - [X] Factor out common boilerplate
-;; - [ ] Explore declarative gray inputs
-;;   - [ ] How do they interact with queries?
-;;   - [ ] Inject gray input storage mechanism
-;;
-;;
-;;
-;; (e/defn Schema [db] (e/server (datomic->malli-schema (new (dx/schema> db)))))
 
 
 (comment
