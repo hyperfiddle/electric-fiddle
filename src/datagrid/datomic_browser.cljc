@@ -50,10 +50,12 @@
     (compare-nil-last a b)))
 
 (defn smart-sort-by [column direction coll]
-  (sort-by column
-    (case direction
-      (nil ::r/asc) smart-compare
-      ::r/desc #(smart-compare %2 %1))
+  (if (some? column)
+    (sort-by column
+      (case direction
+        (nil ::r/asc) smart-compare
+        ::r/desc #(smart-compare %2 %1))
+      coll)
     coll))
 
 (e/defn QueryAttributes [db pull-pattern]
@@ -75,9 +77,12 @@
 
 (e/defn QueryRecentTxs [db]
   (e/server
-    (new (->> (d/datoms> db {:index :aevt, :components [:db/txInstant]})
-           (m/reductions conj ())
-           (m/relieve {})))))
+    (let [[column direction] (e/client (first r/column-sort-spec))]
+      (->> (new (->> (d/datoms> db {:index :aevt, :components [:db/txInstant]})
+                  (m/reductions conj ())
+                  (m/relieve {})))
+        (map (fn [[_e _a v tx]] {:db/id tx, :db/txInstant v}))
+        (smart-sort-by column direction)))))
 
 (e/defn QueryEntityDetail [e]
   (e/server
@@ -249,7 +254,8 @@
       (r/RenderGrid. {::r/row-height-px 25
                       ::r/max-height-px "100%"
                       ::r/columns       [{::r/attribute :db/id}
-                                         {::r/attribute :db/txInstant}]
+                                         {::r/attribute :db/txInstant
+                                          ::r/sortable  true}]
                       ::dom/props       {:style {:grid-template-columns "20rem auto"}}}
         nil ; e
         nil ; a
