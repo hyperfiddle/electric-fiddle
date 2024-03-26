@@ -102,12 +102,6 @@
 
 ;;; Progressive Enhancement
 
-(e/defn RenderKeyword [props e a V]
-  (e/server
-    (let [v (V.)]
-      (e/client
-        (dom/text (if (= :db/ident a) v (name (or v ""))))))))
-
 (defn target->link-path [base target v]
   (if (vector? target)
     (let [syms #{'. '.. '/}
@@ -158,7 +152,7 @@
   (e/server
     (let [V (e/share V)
           v (V.)]
-      (cond (or (nil? v) (keyword? v)) (RenderKeyword. props e a V)
+      (cond (or (nil? v) (keyword? v)) (r/RenderString. props e a V)
             :else        (r/DefaultRenderer. props e a V))) ;; TODO account for db/id and lookup refs
     ))
 
