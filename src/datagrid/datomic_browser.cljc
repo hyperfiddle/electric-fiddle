@@ -103,11 +103,18 @@
       (e/client
         (dom/text (if (= :db/ident a) v (name (or v ""))))))))
 
+(defn target->link-path [base target v]
+  (if (vector? target)
+    (let [syms #{'. '.. '/}
+          [path value] [(take-while syms target) (drop-while syms target)]]
+      (conj (into [base] path) (conj (vec value) v)))
+    [base [target v]]))
+
 (e/defn RenderLink [target props e a V] ;; TODO move link directive to props, add MapProps
   (e/server
     (let [v (V.)]
       (e/client
-        (router/link ['.. [target v]] (dom/text v))))))
+        (router/link (target->link-path '.. target v) (dom/text v))))))
 
 (e/defn RenderTxId [props e a V]
   (let [[[e a V]  [e⁻¹ a⁻¹ V⁻¹]] r/stack
@@ -256,7 +263,7 @@
     (router/focus [`EntityDetail]
       (e/server
         (binding [r/Sequence (e/fn* [entity] (tree-seq-entity (new (dx/schema> db)) entity))
-                  r/RenderKey (e/partial 5 MaybeRenderLink ::attribute)] ;; FIXME wrong layer due to router/focus
+                  r/RenderKey (e/partial 5 MaybeRenderLink ['.. ::attribute])] ;; FIXME wrong layer due to router/focus
           (r/RenderForm. {::r/row-height-px 25
                           ::r/max-height-px "100%"}
             nil ; e
