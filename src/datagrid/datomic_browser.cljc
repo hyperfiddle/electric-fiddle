@@ -219,7 +219,9 @@
     (RouterInput. {::dom/placeholder "Pour l’amour…"} :v)
     (binding [r/renderers (assoc r/renderers
                             :e (e/partial 5 RenderLink ::entity)
-                            :tx (e/partial 5 RenderLink ::tx))]
+                            :tx (e/partial 5 RenderLink ::tx))
+              #_#_r/schema-registry (schema/registry r/schema-registry {:v :string}) ; TODO v's render type depends on a's valueType
+              ]
       (r/RenderGrid. {::r/row-height-px 25
                       ::r/max-height-px "100%"
                       ::r/columns       [{::r/attribute :e}
