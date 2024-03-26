@@ -190,6 +190,12 @@
     (e/client
       (router/link ['.. (list `FileExplorer absolute-path)] (dom/text v)))))
 
+(e/defn RouterInput [props attribute]
+  (e/client
+    (r/RouterStorage. attribute
+      (e/fn* [value]
+        (r/RenderInput. props attribute value)))))
+
 (e/defn DirectoryViewer [file]
   (e/client
     (dom/props {:style {:height         "100vh"
@@ -201,6 +207,7 @@
                 :class [(css/scoped-style
                           (css/rule ".virtual-scroll" {:flex 1}))]})
     (try
+      (RouterInput. {} ::dfs/name)
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry
@@ -214,15 +221,16 @@
                                        ::dfs/mime-type :string
                                        ::dfs/kind      :string})
                   r/renderers       (assoc r/renderers ::dfs/name RenderName)]
-          (r/PushEAV. file ::dfs/children (e/fn* [] (r/Nav. (datafy file) ::dfs/children))
-            (e/fn* [e a V]
-              (r/Render.
-                {::r/row-height-px 25
-                 ::r/max-height-px "100%"
-                 ::r/columns       [{::r/attribute ::dfs/name}
-                                    {::r/attribute ::dfs/size}
-                                    {::r/attribute ::dfs/mime-type}]}
-                e a V)))))
+          (r/RenderGrid.
+            {::r/row-height-px 25
+             ::r/max-height-px "100%"
+             ::r/columns       [{::r/attribute ::dfs/name}
+                                {::r/attribute ::dfs/size}
+                                {::r/attribute ::dfs/mime-type}]}
+            nil nil
+            (e/fn* []
+              (r/InputFilter. ::dfs/name ; FIXME missing a datafy call
+                (r/Nav. (datafy file) ::dfs/children))))))
       (catch Pending _))))
 
 (e/defn FileViewer [file]

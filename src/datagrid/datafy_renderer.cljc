@@ -10,6 +10,7 @@
    [hyperfiddle.electric-dom2 :as dom]
    [hyperfiddle.electric-css :as css]
    [hyperfiddle.electric-ui4 :as ui]
+   [hyperfiddle.router :as router]
    [clojure.string :as str]
    [datagrid.schema :as schema])
   #?(:cljs (:require-macros datagrid.datafy-renderer)))
@@ -275,12 +276,38 @@
            ))
      default-renderer)))
 
-(comment
-  _schema
-  (schema/schema-types _schema)
-  )
-
 (e/defn SchemaRenderer [props e a V]
   (new (resolve-renderer schema-registry renderers a DefaultRenderer) props e a V))
 
+;; inputs
 
+(e/defn InputValue [attribute]
+  (e/client (not-empty (ffirst (get router/route attribute)))))
+
+(e/defn RouterStorage [attribute Body]
+  (when-let [value' (Body. (InputValue. attribute))]
+    (router/ReplaceState!. ['. {attribute value'}])
+    value'))
+
+(e/defn RenderInput [props attribute value]
+  (e/client
+    (dom/input
+      (dom/props {:placeholder (::dom/placeholder props (str attribute))
+                  :style {:border "1px gray solid"}})
+      (dom/props (dissoc (contrib.data/select-ns 'hyperfiddle.electric-dom2 props) ::dom/placeholder))
+      (set! (.-value dom/node) value)
+      (str (dom/on! "input" (fn [^js e] (.. e -target -value)))))))
+
+(defn needle-match
+  "Case insensitive check if `needle-str` is included in `str`.
+  TODO ignore diacritics and variants (normalize and collate), or let the database/fts engine handle it."
+  [needle-str str]
+  (str/includes? (str/lower-case (or str "")) (str/lower-case (or needle-str ""))))
+
+(e/defn InputFilter
+  ([attribute coll] (InputFilter. attribute attribute coll))
+  ([keyfn attribute coll] (InputFilter. needle-match keyfn attribute coll))
+  ([sort-fn keyfn attribute coll]
+   (if-let [input-value (InputValue. attribute)]
+     (filter #(sort-fn input-value (keyfn %)) coll)
+     coll)))
