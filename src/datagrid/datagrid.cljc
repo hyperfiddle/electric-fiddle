@@ -125,7 +125,7 @@
 
 (defn toggle-sort [!atom column-key]
   (swap! !atom (fn [atom] (-> (select-keys atom [column-key])
-                            (update column-key #(case % (::asc nil) ::desc ::desc ::asc))))))
+                            (update column-key #(case % ::asc ::desc (::desc nil) ::asc))))))
 
 (e/defn SortController [Body]
   (let [!column-sort-spec (atom {})]
