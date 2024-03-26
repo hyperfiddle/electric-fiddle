@@ -175,10 +175,17 @@
 
 (e/def RenderSmartRefLink (MapV. Human-Friendly-Identity RenderRefLink))
 
+(e/defn RouterInput [props attribute]
+  (e/client
+    (r/RouterStorage. attribute
+      (e/fn* [value]
+        (r/RenderInput. props attribute value)))))
+
 ;;; Pages
 
 (e/defn Attributes []
   (e/server
+    (RouterInput. {::dom/placeholder ":release/name"} :db/ident)
     (r/RenderGrid. {::r/row-height-px 25
                     ::r/max-height-px "100%"
                     ::r/columns       [{::r/attribute :db/ident
@@ -194,15 +201,17 @@
       nil ; e
       nil ; a
       (e/fn* [] ;; V
-        (QueryAttributes. db [:db/ident
-                              {:db/valueType [:db/ident]}
-                              {:db/cardinality [:db/ident]}
-                              {:db/unique [:db/ident]}
-                              :db/isComponent])))))
+        (r/InputFilter. :db/ident
+          (QueryAttributes. db [:db/ident
+                                {:db/valueType [:db/ident]}
+                                {:db/cardinality [:db/ident]}
+                                {:db/unique [:db/ident]}
+                                :db/isComponent]))))))
 
 (e/defn AttributeDetail [a]
   (e/client (dom/h1 (dom/text "Attribute detail: " a)))
   (e/server
+    (RouterInput. {::dom/placeholder "Pour l’amour…"} :v)
     (binding [r/renderers (assoc r/renderers
                             :e (e/partial 5 RenderLink ::entity)
                             :tx (e/partial 5 RenderLink ::tx))]
@@ -216,12 +225,12 @@
         nil ; e
         nil ; a
         (e/fn* [] ; V
-          (QueryAttributeDetails. db a))))))
+          (r/InputFilter. :v (QueryAttributeDetails. db a)))))))
 
 (e/defn DbStats []
   (e/client (dom/h1 (dom/text "Db stats")))
   (e/server
-    ;; (binding [r/renderers (assoc r/renderers ::r/key )])
+    (RouterInput. {::dom/placeholder ":release/name"} ::r/key)
     (binding [r/RenderKey (e/partial 5 RenderLink ::attribute)]
       (r/RenderForm. {::r/row-height-px 25
                       ::r/max-height-px "100%"
@@ -229,16 +238,14 @@
         nil ; e
         nil ; a
         (e/fn* [] ; V
-          (QueryDbStats. db))))))
+          (r/InputFilter. first ::r/key
+            (QueryDbStats. db)))))))
 
 (e/defn RecentTx []
   (e/client (dom/h1 (dom/text "Recent Txs")))
   (e/server
-    (binding [r/Nav             (e/fn* [[e a v tx op] a] ; TODO remove
-                                  (case a
-                                    :db/id tx
-                                    :db/txInstant v))
-              r/renderers       (assoc r/renderers :db/id (e/partial 5 RenderLink ::tx))]
+    (RouterInput. {::dom/type "date"} :db/txInstant) ; FIXME This input should produce an #inst, today produces a string
+    (binding [r/renderers (assoc r/renderers :db/id (e/partial 5 RenderLink ::tx))]
       (r/RenderGrid. {::r/row-height-px 25
                       ::r/max-height-px "100%"
                       ::r/columns       [{::r/attribute :db/id}
@@ -247,7 +254,8 @@
         nil ; e
         nil ; a
         (e/fn* [] ; V
-          (QueryRecentTxs. db))))))
+          (r/InputFilter. compare :db/txInstant :db/txInstant
+            (QueryRecentTxs. db)))))))
 
 (e/defn MaybeRenderLink [target props e a V]
   (e/server
