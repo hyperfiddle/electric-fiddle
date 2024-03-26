@@ -158,8 +158,8 @@
   (e/server
     (let [V (e/share V)
           v (V.)]
-      (cond (keyword? v) (RenderKeyword. props e a V)
-            :else  (r/DefaultRenderer. props e a V))) ;; TODO account for db/id and lookup refs
+      (cond (or (nil? v) (keyword? v)) (RenderKeyword. props e a V)
+            :else        (r/DefaultRenderer. props e a V))) ;; TODO account for db/id and lookup refs
     ))
 
 (e/def RenderSmartRef (MapV. Human-Friendly-Identity RenderRef))
