@@ -63,7 +63,9 @@
             (e/fn* [v']
               (stage!
                 [[::retract e a v] [::add e a v']]))
-          (set! (.-checked dom/node) v))))))
+            (set! (.-checked dom/node) v)
+            (dom/props {:disabled true}) ; TODO read writable state from schema? config?
+            )))))
 
 (e/defn RenderString [props e a V]
   (let [v (new (e/Comp. JoinValue V))]
