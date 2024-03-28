@@ -250,7 +250,7 @@
 (e/defn RecentTx []
   (e/client (dom/h1 (dom/text "Recent Txs")))
   (e/server
-    (RouterInput. {::dom/type "date"} :db/txInstant) ; FIXME This input should produce an #inst, today produces a string
+    #_(RouterInput. {::dom/type "date" ::dom/disabled true} :db/txInstant) ; FIXME This input should produce an #inst, today produces a string
     (binding [r/renderers (assoc r/renderers :db/id (e/partial 5 RenderLink ::tx))]
       (r/RenderGrid. {::r/row-height-px 25
                       ::r/max-height-px "100%"
