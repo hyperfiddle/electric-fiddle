@@ -288,7 +288,7 @@
                   :style {:border "1px gray solid"}})
       (dom/props (dissoc (contrib.data/select-ns 'hyperfiddle.electric-dom2 props) ::dom/placeholder))
       (set! (.-value dom/node) value)
-      (str (dom/on! "input" (fn [^js e] (.. e -target -value)))))))
+      (str (or (dom/on! "input" (fn [^js e] (.. e -target -value))) value)))))
 
 (defn needle-match
   "Case insensitive check if `needle-str` is included in `str`.

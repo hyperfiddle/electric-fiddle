@@ -207,7 +207,7 @@
                 :class [(css/scoped-style
                           (css/rule ".virtual-scroll" {:flex 1}))]})
     (try
-      (RouterInput. {} ::dfs/name)
+      (RouterInput. {::dom/type :search} ::dfs/name)
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry
@@ -229,7 +229,7 @@
                                 {::r/attribute ::dfs/mime-type}]}
             nil nil
             (e/fn* []
-              (r/InputFilter. ::dfs/name ; FIXME missing a datafy call
+              (r/InputFilter. (comp ::dfs/name datafy) ::dfs/name ; FIXME missing a datafy call
                 (r/Nav. (datafy file) ::dfs/children))))))
       (catch Pending _))))
 
