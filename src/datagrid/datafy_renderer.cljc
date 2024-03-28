@@ -141,6 +141,7 @@
   `(new Column ~props (e/fn* [] ~@body)))
 
 (e/defn Grid [{::keys [row-height-px max-height-px rows RenderRow] ; WIP
+               ::dom/keys [props]
                :or    {row-height-px 30
                        max-height-px 300
                        rows          []}}
@@ -153,7 +154,8 @@
                             ::vs/max-height-px  max-height-px
                             ::vs/padding-top header-height-px
                             ::vs/rows-count  (e/server (count rows))}
-          (dg/datagrid {::dg/row-height row-height-px}
+          (dg/datagrid {::dg/row-height row-height-px
+                        ::dom/props props}
             (dom/props {:tabIndex "1", :class [(styles/GridStyle.) (styles/CellsStyle.)]})
             (e/server
               (Body.)
@@ -186,7 +188,8 @@
                    ::rows          (V.)
                    ::RenderRow     (e/fn* [row]
                                      (PushEAV. e a (e/fn* [] row)
-                                       (e/fn* [e a V] (RenderRow. {} e a V))))}
+                                       (e/fn* [e a V] (RenderRow. {} e a V))))
+                   ::dom/props props}
               (e/client
                 (dom/props props)
                 (header {}

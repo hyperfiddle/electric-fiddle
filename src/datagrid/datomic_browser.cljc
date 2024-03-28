@@ -187,7 +187,7 @@
 
 (e/defn Attributes []
   (e/server
-    (RouterInput. {::dom/placeholder ":release/name"} :db/ident)
+    (RouterInput. {::dom/placeholder ":release/name", ::dom/type :search} :db/ident)
     (r/RenderGrid. {::r/row-height-px 25
                     ::r/max-height-px "100%"
                     ::r/columns       [{::r/attribute :db/ident
@@ -199,7 +199,8 @@
                                        {::r/attribute :db/unique
                                         ::r/sortable true}
                                        {::r/attribute :db/isComponent
-                                        ::r/sortable true}]}
+                                        ::r/sortable true}]
+                    ::dom/props {:style {:grid-template-columns "repeat(5, 1fr)"}}}
       nil ; e
       nil ; a
       (e/fn* [] ;; V
@@ -213,7 +214,7 @@
 (e/defn AttributeDetail [a]
   (e/client (dom/h1 (dom/text "Attribute detail: " a)))
   (e/server
-    (RouterInput. {::dom/placeholder "Pour l’amour…"} :v)
+    (RouterInput. {::dom/placeholder "Rock …" ::dom/type :search} :v)
     (binding [r/renderers (assoc r/renderers
                             :e (e/partial 5 RenderLink ::entity)
                             :a RenderSmartRef
@@ -226,8 +227,7 @@
                       ::r/columns       [{::r/attribute :e}
                                          {::r/attribute :a}
                                          {::r/attribute :v}
-                                         {::r/attribute :tx}]
-                      ::dom/props       {:style {:grid-template-columns "1fr 1fr 1fr 1fr"}}}
+                                         {::r/attribute :tx}]}
         nil ; e
         nil ; a
         (e/fn* [] ; V
@@ -236,11 +236,11 @@
 (e/defn DbStats []
   (e/client (dom/h1 (dom/text "Db stats")))
   (e/server
-    (RouterInput. {::dom/placeholder ":release/name"} ::r/key)
+    (RouterInput. {::dom/placeholder ":release/name", ::dom/type :search} ::r/key)
     (binding [r/RenderKey (e/partial 5 RenderLink ::attribute)]
       (r/RenderForm. {::r/row-height-px 25
                       ::r/max-height-px "100%"
-                      ::dom/props {:style {:grid-template-columns "20rem auto"}}}
+                      ::dom/props {:style {#_#_:grid-template-columns "20rem auto"}}}
         nil ; e
         nil ; a
         (e/fn* [] ; V
@@ -257,7 +257,7 @@
                       ::r/columns       [{::r/attribute :db/id}
                                          {::r/attribute :db/txInstant
                                           ::r/sortable  true}]
-                      ::dom/props       {:style {:grid-template-columns "20rem auto"}}}
+                      ::dom/props       {:style {#_#_:grid-template-columns "20rem auto"}}}
         nil ; e
         nil ; a
         (e/fn* [] ; V

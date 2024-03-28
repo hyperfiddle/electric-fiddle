@@ -76,7 +76,7 @@
 (defn grid-template-column [sizing-mode column]
   (let [px (str (::width column) "px")]
     (case sizing-mode
-      ::auto   (str "minmax(min-content, " px ")")
+      ::auto   "auto" #_(str "minmax(min-content, " px ")")
       ::manual px)))
 
 (defn grid-template-columns [sizing-mode columns]
@@ -93,39 +93,46 @@
 
 (e/defn* GridStyle [id columns]
   (e/client
-    (css/style
-      (css/rule ".datagrid_datagrid__row"
-        {:display               :grid
-         :grid-template-columns :subgrid
-         :grid-column           "1 / -1"
-         :transform             "scale(1)"})
-      (css/rule ".datagrid_datagrid__column"
-        {:position      :sticky
-         :top           0
-         :display       :block
-         :overflow      :hidden
-         :text-overflow :ellipsis
-         :white-space   :nowrap})
-      (css/rule (str "#" id " th") {:z-index 2})
-      (e/for [{::keys [position] :as column} (filter ::frozen? columns)]
-        (css/rule (str "#" id " th:nth-child(" position ")") {:postition :sticky
-                                                              :left      (str (column-offset columns column) "px")
-                                                              :z-index   3})
-        (css/rule (str "#" id " td:nth-child(" position ")") {:postition :sticky
-                                                              :left      (str (column-offset columns column) "px")
-                                                              :z-index   2})))))
+   (css/style ;; TODO move to scoped style?
+    (css/rule ".datagrid_datagrid__row"
+              {:display               :grid
+               :grid-template-columns :subgrid
+               :grid-column           "1 / -1"
+               :transform             "scale(1)"})
+    (css/rule ".datagrid_datagrid__column"
+              {:position      :sticky
+               :top           0
+               :display       :block
+               :box-sizing    :border-box
+               :padding-left  "1px"
+               :padding-right "1px"
+               :overflow      :hidden
+               :text-overflow :ellipsis
+               :white-space   :nowrap})
+    (css/rule (str "#" id " th") {:z-index 2})
+    (css/rule (str "#" id " td")
+      {:padding    0
+       :margin     0
+       :box-sizing :border-box
+       :height     "var(--row-height)"})
+    (e/for [{::keys [position] :as column} (filter ::frozen? columns)]
+      (css/rule (str "#" id " th:nth-child(" position ")") {:postition :sticky
+                                                            :left      (str (column-offset columns column) "px")
+                                                            :z-index   3})
+      (css/rule (str "#" id " td:nth-child(" position ")") {:postition :sticky
+                                                            :left      (str (column-offset columns column) "px")
+                                                            :z-index   2})))))
 
 (e/def columns-key-index)
 
-(e/defn CellPosition [column-key] (get-in columns-key-index [column-key ::position] 0))
-
+(defn cell-position [columns-key-index column-key] (get-in columns-key-index [column-key ::position] 0))
 
 (e/def toggle-column-sort-spec! (constantly nil))
 (e/def column-sort-spec "A map of column key to either ::asc, ::desc, or nil" {})
 
 (defn toggle-sort [!atom column-key]
   (swap! !atom (fn [atom] (-> (select-keys atom [column-key])
-                            (update column-key #(case % ::asc ::desc (::desc nil) ::asc))))))
+                              (update column-key #(case % ::asc ::desc (::desc nil) ::asc))))))
 
 (e/defn SortController [Body]
   (let [!column-sort-spec (atom {})]
@@ -133,54 +140,62 @@
               column-sort-spec (e/watch !column-sort-spec)]
       (Body.))))
 
-(e/defn* DataGrid [{::keys [row-height]} Body]
-  (e/client
-    (let [!loading? (atom false)]
-      (binding [loading? (e/watch !loading?)
-                id (str (gensym "datagrid_"))
-                !columns-index (atom {})
-                !sizing-mode (atom ::auto)
-                datagrid.datagrid/row-height row-height]
-        (binding [columns-index (e/watch !columns-index)
-                  sizing-mode (e/watch !sizing-mode)]
-          (binding [columns (ordered-columns (vals columns-index))
-                    columns-key-index (into {} (map (juxt ::key identity) (filter ::key (vals columns-index))))]
-            (dom/table
-              (vs/RegisterScrollWatch. #(do (reset! !sizing-mode ::manual)
-                                            (blur-focused-element dom/node)))
-              (dom/on! js/window "beforeprint" #(reset! !sizing-mode ::manual))
-              (dom/props {:id id
-                          :tabIndex 0 ; ensure this is focusable for use in pickers
-                          :class "datagrid",
-                          :style {:display               :grid
-                                  :align-content         :flex-start
-                                  :font-variant-numeric  "tabular-nums"
-                                  :grid-template-columns (grid-template-columns sizing-mode columns)
-                                  :grid-auto-rows        (str row-height "px")}})
-              (GridStyle. id columns)
-              ;; @media print{
-              ;;  .hyperfiddle.subgrid-row
-              ;;  , .hyperfiddle .datagrid tr {
-              ;;    break-inside: avoid;
-              ;;  }
-              ;; }
+(defn get-template-columns [props]
+  (or (get-in props [::dom/style :grid-template-columns])
+    (get-in props [::dom/style "grid-template-columns"])
+    (get-in props [:style :grid-template-columns])
+    (get-in props [:style "grid-template-columns"])))
 
-              ;; TODO hook on virtualscroll scroll state to freeze column sizes
-              ;; (dom/on! dom/node "wheel" #(reset! !sizing-mode ::manual))
-              (try (Body.)
-                   (catch Pending p
-                     (reset! !loading? true)
-                     (e/on-unmount #(reset! !loading? false))
-                     (throw p))))))))))
+(e/defn* DataGrid [{::keys [row-height] ::dom/keys [props]} Body]
+  (let [template-columns (get-template-columns props)]
+    (e/client
+      (let [!loading? (atom false)]
+        (binding [loading? (e/watch !loading?)
+                  id (str (gensym "datagrid_"))
+                  !columns-index (atom {})
+                  !sizing-mode (atom ::auto)
+                  datagrid.datagrid/row-height row-height]
+          (binding [columns-index (e/watch !columns-index)
+                    sizing-mode (e/watch !sizing-mode)]
+            (binding [columns (ordered-columns (vals columns-index))
+                      columns-key-index (into {} (map (juxt ::key identity) (filter ::key (vals columns-index))))]
+              (dom/table
+                (vs/RegisterScrollWatch. #(do (reset! !sizing-mode ::manual)
+                                              (blur-focused-element dom/node)))
+                (dom/on! js/window "beforeprint" #(reset! !sizing-mode ::manual))
+                (dom/props {:id id
+                            :tabIndex 0 ; ensure this is focusable for use in pickers
+                            :class "datagrid",
+                            :style {:display               :grid
+                                    :align-content         :flex-start
+                                    :font-variant-numeric  "tabular-nums"
+                                    :grid-template-columns (or template-columns (grid-template-columns sizing-mode columns))
+                                    :--row-height          (str row-height "px")
+                                    :grid-auto-rows        (str row-height "px")}})
+                (GridStyle. id columns)
+                ;; @media print{
+                ;;  .hyperfiddle.subgrid-row
+                ;;  , .hyperfiddle .datagrid tr {
+                ;;    break-inside: avoid;
+                ;;  }
+                ;; }
+
+                ;; TODO hook on virtualscroll scroll state to freeze column sizes
+                ;; (dom/on! dom/node "wheel" #(reset! !sizing-mode ::manual))
+                (try (Body.)
+                     (catch Pending p
+                       (reset! !loading? true)
+                       (e/on-unmount #(reset! !loading? false))
+                       (throw p)))))))))))
 
 (defmacro datagrid [props & body]
   `(new DataGrid ~props (e/fn* [] ~@body)))
 
 (e/defn* Header [Body]
   (e/client
-    (dom/thead
-      (dom/props {:style {:display :contents}})
-      (Body.))))
+   (dom/thead
+    (dom/props {:style {:display :contents}})
+    (Body.))))
 
 (defmacro header [& body]
   `(new Header (e/fn* [] ~@body)))
@@ -192,11 +207,12 @@
                     (! nil)
                     (let [observer (new js/ResizeObserver (fn [entries]
                                                             (doseq [e entries]
-                                                              (! (Math/floor (if-let [cbs (.-borderBoxSize e)]
-                                                                               (if-let [dimentions (aget cbs 0)]
-                                                                                 (.-inlineSize dimentions)
-                                                                                 (.-inlineSize cbs))
-                                                                               (.. e -contentRect -width)))))))]
+                                                              (! (.toFixed (if-let [cbs (.-borderBoxSize e)]
+                                                                             (if-let [dimentions (aget cbs 0)]
+                                                                               (.-inlineSize dimentions)
+                                                                               (.-inlineSize cbs))
+                                                                             (.. e -contentRect -width))
+                                                                   2)))))]
                       (.observe observer node)
                       #(.unobserve observer node)))))))
 
@@ -216,12 +232,12 @@
         (let [b (Body.)]
           (when sortable ;; TODO move this bit of UI out of Column, make it part of Body, not a prop
             (dom/button (dom/props {:style {:position :absolute
-                                            :right 0}})
-                        (dom/text (case (get column-sort-spec key)
-                                    nil "-"
-                                    ::asc "^"
-                                    ::desc "v"))
-                        (dom/on! "click" #(toggle-column-sort-spec! key))))
+                                            :right "1px"}})
+              (dom/text (case (get column-sort-spec key)
+                          nil "-"
+                          ::asc "^"
+                          ::desc "v"))
+              (dom/on! "click" #(toggle-column-sort-spec! key))))
           b)))))
 
 (defmacro column [props & body]
@@ -236,22 +252,18 @@
 
 (e/defn* Row [Body]
   (e/client
-    (dom/tr
-      (if (subgrid?)
-        (dom/props {:class "datagrid_datagrid__row"})
-        (dom/props {:style {:display :contents}}))
-      (Body.))))
+   (dom/tr
+     (dom/props (subgrid? {:class "datagrid_datagrid__row"} {:style {:display :contents}}))
+     (Body.))))
 
 (defmacro row [& body]
   `(new Row (e/fn* [] ~@body)))
 
 (e/defn* Cell [{::keys [column]} Body]
   (e/client
-    (dom/td
-      (dom/props {:style {:padding 0, :margin 0, :grid-column (CellPosition. column)}})
-      (when row-height ; TODO delegate to CSS engine by setting a CSS variable instead
-        (dom/props {:style {:height (str row-height "px")}}))
-      (Body.))))
+   (dom/td
+     (dom/props {:style {:grid-column (cell-position columns-key-index column)}})
+     (Body.))))
 
 (defmacro cell [props & body]
   `(new Cell ~props (e/fn* [] ~@body)))
