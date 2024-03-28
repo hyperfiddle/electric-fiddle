@@ -3,7 +3,7 @@
   (:require #?(:clj [clj-jgit.porcelain :refer [load-repo]])
             [clojure.datafy :refer [datafy]]
             [datagrid.datafy-renderer :as r]
-            [datagrid.fiddles :refer [RouterInput]]
+            [datagrid.file-explorer :refer [RouterInput]]
             [datagrid.schema :as schema]
             #?(:clj [dustingetz.datafy-git :as git])
             [hyperfiddle.electric :as e]
