@@ -20,3 +20,5 @@ node_modules
 data
 # ---
 /src/datomic_browser/state/
+/src/datagrid/state/
+/app.jar

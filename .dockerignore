@@ -21,3 +21,5 @@ yarn.lock
 **/target
 **/tsconfig.tsbuildinfo
 # **/src/**/*.js -- we commit precompiled js files (Failure.js, Pending.js), as well as .class
+**/datagrid/state
+**/datomic_browser/state

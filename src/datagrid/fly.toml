@@ -1,20 +1,26 @@
-app = "datagrid"
-primary_region = "ewr"
+# fly.toml app configuration file generated for electric-datagrid on 2024-03-29T17:07:41+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-[http_service]
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = true
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ["app"]
+app = 'electric-datagrid'
+primary_region = 'cdg'
+
+[build]
 
 [build.args]
   HYPERFIDDLE_DOMAIN="datagrid"
 
+[env]
+  PORT = '8080'
 
-# NO_COLOR=1 fly deploy --config src/datagrid/fly.toml --remote-only --build-only
+[http_service]
+  internal_port = 8080
+  force_https = true
+  processes = ['app']
 
-# fly scale vm shared-cpu-8x --config src/datagrid/fly.toml
-# fly scale show  --config src/datagrid/fly.toml
-# fly status --config src/datagrid/fly.toml
+[[vm]]
+  size = 'performance-8x'
+
+# [processes]
+#   app = "./prod.sh $VERSION"
