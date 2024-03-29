@@ -4,7 +4,8 @@
    [datagrid.file-explorer]
    [datagrid.host-viewer]
    [hyperfiddle.electric :as e]
-   [hyperfiddle.electric-dom2 :as dom]))
+   [hyperfiddle.electric-dom2 :as dom]
+   [hyperfiddle.router :as r]))
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
@@ -18,4 +19,12 @@
     (binding [e/http-request ring-request] ; make ring request available through the app
       (e/client
         (binding [dom/node js/document.body] ; where to mount dom elements
-          (datagrid.file-explorer/FileExplorer.))))))
+          (r/router (r/HTML5-History.)
+            (let [[app & args :as route] (or (ffirst r/route) `(datagrid.file-explorer/FileExplorer))]
+              (r/focus [route]
+                (e/server
+                  (case app
+                    `datagrid.file-explorer/FileExplorer     (datagrid.file-explorer/FileExplorer. (first args))
+                    `datagrid.host-viewer/HostFile-Editor    (datagrid.host-viewer/HostFile-Editor.)
+                    `datagrid.datomic-browser/DatomicBrowser (datagrid.datomic-browser/DatomicBrowser.)
+                    (e/client (dom/text "Not found" route))))))))))))

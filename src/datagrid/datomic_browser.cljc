@@ -86,7 +86,7 @@
 
 (e/defn QueryEntityDetail [e]
   (e/server
-    (assert e)
+    ;; (assert e) ; macroexpand difference breaks advanced comp
     (new (e/task->cp (d/pull db {:eid e :selector ['*] :compare compare})))))
 
 #?(:clj
@@ -278,7 +278,7 @@
     (router/focus [`EntityDetail]
       (e/server
         (binding [r/Sequence (e/fn* [entity] (tree-seq-entity (new (dx/schema> db)) entity))
-                  r/RenderKey (e/partial 5 MaybeRenderLink ['.. ::attribute])] ;; FIXME wrong layer due to router/focus
+                  r/RenderKey (e/partial 5 MaybeRenderLink ['.. ::attribute])]
           (r/RenderForm. {::r/row-height-px 25
                           ::r/max-height-px "100%"}
             nil ; e
