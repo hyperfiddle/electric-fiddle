@@ -280,9 +280,10 @@
   (e/client (not-empty (ffirst (get router/route attribute)))))
 
 (e/defn RouterStorage [attribute Body]
-  (when-let [value' (Body. (InputValue. attribute))]
-    (router/ReplaceState!. ['. {attribute value'}])
-    value'))
+  (when (= router/path (e/snapshot router/path)) ; only read and write to current route
+    (when-let [value' (Body. (InputValue. attribute))]
+      (router/ReplaceState!. ['. {attribute value'}])
+      value')))
 
 (e/defn RenderInput [props attribute value]
   (e/client
