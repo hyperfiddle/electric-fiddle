@@ -26,13 +26,13 @@
 
 (e/defn DirectoryViewer [file]
   (e/client
-    (dom/props {:style {:height         "100dvh"
-                        :padding-bottom 0
-                        :box-sizing     :border-box
-                        :margin         0
-                        :display        :flex
-                        :flex-direction :column}
-                :class [(css/scoped-style
+    (dom/props {:class [(css/scoped-style
+                          (css/rule {:height         "100dvh"
+                                     :padding-bottom 0
+                                     :box-sizing     :border-box
+                                     :margin         0
+                                     :display        :flex
+                                     :flex-direction :column})
                           (css/rule ".virtual-scroll" {:flex 1}))]})
     (try
       (RouterInput. {::dom/type :search} ::dfs/name)
