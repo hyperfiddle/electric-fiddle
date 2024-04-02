@@ -34,4 +34,4 @@ RUN clojure -X:build:prod:$HYPERFIDDLE_DOMAIN uberjar \
     :build/jar-name app.jar
 
 # # CMD java -cp user.jar clojure.main -m prod
-CMD prod.sh
+CMD src/datagrid/prod.sh
