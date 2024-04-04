@@ -98,7 +98,8 @@
               {:display               :grid
                :grid-template-columns :subgrid
                :grid-column           "1 / -1"
-               :transform             "scale(1)"})
+               :transform             "scale(1)"
+               :z-index               1})
     (css/rule ".datagrid_datagrid__column"
               {:position      :sticky
                :top           0
@@ -111,8 +112,8 @@
                :white-space   :nowrap})
     (css/rule (str "#" id " th") {:z-index 2})
     (css/rule (str "#" id " td")
-      {:padding    0
-       :margin     0
+      {#_#_:padding    0
+       #_#_:margin     0
        :box-sizing :border-box
        :height     "var(--row-height)"})
     (e/for [{::keys [position] :as column} (filter ::frozen? columns)]
@@ -254,6 +255,7 @@
   (e/client
    (dom/tr
      (dom/props (subgrid? {:class "datagrid_datagrid__row"} {:style {:display :contents}}))
+     (dom/props {:style {:z-index (- (max vs/index (e/server vs/index)))}}) ; FIXME binding unification
      (Body.))))
 
 (defmacro row [& body]
