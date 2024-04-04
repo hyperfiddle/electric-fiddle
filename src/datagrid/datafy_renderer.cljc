@@ -307,3 +307,16 @@
    (if-let [input-value (InputValue. attribute)]
      (filter #(sort-fn input-value (keyfn %)) coll)
      coll)))
+
+(defn column-sort
+  ([column-key direction collection] (column-sort column-key compare direction collection))
+  ([column-key comparator direction collection]
+   (if column-key
+     (sort-by column-key
+       (case direction ::asc comparator (::desc nil) #(comparator %2 %1))
+       collection)
+     collection)))
+
+(e/defn ColumnSort [collection]
+  (let [[column direction] (e/client (first column-sort-spec))]
+    (column-sort column direction collection)))
