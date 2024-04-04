@@ -282,7 +282,7 @@
 (e/defn RouterStorage [attribute Body]
   (when (= router/path (e/snapshot router/path)) ; only read and write to current route
     (when-let [value' (Body. (InputValue. attribute))]
-      (router/ReplaceState!. ['. {attribute value'}])
+      (router/ReplaceState!. ['. (assoc router/route attribute value')])
       value')))
 
 (e/defn RenderInput [props attribute value]
