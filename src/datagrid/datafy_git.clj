@@ -18,7 +18,8 @@
                              (map (fn [m]
                                     (let [commit (:id m) ; dumb attr name
                                           ci (git2/commit-info repo commit)]
-                                      (assoc m
+                                      (assoc ci ::commit-id-short (apply str (take 7 (:id ci))))
+                                      #_(assoc m
                                         ::commit commit ; alias to better name
                                         ::commit-info ci
                                         ::commit-id (str (:id ci))
@@ -43,6 +44,7 @@
   (git/git-status r)
   (type r)
   (datafy r)
+  (nav (datafy r) :log ())
   (count (git/git-log r))
   (type (git/git-log r))
   (def x (first (git/git-log r)))
@@ -53,5 +55,14 @@
   (type c)
   (datafy c)
   (def ci (git2/commit-info r c))
+  (prn ci)
   (type ci)
+  (keys ci)
   (.getShortMessage c))
+
+(defn get-commit [repo commit-id]
+  (clj-jgit.querying/commit-info
+    repo
+    (clj-jgit.querying/find-rev-commit repo
+      (clj-jgit.internal/new-rev-walk repo)
+      commit-id)))
