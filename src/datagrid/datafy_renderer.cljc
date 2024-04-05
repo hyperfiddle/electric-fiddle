@@ -352,6 +352,8 @@
        collection)
      collection)))
 
-(e/defn ColumnSort [collection]
-  (let [[column direction] (e/client (first column-sort-spec))]
-    (column-sort column direction collection)))
+(e/defn ColumnSort
+  ([collection] (ColumnSort. identity collection))
+  ([column-keyfn collection]
+   (let [[column direction] (e/client (first column-sort-spec))]
+     (column-sort (column-keyfn column) direction collection))))

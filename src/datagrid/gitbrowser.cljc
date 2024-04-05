@@ -68,7 +68,12 @@
            ::dom/props       {:style {:grid-template-columns "min-content min-content auto min-content"}}}
           nil nil
           (e/fn []
-            (r/ColumnSort. (r/InputFilter. :msg :message (r/Nav. (datafy repo) :log))))))))) ; :msg vs :message is a clj-jgit inconsistency
+            (->> (r/Nav. (datafy repo) :log)
+              (r/InputFilter. :msg :message) ; :msg vs :message is a clj-jgit inconsistency
+              (r/ColumnSort. (fn [column]
+                               (case column ; Account for clj-jgit naming inconsistencies
+                                 :time #(get-in % [:author :date]) ; clj-git stores time in [:author :date] for the log, but in :time for the commit itself
+                                 column))))))))))
 
 (e/defn GitBrowser [& [git-repo-path git-commit-id]]
   (e/server
