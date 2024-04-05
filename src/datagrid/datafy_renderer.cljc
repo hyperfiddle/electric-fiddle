@@ -16,8 +16,6 @@
   #?(:cljs (:require-macros datagrid.datafy-renderer)))
 
 
-(e/def loading? false)
-
 (e/defn* CellInput [value OnCommit]
   (e/client
     (stage/staged OnCommit
@@ -175,6 +173,9 @@
 
 (defn get-ns [named] (when (ident? named) (namespace named)))
 
+(e/def !loading?)
+(e/def loading? false)
+
 (e/defn RenderGrid [{::keys [row-height-px max-height-px columns]
                      ::dom/keys [props]}
                     e a V]
@@ -182,26 +183,60 @@
     (dg/SortController.
       (e/fn* []
         (binding [column-sort-spec (update-vals dg/column-sort-spec (partial requalify-kw {(get-ns ::dg/_) (get-ns ::_)}))]
-          (e/server
-            (grid {::row-height-px row-height-px
-                   ::max-height-px max-height-px
-                   ::rows          (V.)
-                   ::RenderRow     (e/fn* [row]
-                                     (PushEAV. e a (e/fn* [] row)
-                                       (e/fn* [e a V] (RenderRow. {} e a V))))
-                   ::dom/props props}
-              (e/client
-                (dom/props props)
-                (header {}
-                  (e/server
-                    (e/for-by ::key [{::keys [attribute title sortable Body] ::dom/keys [props]} columns]
-                      (e/client
-                        (column {::attribute attribute
-                                 ::title     title
-                                 ::sortable  sortable}
-                          (when props (dom/props props))
-                          (e/server
-                            (when Body (Body.))))))))))))))))
+          (binding [!loading? (atom false)]
+            (binding [loading? (e/watch !loading?)]
+              (e/server
+                (grid {::row-height-px row-height-px
+                       ::max-height-px max-height-px
+                       ::rows          (try (V.)
+                                            (catch hyperfiddle.electric.Pending _
+                                              (e/client
+                                                (reset! !loading? true)
+                                                (e/on-unmount #(reset! !loading? false)))
+                                              ()))
+                       ::RenderRow     (e/fn* [row]
+                                         (PushEAV. e a (e/fn* [] row)
+                                           (e/fn* [e a V] (RenderRow. {} e a V))))
+                       ::dom/props props}
+                  (e/client
+                    (dom/props props)
+                    (when loading?
+                      (dom/props {:class "dg-shimmer", :style {:height "100%"}}))
+                    (dom/element :style
+                      (dom/text "
+    .dg-shimmer{
+             background-image: linear-gradient(
+                 to right,
+                 transparent 0%,
+                 rgba(255, 255, 255, 0.5) 50%,
+                 transparent 100%
+             )
+             ,
+             repeating-linear-gradient(whitesmoke, whitesmoke 25px, transparent 25px, transparent 27px) ;
+             background-size: 50% 100%, 100% 100%;
+             background-repeat: no-repeat;
+             animation: dgShimmerAnimation 1s linear infinite;
+         }
+
+         @keyframes dgShimmerAnimation {
+             0% {
+                 background-position: -150% 0;
+             }
+             100% {
+                 background-position: 250% 0;
+             }
+         }
+"))
+                    (header {}
+                      (e/server
+                        (e/for-by ::key [{::keys [attribute title sortable Body] ::dom/keys [props]} columns]
+                          (e/client
+                            (column {::attribute attribute
+                                     ::title     title
+                                     ::sortable  sortable}
+                              (when props (dom/props props))
+                              (e/server
+                                (when Body (Body.))))))))))))))))))
 
 (e/def FormStyle
   (e/client
