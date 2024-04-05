@@ -17,3 +17,5 @@
 
 ; binding fiddles in entrypoint fixes comptime stackoverflow
 (e/def pages #_(install-fiddles)) ; client
+
+(e/defn Entrypoint "Meant to be bound to an app's entrypoint to allow for recursive navigation." [f & args])

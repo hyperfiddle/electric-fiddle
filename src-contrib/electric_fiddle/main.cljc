@@ -9,6 +9,8 @@
 
 (e/defn NotFoundPage [& args] (e/client (dom/h1 (dom/text "Page not found: " (pr-str r/route)))))
 
+(e/defn Entrypoint [f & args] (e/apply (get hf/pages f NotFoundPage) args))
+
 (e/defn Main [ring-req]
   (e/server
     (binding [e/http-request ring-req]
@@ -22,5 +24,6 @@
               (case f
                 `Index (Index.)
                 (r/focus [route]
-                  (e/apply (get hf/pages f NotFoundPage) args))))))))))
+                  (binding [hf/Entrypoint Entrypoint] ; allow for recursive navigation
+                    (e/apply hf/Entrypoint f args)))))))))))
 

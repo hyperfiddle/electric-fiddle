@@ -4,6 +4,7 @@
    [datagrid.file-explorer]
    [datagrid.gitbrowser]
    [datagrid.host-viewer]
+   [hyperfiddle :as hf]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
    [hyperfiddle.router :as r]))
@@ -16,6 +17,15 @@
                 `datagrid.datomic-browser/DatomicBrowser datagrid.datomic-browser/DatomicBrowser
                 `datagrid.gitbrowser/GitBrowser          datagrid.gitbrowser/GitBrowser})
 
+(e/defn Entrypoint [f & args]
+  (e/server
+    (case f
+      `datagrid.file-explorer/FileExplorer     (datagrid.file-explorer/FileExplorer. (first args))
+      `datagrid.host-viewer/HostFile-Editor    (datagrid.host-viewer/HostFile-Editor.)
+      `datagrid.datomic-browser/DatomicBrowser (datagrid.datomic-browser/DatomicBrowser.)
+      `datagrid.gitbrowser/GitBrowser          (e/apply datagrid.gitbrowser/GitBrowser args)
+      (e/client (dom/text "Not found" (cons f args))))))
+
 ;; Prod entrypoint, called by `prod.clj`
 (e/defn FiddleMain [ring-request]
   (e/server
@@ -23,11 +33,7 @@
       (e/client
         (binding [dom/node js/document.body] ; where to mount dom elements
           (r/router (r/HTML5-History.)
-            (let [[app & args :as route] (or (ffirst r/route) `(datagrid.file-explorer/FileExplorer))]
+            (let [route (or (ffirst r/route) `(datagrid.file-explorer/FileExplorer))]
               (r/focus [route]
-                (e/server
-                  (case app
-                    `datagrid.file-explorer/FileExplorer     (datagrid.file-explorer/FileExplorer. (first args))
-                    `datagrid.host-viewer/HostFile-Editor    (datagrid.host-viewer/HostFile-Editor.)
-                    `datagrid.datomic-browser/DatomicBrowser (datagrid.datomic-browser/DatomicBrowser.)
-                    (e/client (dom/text "Not found" route))))))))))))
+                (binding [hf/Entrypoint Entrypoint] ; allow recursive navigation
+                  (e/apply hf/Entrypoint route))))))))))

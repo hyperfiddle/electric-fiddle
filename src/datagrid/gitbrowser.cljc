@@ -1,5 +1,6 @@
 (ns datagrid.gitbrowser
   (:require #?(:clj [clj-jgit.porcelain :refer [load-repo]])
+            [hyperfiddle :as hf]
             [clojure.datafy :refer [datafy]]
             [datagrid.datafy-git #?(:clj :as, :cljs :as-alias) git]
             [datagrid.datafy-renderer :as r]
@@ -25,9 +26,7 @@
   "A Popover rendering a fiddle, allows recursive, lazy fiddle nesting."
   [path AnchorBody]
   (popover/Popover. {::popover/path path, ::popover/AnchorBody AnchorBody}
-    (e/fn []
-      (let [[f & args :as route] (first (router/resolve-path path))]
-        (e/apply (get hyperfiddle/pages f electric-fiddle.main/NotFoundPage) args)))))
+    (e/fn [] (e/apply hyperfiddle/Entrypoint (first (router/resolve-path path))))))
 
 (e/defn RenderCommitId [props e a V]
   (e/server
