@@ -4,40 +4,26 @@
             [clojure.core.protocols :as ccp :refer [nav]]
             [clojure.datafy :refer [datafy]]))
 
-(def ... `...)
-
 (extend-protocol ccp/Datafiable
   org.eclipse.jgit.api.Git
   (datafy [^org.eclipse.jgit.api.Git repo]
     (-> {:status (git/git-status repo)
-         :log ...}
+         :log `...}
       (with-meta
         {`ccp/nav (fn [x k v]
                     (case k
-                      :log (->> (git/git-log repo)
-                             (map (fn [m]
-                                    (let [commit (:id m) ; dumb attr name
-                                          ci (git2/commit-info repo commit)]
-                                      (assoc ci ::commit-id-short (apply str (take 7 (:id ci))))
-                                      #_(assoc m
-                                        ::commit commit ; alias to better name
-                                        ::commit-info ci
-                                        ::commit-id (str (:id ci))
-                                        ::commit-id-short (apply str (take 7 (:id ci))))))))
-                      v))})))
-
-  org.eclipse.jgit.revwalk.RevCommit
-  (datafy [^org.eclipse.jgit.revwalk.RevCommit o]
-    ; (qualify (namespace ::x) :raw)
-    (-> (git2/commit-info (:repo o) o)
-      (dissoc :raw :repo)
-      (assoc :raw ... :repo ...)
-      (with-meta
-        {`ccp/nav (fn [x k v]
-                    (case k
-                      :raw x
-                      :repo (:repo x)
+                      :log (map (fn [commit] (with-meta commit {`ccp/datafy (fn datafy [commit] (git2/commit-info repo (:id commit)))}))
+                             (git/git-log repo))
                       v))}))))
+
+(defn short-commit-id [id] (apply str (take 7 id)))
+
+(defn get-commit [repo commit-id]
+  (clj-jgit.querying/commit-info
+    repo
+    (clj-jgit.querying/find-rev-commit repo
+      (clj-jgit.internal/new-rev-walk repo)
+      commit-id)))
 
 (comment
   (def r (git/load-repo "./"))
@@ -59,10 +45,3 @@
   (type ci)
   (keys ci)
   (.getShortMessage c))
-
-(defn get-commit [repo commit-id]
-  (clj-jgit.querying/commit-info
-    repo
-    (clj-jgit.querying/find-rev-commit repo
-      (clj-jgit.internal/new-rev-walk repo)
-      commit-id)))

@@ -31,7 +31,7 @@
 
 (e/defn RenderCommitId [props e a V]
   (e/server
-    (let [commit-id (V.)]
+    (let [commit-id (git/short-commit-id (V.))]
       (e/client
         (FiddlePopover. ['.. `(GitBrowser ~repo-path ~commit-id)]
           (e/fn []
@@ -53,22 +53,22 @@
     (RouterInput. {::dom/type :search} :message)
     (e/server
       (binding [r/Render          r/SchemaRenderer
-                r/schema-registry (schema/registry {::git/commit-id-short :string
-                                                    :author               :string
-                                                    :message              :string
-                                                    :time                 inst?})
-                r/renderers       (assoc r/renderers ::git/commit-id-short RenderCommitId)]
+                r/schema-registry (schema/registry {:id      :string
+                                                    :author  :string
+                                                    :message :string
+                                                    :time    inst?})
+                r/renderers       (assoc r/renderers :id RenderCommitId)]
         (r/RenderGrid.
           {::r/row-height-px 25
            ::r/max-height-px "100%"
-           ::r/columns       [{::r/attribute :datagrid.datafy-git/commit-id-short}
+           ::r/columns       [{::r/attribute :id}
                               {::r/attribute :author}
                               {::r/attribute :message}
-                              {::r/attribute :time, ::r/sortable  true}]
+                              {::r/attribute :time, ::r/sortable true}]
            ::dom/props       {:style {:grid-template-columns "min-content min-content auto min-content"}}}
           nil nil
           (e/fn []
-            (r/ColumnSort. (r/InputFilter. :message (r/Nav. (datafy repo) :log)))))))))
+            (r/ColumnSort. (r/InputFilter. :msg :message (r/Nav. (datafy repo) :log)))))))))
 
 (e/defn GitBrowser [& [git-repo-path git-commit-id]]
   (e/server
