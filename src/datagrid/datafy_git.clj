@@ -12,18 +12,26 @@
       (with-meta
         {`ccp/nav (fn [x k v]
                     (case k
-                      :log (map (fn [commit] (with-meta commit {`ccp/datafy (fn datafy [commit] (git2/commit-info repo (:id commit)))}))
-                             (git/git-log repo))
+                      :log
+                      (let [rev-walk (clj-jgit.internal/new-rev-walk repo)
+                            index    (git2/build-commit-map repo rev-walk)] ; pre-compute for fast ref resolve
+                        (map (fn [commit] (with-meta commit {`ccp/datafy (fn datafy [commit] (git2/commit-info repo rev-walk index (:id commit)))}))
+                          (git/git-log repo)))
                       v))}))))
 
 (defn short-commit-id [id] (apply str (take 7 id)))
 
-(defn get-commit [repo commit-id]
-  (clj-jgit.querying/commit-info
-    repo
-    (clj-jgit.querying/find-rev-commit repo
-      (clj-jgit.internal/new-rev-walk repo)
-      commit-id)))
+(defn get-commit
+  ([repo commit-id] (get-commit repo (clj-jgit.internal/new-rev-walk repo) commit-id))
+  ([repo rev-walk commit-id] (get-commit repo rev-walk (git2/build-commit-map repo rev-walk) commit-id))
+  ([repo rev-walk commit-map commit-id]
+   (clj-jgit.querying/commit-info
+     repo
+     rev-walk
+     commit-map
+     (clj-jgit.querying/find-rev-commit repo
+       rev-walk
+       commit-id))))
 
 (comment
   (def r (git/load-repo "./"))
