@@ -1,12 +1,12 @@
 (ns dustingetz.fiddles
   (:require [hyperfiddle.electric :as e]
             [hyperfiddle :as hf]
-            [dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
+            ;; [dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
             [dustingetz.hfql-intro :refer [With-HFQL-Bindings
                                            Teeshirt-orders-1
                                            Teeshirt-orders-2
                                            Teeshirt-orders-3
-                                           Teeshirt-orders-4
+                                           ;; Teeshirt-orders-4
                                            Teeshirt-orders-5]]
             dustingetz.scratch
             [dustingetz.y-fib :refer [Y-fib]]
@@ -24,9 +24,9 @@
    `Teeshirt-orders-1 (With-HFQL-Bindings. Teeshirt-orders-1)
    `Teeshirt-orders-2 (With-HFQL-Bindings. Teeshirt-orders-2)
    `Teeshirt-orders-3 (With-HFQL-Bindings. Teeshirt-orders-3)
-   `Teeshirt-orders-4 (With-HFQL-Bindings. Teeshirt-orders-4)
+   ;; `Teeshirt-orders-4 (With-HFQL-Bindings. Teeshirt-orders-4)
    `Teeshirt-orders-5 (With-HFQL-Bindings. Teeshirt-orders-5)
-   `DirectoryExplorer-HFQL (With-HFQL-Bindings. DirectoryExplorer-HFQL)
+   ;; `DirectoryExplorer-HFQL (With-HFQL-Bindings. DirectoryExplorer-HFQL)
    `dustingetz.scratch/Scratch dustingetz.scratch/Scratch})
 
 #?(:clj
