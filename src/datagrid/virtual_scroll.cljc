@@ -49,8 +49,8 @@
   "
   [row-height padding-top rows-count scrollTop clientHeight]
   (let [scrollable-height  (+ (* rows-count row-height) padding-top)
-        first-row-index    (max 0 (Math/floor (/ scrollTop row-height)))
-        mounted-rows-count (max 0 (min (- rows-count first-row-index) (Math/ceil (/ (- clientHeight padding-top) row-height))))]
+        first-row-index    (max 0 (Math/ceil (/ scrollTop row-height)))
+        mounted-rows-count (max 0 (min (- rows-count first-row-index) (Math/floor (/ (- clientHeight padding-top) row-height))))]
     [scrollable-height first-row-index mounted-rows-count]))
 
 (e/def rows-count 0)
