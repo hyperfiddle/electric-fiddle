@@ -110,8 +110,8 @@
                :overflow      :hidden
                :text-overflow :ellipsis
                :white-space   :nowrap})
-    (css/rule (str "#" id " th") {:z-index 2})
-    (css/rule (str "#" id " td")
+    (css/rule (str "#" id " thead > tr > th") {:z-index 2})
+    (css/rule (str "#" id " > tr > td")
       {#_#_:padding    0
        #_#_:margin     0
        :box-sizing :border-box

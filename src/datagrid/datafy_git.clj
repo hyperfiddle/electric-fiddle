@@ -2,7 +2,10 @@
   (:require [clj-jgit.porcelain :as git]
             [clj-jgit.querying :as git2]
             [clojure.core.protocols :as ccp :refer [nav]]
-            [clojure.datafy :refer [datafy]]))
+            [clojure.datafy :refer [datafy]])
+  (:import (org.eclipse.jgit.api Git)
+           (org.eclipse.jgit.diff DiffFormatter DiffEntry RawTextComparator)
+           (org.eclipse.jgit.revwalk RevWalk RevCommit RevCommitList)))
 
 (extend-protocol ccp/Datafiable
   org.eclipse.jgit.api.Git
@@ -52,4 +55,55 @@
   (prn ci)
   (type ci)
   (keys ci)
-  (.getShortMessage c))
+  (.getShortMessage c)
+
+  (git2/changed-files r c)
+  (println (git2/changed-files-with-patch r c))
+  (def parent-commit (.getParent c 0))
+  (def entries )
+  (println (git2/changed-files-between-commits r parent-commit c))
+)
+
+
+(defn diff-entries-between-commits
+  "List of files changed between two RevCommit objects"
+  [^Git repo ^RevCommit old-rev-commit ^RevCommit new-rev-commit]
+  (let [df ^DiffFormatter (#'git2/diff-formatter-for-changes repo)]
+    (.scan df old-rev-commit new-rev-commit)))
+
+;; (def entries (git2/changed-files-between-commits r parent-commit c))
+(def WHITESPACE-MODE {::default         RawTextComparator/DEFAULT
+                      ::ignore          RawTextComparator/WS_IGNORE_ALL
+                      ::ignore-change   RawTextComparator/WS_IGNORE_CHANGE
+                      ::ignore-leading  RawTextComparator/WS_IGNORE_LEADING
+                      ::ignore-trailing RawTextComparator/WS_IGNORE_TRAILING})
+
+(defn byte-array-diff-formatter-for-changes
+  ([^Git repo ^java.io.ByteArrayOutputStream out] (byte-array-diff-formatter-for-changes repo out ::default))
+  ([^Git repo ^java.io.ByteArrayOutputStream out whitespace-mode]
+   (doto
+       (new DiffFormatter out)
+     (.setRepository (.getRepository repo))
+     (.setDiffComparator (WHITESPACE-MODE whitespace-mode RawTextComparator/DEFAULT)))))
+
+(defn format-entry-patch
+  ([repo entry] (format-entry-patch repo entry ::default))
+  ([repo entry whitespace-mode]
+   (let [out       (java.io.ByteArrayOutputStream.)
+         formatter (byte-array-diff-formatter-for-changes repo out whitespace-mode)]
+     (.format formatter entry)
+     (.toString out "UTF-8"))))
+
+;; (map #(format-entry-patch r %) entries)
+
+(defn parent-commit
+  ([commit] (parent-commit commit 0))
+  ([commit distance] (.getParent commit distance)))
+
+(defn diffs
+  ([^Git repo ^RevCommit commit] (diffs repo (parent-commit commit) commit))
+  ([^Git repo ^RevCommit parent ^RevCommit commit]
+   (diffs repo parent commit ::default))
+  ([^Git repo ^RevCommit parent ^RevCommit commit whitespace-mode]
+   (map #(format-entry-patch repo % whitespace-mode) (diff-entries-between-commits repo parent commit))))
+

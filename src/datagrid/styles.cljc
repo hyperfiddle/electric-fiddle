@@ -63,10 +63,10 @@
     (css/scoped-style
       (css/rule {:grid-auto-columns "auto", :border-collapse :collapse})
       (css/rule "td:focus-within" {:outline "1px lightgray solid"})
-      (css/rule "tr td" {:background-color :white})
-      (css/rule "tr.header td > *" {:background-color :lightgray})
-      (css/rule "thead tr" {:box-shadow SHADOW :z-index 10})
-      (css/rule "thead tr th" {:font-size        "0.75rem"
+      (css/rule "> tr > td" {:background-color :white})
+      (css/rule "> thead tr.header td > *" {:background-color :lightgray})
+      (css/rule "> thead tr" {:box-shadow SHADOW :z-index 10})
+      (css/rule "> thead tr th" {:font-size        "0.75rem"
                                :line-height      "1rem"
                                :display          :flex
                                :align-items      :center
