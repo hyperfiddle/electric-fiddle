@@ -138,9 +138,10 @@
 (defmacro column [props & body]
   `(new Column ~props (e/fn* [] ~@body)))
 
-(e/defn Grid [{::keys [row-height-px max-height-px rows RenderRow] ; WIP
+(e/defn Grid [{::keys [header? row-height-px max-height-px rows RenderRow] ; WIP
                ::dom/keys [props]
-               :or    {row-height-px 30
+               :or    {header?       true
+                       row-height-px 30
                        max-height-px 300
                        rows          []}}
               Body]
@@ -150,7 +151,7 @@
       (binding [header-height-px (e/watch !header-height-px)]
         (vs/virtual-scroll {::vs/row-height-px  row-height-px
                             ::vs/max-height-px  max-height-px
-                            ::vs/padding-top header-height-px
+                            ::vs/padding-top (if header? header-height-px 0)
                             ::vs/rows-count  (e/server (count rows))}
           (dg/datagrid {::dg/row-height row-height-px
                         ::dom/props props}
@@ -176,8 +177,9 @@
 (e/def !loading?)
 (e/def loading? false)
 
-(e/defn RenderGrid [{::keys [row-height-px max-height-px columns]
-                     ::dom/keys [props]}
+(e/defn RenderGrid [{::keys [header? row-height-px max-height-px columns]
+                     ::dom/keys [props]
+                     :or {header? true}}
                     e a V]
   (e/client
     (dg/SortController.
@@ -186,7 +188,8 @@
           (binding [!loading? (atom false)]
             (binding [loading? (e/watch !loading?)]
               (e/server
-                (grid {::row-height-px row-height-px
+                (grid {::header? header?
+                       ::row-height-px row-height-px
                        ::max-height-px max-height-px
                        ::rows          (try (V.)
                                             (catch hyperfiddle.electric.Pending _
@@ -200,33 +203,15 @@
                        ::dom/props props}
                   (e/client
                     (dom/props props)
-                    (when loading?
-                      (dom/props {:class "dg-shimmer", :style {:height "100%"}}))
-                    (dom/element :style
-                      (dom/text "
-    .dg-shimmer{
-             background-image: linear-gradient(
-                 to right,
-                 transparent 0%,
-                 rgba(255, 255, 255, 0.5) 50%,
-                 transparent 100%
-             )
-             ,
-             repeating-linear-gradient(whitesmoke, whitesmoke 25px, transparent 25px, transparent 27px) ;
-             background-size: 50% 100%, 100% 100%;
-             background-repeat: no-repeat;
-             animation: dgShimmerAnimation 1s linear infinite;
-         }
-
-         @keyframes dgShimmerAnimation {
-             0% {
-                 background-position: -150% 0;
-             }
-             100% {
-                 background-position: 250% 0;
-             }
-         }
-"))
+                    (dom/element :style (dom/text " @keyframes dgShimmerAnimation {0% {background-position: -150% 0;} 100% {background-position: 250% 0;}}"))
+                    (dom/props {:class (css/scoped-style
+                                         (css/rule "> thead > tr" {:display :none})
+                                         (when loading?
+                                           (css/rule {:height "100%"})
+                                           (css/rule {:background-image  "linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%), repeating-linear-gradient(whitesmoke, whitesmoke 25px, transparent 25px, transparent 27px)"
+                                                      :background-size   "50% 100%, 100% 100%"
+                                                      :background-repeat :no-repeat
+                                                      :animation         "dgShimmerAnimation 1s linear infinite"})))})
                     (header {}
                       (e/server
                         (e/for-by ::key [{::keys [attribute title sortable Body] ::dom/keys [props]} columns]

@@ -7,6 +7,17 @@
            (org.eclipse.jgit.diff DiffFormatter DiffEntry RawTextComparator)
            (org.eclipse.jgit.revwalk RevWalk RevCommit RevCommitList)))
 
+(defn get-branches [^Git repo]
+  (into {}
+    (map (fn [[ref commit]]
+           [(.getName ref) commit])
+      (git2/branch-list-with-heads repo))))
+
+(defn find-branches [branches commit]
+  (->> (select-keys branches (:branches commit))
+    (filter (fn [[_ref ref-commit]] (= (:raw commit) ref-commit)))
+    (map first)))
+
 (extend-protocol ccp/Datafiable
   org.eclipse.jgit.api.Git
   (datafy [^org.eclipse.jgit.api.Git repo]
@@ -17,8 +28,12 @@
                     (case k
                       :log
                       (let [rev-walk (clj-jgit.internal/new-rev-walk repo)
-                            index    (git2/build-commit-map repo rev-walk)] ; pre-compute for fast ref resolve
-                        (map (fn [commit] (with-meta commit {`ccp/datafy (fn datafy [commit] (git2/commit-info repo rev-walk index (:id commit)))}))
+                            index    (git2/build-commit-map repo rev-walk) ; pre-compute for fast ref resolve
+                            branches (get-branches repo)]
+                        (map (fn [commit] (with-meta commit {`ccp/datafy (fn datafy [commit]
+                                                                           (let [commit-info (git2/commit-info repo rev-walk index (:id commit))
+                                                                                 branches    (find-branches branches commit-info)]
+                                                                             (assoc commit-info ::branches branches)))}))
                           (git/git-log repo)))
                       v))}))))
 
@@ -38,12 +53,6 @@
 
 (defn get-branch [^Git repo branch-ref-name]
   (get-commit repo (clj-jgit.internal/resolve-object branch-ref-name repo)))
-
-(defn get-branches [^Git repo]
-  (into {}
-    (map (fn [[ref commit]]
-           [(.getName ref) commit])
-      (git2/branch-list-with-heads repo))))
 
 (comment
   (def r (git/load-repo "./"))
@@ -101,9 +110,7 @@
    (let [out       (java.io.ByteArrayOutputStream.)
          formatter (byte-array-diff-formatter-for-changes repo out whitespace-mode)]
      (.format formatter entry)
-     (.toString out "UTF-8"))))
-
-;; (map #(format-entry-patch r %) entries)
+     [(.getOldPath entry) (.toString out "UTF-8")])))
 
 (defn parent-commit
   ([commit] (parent-commit commit 0))
@@ -114,5 +121,5 @@
   ([^Git repo ^RevCommit parent ^RevCommit commit]
    (diffs repo parent commit ::default))
   ([^Git repo ^RevCommit parent ^RevCommit commit whitespace-mode]
-   (map #(format-entry-patch repo % whitespace-mode) (diff-entries-between-commits repo parent commit))))
+   (into {} (map #(format-entry-patch repo % whitespace-mode) (diff-entries-between-commits repo parent commit)))))
 

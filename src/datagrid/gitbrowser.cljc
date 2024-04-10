@@ -44,51 +44,6 @@
       (dom/on "click" (e/fn* []
                         (router/Navigate!. ['.. `(GitBrowser ~repo-path)]))))))
 
-(e/defn CommitInfo  [commit]
-  (e/server
-    (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)]
-      (e/client
-        (dom/div
-          (dom/props {:style {:border-top "2px lightgray solid"
-                              :overflow   :hidden
-                              :position   :relative
-                              :height :auto}})
-          (ClosePanelButton.)
-          (dom/div
-            (dom/props {:class (css/scoped-style
-                                 (css/rule {:overflow              :hidden
-                                            :max-height            "100%"
-                                            :display               :grid
-                                            :grid-template-columns "auto 1fr"
-                                            :position              :relative
-                                            :width                 "100%"
-                                            :height                "100%"})
-                                 (css/rule ".d2h-wrapper" {:overflow   :auto
-                                                           :max-height "100%"
-                                                           :position   :relative}))})
-            (let [str    (str/join "\n\n" diffs)
-                  config (js-obj "drawFileList" true
-                           "fileListToggle" false
-                           "fileListStartVisible" true
-                           "fileContentToggle" true
-                           "matching" "words" ; "lines"
-                           "outputFormat" #_"line-by-line" "side-by-side"
-                           "synchronisedScroll" true
-                           "stickyFileHeaders" true
-                           "highlight" true
-                           "renderNothingWhenEmpty" false)
-                  ui     ^js (js/Diff2HtmlUI. dom/node str config)]
-              (.draw ui))))))))
-
-
-(e/defn RenderCommitId [props e a V]
-  (e/server
-    (let [commit-id (git/short-commit-id (V.))]
-      (e/client
-        (router/link ['. :details commit-id]
-          (dom/props {:style {:font-family "monospace"}})
-          (dom/text commit-id))))))
-
 #?(:cljs
    (defn format-time [inst]
      (let [fmt (js/Intl.DateTimeFormat. js/undefined #js {:timeStyle "short"})]
@@ -124,34 +79,117 @@
         (dom/props {:title (format-commit-time false inst)})
         (dom/text (format-commit-time inst))))))
 
+(e/defn CommitMetadata [commit]
+  (e/client
+    (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
+      (e/server
+        (binding [r/Render          r/SchemaRenderer
+                  r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
+                  r/renderers  (assoc r/renderers :time RenderCommitTime)]
+          (r/RenderForm. {::r/row-height-px 25
+                          ::r/max-height-px (* 25 6)}
+            nil nil (e/fn* [] (select-keys commit [:id :author :merge :time :email]))))
+        (let [[head & details] (str/split-lines (:message commit))]
+          (e/client
+            (dom/pre (dom/props {:style {:font-size "1.125rem" :margin-top 0, :margin-left "0.5rem", :margin-bottom 0}}) (dom/text head))
+            (dom/pre (dom/props {:style {:margin-top 0, :margin-left "0.5rem"}}) (dom/text (str/join "\n" details)))))))))
+
+(e/defn RenderDiffLink [props e a V]
+  (e/server
+    (let [v (V.)]
+      (e/client
+        (router/link ['. :diff v]
+          (dom/text v))))))
+
+(e/defn ChangesList [changed-files]
+  (e/client
+    (dom/div
+      (dom/props {:style {:display :flex, :flex-direction :column, :grid-row 3, :position :sticky, :top 0 :height "auto"}})
+      (dom/h2  (dom/props {:style {:font-size "1.25rem", :font-weight 500, :margin "0 0 0 0.5rem"}}) (dom/text "Changes"))
+      (e/server
+        (binding [r/Render          r/SchemaRenderer
+                  r/schema-registry (schema/registry {:path :string})
+                  r/renderers       (assoc r/renderers :path RenderDiffLink)]
+          (r/RenderGrid.
+            {::r/header?       false
+             ::r/row-height-px 25
+             ::r/max-height-px "100%"
+             ::r/columns       [#_{::r/attribute :type ::r/title ""}
+                                {::r/attribute :path, ::r/title ""}]
+             ::dom/props       {:style {:grid-template-columns "min-content auto"
+                                        :min-height            "25px"}}}
+            nil nil
+            (e/fn []
+              (map (fn [[path type]] {:path path, :type type}) changed-files))))))))
+
+(e/defn DiffView [diff]
+  (e/client
+    (dom/div
+      (dom/props {:class (css/scoped-style
+                           (css/rule {:height :fit-content, :overflow-x :hidden, :grid-column 2, :grid-row 3})
+                           (css/rule ".d2h-file-header" {:display :none}))})
+      (let [config (js-obj "drawFileList" false
+                     "fileListToggle" false
+                     "fileListStartVisible" false
+                     "fileContentToggle" false
+                     "matching" "words" ; "lines"
+                     "outputFormat" #_"line-by-line" "side-by-side"
+                     "synchronisedScroll" true
+                     "stickyFileHeaders" false
+                     "highlight" true
+                     "renderNothingWhenEmpty" false)
+            ui     ^js (js/Diff2HtmlUI. dom/node diff config)]
+        (.draw ui)))))
+
+(e/defn CommitInfo  [commit]
+  (e/server
+    ;; (let [diff-path (ffirst (get router/route :diff-path))])
+    (e/client
+      (dom/div
+        (dom/props {:style {:border-top "2px lightgray solid"
+                            :overflow   :auto
+                            :position   :relative
+                            :height :auto
+                            :display :grid
+                            :grid-template-columns "auto 1fr"}})
+
+        (ClosePanelButton.)
+        (e/server
+          (CommitMetadata. commit)
+          (let [changed-files (:changed_files commit)]
+            (ChangesList. changed-files)
+            (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)]
+              ;; (def rr router/route)
+              (DiffView. (get diffs (e/client (ffirst (get router/route :diff))) (get diffs (ffirst changed-files)))))))))))
+
+
+(e/defn RenderCommitId [props e a V]
+  (e/server
+    (let [commit-id (git/short-commit-id (V.))]
+      (e/client
+        (router/link ['. :details commit-id]
+          (dom/props {:style {:font-family "monospace"}})
+          (dom/text commit-id))))))
+
 (e/defn RenderLine [props e a V]
   (e/client
     (dom/text "│")))
 
-(defn format-branch [str]
-  (str/replace-first str #"refs/heads/" ""))
+(defn format-branch [str] (str/replace-first str #"refs/heads/" ""))
 
-(defn branch-color [branch-ref-name]
-  (contrib.color/color branch-ref-name (/ 63 360) 55 65)
-  ;; (contrib.color/color-oklch branch-ref-name (/ 63 360) 55 65)
-  )
-
-(defn find-branches [branches commit]
-  (->> (select-keys branches (:branches commit))
-    (filter (fn [[_ref ref-commit]] (= (:raw commit) ref-commit)))
-    (map first)))
+(defn branch-color [branch-ref-name] (contrib.color/color branch-ref-name (/ 63 360) 55 65))
 
 (e/defn RenderMessage [props e a V]
   (e/server
     (let [[_ [_e _a V-1]] r/stack
           commit          (r/JoinValue. (V-1.))
-          branches        (map format-branch (find-branches branches commit))
+          branches        (::git/branches commit)
           message         (V.)]
       (e/client
         (dom/props {:style {:display :flex
                             :gap     "0.25rem"}})
         (when (seq branches)
-          (e/for [branch branches]
+          (e/for [branch (map format-branch branches)]
             (dom/span (dom/props {:style {:border           "2px white solid"
                                           :color            :white
                                           :border-radius    "7px"
@@ -186,8 +224,7 @@
           (r/RenderGrid.
             {::r/row-height-px 25
              ::r/max-height-px "100%"
-             ::r/columns       [
-                                {::r/attribute :id}
+             ::r/columns       [{::r/attribute :id}
                                 {::r/attribute :line, ::r/title ""}
                                 {::r/attribute :message}
                                 {::r/attribute :author}
