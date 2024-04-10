@@ -36,6 +36,15 @@
        rev-walk
        commit-id))))
 
+(defn get-branch [^Git repo branch-ref-name]
+  (get-commit repo (clj-jgit.internal/resolve-object branch-ref-name repo)))
+
+(defn get-branches [^Git repo]
+  (into {}
+    (map (fn [[ref commit]]
+           [(.getName ref) commit])
+      (git2/branch-list-with-heads repo))))
+
 (comment
   (def r (git/load-repo "./"))
   (git/git-status r)
