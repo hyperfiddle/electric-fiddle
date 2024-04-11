@@ -86,10 +86,10 @@
                   r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
                   r/renderers  (assoc r/renderers :time RenderCommitTime)]
           (r/RenderForm. {::r/row-height-px 25
-                          ::r/max-height-px (* 25 6)
-                          ::r/keys [:id :author :merge :time :email]}
+                          ::r/max-height-px (* 25 7)
+                          ::r/keys [:id :author :merge :time :email :message]}
             nil nil (e/fn* [] commit)))
-        (let [[head & details] (str/split-lines (:message commit))]
+        #_(let [[head & details] (str/split-lines (:message commit))]
           (e/client
             (dom/pre (dom/props {:style {:font-size "1.125rem" :margin-top 0, :margin-left "0.5rem", :margin-bottom 0}}) (dom/text head))
             (dom/pre (dom/props {:style {:margin-top 0, :margin-left "0.5rem"}}) (dom/text (str/join "\n" details)))))))))
@@ -113,7 +113,7 @@
   (e/client
     (dom/div
       (dom/props {:style {:display :flex, :flex-direction :column, :grid-row 3, :position :sticky, :top 0 :height "auto"}})
-      (dom/h2  (dom/props {:style {:font-size "1.25rem", :font-weight 500, :margin "0 0 0 0.5rem"}}) (dom/text "Changes"))
+      #_(dom/h2  (dom/props {:style {:font-size "1.25rem", :font-weight 500, :margin "0 0 0 0.5rem"}}) (dom/text "Changes"))
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry {:path :string})
