@@ -184,7 +184,7 @@
   (e/client
     (dom/text "│")))
 
-(defn format-branch [str] (str/replace-first str #"refs/heads/" ""))
+(defn format-branch [str] (str/replace-first str #"refs/(heads|remotes)/" ""))
 
 (defn branch-color [branch-ref-name] (contrib.color/color branch-ref-name (/ 63 360) 55 65))
 
@@ -280,7 +280,7 @@
       (e/server
         (binding [repo-path (or git-repo-path ".")]
           (let [repo (load-repo repo-path)]
-            (binding [branches (git/get-branches repo)]
+            (binding [branches (git/branch-list repo)]
               (GitLog. repo)
               (e/client
                 (when-let [commit-id (:details router/route)]

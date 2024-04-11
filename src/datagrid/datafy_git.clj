@@ -5,24 +5,42 @@
             [clojure.datafy :refer [datafy]])
   (:import (org.eclipse.jgit.api Git)
            (org.eclipse.jgit.diff DiffFormatter DiffEntry RawTextComparator)
-           (org.eclipse.jgit.revwalk RevWalk RevCommit RevCommitList)))
+           (org.eclipse.jgit.revwalk RevWalk RevCommit RevCommitList)
+           (org.eclipse.jgit.lib ObjectIdRef)))
 
-(defn get-branches [^Git repo]
-  (into {}
-    (map (fn [[ref commit]]
-           [(.getName ref) commit])
-      (git2/branch-list-with-heads repo))))
+(declare get-commit changes-stats)
+
+(defn resolve-ref [ref]
+  (if (.isSymbolic ref)
+    (resolve-ref (.getTarget ref))
+    ref))
+
+(defn branch-list [repo]
+  (update-vals (clj-jgit.internal/get-refs repo "") resolve-ref))
+
+(comment
+  (branch-list r)
+  (resolve-ref _ref)
+  (get-commit r "refs/remotes/origin/main")
+  (git/git-branch-list r :jgit? false :list-mode :all)
+  )
 
 (defn find-branches [branches commit]
-  (->> (select-keys branches (:branches commit))
-    (filter (fn [[_ref ref-commit]] (= (:raw commit) ref-commit)))
-    (map first)))
+  (map first
+    (filter (fn [[_branch ref]]
+              (= (.name (.getObjectId ref)) (:id commit)))
+      branches)))
 
-(declare changes-stats)
+(comment
+  (find-branches (branch-list r) (first (nav (datafy r) :log ())))
+  (datafy (first (nav (datafy r) :log ())))
+  (clj-jgit.internal/get-refs r "")
+  (.name (.getObjectId (val (first (branch-list r)))))
+  )
 
 (defn with-datafy
   ([commit] (with-datafy (:repo commit) commit))
-  ([repo commit] (with-datafy repo (get-branches repo) commit))
+  ([repo commit] (with-datafy repo (branch-list repo) commit))
   ([_repo branches commit]
    (with-meta commit {`ccp/datafy (fn datafy [commit]
                                     (let [original (:clojure.datafy/obj (meta commit) commit)
@@ -41,7 +59,7 @@
                       :log
                       (let [rev-walk (clj-jgit.internal/new-rev-walk repo)
                             index    (git2/build-commit-map repo rev-walk) ; pre-compute for fast ref resolve
-                            branches (get-branches repo)]
+                            branches (branch-list repo)]
                         (map (fn [commit] (with-datafy repo branches (git2/commit-info repo rev-walk index (:id commit))))
                           (git/git-log repo)))
                       v))}))))
@@ -60,9 +78,6 @@
        (clj-jgit.querying/find-rev-commit repo
          rev-walk
          commit-id)))))
-
-(defn get-branch [^Git repo branch-ref-name]
-  (get-commit repo (clj-jgit.internal/resolve-object branch-ref-name repo)))
 
 (comment
   (def r (git/load-repo "./"))
@@ -123,7 +138,8 @@
 
 (defn parent-commit
   ([commit] (parent-commit commit 0))
-  ([commit distance] (.getParent commit distance)))
+  ([commit index] (when (< index (.getParentCount commit))
+                    (.getParent commit index))))
 
 (defn diffs
   ([^Git repo ^RevCommit commit] (diffs repo (parent-commit commit) commit))
