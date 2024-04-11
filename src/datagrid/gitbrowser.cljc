@@ -243,7 +243,7 @@
             (e/fn []
               (->> (r/Nav. (datafy repo) :log)
                 ;; (take 1)
-                (r/InputFilter. :msg :message) ; :msg vs :message is a clj-jgit inconsistency
+                (r/InputFilter. :message)
                 (r/ColumnSort. (fn [column]
                                  (case column ; Account for clj-jgit naming inconsistencies
                                    :time #(get-in % [:author :date]) ; clj-git stores time in [:author :date] for the log, but in :time for the commit itself
