@@ -69,8 +69,7 @@
      ([inst] (format-commit-time true inst))
      ([relative? inst]
       (or (and relative? (format-relative inst))
-        (str (format-date inst) " " (format-time inst)))
-      )))
+        (str (format-date inst) " " (format-time inst))))))
 
 (e/defn RenderCommitTime [props e a V]
   (e/server
@@ -87,8 +86,9 @@
                   r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
                   r/renderers  (assoc r/renderers :time RenderCommitTime)]
           (r/RenderForm. {::r/row-height-px 25
-                          ::r/max-height-px (* 25 6)}
-            nil nil (e/fn* [] (select-keys commit [:id :author :merge :time :email]))))
+                          ::r/max-height-px (* 25 6)
+                          ::r/keys [:id :author :merge :time :email]}
+            nil nil (e/fn* [] commit)))
         (let [[head & details] (str/split-lines (:message commit))]
           (e/client
             (dom/pre (dom/props {:style {:font-size "1.125rem" :margin-top 0, :margin-left "0.5rem", :margin-bottom 0}}) (dom/text head))
@@ -101,6 +101,14 @@
         (router/link ['. :diff v]
           (dom/text v))))))
 
+(e/defn RenderGitStat [type props e a V]
+  (e/server
+    (let [v (V.)]
+      (when-not (zero? v)
+        (e/client
+          (dom/props {:style {:color (case type ::additions :green, ::deletions :red :inherit)}})
+          (dom/text (case type ::additions "+", ::deletions "-" "") v))))))
+
 (e/defn ChangesList [changed-files]
   (e/client
     (dom/div
@@ -109,18 +117,21 @@
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry {:path :string})
-                  r/renderers       (assoc r/renderers :path RenderDiffLink)]
+                  r/renderers       (assoc r/renderers ::git/path RenderDiffLink
+                                      ::git/additions (e/partial 5 RenderGitStat ::additions)
+                                      ::git/deletions (e/partial 5 RenderGitStat ::deletions))]
           (r/RenderGrid.
             {::r/header?       false
              ::r/row-height-px 25
              ::r/max-height-px "100%"
              ::r/columns       [#_{::r/attribute :type ::r/title ""}
-                                {::r/attribute :path, ::r/title ""}]
-             ::dom/props       {:style {:grid-template-columns "min-content auto"
+                                {::r/attribute ::git/path, ::r/title ""}
+                                {::r/attribute ::git/additions, ::r/title ""}
+                                {::r/attribute ::git/deletions, ::r/title ""}]
+             ::dom/props       {:style {:grid-template-columns "auto min-content min-content"
                                         :min-height            "25px"}}}
             nil nil
-            (e/fn []
-              (map (fn [[path type]] {:path path, :type type}) changed-files))))))))
+            (e/fn [] changed-files)))))))
 
 (e/defn DiffView [diff]
   (e/client
@@ -143,7 +154,6 @@
 
 (e/defn CommitInfo  [commit]
   (e/server
-    ;; (let [diff-path (ffirst (get router/route :diff-path))])
     (e/client
       (dom/div
         (dom/props {:style {:border-top "2px lightgray solid"
@@ -156,11 +166,10 @@
         (ClosePanelButton.)
         (e/server
           (CommitMetadata. commit)
-          (let [changed-files (:changed_files commit)]
+          (let [changed-files (::git/changes commit)]
             (ChangesList. changed-files)
             (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)]
-              ;; (def rr router/route)
-              (DiffView. (get diffs (e/client (ffirst (get router/route :diff))) (get diffs (ffirst changed-files)))))))))))
+              (DiffView. (get diffs (e/client (ffirst (get router/route :diff))) (get diffs (::git/path (first changed-files))))))))))))
 
 
 (e/defn RenderCommitId [props e a V]
@@ -238,8 +247,7 @@
                 (r/ColumnSort. (fn [column]
                                  (case column ; Account for clj-jgit naming inconsistencies
                                    :time #(get-in % [:author :date]) ; clj-git stores time in [:author :date] for the log, but in :time for the commit itself
-                                   column)))))))))
-    ))
+                                   column)))))))))))
 
 (e/defn GitBrowser [& [git-repo-path git-commit-id]]
   (e/client
@@ -277,5 +285,5 @@
           (GitLog. repo)
           (e/client
             (when-let [commit-id (:details router/route)]
-              (e/server (CommitInfo. (git/get-commit repo (ffirst commit-id)))))))))))
+              (e/server (CommitInfo. (datafy (git/get-commit repo (ffirst commit-id))))))))))))
 

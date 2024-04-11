@@ -257,14 +257,22 @@
           (e/server
             (RenderKey. props e a V)))))))
 
-(e/defn RenderForm [props e a V]
+(defn form-select-keys [keys value]
+  (if (empty? keys)
+    value
+    (cond (map? value) (select-keys value keys)
+          (seq? value) (let [key? (set keys)]
+                         (filter #(key? (first %)) value))
+          :else value)))
+
+(e/defn RenderForm [{::keys [keys] :as props} e a V]
   ;; TODO link label with ::value column through :for attribute
   (RenderGrid. (-> props (update ::dom/props assoc :role "form")
                  (update-in [::dom/props :style] assoc :grid-template-columns "auto 1fr")
                  (assoc ::columns [{::attribute ::key}
                                    {::attribute ::value}]))
     e a (e/fn* []
-          (Sequence. (JoinValue. (V.))))))
+          (Sequence. (form-select-keys keys (JoinValue. (V.)))))))
 
 (e/def renderers {:string                     RenderString
                   :boolean                    RenderBoolean

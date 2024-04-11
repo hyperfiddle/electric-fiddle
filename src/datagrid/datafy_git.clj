@@ -18,6 +18,18 @@
     (filter (fn [[_ref ref-commit]] (= (:raw commit) ref-commit)))
     (map first)))
 
+(declare changes-stats)
+
+(defn with-datafy
+  ([commit] (with-datafy (:repo commit) commit))
+  ([repo commit] (with-datafy repo (get-branches repo) commit))
+  ([_repo branches commit]
+   (with-meta commit {`ccp/datafy (fn datafy [commit]
+                                    (let [original (:clojure.datafy/obj (meta commit) commit)
+                                          branches (find-branches branches original)]
+                                      (assoc commit ::branches branches
+                                        ::changes (changes-stats original))))})))
+
 (extend-protocol ccp/Datafiable
   org.eclipse.jgit.api.Git
   (datafy [^org.eclipse.jgit.api.Git repo]
@@ -30,10 +42,7 @@
                       (let [rev-walk (clj-jgit.internal/new-rev-walk repo)
                             index    (git2/build-commit-map repo rev-walk) ; pre-compute for fast ref resolve
                             branches (get-branches repo)]
-                        (map (fn [commit] (with-meta commit {`ccp/datafy (fn datafy [commit]
-                                                                           (let [commit-info (git2/commit-info repo rev-walk index (:id commit))
-                                                                                 branches    (find-branches branches commit-info)]
-                                                                             (assoc commit-info ::branches branches)))}))
+                        (map (fn [commit] (with-datafy repo branches (git2/commit-info repo rev-walk index (:id commit))))
                           (git/git-log repo)))
                       v))}))))
 
@@ -43,13 +52,14 @@
   ([repo commit-id] (get-commit repo (clj-jgit.internal/new-rev-walk repo) commit-id))
   ([repo rev-walk commit-id] (get-commit repo rev-walk (git2/build-commit-map repo rev-walk) commit-id))
   ([repo rev-walk commit-map commit-id]
-   (clj-jgit.querying/commit-info
-     repo
-     rev-walk
-     commit-map
-     (clj-jgit.querying/find-rev-commit repo
+   (with-datafy repo
+     (clj-jgit.querying/commit-info
+       repo
        rev-walk
-       commit-id))))
+       commit-map
+       (clj-jgit.querying/find-rev-commit repo
+         rev-walk
+         commit-id)))))
 
 (defn get-branch [^Git repo branch-ref-name]
   (get-commit repo (clj-jgit.internal/resolve-object branch-ref-name repo)))
@@ -123,3 +133,51 @@
   ([^Git repo ^RevCommit parent ^RevCommit commit whitespace-mode]
    (into {} (map #(format-entry-patch repo % whitespace-mode) (diff-entries-between-commits repo parent commit)))))
 
+
+
+(comment
+  (def c (datafy (get-commit r "8cb3d91")))
+  (diff-entries-between-commits r (parent-commit (:raw c)) (:raw c))
+  (def entry (second (diff-entries-between-commits r (parent-commit (:raw c)) (:raw c))))
+  (def formatter (DiffFormatter. org.eclipse.jgit.util.io.DisabledOutputStream/INSTANCE))
+  (.setRepository formatter (.getRepository r))
+  (.toFileHeader formatter entry)
+
+  (.getHunks (.toFileHeader formatter entry))
+  (first (.getHunks (.toFileHeader formatter entry)))
+  (def edits (.toEditList (first (.getHunks (.toFileHeader formatter entry)))))
+  (reduce (fn [[adds rets] edit]
+            [(+ adds (- (.getLengthB edit) (.getLengthA edit)))
+             (+ rets (- (.getLengthA edit) (.getLengthB edit)))])
+    [0 0] edits)
+
+  )
+
+(defn hunks [formatter entry] (.getHunks (.toFileHeader formatter entry)))
+
+(defn edits [hunk]
+  (reduce (fn [[adds rets] edit]
+            [(+ adds (.getLengthB edit) #_(- (.getLengthB edit) #_(.getLengthA edit)))
+             (+ rets (.getLengthA edit) #_(- (.getLengthA edit) #_(.getLengthB edit)))])
+    [0 0] (.toEditList hunk)))
+
+(defn entry-edits [repo entry]
+  (let [formatter (doto (DiffFormatter. org.eclipse.jgit.util.io.DisabledOutputStream/INSTANCE)
+                    (.setRepository (.getRepository repo)))]
+    (map edits (hunks formatter entry))))
+
+(defn changes-stats
+  ([commit] (changes-stats (:repo commit) (parent-commit (:raw commit)) (:raw commit)))
+  ([repo parent-commit commit]
+   (let [entries (diff-entries-between-commits repo parent-commit commit)]
+     (for [entry entries
+           [adds rets] (entry-edits repo entry)]
+       {::path (.getOldPath entry)
+        ::additions adds
+        ::deletions rets})
+     #_(zipmap (map #(.getOldPath %) entries)
+         (mapcat #(entry-edits repo %) entries)))))
+
+(comment
+  (changes-stats c)
+  )
