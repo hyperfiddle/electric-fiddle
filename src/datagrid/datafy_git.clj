@@ -92,7 +92,6 @@
   (println (git2/changed-files-between-commits r parent-commit c))
 )
 
-
 (defn diff-entries-between-commits
   "List of files changed between two RevCommit objects"
   [^Git repo ^RevCommit old-rev-commit ^RevCommit new-rev-commit]
@@ -133,8 +132,6 @@
   ([^Git repo ^RevCommit parent ^RevCommit commit whitespace-mode]
    (into {} (map #(format-entry-patch repo % whitespace-mode) (diff-entries-between-commits repo parent commit)))))
 
-
-
 (comment
   (def c (datafy (get-commit r "8cb3d91")))
   (diff-entries-between-commits r (parent-commit (:raw c)) (:raw c))
@@ -157,8 +154,8 @@
 
 (defn edits [hunk]
   (reduce (fn [[adds rets] edit]
-            [(+ adds (.getLengthB edit) #_(- (.getLengthB edit) #_(.getLengthA edit)))
-             (+ rets (.getLengthA edit) #_(- (.getLengthA edit) #_(.getLengthB edit)))])
+            [(+ adds (.getLengthB edit))
+             (+ rets (.getLengthA edit))])
     [0 0] (.toEditList hunk)))
 
 (defn entry-edits [repo entry]
@@ -174,9 +171,7 @@
            [adds rets] (entry-edits repo entry)]
        {::path (.getOldPath entry)
         ::additions adds
-        ::deletions rets})
-     #_(zipmap (map #(.getOldPath %) entries)
-         (mapcat #(entry-edits repo %) entries)))))
+        ::deletions rets}))))
 
 (comment
   (changes-stats c)
