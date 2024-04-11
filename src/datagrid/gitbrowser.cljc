@@ -251,39 +251,38 @@
 
 (e/defn GitBrowser [& [git-repo-path git-commit-id]]
   (e/client
-    (dom/props {:style {;; FIXME make it a rule, conflict with "examples.css"
-                        :height             "100dvh"
-                        :box-sizing         :border-box
-                        :padding            "1rem"
-                        :padding-bottom     "0.5rem"
-                        :margin             0
-                        :display            :grid
-                        :gap                "0.75rem"
-                        :grid-auto-flow     :column
-                        :overflow           :hidden
-                        :grid-template-rows "min-content min-content auto fit-content(50%)"
-                        }
-                :class (css/scoped-style
-                         (css/rule {:height             "100dvh"
-                                    :box-sizing         :border-box
-                                    :padding            "1rem"
-                                    :padding-bottom     "0.5rem"
-                                    :margin             0
-                                    :display            :grid
-                                    :gap                "0.75rem"
-                                    :grid-auto-flow     :column
-                                    :overflow           :hidden
-                                    :grid-template-rows "min-content min-content auto fit-content(50%)"})
-                         (css/rule ".virtual-scroll" {:flex 1, :max-height "100%"})
-                         (css/rule ".datagrid > tr > td, .datagrid > thead th" {:padding-left "0.5rem", :padding-right "0.5em", :border :none})
-                         (css/rule ".datagrid > tr:nth-child(odd) > td" {:background-color :whitesmoke})
-                         (css/rule ".d2h-file-list-wrapper" {:position :sticky, :top 0, :height :min-content}))}))
-  (e/server
-    (binding [repo-path (or git-repo-path ".")]
-      (let [repo (load-repo repo-path)]
-        (binding [branches (git/get-branches repo)]
-          (GitLog. repo)
-          (e/client
-            (when-let [commit-id (:details router/route)]
-              (e/server (CommitInfo. (datafy (git/get-commit repo (ffirst commit-id))))))))))))
+    (dom/style {:padding        "1rem"
+                :padding-bottom "0.5rem"
+                :margin         0
+                :box-sizing     :border-box
+                :overflow       :hidden
+                :height         "100dvh"})
+    (dom/div
+      (dom/props {:style {;; FIXME make it a rule, conflict with "examples.css"
+                          :height             "100%"
+                          :display            :grid
+                          :gap                "0.75rem"
+                          :grid-auto-flow     :column
+                          :overflow           :hidden
+                          :grid-template-rows "min-content auto fit-content(50%)"
+                          }
+                  :class (css/scoped-style
+                           (css/rule {:height             "100%"
+                                      :display            :grid
+                                      :gap                "0.75rem"
+                                      :grid-auto-flow     :column
+                                      :overflow           :hidden
+                                      :grid-template-rows "min-content auto fit-content(50%)"})
+                           (css/rule ".virtual-scroll" {:flex 1, :max-height "100%"})
+                           (css/rule ".datagrid > tr > td, .datagrid > thead th" {:padding-left "0.5rem", :padding-right "0.5em", :border :none})
+                           (css/rule ".datagrid > tr:nth-child(odd) > td" {:background-color :whitesmoke})
+                           (css/rule ".d2h-file-list-wrapper" {:position :sticky, :top 0, :height :min-content}))})
+      (e/server
+        (binding [repo-path (or git-repo-path ".")]
+          (let [repo (load-repo repo-path)]
+            (binding [branches (git/get-branches repo)]
+              (GitLog. repo)
+              (e/client
+                (when-let [commit-id (:details router/route)]
+                  (e/server (CommitInfo. (datafy (git/get-commit repo (ffirst commit-id))))))))))))))
 
