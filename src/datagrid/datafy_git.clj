@@ -192,3 +192,8 @@
 (comment
   (changes-stats c)
   )
+
+
+(comment
+  (git/git-checkout r :name "refs/heads/main")
+  )

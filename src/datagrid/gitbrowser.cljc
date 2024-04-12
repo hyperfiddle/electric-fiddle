@@ -161,7 +161,8 @@
                             :position   :relative
                             :height :auto
                             :display :grid
-                            :grid-template-columns "auto 1fr"}})
+                            :grid-template-columns "auto 1fr"
+                            :grid-area "details"}})
 
         (ClosePanelButton.)
         (e/server
@@ -213,13 +214,15 @@
 
 (e/defn GitLog [repo]
   (e/client
-    (RouterInput. {::dom/type :search
-                   ::dom/placeholder "Search for commits"}
+    (RouterInput. {::dom/type        :search
+                   ::dom/placeholder "Search for commits"
+                   ::dom/style {:grid-area "search"}}
       :message)
     (dom/div
-      (dom/props {:style {:max-height "100%"
-                          :overflow   :auto
-                          :position   :relative}})
+      (dom/props {:style {:max-height  "100%"
+                          :overflow    :auto
+                          :position    :relative
+                          :grid-area   "log"}})
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry {:id      :string
@@ -228,13 +231,13 @@
                                                       :time    inst?})
                   r/renderers       (assoc r/renderers :id RenderCommitId
                                       :time RenderCommitTime
-                                      :line RenderLine
+                                      ;; :line RenderLine
                                       :message RenderMessage)]
           (r/RenderGrid.
             {::r/row-height-px 25
              ::r/max-height-px "100%"
              ::r/columns       [{::r/attribute :id}
-                                {::r/attribute :line, ::r/title ""}
+                                ;; {::r/attribute :line, ::r/title ""}
                                 {::r/attribute :message}
                                 {::r/attribute :author}
                                 {::r/attribute :time, ::r/sortable true}]
@@ -248,6 +251,59 @@
                                  (case column ; Account for clj-jgit naming inconsistencies
                                    :time #(get-in % [:author :date]) ; clj-git stores time in [:author :date] for the log, but in :time for the commit itself
                                    column)))))))))))
+
+(defn sequence-refs-tree [branches]
+  (->> branches
+    (sort-by key)
+    (reduce (fn [r [k v]]
+              (let [segments (->> (str/split k #"/")
+                               (map vector (range) (repeat k)))]
+                (reduce conj r (concat (butlast segments) [(conj (last segments) v)]))))
+      [])
+    (map #(zipmap [::depth ::full-name ::name ::ref] %))
+    (contrib.data/distinct-by (juxt ::depth ::name))))
+
+(comment
+  (sequence-refs-tree (git/branch-list git/r))
+  ())
+
+(e/defn RenderRefName [props e a V]
+  (e/server
+    (let [v (V.)
+          {::keys [depth full-name ref]} (r/Parent.)]
+      (e/client
+        (dom/text (apply str (repeat (dec depth) "  ")))
+        (if (e/server (some? ref))
+          (router/link ['. :branch full-name]
+            (dom/text v))
+          (dom/text v))))))
+
+(e/defn ListRefs [branches]
+  (e/client
+    (dom/div
+      (dom/props {:style {:display :flex :flex-direction :column}})
+      ;; (dom/h2 (dom/props {:style {:margin 0}}) (dom/text "Branches"))
+      (e/server
+        (binding [r/Render          r/SchemaRenderer
+                  r/schema-registry (schema/registry {::name :string})
+                  r/renderers   (assoc r/renderers ::name RenderRefName)]
+          (r/RenderGrid.
+            {::r/row-height-px 25
+             ::r/max-height-px "100%"
+             ::r/columns       [{::r/attribute ::name}]}
+            nil nil
+            (e/fn [] (sequence-refs-tree branches)))))
+      #_(dom/h2 (dom/props {:margin-bottom 0}) (dom/text "Remotes"))
+      #_(e/server
+          (binding [r/Render          r/SchemaRenderer
+                    r/schema-registry (schema/registry {::name :string})
+                    #_#_r/renderers   r/renderers]
+            (r/RenderGrid.
+              {::r/row-height-px 25
+               ::r/max-height-px "100%"
+               ::r/columns       [{::r/attribute ::name}]}
+              nil nil
+              (e/fn [] (map (fn [[name ref]] {::name name}) remotes))))))))
 
 (e/defn GitBrowser [& [git-repo-path git-commit-id]]
   (e/client
@@ -267,12 +323,14 @@
                           :grid-template-rows "min-content auto fit-content(50%)"
                           }
                   :class (css/scoped-style
-                           (css/rule {:height             "100%"
-                                      :display            :grid
-                                      :gap                "0.75rem"
-                                      :grid-auto-flow     :column
-                                      :overflow           :hidden
-                                      :grid-template-rows "min-content auto fit-content(50%)"})
+                           (css/rule {:height                "100%"
+                                      :display               :grid
+                                      :gap                   "0.75rem"
+                                      :grid-auto-flow        :column
+                                      :overflow              :hidden
+                                      :grid-template-areas   " \"search search\" \"refs log\" \"details details\" "
+                                      :grid-template-columns "auto 1fr"
+                                      :grid-template-rows    "min-content auto fit-content(50%)"})
                            (css/rule ".virtual-scroll" {:flex 1, :max-height "100%"})
                            (css/rule ".datagrid > tr > td, .datagrid > thead th" {:padding-left "0.5rem", :padding-right "0.5em", :border :none})
                            (css/rule ".datagrid > tr:nth-child(odd) > td" {:background-color :whitesmoke})
@@ -281,6 +339,7 @@
         (binding [repo-path (or git-repo-path ".")]
           (let [repo (load-repo repo-path)]
             (binding [branches (git/branch-list repo)]
+              (ListRefs. branches)
               (GitLog. repo)
               (e/client
                 (when-let [commit-id (:details router/route)]

@@ -48,6 +48,10 @@
     (binding [stack (conj stack [e a V])]
       (Continuation. e a V))))
 
+(e/defn Parent []
+  (let [[_ [_e _a V]] stack]
+    (V.)))
+
 (e/defn DefaultRenderer [props e a V]
   (let [v (JoinValue. (V.))]
     (e/client
