@@ -16,18 +16,6 @@
 (e/def repo-path ".")
 (e/def branches {})
 
-(e/defn CommitMetadata [commit]
-  (e/client
-    (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
-             (e/server
-               (binding [r/Render          r/SchemaRenderer
-                         r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
-                         r/renderers  (assoc r/renderers :time RenderCommitTime)]
-                 (r/RenderForm. {::r/row-height-px 25
-                                 ::r/max-height-px (* 25 7)
-                                 ::r/keys [:id :author :merge :time :email :message]}
-                   nil nil (e/fn* [] commit)))))))
-
 (e/defn RenderDiffLink [props e a V]
   (e/server
     (let [v (V.)]
@@ -84,26 +72,6 @@
             ui     ^js (js/Diff2HtmlUI. dom/node diff config)]
         (.draw ui)))))
 
-(e/defn CommitInfo  [commit]
-  (e/server
-    (e/client
-      (dom/div
-        (dom/props {:style {:border-top "2px lightgray solid"
-                            :overflow   :auto
-                            :position   :relative
-                            :height :auto
-                            :display :grid
-                            :grid-template-columns "auto 1fr"
-                            :grid-area "details"}})
-
-        (ui/ClosePanelButton. ['.. `(GitBrowser ~repo-path)])
-        (e/server
-          (CommitMetadata. commit)
-          (let [changed-files (::git/changes commit)]
-            (ChangesList. changed-files)
-            (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)]
-              (DiffView. (get diffs (e/client (ffirst (get router/route :diff))) (get diffs (::git/path (first changed-files))))))))))))
-
 (e/defn RenderCommitId [props e a V]
   (e/server
     (let [commit-id (git/short-commit-id (V.))]
@@ -141,6 +109,38 @@
       (e/client
         (dom/props {:title (ui/format-commit-time false inst)})
         (dom/text (ui/format-commit-time inst))))))
+
+(e/defn CommitMetadata [commit]
+  (e/client
+    (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
+             (e/server
+               (binding [r/Render          r/SchemaRenderer
+                         r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
+                         r/renderers  (assoc r/renderers :time RenderCommitTime)]
+                 (r/RenderForm. {::r/row-height-px 25
+                                 ::r/max-height-px (* 25 7)
+                                 ::r/keys [:id :author :merge :time :email :message]}
+                   nil nil (e/fn* [] commit)))))))
+
+(e/defn CommitInfo  [commit]
+  (e/server
+    (e/client
+      (dom/div
+        (dom/props {:style {:border-top "2px lightgray solid"
+                            :overflow   :auto
+                            :position   :relative
+                            :height :auto
+                            :display :grid
+                            :grid-template-columns "auto 1fr"
+                            :grid-area "details"}})
+
+        (ui/ClosePanelButton. ['.. `(GitBrowser ~repo-path)])
+        (e/server
+          (CommitMetadata. commit)
+          (let [changed-files (::git/changes commit)]
+            (ChangesList. changed-files)
+            (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)]
+              (DiffView. (get diffs (e/client (ffirst (get router/route :diff))) (get diffs (::git/path (first changed-files))))))))))))
 
 (e/defn GitLog [repo branch]
   (e/client
