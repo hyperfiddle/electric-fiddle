@@ -13,17 +13,19 @@
             [clojure.string :as str]
             [datagrid.ui :as ui]))
 
+(defmacro hfql [& body])
+
 (e/def repo-path ".")
 (e/def branches {})
 
-(e/defn RenderDiffLink [props e a V]
+(e/defn RenderDiffLink [V]
   (e/server
     (let [v (V.)]
       (e/client
         (router/link ['. :diff v]
           (dom/text v))))))
 
-(e/defn RenderGitStat [type props e a V]
+(e/defn RenderGitStat [type v]
   (e/server
     (let [v (V.)]
       (when-not (zero? v)
@@ -31,26 +33,18 @@
           (dom/props {:style {:color (case type ::additions :green, ::deletions :red :inherit)}})
           (dom/text (case type ::additions "+", ::deletions "-" "") v))))))
 
-(e/defn ChangesList [changed-files]
-  (e/client
-    (dom/div
-      (dom/props {:style {:display :flex, :flex-direction :column, :grid-row 3, :position :sticky, :top 0 :height "auto"}})
-      (e/server
-        (binding [r/Render          r/SchemaRenderer
-                  r/schema-registry (schema/registry {:path :string})
-                  r/renderers       (assoc r/renderers ::git/path RenderDiffLink
-                                      ::git/additions (e/partial 5 RenderGitStat ::additions)
-                                      ::git/deletions (e/partial 5 RenderGitStat ::deletions))]
-          (r/RenderGrid.
-            {::r/header?       false
-             ::r/row-height-px 25
-             ::r/max-height-px "100%"
-             ::r/columns       [{::r/attribute ::git/path, ::r/title ""}
-                                {::r/attribute ::git/additions, ::r/title ""}
-                                {::r/attribute ::git/deletions, ::r/title ""}]
-             ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}}
-            nil nil
-            (e/fn [] changed-files)))))))
+; {::git/path :string}
+(e/defn ChangesList [commit]
+  (dom/div (dom/props {:style {:display :flex, :flex-direction :column, :grid-row 3, :position :sticky, :top 0 :height "auto"}})
+    (hfql
+      {(props (::git/changes commit)
+         {::r/header?       false
+          ::r/row-height-px 25
+          ::r/max-height-px "100%"
+          ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
+       [(props ::git/path {:render (RenderDiffLink. %)})
+        (props ::git/additions {:render (RenderGitStat. hf/a %)})
+        (props ::git/deletions {:render (RenderGitStat. hf/a %)})]})))
 
 (e/defn DiffView [diff]
   (e/client
@@ -137,10 +131,11 @@
         (ui/ClosePanelButton. ['.. `(GitBrowser ~repo-path)])
         (e/server
           (CommitMetadata. commit)
-          (let [changed-files (::git/changes commit)]
-            (ChangesList. changed-files)
-            (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)]
-              (DiffView. (get diffs (e/client (ffirst (get router/route :diff))) (get diffs (::git/path (first changed-files))))))))))))
+          (ChangesList. commit) #_(::git/changes commit)
+          (DiffView. #_(::git/diff commit)
+            (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
+              (get diffs (e/client (ffirst (get router/route :diff)))
+                (get diffs (::git/path (first (::git/changes commit))))))))))))
 
 (e/defn GitLog [repo branch]
   (e/client
@@ -190,35 +185,29 @@
     (map #(zipmap [::depth ::full-name ::name ::ref] %))
     (contrib.data/distinct-by (juxt ::depth ::name))))
 
-(e/defn RenderRefName [props e a V]
+(e/defn RenderRefName [{::keys [depth full-name ref]}]
   (e/server
-    (let [v (V.)
-          {::keys [depth full-name ref]} (r/Parent.)
-          ref? (some? ref)]
+    (let [ref? (some? ref)]
       (e/client
         (dom/text (apply str (repeat (dec depth) "  ")))
         (router/link ['. :branch full-name]
           (dom/props {:disabled (not ref?)})
           (dom/text v))))))
 
-(e/defn ListRefs [branches]
-  (e/client
-    (dom/div
-      ;; (dom/props {:style {:display :flex :flex-direction :column}})
-      (dom/props {:class (css/scoped-style
+(defn branch-list [repo] (sequence-refs-tree (git/branch-list repo)))
+
+; {::name :string}
+(e/defn ListRefs [repo]
+  (dom/div
+   (dom/props {:class (css/scoped-style
                            (css/rule {:overflow :auto})
                            (css/rule "a[disabled=true]"
-                             {:cursor :text, :color :initial, :text-decoration :none}))})
-      (e/server
-        (binding [r/Render          r/SchemaRenderer
-                  r/schema-registry (schema/registry {::name :string})
-                  r/renderers   (assoc r/renderers ::name RenderRefName)]
-          (r/RenderGrid.
-            {::r/row-height-px 25
-             ::r/max-height-px "100%"
-             ::r/columns       [{::r/attribute ::name}]}
-            nil nil
-            (e/fn [] (sequence-refs-tree branches))))))))
+                             {:cursor :text, :color :initial, :text-decoration :none}))}) 
+    (hfql
+      {(props (branch-list repo)
+         {::r/row-height-px 25
+          ::r/max-height-px "100%"})
+       [(RenderRefName. %)]})))
 
 (e/defn GitBrowser [& [git-repo-path]]
   (e/client
