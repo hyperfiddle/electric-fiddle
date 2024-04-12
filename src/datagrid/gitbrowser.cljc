@@ -169,7 +169,7 @@
                                 {::r/attribute :message}
                                 {::r/attribute :author}
                                 {::r/attribute :time, ::r/sortable true}]
-             ::dom/props       {:style {:grid-template-columns "min-content min-content auto min-content min-content"}}}
+             ::dom/props       {:style {:grid-template-columns "min-content auto min-content min-content"}}}
             nil nil
             (e/fn []
               (->> (r/Nav. (datafy repo) [:log :branch branch])
@@ -218,7 +218,12 @@
 
 (e/defn GitBrowser [& [git-repo-path git-commit-id]]
   (e/client
-    (dom/props {:class (ui/BodyStyle.)})
+    (dom/props {:style {:padding        "1rem"
+                        :padding-bottom "0.5rem"
+                        :margin         0
+                        :box-sizing     :border-box
+                        :overflow       :hidden
+                        :height         "100dvh"}})
     (dom/div (dom/props {:class (ui/LayoutStyle.)})
       (e/server
         (binding [repo-path (or git-repo-path ".")]

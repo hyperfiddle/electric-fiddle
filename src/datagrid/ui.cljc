@@ -2,6 +2,7 @@
   (:require
    #?(:cljs [goog.date.relative :refer [formatPast]])
    [clojure.string :as str]
+   [contrib.color]
    [heroicons.electric.v24.outline :as icons]
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-css :as css]
@@ -64,16 +65,6 @@
 (defn format-branch [str] (str/replace-first str #"refs/(heads|remotes)/" ""))
 
 (defn branch-color [branch-ref-name] (contrib.color/color branch-ref-name (/ 63 360) 55 65))
-
-(e/defn BodyStyle []
-  (e/client
-    (css/scoped-style
-      (css/rule {:padding        "1rem"
-                 :padding-bottom "0.5rem"
-                 :margin         0
-                 :box-sizing     :border-box
-                 :overflow       :hidden
-                 :height         "100dvh"}))))
 
 (e/defn LayoutStyle []
   (e/client
