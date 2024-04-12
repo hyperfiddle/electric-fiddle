@@ -54,15 +54,20 @@
     (-> {:status (git/git-status repo)
          :log `...}
       (with-meta
-        {`ccp/nav (fn [x k v]
-                    (case k
-                      :log
-                      (let [rev-walk (clj-jgit.internal/new-rev-walk repo)
-                            index    (git2/build-commit-map repo rev-walk) ; pre-compute for fast ref resolve
-                            branches (branch-list repo)]
-                        (map (fn [commit] (with-datafy repo branches (git2/commit-info repo rev-walk index (:id commit))))
-                          (git/git-log repo)))
-                      v))}))))
+        {`ccp/nav (fn rec [x k v & {:keys [branch] :or {branch "HEAD"}}]
+                    (cond
+                      (vector? k)
+                      (let [[command & args] k]
+                        (apply rec x command v args))
+                      (keyword? k)
+                      (case k
+                        :log
+                        (let [rev-walk (clj-jgit.internal/new-rev-walk repo)
+                              index    (git2/build-commit-map repo rev-walk) ; pre-compute for fast ref resolve
+                              branches (branch-list repo)]
+                          (map (fn [commit] (with-datafy repo branches (git2/commit-info repo rev-walk index (:id commit))))
+                            (git/git-log repo :until branch)))
+                        v)))}))))
 
 (defn short-commit-id [id] (apply str (take 7 id)))
 
@@ -195,5 +200,6 @@
 
 
 (comment
-  (git/git-checkout r :name "refs/heads/main")
+  ;; (git/git-checkout r :name "refs/heads/main")
+  (git/git-log r :until "HEAD" #_"refs/heads/main")
   )

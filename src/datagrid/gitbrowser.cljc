@@ -10,89 +10,23 @@
             [hyperfiddle.electric-css :as css]
             [hyperfiddle.electric-dom2 :as dom]
             [hyperfiddle.router :as router]
-            [heroicons.electric.v24.outline :as icons]
             [clojure.string :as str]
-            #?(:cljs [goog.date.relative :refer [formatPast]])))
+            [datagrid.ui :as ui]))
 
 (e/def repo-path ".")
 (e/def branches {})
 
-(e/defn ClosePanelButton []
-  (e/client
-    (dom/button
-      (dom/props {:title "Close panel"
-                  :class (css/scoped-style
-                           (css/rule {:width                      "1.25rem"
-                                      :height                     "1.25rem"
-                                      :position                   :absolute
-                                      :top                        0
-                                      :left                       0
-                                      :right                      0
-                                      :margin-left                :auto
-                                      :margin-right               :auto
-                                      :background-color           :white
-                                      :box-sizing                 :content-box
-                                      :padding                    "0.125rem 0.5rem"
-                                      :box-shadow                 "0 0.25rem .75rem lightgray"
-                                      :border                     "1px white solid"
-                                      :border-bottom-right-radius "50%"
-                                      :border-bottom-left-radius  "50%"
-                                      :z-index                    2})
-                           (css/rule ":hover" {:cursor :pointer
-                                               :transform "scale(1.05)"}))})
-      (icons/chevron-down)
-      (dom/on "click" (e/fn* []
-                        (router/Navigate!. ['.. `(GitBrowser ~repo-path)]))))))
-
-#?(:cljs
-   (defn format-time [inst]
-     (let [fmt (js/Intl.DateTimeFormat. js/undefined #js {:timeStyle "short"})]
-       (.format fmt inst))))
-
-#?(:cljs
-   (defn format-date [inst]
-     (let [fmt (js/Intl.DateTimeFormat. js/undefined #js {:dateStyle "short"})]
-       (.format fmt inst))))
-
-#?(:cljs
-   (defn format-relative [inst]
-     (let [now (js/Date.)]
-       (not-empty
-         (let [today?     (< (- now inst) (* 1000 60 60 24))
-               yesterday? (< (- now inst) (* 1000 60 60 24 2))]
-           (cond
-             today?     (formatPast (.getTime inst))
-             yesterday? (str (formatPast (.getTime inst)) " " (format-time inst))))))))
-
-#?(:cljs
-   (defn format-commit-time
-     ([inst] (format-commit-time true inst))
-     ([relative? inst]
-      (or (and relative? (format-relative inst))
-        (str (format-date inst) " " (format-time inst))))))
-
-(e/defn RenderCommitTime [props e a V]
-  (e/server
-    (let [inst (V.)]
-      (e/client
-        (dom/props {:title (format-commit-time false inst)})
-        (dom/text (format-commit-time inst))))))
-
 (e/defn CommitMetadata [commit]
   (e/client
     (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
-      (e/server
-        (binding [r/Render          r/SchemaRenderer
-                  r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
-                  r/renderers  (assoc r/renderers :time RenderCommitTime)]
-          (r/RenderForm. {::r/row-height-px 25
-                          ::r/max-height-px (* 25 7)
-                          ::r/keys [:id :author :merge :time :email :message]}
-            nil nil (e/fn* [] commit)))
-        #_(let [[head & details] (str/split-lines (:message commit))]
-          (e/client
-            (dom/pre (dom/props {:style {:font-size "1.125rem" :margin-top 0, :margin-left "0.5rem", :margin-bottom 0}}) (dom/text head))
-            (dom/pre (dom/props {:style {:margin-top 0, :margin-left "0.5rem"}}) (dom/text (str/join "\n" details)))))))))
+             (e/server
+               (binding [r/Render          r/SchemaRenderer
+                         r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
+                         r/renderers  (assoc r/renderers :time RenderCommitTime)]
+                 (r/RenderForm. {::r/row-height-px 25
+                                 ::r/max-height-px (* 25 7)
+                                 ::r/keys [:id :author :merge :time :email :message]}
+                   nil nil (e/fn* [] commit)))))))
 
 (e/defn RenderDiffLink [props e a V]
   (e/server
@@ -113,7 +47,6 @@
   (e/client
     (dom/div
       (dom/props {:style {:display :flex, :flex-direction :column, :grid-row 3, :position :sticky, :top 0 :height "auto"}})
-      #_(dom/h2  (dom/props {:style {:font-size "1.25rem", :font-weight 500, :margin "0 0 0 0.5rem"}}) (dom/text "Changes"))
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry {:path :string})
@@ -124,8 +57,7 @@
             {::r/header?       false
              ::r/row-height-px 25
              ::r/max-height-px "100%"
-             ::r/columns       [#_{::r/attribute :type ::r/title ""}
-                                {::r/attribute ::git/path, ::r/title ""}
+             ::r/columns       [{::r/attribute ::git/path, ::r/title ""}
                                 {::r/attribute ::git/additions, ::r/title ""}
                                 {::r/attribute ::git/deletions, ::r/title ""}]
              ::dom/props       {:style {:grid-template-columns "auto min-content min-content"
@@ -164,14 +96,13 @@
                             :grid-template-columns "auto 1fr"
                             :grid-area "details"}})
 
-        (ClosePanelButton.)
+        (ui/ClosePanelButton. ['.. `(GitBrowser ~repo-path)])
         (e/server
           (CommitMetadata. commit)
           (let [changed-files (::git/changes commit)]
             (ChangesList. changed-files)
             (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)]
               (DiffView. (get diffs (e/client (ffirst (get router/route :diff))) (get diffs (::git/path (first changed-files))))))))))))
-
 
 (e/defn RenderCommitId [props e a V]
   (e/server
@@ -181,15 +112,7 @@
           (dom/props {:style {:font-family "monospace"}})
           (dom/text commit-id))))))
 
-(e/defn RenderLine [props e a V]
-  (e/client
-    (dom/text "│")))
-
-(defn format-branch [str] (str/replace-first str #"refs/(heads|remotes)/" ""))
-
-(defn branch-color [branch-ref-name] (contrib.color/color branch-ref-name (/ 63 360) 55 65))
-
-(e/defn RenderMessage [props e a V]
+(e/defn RenderCommitMessage [props e a V]
   (e/server
     (let [[_ [_e _a V-1]] r/stack
           commit          (r/JoinValue. (V-1.))
@@ -199,7 +122,7 @@
         (dom/props {:style {:display :flex
                             :gap     "0.25rem"}})
         (when (seq branches)
-          (e/for [branch (map format-branch branches)]
+          (e/for [branch (map ui/format-branch branches)]
             (dom/span (dom/props {:style {:border           "2px white solid"
                                           :color            :white
                                           :border-radius    "7px"
@@ -207,12 +130,19 @@
                                           :box-sizing       :border-box
                                           :font-size        "0.75rem"
                                           :font-family      "monospace, sans serif"
-                                          :background-color (branch-color branch)}})
+                                          :background-color (ui/branch-color branch)}})
                       (dom/text branch))))
         (dom/span
           (dom/text message))))))
 
-(e/defn GitLog [repo]
+(e/defn RenderCommitTime [props e a V]
+  (e/server
+    (let [inst (V.)]
+      (e/client
+        (dom/props {:title (ui/format-commit-time false inst)})
+        (dom/text (ui/format-commit-time inst))))))
+
+(e/defn GitLog [repo branch]
   (e/client
     (RouterInput. {::dom/type        :search
                    ::dom/placeholder "Search for commits"
@@ -231,21 +161,18 @@
                                                       :time    inst?})
                   r/renderers       (assoc r/renderers :id RenderCommitId
                                       :time RenderCommitTime
-                                      ;; :line RenderLine
-                                      :message RenderMessage)]
+                                      :message RenderCommitMessage)]
           (r/RenderGrid.
             {::r/row-height-px 25
              ::r/max-height-px "100%"
              ::r/columns       [{::r/attribute :id}
-                                ;; {::r/attribute :line, ::r/title ""}
                                 {::r/attribute :message}
                                 {::r/attribute :author}
                                 {::r/attribute :time, ::r/sortable true}]
              ::dom/props       {:style {:grid-template-columns "min-content min-content auto min-content min-content"}}}
             nil nil
             (e/fn []
-              (->> (r/Nav. (datafy repo) :log)
-                ;; (take 1)
+              (->> (r/Nav. (datafy repo) [:log :branch branch])
                 (r/InputFilter. :message)
                 (r/ColumnSort. (fn [column]
                                  (case column ; Account for clj-jgit naming inconsistencies
@@ -263,10 +190,6 @@
     (map #(zipmap [::depth ::full-name ::name ::ref] %))
     (contrib.data/distinct-by (juxt ::depth ::name))))
 
-(comment
-  (sequence-refs-tree (git/branch-list git/r))
-  ())
-
 (e/defn RenderRefName [props e a V]
   (e/server
     (let [v (V.)
@@ -282,7 +205,6 @@
   (e/client
     (dom/div
       (dom/props {:style {:display :flex :flex-direction :column}})
-      ;; (dom/h2 (dom/props {:style {:margin 0}}) (dom/text "Branches"))
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry {::name :string})
@@ -292,55 +214,18 @@
              ::r/max-height-px "100%"
              ::r/columns       [{::r/attribute ::name}]}
             nil nil
-            (e/fn [] (sequence-refs-tree branches)))))
-      #_(dom/h2 (dom/props {:margin-bottom 0}) (dom/text "Remotes"))
-      #_(e/server
-          (binding [r/Render          r/SchemaRenderer
-                    r/schema-registry (schema/registry {::name :string})
-                    #_#_r/renderers   r/renderers]
-            (r/RenderGrid.
-              {::r/row-height-px 25
-               ::r/max-height-px "100%"
-               ::r/columns       [{::r/attribute ::name}]}
-              nil nil
-              (e/fn [] (map (fn [[name ref]] {::name name}) remotes))))))))
+            (e/fn [] (sequence-refs-tree branches))))))))
 
 (e/defn GitBrowser [& [git-repo-path git-commit-id]]
   (e/client
-    (dom/style {:padding        "1rem"
-                :padding-bottom "0.5rem"
-                :margin         0
-                :box-sizing     :border-box
-                :overflow       :hidden
-                :height         "100dvh"})
-    (dom/div
-      (dom/props {:style {;; FIXME make it a rule, conflict with "examples.css"
-                          :height             "100%"
-                          :display            :grid
-                          :gap                "0.75rem"
-                          :grid-auto-flow     :column
-                          :overflow           :hidden
-                          :grid-template-rows "min-content auto fit-content(50%)"
-                          }
-                  :class (css/scoped-style
-                           (css/rule {:height                "100%"
-                                      :display               :grid
-                                      :gap                   "0.75rem"
-                                      :grid-auto-flow        :column
-                                      :overflow              :hidden
-                                      :grid-template-areas   " \"search search\" \"refs log\" \"details details\" "
-                                      :grid-template-columns "auto 1fr"
-                                      :grid-template-rows    "min-content auto fit-content(50%)"})
-                           (css/rule ".virtual-scroll" {:flex 1, :max-height "100%"})
-                           (css/rule ".datagrid > tr > td, .datagrid > thead th" {:padding-left "0.5rem", :padding-right "0.5em", :border :none})
-                           (css/rule ".datagrid > tr:nth-child(odd) > td" {:background-color :whitesmoke})
-                           (css/rule ".d2h-file-list-wrapper" {:position :sticky, :top 0, :height :min-content}))})
+    (dom/props {:class (ui/BodyStyle.)})
+    (dom/div (dom/props {:class (ui/LayoutStyle.)})
       (e/server
         (binding [repo-path (or git-repo-path ".")]
           (let [repo (load-repo repo-path)]
             (binding [branches (git/branch-list repo)]
               (ListRefs. branches)
-              (GitLog. repo)
+              (GitLog. repo (e/client (or (ffirst (:branch router/route)) "HEAD")))
               (e/client
                 (when-let [commit-id (:details router/route)]
                   (e/server (CommitInfo. (datafy (git/get-commit repo (ffirst commit-id))))))))))))))
