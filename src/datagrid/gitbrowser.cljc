@@ -48,8 +48,7 @@
              ::r/columns       [{::r/attribute ::git/path, ::r/title ""}
                                 {::r/attribute ::git/additions, ::r/title ""}
                                 {::r/attribute ::git/deletions, ::r/title ""}]
-             ::dom/props       {:style {:grid-template-columns "auto min-content min-content"
-                                        :min-height            "25px"}}}
+             ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}}
             nil nil
             (e/fn [] changed-files)))))))
 
@@ -130,6 +129,7 @@
                             :overflow   :auto
                             :position   :relative
                             :height :auto
+                            :padding-bottom "2rem"
                             :display :grid
                             :grid-template-columns "auto 1fr"
                             :grid-area "details"}})
@@ -193,18 +193,22 @@
 (e/defn RenderRefName [props e a V]
   (e/server
     (let [v (V.)
-          {::keys [depth full-name ref]} (r/Parent.)]
+          {::keys [depth full-name ref]} (r/Parent.)
+          ref? (some? ref)]
       (e/client
         (dom/text (apply str (repeat (dec depth) "  ")))
-        (if (e/server (some? ref))
-          (router/link ['. :branch full-name]
-            (dom/text v))
+        (router/link ['. :branch full-name]
+          (dom/props {:disabled (not ref?)})
           (dom/text v))))))
 
 (e/defn ListRefs [branches]
   (e/client
     (dom/div
-      (dom/props {:style {:display :flex :flex-direction :column}})
+      ;; (dom/props {:style {:display :flex :flex-direction :column}})
+      (dom/props {:class (css/scoped-style
+                           (css/rule {:overflow :auto})
+                           (css/rule "a[disabled=true]"
+                             {:cursor :text, :color :initial, :text-decoration :none}))})
       (e/server
         (binding [r/Render          r/SchemaRenderer
                   r/schema-registry (schema/registry {::name :string})
@@ -216,7 +220,7 @@
             nil nil
             (e/fn [] (sequence-refs-tree branches))))))))
 
-(e/defn GitBrowser [& [git-repo-path git-commit-id]]
+(e/defn GitBrowser [& [git-repo-path]]
   (e/client
     (dom/props {:style {:padding        "1rem"
                         :padding-bottom "0.5rem"
@@ -224,7 +228,7 @@
                         :box-sizing     :border-box
                         :overflow       :hidden
                         :height         "100dvh"}})
-    (dom/div (dom/props {:class (ui/LayoutStyle.)})
+    (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})
       (e/server
         (binding [repo-path (or git-repo-path ".")]
           (let [repo (load-repo repo-path)]

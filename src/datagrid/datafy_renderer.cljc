@@ -209,7 +209,8 @@
                     (dom/props props)
                     (dom/element :style (dom/text " @keyframes dgShimmerAnimation {0% {background-position: -150% 0;} 100% {background-position: 250% 0;}}"))
                     (dom/props {:class (css/scoped-style
-                                         (css/rule "> thead > tr" {:display :none})
+                                         (when-not header?
+                                           (css/rule "> thead > tr" {:display :none}))
                                          (when loading?
                                            (css/rule {:height "100%"})
                                            (css/rule {:background-image  "linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%), repeating-linear-gradient(whitesmoke, whitesmoke 25px, transparent 25px, transparent 27px)"

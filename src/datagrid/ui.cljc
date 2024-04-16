@@ -66,17 +66,19 @@
 
 (defn branch-color [branch-ref-name] (contrib.color/color branch-ref-name (/ 63 360) 55 65))
 
-(e/defn LayoutStyle []
+(e/defn LayoutStyle [show-detail?]
   (e/client
     (css/scoped-style
-      (css/rule {:height                "100%"
-                 :display               :grid
-                 :gap                   "0.75rem"
-                 :grid-auto-flow        :column
-                 :overflow              :hidden
-                 :grid-template-areas   " \"search search\" \"refs log\" \"details details\" "
-                 :grid-template-columns "auto 1fr"
-                 :grid-template-rows    "min-content auto fit-content(50%)"})
+      (css/rule {:height         "100%"
+                 :display        :grid
+                 :gap            "0.75rem"
+                 :grid-auto-flow :column
+                 :overflow       :hidden
+                 :grid-template  (css/grid-template [[[:search :search]   :min-content]
+                                                     [[:refs    :log]     "1fr"]
+                                                     (when show-detail?
+                                                       [[:details :details] "40%"])]
+                                   [:auto "1fr"])})
       (css/rule ".virtual-scroll" {:flex 1, :max-height "100%"})
       (css/rule ".datagrid > tr > td, .datagrid > thead th" {:padding-left "0.5rem", :padding-right "0.5em", :border :none})
       (css/rule ".datagrid > tr:nth-child(odd) > td" {:background-color :whitesmoke})
