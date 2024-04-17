@@ -18,50 +18,29 @@
 (e/def branches {})
 
 ;; TODO merge
-;; {::git/path      :string
-;;  ::git/additions :number
-;;  ::git/deletions :number
-;;  ::git/changes   [:sequential ::git/change]
-;;  ::git/change    [:map [::git/path ::git/additions ::git/deletions]]}
-
-;; TODO merge
-;; (css/rule ".datafy_datafy-git/changes" {:display :flex, :flex-direction :column, :grid-row 3, :position :sticky, :top 0 :height "auto"})
-;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/additions" {:color :green})
-;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/additions:before" {:content "+"})
-;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions" {:color :red})
-;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions:before" {:content "-"})
-
-(e/defn ChangesList [!commit]
-  (hfql
-    {(props (::git/changes !commit)
-       {::r/header?       false
-        ::r/row-height-px 25
-        ::r/max-height-px "100%"
-        ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
-     [(props ::git/path {:link [:diff %]})
-      ::git/additions
-      ::git/deletions]}))
-
-;; TODO merge
 ;; (css/rule ".diff-view" {:height :fit-content, :overflow-x :hidden, :grid-column 2, :grid-row 3})
 ;; (css/rule ".diff-view .d2h-file-header" {:display :none})
 
-(e/defn DiffView [diff]
-  (e/client
-    (dom/div (dom/props {:class "diff-view"})
-      (->> (js-obj
-             "drawFileList"           false
-             "fileListToggle"         false
-             "fileListStartVisible"   false
-             "fileContentToggle"      false
-             "matching"               "words" ; "lines"
-             "outputFormat"           "side-by-side" ; "line-by-line"
-             "synchronisedScroll"     true
-             "stickyFileHeaders"      false
-             "highlight"              true
-             "renderNothingWhenEmpty" false)
-        (js/Diff2HtmlUI. dom/node diff)
-        (.draw)))))
+(e/defn DiffView [commit]
+  (e/server
+    (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default) ; move into datafy
+          diff (get diffs (e/client (ffirst (get router/route :diff)))
+                 (get diffs (::git/path (first (::git/changes commit)))))]
+      (e/client
+        (dom/div (dom/props {:class "diff-view"})
+          (->> (js-obj
+                 "drawFileList"           false
+                 "fileListToggle"         false
+                 "fileListStartVisible"   false
+                 "fileContentToggle"      false
+                 "matching"               "words" ; "lines"
+                 "outputFormat"           "side-by-side" ; "line-by-line"
+                 "synchronisedScroll"     true
+                 "stickyFileHeaders"      false
+                 "highlight"              true
+                 "renderNothingWhenEmpty" false)
+            (js/Diff2HtmlUI. dom/node diff)
+            (.draw)))))))
 
 (declare format-relative-time format-absolute-time)
 
@@ -70,23 +49,7 @@
   (e/client
     (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
 
-      (hfql {(props !commit
-               {::r/row-height-px 25
-                ::r/max-height-px (* 25 7)})
-             [:id
-              :author
-              :merge
-              (props :time {:render  (format-relative-time %)
-                            :tooltip (format-absolute-time %)})
-              :email
-              :message]})
-
-      (e/server
-        (binding [r/Render          r/SchemaRenderer
-                  r/schema-registry (schema/registry)
-                  r/renderers  (assoc r/renderers :time RenderCommitTime)]
-          (r/RenderForm. {::r/keys [:id :author :merge :time :email :message]}
-            nil nil (e/fn* [] commit)))))))
+      (hfql ))))
 
 ;; TODO merge
 ;; (css/rule ".commit-info" {:border-top            "2px lightgray solid"
@@ -176,16 +139,20 @@
 
 (defn branch-list [repo] (sequence-refs-tree (git/branch-list repo)))
 
-;; TODO merge
 ;; (css/rule ".branch-list" {:overflow :auto})
 ;; (css/rule ".branch-list a[disabled=true]" {:cursor :text, :color :initial, :text-decoration :none})
+;; (css/rule ".datafy_datafy-git/changes" {:display :flex, :flex-direction :column, :grid-row 3, :position :sticky, :top 0 :height "auto"})
+;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/additions" {:color :green})
+;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/additions:before" {:content "+"})
+;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions" {:color :red})
+;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions:before" {:content "-"})
 
-(e/defn ListRefs [!repo]
-  (hfql
-    {(props (branch-list !repo)
-       {::r/row-height-px 25
-        ::r/max-height-px "100%"})
-     [(RenderRefName. %)]}))
+;; {::git/path      :string
+;;  ::git/additions :number
+;;  ::git/deletions :number
+;;  ::git/changes   [:sequential ::git/change]
+;;  ::git/change    [:map [::git/path ::git/additions ::git/deletions]]}
+
 
 (e/defn GitBrowser [& [git-repo-path]]
   (e/client
@@ -201,14 +168,31 @@
               branch (e/client (or (ffirst (:branch router/route)) "HEAD"))]
 
           (hfql
-            {(load-repo (or git-repo-path "."))
-             [(ListRefs. %)
-              (GitLog. % branch)
-              {(git/get-commit % commit-id)
-               [(CommitMetadata. %)
-                (ChangesList. %)
-                (DiffView. #_(::git/diff commit)
-                  (let [commit %
-                        diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
-                    (get diffs (e/client (ffirst (get router/route :diff)))
-                      (get diffs (::git/path (first (::git/changes commit)))))))]}]}))))))
+            {(props (load-repo (or git-repo-path ".")) {:as repo})
+             [{(props (branch-list repo) {::r/row-height-px 25
+                                          ::r/max-height-px "100%"})
+               [(RenderRefName. %)]}
+
+              (GitLog. repo branch)
+
+              {(props (git/get-commit repo commit-id) {:as commit
+                                                       ::r/row-height-px 25
+                                                       ::r/max-height-px (* 25 7)
+                                                       ; todo span two columns
+                                                       })
+               [:id
+                :author
+                :merge
+                (props :time {:render (format-absolute-time time)})
+                :email
+                :message
+
+                {(props (::git/changes commit) {::r/header?       false
+                                                ::r/row-height-px 25
+                                                ::r/max-height-px "100%"
+                                                ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
+                 [(props ::git/path {:link [:diff path]})
+                  ::git/additions
+                  ::git/deletions]}
+
+                (DiffView. commit)]}]}))))))
