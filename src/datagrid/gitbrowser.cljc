@@ -31,9 +31,9 @@
 ;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions" {:color :red})
 ;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions:before" {:content "-"})
 
-(e/defn ChangesList [repo commit-id]
+(e/defn ChangesList [!commit]
   (hfql
-    {(props (::git/changes (git/get-commit (load-repo repo) commit-id))
+    {(props (::git/changes !commit)
        {::r/header?       false
         ::r/row-height-px 25
         ::r/max-height-px "100%"
@@ -66,11 +66,11 @@
 (declare format-relative-time format-absolute-time)
 
 #_{:id :string, :author :string, :time inst?, :email :string}
-(e/defn CommitMetadata [!repo commit-id]
+(e/defn CommitMetadata [!commit]
   (e/client
     (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
 
-      (hfql {(props (git/get-commit !repo commit-id)
+      (hfql {(props !commit
                {::r/row-height-px 25
                 ::r/max-height-px (* 25 7)})
              [:id
@@ -197,16 +197,18 @@
                         :height         "100dvh"}}) ; electric-fiddle integration, doesn't count
     (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})
       (e/server
-        (let [commit-id (ffirst (e/client (:details router/route)))]
+        (let [commit-id (e/client (ffirst (:details router/route)))
+              branch (e/client (or (ffirst (:branch router/route)) "HEAD"))]
 
           (hfql
             {(load-repo (or git-repo-path "."))
              [(ListRefs. %)
-              (GitLog. % (e/client (or (ffirst (:branch router/route)) "HEAD")))
-              (CommitMetadata. % commit-id)
-              (ChangesList. % commit-id)
-              (DiffView. #_(::git/diff commit)
-                (let [commit (datafy (git/get-commit % commit-id))
-                      diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
-                  (get diffs (e/client (ffirst (get router/route :diff)))
-                    (get diffs (::git/path (first (::git/changes commit)))))))]}))))))
+              (GitLog. % branch)
+              {(git/get-commit % commit-id)
+               [(CommitMetadata. %)
+                (ChangesList. %)
+                (DiffView. #_(::git/diff commit)
+                  (let [commit %
+                        diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
+                    (get diffs (e/client (ffirst (get router/route :diff)))
+                      (get diffs (::git/path (first (::git/changes commit)))))))]}]}))))))
