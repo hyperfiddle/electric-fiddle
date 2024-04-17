@@ -11,11 +11,90 @@
             [datagrid.ui :as ui]))
 
 (defmacro hfql [& body])
-(declare format-relative-time format-absolute-time)
+(declare format-relative-time format-absolute-time DiffView)
+
+(defn commit->diffs [commit] (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default))
+
+(defn sequence-refs-tree [branches]
+  (->> branches
+    (sort-by key)
+    (reduce (fn [r [k v]]
+              (let [segments (->> (str/split k #"/")
+                               (map vector (range) (repeat k)))]
+                (reduce conj r (concat (butlast segments) [(conj (last segments) v)]))))
+      [])
+    (map #(zipmap [::depth ::full-name ::name ::ref] %))
+    (contrib.data/distinct-by (juxt ::depth ::name))))
+
+(defn branch-list [repo] (sequence-refs-tree (git/branch-list repo)))
+
+(e/defn Git-log [repo branch needle]
+  (->> (hf/Nav. (datafy repo) [:log :branch branch])
+    (filter #(str/includes? (keyfn %) needle) collection)))
+
+(defn format-ref-link [{::keys [depth name full-name ref]}]
+  (str (apply str (repeat (dec depth) "  ")) name))
+
+(e/defn RenderCommitMessage [^JCommit commit]
+  (e/server
+    (let [{:keys [::git/branches :message]} (datafy commit)] ; two columns, not one.
+      (e/client
+        (e/for [branch branches]
+          (let [branch (ui/format-branch branch)]
+            (dom/span (dom/props {:class "branch-tag", :style {:background-color (ui/branch-color branch)}})
+              (dom/text branch))))
+        (dom/span
+          (dom/text message))))))
+
+(s/fdef GitBrowser :args (s/cat :repo-path string? :branch string? :commit is-commit?))
+(e/defn GitBrowser [& [repo-path branch commit]]
+  (e/server
+    (let [branch (or branch "HEAD")]
+      (hfql
+        {(props (load-repo (or repo-path ".")) {:as repo})
+         [{(props (branch-list repo) {::r/row-height-px 25 ::r/max-height-px "100%"})
+           [(props :name {:link (if (:ref %) `(GitBrowser ~repo-path ~(:full-name %) ~commit))
+                          :render (format-ref-link %)})]}
+
+          {(props (Git-log. repo branch (props . {:placeholder "Search for commits"})) {::r/row-height-px 25
+                                                                                        ::r/max-height-px "100%"})
+           [(props :id {:link `(GitBrowser ~repo-path ~branch ~(git/short-commit-id id)) #_#_:style {:font-family "monospace"}})
+            (props (RenderCommitMessage. %) {:label "message"})
+            :author
+            (props :time {:sortable true,
+                          :render  (format-relative-time time)
+                          :tooltip (format-absolute-time time)})]}
+
+          {(props commit #_(git/get-commit repo commit-id) {:as commit ::r/row-height-px 25 ::r/max-height-px (* 25 7)}) ; todo span two columns
+           [:id
+            :author
+            :merge
+            (props :time {:render (format-absolute-time time)})
+            :email
+            :message]}
+
+          {(props (::git/changes commit) {::r/header?       false
+                                          ::r/row-height-px 25
+                                          ::r/max-height-px "100%"
+                                          ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
+           [(props ::git/path {:link [:diff path]})
+            ::git/additions
+            ::git/deletions]}
+
+          (DiffView. commit)]}))))
+
+#_{:id :string, :author :string, :time inst?, :email :string} ; commit metadata
+;; {::git/path      :string
+;;  ::git/additions :number
+;;  ::git/deletions :number
+;;  ::git/changes   [:sequential ::git/change]
+;;  ::git/change    [:map [::git/path ::git/additions ::git/deletions]]}
+;; {:id      :string :author  :string :message :string :time    inst?}
+;; [:=> [:cat :string :string :string] [:sequential :commit]] ; git log
 
 (e/defn DiffView [commit]
   (e/server
-    (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default) ; move into datafy
+    (let [diffs (commit->diffs commit) ; move into datafy
           diff (get diffs (e/client (ffirst (get router/route :diff)))
                  (get diffs (::git/path (first (::git/changes commit)))))]
       (e/client
@@ -36,42 +115,16 @@
             (js/Diff2HtmlUI. dom/node diff)
             (.draw)))))))
 
-(defn needle-matches [keyfn needle collection] (filter #(str/includes? (keyfn %) needle) collection))
-
-(e/defn Git-log [repo branch needle]
-  (->> (hf/Nav. (datafy repo) [:log :branch branch])
-       (needle-match :message needle)))
-
-(e/defn RenderCommitMessage [^JCommit commit]
-  (e/server
-    (let [{:keys [::git/branches :message]} (datafy commit)] ; two columns, not one.
-      (e/client
-        (e/for [branch branches]
-          (let [branch (ui/format-branch branch)]
-            (dom/span (dom/props {:class "branch-tag", :style {:background-color (ui/branch-color branch)}})
-              (dom/text branch))))
-        (dom/span
-          (dom/text message))))))
-
-(defn sequence-refs-tree [branches]
-  (->> branches
-    (sort-by key)
-    (reduce (fn [r [k v]]
-              (let [segments (->> (str/split k #"/")
-                               (map vector (range) (repeat k)))]
-                (reduce conj r (concat (butlast segments) [(conj (last segments) v)]))))
-      [])
-    (map #(zipmap [::depth ::full-name ::name ::ref] %))
-    (contrib.data/distinct-by (juxt ::depth ::name))))
-
-(e/defn RenderRefName [{::keys [depth name full-name ref]}]
+(e/defn GitBrowserEntryWrap [& args]
   (e/client
-    (dom/text (apply str (repeat (dec depth) "  ")))
-    (router/link ['. :branch full-name]
-      #_(dom/props {:disabled (e/server (not (some? ref)))})
-      (dom/text name))))
-
-(defn branch-list [repo] (sequence-refs-tree (git/branch-list repo)))
+    (dom/props {:style {:padding        "1rem"
+                        :padding-bottom "0.5rem"
+                        :margin         0
+                        :box-sizing     :border-box
+                        :overflow       :hidden
+                        :height         "100dvh"}}) ; electric-fiddle integration, doesn't count
+    (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})))
+  (e/server (e/apply GitBrowser args)))
 
 ;; (css/rule ".branch-list" {:overflow :auto})
 ;; (css/rule ".branch-list a[disabled=true]" {:cursor :text, :color :initial, :text-decoration :none})
@@ -102,63 +155,3 @@
 ;;                       :position              :relative
 ;;                       :overflow              :auto
 ;;                       :max-height            "100%"})
-
-
-#_{:id :string, :author :string, :time inst?, :email :string} ; commit metadata
-;; {::git/path      :string
-;;  ::git/additions :number
-;;  ::git/deletions :number
-;;  ::git/changes   [:sequential ::git/change]
-;;  ::git/change    [:map [::git/path ::git/additions ::git/deletions]]}
-;; {:id      :string :author  :string :message :string :time    inst?}
-;; [:=> [:cat :string :string :string] [:sequential :commit]] ; git log
-
-(defn format-ref-link [{::keys [depth name full-name ref]}]
-  (str (apply str (repeat (dec depth) "  ")) name))
-
-(e/defn GitBrowser [& [git-repo-path branch commit-id]]
-  (e/server
-    (let [branch (or branch "HEAD")]
-      (hfql
-        {(props (load-repo (or git-repo-path ".")) {:as repo})
-         [{(props (branch-list repo) {::r/row-height-px 25 ::r/max-height-px "100%"})
-           [(props :name {:link `(GitBrowser ~git-repo-path ~(:full-name %) ~commit-id)
-                          :render (format-ref-link %)})]}
-
-          {(props (Git-log. repo branch (props . {:placeholder "Search for commits"})) {::r/row-height-px 25
-                                                                                        ::r/max-height-px "100%"})
-           [(props :id {:link `(GitBrowser ~git-repo-path ~branch ~(git/short-commit-id id)) #_#_:style {:font-family "monospace"}})
-            (props (RenderCommitMessage. %) {:label "message"})
-            :author
-            (props :time {:sortable true,
-                          :render  (format-relative-time time)
-                          :tooltip (format-absolute-time time)})]}
-
-          {(props (git/get-commit repo commit-id) {:as commit ::r/row-height-px 25 ::r/max-height-px (* 25 7)}) ; todo span two columns
-           [:id
-            :author
-            :merge
-            (props :time {:render (format-absolute-time time)})
-            :email
-            :message]}
-
-          {(props (::git/changes commit) {::r/header?       false
-                                          ::r/row-height-px 25
-                                          ::r/max-height-px "100%"
-                                          ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
-           [(props ::git/path {:link [:diff path]})
-            ::git/additions
-            ::git/deletions]}
-
-          (DiffView. commit)]}))))
-
-(e/defn GitBrowserEntryWrap [& args]
-  (e/client
-    (dom/props {:style {:padding        "1rem"
-                        :padding-bottom "0.5rem"
-                        :margin         0
-                        :box-sizing     :border-box
-                        :overflow       :hidden
-                        :height         "100dvh"}}) ; electric-fiddle integration, doesn't count
-    (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})))
-  (e/server (e/apply GitBrowser args)))
