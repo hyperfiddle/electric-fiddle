@@ -66,11 +66,11 @@
 (declare format-relative-time format-absolute-time)
 
 #_{:id :string, :author :string, :time inst?, :email :string}
-(e/defn CommitMetadata [repo commit-id]
+(e/defn CommitMetadata [!repo commit-id]
   (e/client
     (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
 
-      (hfql {(props (git/get-commit (load-repo repo) commit-id)
+      (hfql {(props (git/get-commit !repo commit-id)
                {::r/row-height-px 25
                 ::r/max-height-px (* 25 7)})
              [:id
@@ -143,9 +143,9 @@
         (dom/span
           (dom/text message))))))
 
-(e/defn GitLog [repo branch]
+(e/defn GitLog [!repo branch]
   (dom/div (dom/props {:class "log-wrapper"})
-    (hfql {(props (Git-log. (load-repo repo) branch (props . {:placeholder "Search for commits"}))
+    (hfql {(props (Git-log. !repo branch (props . {:placeholder "Search for commits"}))
              {::r/row-height-px 25
               ::r/max-height-px "100%"})
            [(props :id {:link  [:details (git/short-commit-id %)]
@@ -180,9 +180,9 @@
 ;; (css/rule ".branch-list" {:overflow :auto})
 ;; (css/rule ".branch-list a[disabled=true]" {:cursor :text, :color :initial, :text-decoration :none})
 
-(e/defn ListRefs [repo]
+(e/defn ListRefs [!repo]
   (hfql
-    {(props (branch-list (load-repo repo))
+    {(props (branch-list !repo)
        {::r/row-height-px 25
         ::r/max-height-px "100%"})
      [(RenderRefName. %)]}))
@@ -197,14 +197,16 @@
                         :height         "100dvh"}}) ; electric-fiddle integration, doesn't count
     (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})
       (e/server
-        (let [repo (or git-repo-path ".")
-              commit-id (ffirst (e/client (:details router/route)))]
-          (ListRefs. repo)
-          (GitLog. repo (e/client (or (ffirst (:branch router/route)) "HEAD")))
-          (CommitMetadata. repo commit-id)
-          (ChangesList. repo commit-id)
-          (DiffView. #_(::git/diff commit)
-            (let [commit (datafy (git/get-commit (load-repo repo) commit-id))
-                  diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
-              (get diffs (e/client (ffirst (get router/route :diff)))
-                (get diffs (::git/path (first (::git/changes commit))))))))))))
+        (let [commit-id (ffirst (e/client (:details router/route)))]
+
+          (hfql
+            {(load-repo (or git-repo-path "."))
+             [(ListRefs. %)
+              (GitLog. % (e/client (or (ffirst (:branch router/route)) "HEAD")))
+              (CommitMetadata. % commit-id)
+              (ChangesList. % commit-id)
+              (DiffView. #_(::git/diff commit)
+                (let [commit (datafy (git/get-commit % commit-id))
+                      diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
+                  (get diffs (e/client (ffirst (get router/route :diff)))
+                    (get diffs (::git/path (first (::git/changes commit)))))))]}))))))
