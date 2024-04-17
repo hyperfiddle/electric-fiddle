@@ -68,7 +68,7 @@
   (e/client
     (dom/text (apply str (repeat (dec depth) "  ")))
     (router/link ['. :branch full-name]
-      (dom/props {:disabled (e/server (not (some? ref)))})
+      #_(dom/props {:disabled (e/server (not (some? ref)))})
       (dom/text name))))
 
 (defn branch-list [repo] (sequence-refs-tree (git/branch-list repo)))
@@ -113,8 +113,46 @@
 ;; {:id      :string :author  :string :message :string :time    inst?}
 ;; [:=> [:cat :string :string :string] [:sequential :commit]] ; git log
 
+(defn format-ref-link [{::keys [depth name full-name ref]}]
+  (str (apply str (repeat (dec depth) "  ")) name))
 
-(e/defn GitBrowser [& [git-repo-path]]
+(e/defn GitBrowser [& [git-repo-path branch commit-id]]
+  (e/server
+    (let [branch (or branch "HEAD")]
+      (hfql
+        {(props (load-repo (or git-repo-path ".")) {:as repo})
+         [{(props (branch-list repo) {::r/row-height-px 25 ::r/max-height-px "100%"})
+           [(props :name {:link `(GitBrowser ~git-repo-path ~(:full-name %) ~commit-id)
+                          :render (format-ref-link %)})]}
+
+          {(props (Git-log. repo branch (props . {:placeholder "Search for commits"})) {::r/row-height-px 25
+                                                                                        ::r/max-height-px "100%"})
+           [(props :id {:link `(GitBrowser ~git-repo-path ~branch ~(git/short-commit-id id)) #_#_:style {:font-family "monospace"}})
+            (props (RenderCommitMessage. %) {:label "message"})
+            :author
+            (props :time {:sortable true,
+                          :render  (format-relative-time time)
+                          :tooltip (format-absolute-time time)})]}
+
+          {(props (git/get-commit repo commit-id) {:as commit ::r/row-height-px 25 ::r/max-height-px (* 25 7)}) ; todo span two columns
+           [:id
+            :author
+            :merge
+            (props :time {:render (format-absolute-time time)})
+            :email
+            :message]}
+
+          {(props (::git/changes commit) {::r/header?       false
+                                          ::r/row-height-px 25
+                                          ::r/max-height-px "100%"
+                                          ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
+           [(props ::git/path {:link [:diff path]})
+            ::git/additions
+            ::git/deletions]}
+
+          (DiffView. commit)]}))))
+
+(e/defn GitBrowserEntryWrap [& args]
   (e/client
     (dom/props {:style {:padding        "1rem"
                         :padding-bottom "0.5rem"
@@ -122,40 +160,5 @@
                         :box-sizing     :border-box
                         :overflow       :hidden
                         :height         "100dvh"}}) ; electric-fiddle integration, doesn't count
-    (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})
-      (e/server
-        (let [commit-id (e/client (ffirst (:details router/route)))
-              branch (e/client (or (ffirst (:branch router/route)) "HEAD"))]
-
-          (hfql
-            {(props (load-repo (or git-repo-path ".")) {:as repo})
-             [{(props (branch-list repo) {::r/row-height-px 25 ::r/max-height-px "100%"})
-               [(RenderRefName. %)]}
-
-              {(props (Git-log. repo branch (props . {:placeholder "Search for commits"}))
-                 {::r/row-height-px 25
-                  ::r/max-height-px "100%"})
-               [(props :id {:link  [:details (git/short-commit-id id)] #_#_:style {:font-family "monospace"}})
-                (props (RenderCommitMessage. %) {:label "message"})
-                :author
-                (props :time {:sortable true,
-                              :render  (format-relative-time time)
-                              :tooltip (format-absolute-time time)})]}
-
-              {(props (git/get-commit repo commit-id) {:as commit ::r/row-height-px 25 ::r/max-height-px (* 25 7)}) ; todo span two columns
-               [:id
-                :author
-                :merge
-                (props :time {:render (format-absolute-time time)})
-                :email
-                :message]}
-
-              {(props (::git/changes commit) {::r/header?       false
-                                              ::r/row-height-px 25
-                                              ::r/max-height-px "100%"
-                                              ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
-               [(props ::git/path {:link [:diff path]})
-                ::git/additions
-                ::git/deletions]}
-
-              (DiffView. commit)]}))))))
+    (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})))
+  (e/server (e/apply GitBrowser args)))
