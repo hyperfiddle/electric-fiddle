@@ -15,7 +15,6 @@
 
 (defmacro hfql [& body])
 
-(e/def repo-path ".")
 (e/def branches {})
 
 ;; TODO merge
@@ -32,9 +31,9 @@
 ;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions" {:color :red})
 ;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions:before" {:content "-"})
 
-(e/defn ChangesList [commit]
+(e/defn ChangesList [repo commit-id]
   (hfql
-    {(props (::git/changes commit)
+    {(props (::git/changes (git/get-commit (load-repo repo) commit-id))
        {::r/header?       false
         ::r/row-height-px 25
         ::r/max-height-px "100%"
@@ -50,37 +49,44 @@
 (e/defn DiffView [diff]
   (e/client
     (dom/div (dom/props {:class "diff-view"})
-      (let [config (js-obj "drawFileList"           false
-                           "fileListToggle"         false
-                           "fileListStartVisible"   false
-                           "fileContentToggle"      false
-                           "matching"               "words" ; "lines"
-                           "outputFormat"           "side-by-side" ; "line-by-line"
-                           "synchronisedScroll"     true
-                           "stickyFileHeaders"      false
-                           "highlight"              true
-                           "renderNothingWhenEmpty" false )
-            ui     ^js (js/Diff2HtmlUI. dom/node diff config)]
-        (.draw ui)))))
+      (->> (js-obj
+             "drawFileList"           false
+             "fileListToggle"         false
+             "fileListStartVisible"   false
+             "fileContentToggle"      false
+             "matching"               "words" ; "lines"
+             "outputFormat"           "side-by-side" ; "line-by-line"
+             "synchronisedScroll"     true
+             "stickyFileHeaders"      false
+             "highlight"              true
+             "renderNothingWhenEmpty" false)
+        (js/Diff2HtmlUI. dom/node diff)
+        (.draw)))))
 
 (declare format-relative-time format-absolute-time)
 
-;; FIXME refactor to hfql
-(e/defn CommitMetadata [commit]
+#_{:id :string, :author :string, :time inst?, :email :string}
+(e/defn CommitMetadata [repo commit-id]
   (e/client
     (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
+
+      (hfql {(props (git/get-commit (load-repo repo) commit-id)
+               {::r/row-height-px 25
+                ::r/max-height-px (* 25 7)})
+             [:id
+              :author
+              :merge
+              (props :time {:render  (format-relative-time %)
+                            :tooltip (format-absolute-time %)})
+              :email
+              :message]})
+
       (e/server
         (binding [r/Render          r/SchemaRenderer
-                  r/schema-registry (schema/registry {:id :string, :author :string, :time inst?, :email :string})
+                  r/schema-registry (schema/registry)
                   r/renderers  (assoc r/renderers :time RenderCommitTime)]
-          (r/RenderForm. {::r/row-height-px 25
-                          ::r/max-height-px (* 25 7)
-                          ::r/keys [:id :author :merge :time :email :message]}
+          (r/RenderForm. {::r/keys [:id :author :merge :time :email :message]}
             nil nil (e/fn* [] commit)))))))
-
-(comment
-  (props :time {:render  (format-relative-time %)
-                :tooltip (format-absolute-time %)}))
 
 ;; TODO merge
 ;; (css/rule ".commit-info" {:border-top            "2px lightgray solid"
@@ -93,24 +99,13 @@
 ;;                           :grid-area             "details"})
 
 (e/defn CommitInfo  [commit]
-  (e/server
-    (e/client
-      (dom/div
-        (dom/props {:class "commit-info"})
-        (ui/ClosePanelButton. ['.. `(GitBrowser ~repo-path)])
-        (e/server
-          (CommitMetadata. commit)
-          (ChangesList. commit)
-          (DiffView. #_(::git/diff commit)
-            (let [diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
-              (get diffs (e/client (ffirst (get router/route :diff)))
-                (get diffs (::git/path (first (::git/changes commit))))))))))))
+  )
 
 (defn needle-matches [keyfn needle collection] (filter #(str/includes? (keyfn %) needle) collection))
 
 ;; TODO merge
 ;; [:=> [:cat :string :string :string] [:sequential :commit]]
-(defn Git-log [repo branch needle]
+(e/defn Git-log [repo branch needle]
   (->> (hf/Nav. (datafy repo) [:log :branch branch])
        (needle-match :message needle)))
 
@@ -137,28 +132,25 @@
 
 
 ;; FIXME refactor to hfql renderer
-(e/defn RenderCommitMessage [props e a V]
+(e/defn RenderCommitMessage [^JCommit commit]
   (e/server
-    (let [[_ [_e _a V-1]] r/stack
-          commit          (r/JoinValue. (V-1.))
-          branches        (::git/branches commit)
-          message         (V.)]
+    (let [{:keys [::git/branches :message]} (datafy commit)]
       (e/client
-        (when (seq branches)
-          (e/for [branch (map ui/format-branch branches)]
+        (e/for [branch branches]
+          (let [branch (ui/format-branch branch)]
             (dom/span (dom/props {:class "branch-tag", :style {:background-color (ui/branch-color branch)}})
-                      (dom/text branch))))
+              (dom/text branch))))
         (dom/span
           (dom/text message))))))
 
 (e/defn GitLog [repo branch]
   (dom/div (dom/props {:class "log-wrapper"})
-    (hfql {(props (Git-log. repo branch (props . {:placeholder "Search for commits"}))
+    (hfql {(props (Git-log. (load-repo repo) branch (props . {:placeholder "Search for commits"}))
              {::r/row-height-px 25
               ::r/max-height-px "100%"})
            [(props :id {:link  [:details (git/short-commit-id %)]
                         :style {:font-family "monospace"}})
-            (props :message {:render (RenderCommitMessage. ?)})
+            (props :message {:render (RenderCommitMessage. %%)})
             :author
             (props :time {:sortable true,
                           :render  (format-relative-time %)
@@ -190,7 +182,7 @@
 
 (e/defn ListRefs [repo]
   (hfql
-    {(props (branch-list repo)
+    {(props (branch-list (load-repo repo))
        {::r/row-height-px 25
         ::r/max-height-px "100%"})
      [(RenderRefName. %)]}))
@@ -202,15 +194,17 @@
                         :margin         0
                         :box-sizing     :border-box
                         :overflow       :hidden
-                        :height         "100dvh"}})
+                        :height         "100dvh"}}) ; electric-fiddle integration, doesn't count
     (dom/div (dom/props {:class (ui/LayoutStyle. (contains? router/route :details))})
       (e/server
-        (binding [repo-path (or git-repo-path ".")]
-          (let [repo (load-repo repo-path)]
-            (binding [branches (git/branch-list repo)]
-              (ListRefs. branches)
-              (GitLog. repo (e/client (or (ffirst (:branch router/route)) "HEAD")))
-              (e/client
-                (when-let [commit-id (:details router/route)]
-                  (e/server (CommitInfo. (datafy (git/get-commit repo (ffirst commit-id))))))))))))))
-
+        (let [repo (or git-repo-path ".")
+              commit-id (ffirst (e/client (:details router/route)))]
+          (ListRefs. repo)
+          (GitLog. repo (e/client (or (ffirst (:branch router/route)) "HEAD")))
+          (CommitMetadata. repo commit-id)
+          (ChangesList. repo commit-id)
+          (DiffView. #_(::git/diff commit)
+            (let [commit (datafy (git/get-commit (load-repo repo) commit-id))
+                  diffs (git/diffs (:repo commit) (git/parent-commit (:raw commit)) (:raw commit) ::git/default)] ; move into datafy
+              (get diffs (e/client (ffirst (get router/route :diff)))
+                (get diffs (::git/path (first (::git/changes commit))))))))))))
