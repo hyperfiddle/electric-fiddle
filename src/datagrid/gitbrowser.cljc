@@ -1,25 +1,17 @@
 (ns datagrid.gitbrowser
   (:require #?(:clj [clj-jgit.porcelain :refer [load-repo]])
-            [contrib.color]
             [clojure.datafy :refer [datafy]]
             [datagrid.datafy-git #?(:clj :as, :cljs :as-alias) git]
             [datagrid.datafy-renderer :as r]
-            [datagrid.file-explorer :refer [RouterInput]]
             [datagrid.schema :as schema]
             [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-css :as css]
             [hyperfiddle.electric-dom2 :as dom]
             [hyperfiddle.router :as router]
             [clojure.string :as str]
             [datagrid.ui :as ui]))
 
 (defmacro hfql [& body])
-
-(e/def branches {})
-
-;; TODO merge
-;; (css/rule ".diff-view" {:height :fit-content, :overflow-x :hidden, :grid-column 2, :grid-row 3})
-;; (css/rule ".diff-view .d2h-file-header" {:display :none})
+(declare format-relative-time format-absolute-time)
 
 (e/defn DiffView [commit]
   (e/server
@@ -27,6 +19,8 @@
           diff (get diffs (e/client (ffirst (get router/route :diff)))
                  (get diffs (::git/path (first (::git/changes commit)))))]
       (e/client
+        ; (css/rule ".diff-view" {:height :fit-content, :overflow-x :hidden, :grid-column 2, :grid-row 3})
+        ; (css/rule ".diff-view .d2h-file-header" {:display :none})
         (dom/div (dom/props {:class "diff-view"})
           (->> (js-obj
                  "drawFileList"           false
@@ -42,62 +36,15 @@
             (js/Diff2HtmlUI. dom/node diff)
             (.draw)))))))
 
-(declare format-relative-time format-absolute-time)
-
-#_{:id :string, :author :string, :time inst?, :email :string}
-(e/defn CommitMetadata [!commit]
-  (e/client
-    (dom/div (dom/props {:style {:grid-row 1, :grid-column "1 / 3"}})
-
-      (hfql ))))
-
-;; TODO merge
-;; (css/rule ".commit-info" {:border-top            "2px lightgray solid"
-;;                           :overflow              :auto
-;;                           :position              :relative
-;;                           :height                :auto
-;;                           :padding-bottom        "2rem"
-;;                           :display               :grid
-;;                           :grid-template-columns "auto 1fr"
-;;                           :grid-area             "details"})
-
-(e/defn CommitInfo  [commit]
-  )
-
 (defn needle-matches [keyfn needle collection] (filter #(str/includes? (keyfn %) needle) collection))
 
-;; TODO merge
-;; [:=> [:cat :string :string :string] [:sequential :commit]]
 (e/defn Git-log [repo branch needle]
   (->> (hf/Nav. (datafy repo) [:log :branch branch])
        (needle-match :message needle)))
 
-;; TODO merge
-;; {:id      :string
-;;  :author  :string
-;;  :message :string
-;;  :time    inst?}
-;; (css/rule "input.git-log/needle" {:grid-area "search"})
-;; (css/rule ".git-log" {:grid-area             "log"
-;;                       :grid-template-columns "min-content auto min-content min-content"
-;;                       :position              :relative
-;;                       :overflow              :auto
-;;                       :max-height            "100%"})
-
-;; (css/rule ".git-log .message" {:display :flex, :gap "0.25rem"})
-;; (css/rule ".git-log .message .branch-tag" {:border        "2px white solid"
-;;                                            :color         :white
-;;                                            :border-radius "7px"
-;;                                            :padding       "0.125rem 0.5rem"
-;;                                            :box-sizing    :border-box
-;;                                            :font-size     "0.75rem"
-;;                                            :font-family   "monospace, sans serif"})
-
-
-;; FIXME refactor to hfql renderer
 (e/defn RenderCommitMessage [^JCommit commit]
   (e/server
-    (let [{:keys [::git/branches :message]} (datafy commit)]
+    (let [{:keys [::git/branches :message]} (datafy commit)] ; two columns, not one.
       (e/client
         (e/for [branch branches]
           (let [branch (ui/format-branch branch)]
@@ -105,19 +52,6 @@
               (dom/text branch))))
         (dom/span
           (dom/text message))))))
-
-(e/defn GitLog [!repo branch]
-  (dom/div (dom/props {:class "log-wrapper"})
-    (hfql {(props (Git-log. !repo branch (props . {:placeholder "Search for commits"}))
-             {::r/row-height-px 25
-              ::r/max-height-px "100%"})
-           [(props :id {:link  [:details (git/short-commit-id %)]
-                        :style {:font-family "monospace"}})
-            (props :message {:render (RenderCommitMessage. %%)})
-            :author
-            (props :time {:sortable true,
-                          :render  (format-relative-time %)
-                          :tooltip (format-absolute-time %)})]})))
 
 (defn sequence-refs-tree [branches]
   (->> branches
@@ -146,12 +80,38 @@
 ;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/additions:before" {:content "+"})
 ;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions" {:color :red})
 ;; (css/rule ".datafy_datafy-git/changes .datafy_datafy-git/deletions:before" {:content "-"})
+;; (css/rule ".commit-info" {:border-top            "2px lightgray solid"
+;;                           :overflow              :auto
+;;                           :position              :relative
+;;                           :height                :auto
+;;                           :padding-bottom        "2rem"
+;;                           :display               :grid
+;;                           :grid-template-columns "auto 1fr"
+;;                           :grid-area             "details"})
+;; (css/rule ".git-log .message" {:display :flex, :gap "0.25rem"})
+;; (css/rule ".git-log .message .branch-tag" {:border        "2px white solid"
+;;                                            :color         :white
+;;                                            :border-radius "7px"
+;;                                            :padding       "0.125rem 0.5rem"
+;;                                            :box-sizing    :border-box
+;;                                            :font-size     "0.75rem"
+;;                                            :font-family   "monospace, sans serif"})
+;; (css/rule "input.git-log/needle" {:grid-area "search"})
+;; (css/rule ".git-log" {:grid-area             "log"
+;;                       :grid-template-columns "min-content auto min-content min-content"
+;;                       :position              :relative
+;;                       :overflow              :auto
+;;                       :max-height            "100%"})
 
+
+#_{:id :string, :author :string, :time inst?, :email :string} ; commit metadata
 ;; {::git/path      :string
 ;;  ::git/additions :number
 ;;  ::git/deletions :number
 ;;  ::git/changes   [:sequential ::git/change]
 ;;  ::git/change    [:map [::git/path ::git/additions ::git/deletions]]}
+;; {:id      :string :author  :string :message :string :time    inst?}
+;; [:=> [:cat :string :string :string] [:sequential :commit]] ; git log
 
 
 (e/defn GitBrowser [& [git-repo-path]]
@@ -169,30 +129,33 @@
 
           (hfql
             {(props (load-repo (or git-repo-path ".")) {:as repo})
-             [{(props (branch-list repo) {::r/row-height-px 25
-                                          ::r/max-height-px "100%"})
+             [{(props (branch-list repo) {::r/row-height-px 25 ::r/max-height-px "100%"})
                [(RenderRefName. %)]}
 
-              (GitLog. repo branch)
+              {(props (Git-log. repo branch (props . {:placeholder "Search for commits"}))
+                 {::r/row-height-px 25
+                  ::r/max-height-px "100%"})
+               [(props :id {:link  [:details (git/short-commit-id id)] #_#_:style {:font-family "monospace"}})
+                (props (RenderCommitMessage. %) {:label "message"})
+                :author
+                (props :time {:sortable true,
+                              :render  (format-relative-time time)
+                              :tooltip (format-absolute-time time)})]}
 
-              {(props (git/get-commit repo commit-id) {:as commit
-                                                       ::r/row-height-px 25
-                                                       ::r/max-height-px (* 25 7)
-                                                       ; todo span two columns
-                                                       })
+              {(props (git/get-commit repo commit-id) {:as commit ::r/row-height-px 25 ::r/max-height-px (* 25 7)}) ; todo span two columns
                [:id
                 :author
                 :merge
                 (props :time {:render (format-absolute-time time)})
                 :email
-                :message
+                :message]}
 
-                {(props (::git/changes commit) {::r/header?       false
-                                                ::r/row-height-px 25
-                                                ::r/max-height-px "100%"
-                                                ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
-                 [(props ::git/path {:link [:diff path]})
-                  ::git/additions
-                  ::git/deletions]}
+              {(props (::git/changes commit) {::r/header?       false
+                                              ::r/row-height-px 25
+                                              ::r/max-height-px "100%"
+                                              ::dom/props       {:style {:grid-template-columns "auto min-content min-content"}}})
+               [(props ::git/path {:link [:diff path]})
+                ::git/additions
+                ::git/deletions]}
 
-                (DiffView. commit)]}]}))))))
+              (DiffView. commit)]}))))))
