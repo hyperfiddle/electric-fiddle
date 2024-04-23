@@ -1,0 +1,47 @@
+GitBrowser(
+    repo_path { @default: "." }
+    selected_branch { @default: "HEAD" }
+    selected_commit
+) {
+  load_repo(repo_path) {
+    @as repo
+    branch_list(repo) {
+      @as branch
+      name {
+        @link branch.ref ? GitBrowser(repo_path, branch.full_name, selected_commit) : null
+        @render format_ref_link(branch)
+      }
+    }
+    git_log(
+        repo
+        selected_branch
+        @input { @placeholder "Search for commits" }
+    ) {
+      @as commit
+      id {
+        @link GitBrowser(repo_path, selected_branch, short_commit_id(id))
+      }
+      Render_Commit_Message(commit) { @label "message" }
+      author
+      time {
+        @sortable true
+        @render format_relative_time(time)
+        @tooltip format_absolute_time(time)
+      }
+    }
+    selected_commit {
+      id
+      author
+      merge
+      time { @render format_absolute_time(time) }
+      email
+      message
+    }
+    changes(selected_commit) {
+      path { @link ./diff_view(path) }
+      additions
+      deletions
+    }
+    Diff_View(selected_commit)
+  }
+}
