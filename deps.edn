@@ -97,4 +97,6 @@
     com.datomic/peer {:mvn/version "1.0.7075"}
     clj-jgit/clj-jgit {:mvn/version "1.0.2"} ; git browser
     }}
+  :experiments
+  {:extra-deps {datascript/datascript {:mvn/version "1.6.1"}}}
   }}
