@@ -169,15 +169,15 @@
 (e/defn App []
   (e/client
     (let [authoritative-xs (e/server (query-todos db))
-          !xdxs (atom ())
-          optimistic-xs (optimistic #(:db/id %1 %2) (e/watch !xdxs) authoritative-xs)]
+          !xdxs            (atom ())
+          optimistic-xs    (optimistic #(:db/id %1 %2) (e/watch !xdxs) authoritative-xs)]
       (reset! !xdxs
         (concat
           (dom/input
             (when-let [[value done! running?] (new (listen dom/node "keypress" #(when (= "Enter" (.-key %)) (.. % -target -value))))]
               (when running? (dom/props {:style {:color :purple}}))
               (let [[xdxs emit! retract!] (TxEmitter.)
-                    tx! (fn [tx] (emit! tx) (done!) (set! (.-value dom/node) ""))]
+                    tx!                   (fn [tx] (emit! tx) (done!) (set! (.-value dom/node) ""))]
                 (e/for-by identity [xdx xdxs]
                   (let [[status error] (TxMonitor. (second xdx))]
                     (case status
@@ -212,27 +212,27 @@
                                              (css/keyframe :to {:transform "rotate(360deg)"})))})
                       (set! (.-checked dom/node) (:todo/checked x false))
                       (TxUI. (cond (not-empty xdxs) ::pending
-                                   (some? error) ::failure
-                                   :else nil))
+                                   (some? error)    ::failure
+                                   :else            nil))
                       (when-let [[checked? done! running?] (new (listen dom/node "change" (let [cb ((capture) #(not (:todo/checked x)))]
                                                                                             #((cb) %))))]
                         (when running?
                           (dom/props {:style {:color :purple} :disabled true})
                           (case (emit! [(assoc x :todo/checked checked?) ; TODO redundant in case of edits if we have patch-dx
                                         (if (zero? (rand-int 2))
-                                            [[:db/add (:db/id x) :todo/checked checked?]]
-                                            [[] ;; bad tx, for demo
-                                             [:db/add (:db/id x) :todo/checked checked?]]
-                                            )])
+                                          [[:db/add (:db/id x) :todo/checked checked?]]
+                                          [[] ;; bad tx, for demo
+                                           [:db/add (:db/id x) :todo/checked checked?]]
+                                          )])
                             (done!)))))
                     (dom/text (pr-str x) " - " (pr-str xdxs))
                     xdxs))))))))))
 
 (e/defn Transactor [!tx-report conn dxs]
   (e/server
-    (let [dxs (let [!x__450850__auto__ (atom (e/snapshot dxs))]
-                (try (reset! !x__450850__auto__ dxs) (catch hyperfiddle.electric.Pending _))
-                (e/watch !x__450850__auto__))]
+    (let [dxs (let [!no-pending (atom (e/snapshot dxs))]
+                (try (reset! !no-pending dxs) (catch hyperfiddle.electric.Pending _))
+                (e/watch !no-pending))]
       (e/for-by identity [dx dxs]
         (let [[status _txid tx-report] (Transact!. conn dx)]
           (case (ignore-pendings status)
@@ -252,5 +252,4 @@
                   dxs (remove nil? (map second xdxs))]
               (Transactor. !tx-report conn dxs)
               (e/client
-                (dom/pre (dom/text (contrib.str/pprint-str xdxs)))
-                (dom/pre (dom/text (contrib.str/pprint-str dxs)))))))))))
+                (dom/pre (dom/text (contrib.str/pprint-str xdxs)))))))))))
