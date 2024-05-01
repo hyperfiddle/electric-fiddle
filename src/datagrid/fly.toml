@@ -19,8 +19,10 @@ primary_region = 'cdg'
   force_https = true
   processes = ['app']
 
+# Same spec as Datomic Browser
 [[vm]]
-  size = 'performance-8x'
+  size = 'shared-cpu-8x'
+  memory = '4gb'
 
 # [processes]
 #   app = "./prod.sh $VERSION"
