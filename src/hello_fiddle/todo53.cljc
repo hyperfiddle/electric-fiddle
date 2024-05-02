@@ -1,5 +1,5 @@
 ;; Next up:
-;; - Fix rejected tx state glitch
+;; - Separate Popover/Stage layer from UI controls
 ;; - Add Form abstraction
 ;; - Figure out Form/Field/Input's API
 ;; - Add actual todo edit field
@@ -149,9 +149,12 @@
      (fn emit! [tx] (swap! !txs conj tx) nil)
      (fn retract! [tx] (swap! !txs disj tx) nil)]))
 
-(e/defn TxMonitor [tx]
+(e/defn Drop [n value]
+  (new (m/relieve {} (m/reductions {} nil (m/eduction (drop n) (e/fn* [] value))))))
+
+(e/defn TxMonitor [tx] ; TODO could two = txs race?
   (e/server
-    (let [{::keys [accepted rejected error]} tx-report]
+    (let [{::keys [accepted rejected error]} (Drop. 1 tx-report)] ; ignore current tx-report, only look at next one
       (cond (= accepted tx) [::accepted]
             (= rejected tx) [::rejected (ex-message error)]
             :else           nil))))
