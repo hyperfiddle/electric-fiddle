@@ -2,7 +2,7 @@
 ;; - Separate Popover/Stage layer from UI controls
 ;; - Add Form abstraction
 ;; - Figure out Form/Field/Input's API
-;; - Add actual todo edit field
+;; - Figure out how to cancel pending txs — if even needed
 
 (ns hello-fiddle.todo53
   (:require
@@ -143,11 +143,11 @@
   (let [tempid (- (Math/abs (hash (random-uuid))))]
     [(x! tempid) (dx! tempid)]))
 
-(e/defn TxEmitter []
-  (let [!txs (atom #{})]
+(e/defn TxEmitter [tx-parallelism]
+  (let [!txs (atom ())]
     [(e/watch !txs)
-     (fn emit! [tx] (swap! !txs conj tx) nil)
-     (fn retract! [tx] (swap! !txs disj tx) nil)]))
+     (fn emit! [tx] (swap! !txs #(cons tx (take (dec tx-parallelism) %))) nil)
+     (fn retract! [tx] (swap! !txs (partial remove #{tx})) nil)]))
 
 (e/defn Drop [n value]
   (new (m/relieve {} (m/reductions {} nil (m/eduction (drop n) (e/fn* [] value))))))
@@ -169,24 +169,19 @@
 
 (e/defn InputController [node event-type v0 status read write! Body]
   (let [[value done! running? :as _triple] (new (listen node event-type (let [cb ((capture) read)] #((cb) %))))
-        value                             (if (some? value) value v0)
-        done!                             ((capture) done!)
-        !status                           (atom (e/snapshot status))]
+        value   (if (some? value) value v0)
+        done!   ((capture) done!)
+        !status (atom (e/snapshot status))]
     (reset! !status status)
     (when running?
       (reset! !status ::dirty))
-    (let [status (e/watch !status)]
-      (TxUI. status)
-      (Body. status value write! #((done!))))))
-
-(e/defn DomInputController [node event-type v0 status read write!]
-  (InputController. node event-type v0 status read write!
-    (e/fn* [status value write! done!]
-      (cond
-        #_#_                                     (doto (dom/Focused?.) (prn "focused")) value ; ignore concurrent modifications while typing ; not appropriate for checkboxes
-        (= ::accepted status)                    (do (done!) (write! v0) v0)
-        (#{::dirty ::pending ::rejected} status) value ; ignore concurrent modifications until accepted ; TODO add popover ::dirty
-        ))))
+    (let [status' (e/watch !status)]
+      (when-some [[event done! running?] (new (listen node "keyup"))]
+        (if (and running? (= "Escape" (.-key event)))
+          ((fn [_] (.blur node) (reset! !status status) (done!)) event)
+          (done!)))
+      (TxUI. status')
+      (Body. status' value write! #((done!))))))
 
 (e/defn Checkbox [{::keys [status value]} Body]
   (e/client
@@ -194,24 +189,33 @@
       (dom/props {:type :checkbox})
       (when (= ::pending status) (dom/props {:disabled true}))
       (Body.)
-      (DomInputController. dom/node "change" value status #(.. % -target -checked) #(set! (.-checked dom/node) %)))))
+      (InputController. dom/node "change" value status #(.. % -target -checked) #(set! (.-checked dom/node) %)
+        (e/fn* [status value' write! done!]
+          (prn "checkbox" status value')
+          (cond
+            #_#_ (doto (dom/Focused?.) (prn "focused")) value ; ignore concurrent modifications while typing ; not appropriate for checkboxes
 
-(e/defn Field [{::keys [value edit-fn]} Body]
+            (= ::accepted status)         (do (done!) (write! value) value)
+            (= ::rejected status)         (do (done!) (write! value) nil)
+            (#{::dirty ::pending} status) value' ; ignore concurrent modifications until accepted ; TODO add popover ::dirty
+            ))))))
+
+(e/defn Field [{::keys [value edit-fn tx-parallelism]
+                :or    {tx-parallelism 1}} Body]
   (let [!status               (atom ::idle)
-        [xdxs emit! retract!] (TxEmitter.)
+        [xdxs emit! retract!] (TxEmitter. tx-parallelism)
         !error                (atom nil), error (e/watch !error)
         ]
-    (when (not-empty xdxs) (reset! !status ::pending))
+    ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
     (e/for-by identity [xdx xdxs]
       (let [[status error] (TxMonitor. (second xdx))]
+        (prn "status error" status error)
         (case status
           ::accepted (do (retract! xdx) (reset! !status ::accepted)  (reset! !error nil))
           ::rejected (do (retract! xdx) (reset! !status ::rejected)  (reset! !error error))
           nil)))
-    (prn "Field" value)
     (when-some [v (Body. value (e/watch !status) (comp emit! edit-fn))]
-      ((fn [_] (reset! !status ::dirty)) v)
-      (emit! (edit-fn v)))
+      ((fn [v] (emit! (edit-fn v))) v))
     xdxs))
 
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
@@ -241,12 +245,29 @@
             nil)
           nil)))))
 
+(e/defn Input [{::keys [status value]} Body]
+  (e/client
+    (dom/input
+      (Body.)
+      (InputController. dom/node "keypress" value status #(when (= "Enter" (.-key %))  (.. % -target -value)) #(set! (.-value dom/node) %)
+        (e/fn* [status value' write! done!]
+          (let [write! (if (dom/Focused?.) (constantly nil) write!)]
+            (cond
+              (#{::pending ::dirty ::rejected} status) ((fn [value'] (write! value') (done!) value') value')
+              (= ::accepted status)                    (do (done!) (write! value) value)
+              (= ::idle status)                        (do (write! value) nil)
+              :else                                    nil)))))))
+
 (defn todo-edit-done [x v]
   [(assoc x :todo/checked v) ; TODO redundant in case of edits if we have `patch-dxs`
    (if (zero? (rand-int 2))
      [[:db/add (:db/id x) :todo/checked v]]
      [[] ; bad tx, for demo
       [:db/add (:db/id x) :todo/checked v]])])
+
+(defn todo-edit-text [x v]
+  [{:db/id (:db/id x) :todo/text v}
+   [[:db/add (:db/id x) :todo/text v]]])
 
 (e/defn App []
   (e/server
@@ -257,15 +278,21 @@
                         (Field. {::value   nil
                                  ::edit-fn (fn [v] (genesis
                                                      (fn [tempid] {:db/id tempid, :todo/text v}) ; TODO not used today, instead dxs are interpreted (see `patch-dxs`)
-                                                     (fn [tempid] [[:db/add tempid :todo/text v]])))}
+                                                     (fn [tempid] [[:db/add tempid :todo/text v]])))
+                                 ::tx-parallelism ##Inf}
                           CreateNewInput)))
        ::EditForm (e/fn [x]
                     (e/client ; TODO v3 dynamic siting
                       (dom/li (dom/span (dom/text (pr-str x)))
-                        (Field. {::value   (:todo/checked x false)
-                                 ::edit-fn (partial todo-edit-done x)} ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
-                          (e/fn [value status _tx!]
-                            (Checkbox. {::status status ::value  value} (e/fn* [] #_(dom/props ...))))))))})))
+                        (concat
+                          (Field. {::value   (:todo/checked x false)
+                                   ::edit-fn (partial todo-edit-done x)} ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
+                            (e/fn [value status _tx!]
+                              (Checkbox. {::status status ::value  value} (e/fn* [] #_(dom/props ...)))))
+                          (Field. {::value   (:todo/text x)
+                                   ::edit-fn (partial todo-edit-text x)}
+                            (e/fn [value status _tx!]
+                              (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))))))))})))
 
 (e/defn Transactor [!tx-report conn dxs]
   (e/server
@@ -285,6 +312,9 @@
     (binding [conn (d/create-conn)]
       (binding [!tx-report (atom (d/transact! conn [{:db/id "-1", :todo/text "Hello"}
                                                     {:db/id "-2", :todo/text "world"}]))]
+
+        (def repl-conn conn)
+        (def repl-transact! #(reset! !tx-report (d/transact! conn %)))
         (binding [tx-report (new (m/stream (m/watch !tx-report)))] ; ensures all dependants sees individual tx-reports
           (binding [db (:db-after tx-report)]
             (let [xdxs (App.)
@@ -296,7 +326,10 @@
                   (css/keyframes "spin"
                     (css/keyframe :from {:transform "rotate(0deg)"})
                     (css/keyframe :to   {:transform "rotate(360deg)"}))
-                  (css/rule "ul li" {:display :flex, :flex-direction :row-reverse, :width :max-content})
+                  (css/rule "ul li" {:display :grid, :grid-auto-flow :column, :width :fit-content}
+                    (css/rule "input[type='checkbox']" {:grid-column 1})
+                    (css/rule "input[type='text']" {:grid-column 2})
+                    )
                   (css/rule "input"
                     (css/rule {:outline "2px solid gray"})
                     (css/rule "&.dirty"   {:outline-color "orange"})
