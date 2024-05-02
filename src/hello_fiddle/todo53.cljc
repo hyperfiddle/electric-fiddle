@@ -1,5 +1,5 @@
+;; - WIP - Separate Popover/Stage layer from UI controls
 ;; Next up:
-;; - Separate Popover/Stage layer from UI controls
 ;; - Add Form abstraction
 ;; - Figure out Form/Field/Input's API
 ;; - Figure out how to cancel pending txs — if even needed
@@ -10,7 +10,8 @@
    [hyperfiddle.electric-css :as css]
    [hyperfiddle.electric-dom2 :as dom]
    [datascript.core :as d]
-   [missionary.core :as m])
+   [missionary.core :as m]
+   [hello-fiddle.stage :as stage])
   (:import
    (missionary Cancelled)))
 
@@ -139,7 +140,7 @@
 
 (defn stable-kf [entity] (:db/id entity)) ; FIXME stabilize tempid->id resolution
 
-(defn genesis [x! dx!]
+(defn genesis [x! dx!] ;; TODO looks like x! is unused. Why? Is dx! enough to model genesis? x₀ = id ⊕ dx₀ = dx₀ ?
   (let [tempid (- (Math/abs (hash (random-uuid))))]
     [(x! tempid) (dx! tempid)]))
 
@@ -167,54 +168,19 @@
                       (assoc index (stable-kf x) x)))
             index xdxs))))
 
-(e/defn InputController [node event-type v0 status read write! Body]
-  (let [[value done! running? :as _triple] (new (listen node event-type (let [cb ((capture) read)] #((cb) %))))
-        value   (if (some? value) value v0)
-        done!   ((capture) done!)
-        !status (atom (e/snapshot status))]
-    (reset! !status status)
-    (when running?
-      (reset! !status ::dirty))
-    (let [status' (e/watch !status)]
-      (when-some [[event done! running?] (new (listen node "keyup"))]
-        (if (and running? (= "Escape" (.-key event)))
-          ((fn [_] (.blur node) (reset! !status status) (done!)) event)
-          (done!)))
-      (TxUI. status')
-      (Body. status' value write! #((done!))))))
-
-(e/defn Checkbox [{::keys [status value]} Body]
-  (e/client
-    (dom/input
-      (dom/props {:type :checkbox})
-      (when (= ::pending status) (dom/props {:disabled true}))
-      (Body.)
-      (InputController. dom/node "change" value status #(.. % -target -checked) #(set! (.-checked dom/node) %)
-        (e/fn* [status value' write! done!]
-          (prn "checkbox" status value')
-          (cond
-            #_#_ (doto (dom/Focused?.) (prn "focused")) value ; ignore concurrent modifications while typing ; not appropriate for checkboxes
-
-            (= ::accepted status)         (do (done!) (write! value) value)
-            (= ::rejected status)         (do (done!) (write! value) nil)
-            (#{::dirty ::pending} status) value' ; ignore concurrent modifications until accepted ; TODO add popover ::dirty
-            ))))))
-
 (e/defn Field [{::keys [value edit-fn tx-parallelism]
                 :or    {tx-parallelism 1}} Body]
   (let [!status               (atom ::idle)
         [xdxs emit! retract!] (TxEmitter. tx-parallelism)
-        !error                (atom nil), error (e/watch !error)
-        ]
+        !error                (atom nil), error (e/watch !error)]
     ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
     (e/for-by identity [xdx xdxs]
       (let [[status error] (TxMonitor. (second xdx))]
-        (prn "status error" status error)
         (case status
           ::accepted (do (retract! xdx) (reset! !status ::accepted)  (reset! !error nil))
           ::rejected (do (retract! xdx) (reset! !status ::rejected)  (reset! !error error))
           nil)))
-    (when-some [v (Body. value (e/watch !status) (comp emit! edit-fn))]
+    (when-some [v (Body. value (e/watch !status))]
       ((fn [v] (emit! (edit-fn v))) v))
     xdxs))
 
@@ -233,30 +199,113 @@
                 (e/server  ; TODO v3 dynamic siting
                   (EditForm. x))))))))))
 
-(e/defn CreateNewInput [v0 status tx!] ; Not a regular input, doesn't hold on value, do not care about tx success/failure
-  (e/client
-    (dom/input
-      (InputController. dom/node "keypress" v0 status #(when (= "Enter" (.-key %)) (.. % -target -value)) #(set! (.-value dom/node) %)
-        (e/fn* [status value write! done!]
-          (case status
-            (::dirty ::pending) ((fn [value] (done!) (write! nil) (tx! value) nil) value)
-            ::rejected          nil
-            ::accepted          (do (done!) (write! v0) v0)
-            nil)
-          nil)))))
+(e/defn CommitOnBlurBehavior "Commit current stage when given `node` is blured.
+An input can be blurred e.g. by clicking outside or pressing Tab."
+  [node]
+  (when-let [[_event done! running?] (new (listen node "blur"))]
+    (when running?
+      (case (stage/Commit.) ; assumed called in a stage
+        (done!)))))
+
+(e/defn AtomicEditsBehavior
+  "Augment a dom input so it accumulate edits and:
+  - emits the latest one on Enter pressed (submit)
+  - cancel the edits and resets the input to the latest authoritative value (discard)
+   The input content will reflect the authoritative value unless:
+   - user has focused the input,
+   - user has staged edits."
+  [node status value]
+  ;; stage typed text
+  (when-let [[value' done! _running?] (new (listen node "input" #(.. % -target -value)))]
+    (stage/stage! value')
+    (done!))
+  ;; Emit (commit) on Enter pressed / discard on Escape
+  (when-let [[event done! _] (new (listen node "keyup"))]
+    (done!)
+    (case (.-key event)
+      "Enter"  (stage/Commit.)
+      "Escape" (do (stage/discard!) (.blur node))
+      nil))
+  (let [value  (or stage/stage value) ; don't damage user uncommitted typing
+        status (cond (some? stage/stage) ::dirty
+                     :else               status)]
+    (TxUI. status) ; Render 4 colors ; FIXME misplaced, too low level here
+    (when-not (dom/Focused?.) ; don't alter input while user-focused (UX)
+      (set! (.-value node) value))))
+
+(e/defn ClearOnSubmitBehavior
+  "Clear an input on submit. A common pattern to chat interfaces and todo-apps"
+  [node]
+  (when (empty? stage/stage)
+    (when (not-empty (.-value node)) ; not composed in a single (and …) so expr reruns
+      (set! (.-value node) nil))))
+
+(e/defn SpreadSheetCellBehavior
+  "Augment a dom input to make it behave like a spreadsheet cell.
+   The input will accumulate changes until:
+   - Enter, Tab is pressed or user click outside , emitting the value.
+   - Escape is pressed, rolling back the value to the latest authoritative one.
+   The input content will reflect the authoritative value unless:
+   - user has focused the input,
+   - user has staged edits."
+  [node status value]
+  (AtomicEditsBehavior. node status value)
+  (CommitOnBlurBehavior. node))
+
+(e/defn WithStage
+  "Run `Body` in a `stage` and return latest committed value."
+  [Body]
+  (let [!value (atom nil)]
+    (stage/staged (e/fn* [value] (reset! !value value))
+      (Body.))
+    (e/watch !value)))
+
+(defmacro with-stage
+  "Run `Body` in a `stage` and return latest committed value."
+  [& body]
+  `(new WithStage (e/fn* [] ~@body)))
 
 (e/defn Input [{::keys [status value]} Body]
   (e/client
     (dom/input
       (Body.)
-      (InputController. dom/node "keypress" value status #(when (= "Enter" (.-key %))  (.. % -target -value)) #(set! (.-value dom/node) %)
+      (with-stage (SpreadSheetCellBehavior. dom/node status value)))))
+
+(e/defn CreateNewInput [v0 status tx!] ; Not a regular input, doesn't hold on value, do not care about tx success/failure
+  (e/client
+    (dom/input
+      (with-stage
+        (AtomicEditsBehavior. dom/node status v0)
+        (ClearOnSubmitBehavior. dom/node)))))
+
+;; TODO remove
+(e/defn InputController [node event-type v0 status read write! Body]
+  (let [[value done! running? :as _triple] (new (listen node event-type (let [cb ((capture) read)] #((cb) %))))
+        value   (if (some? value) value v0)
+        done!   ((capture) done!)
+        !status (atom (e/snapshot status))]
+    (reset! !status status)
+    (let [status' (e/watch !status)] ; TODO rename status' -> status
+      (TxUI. status')
+      (Body. status' value write! #((done!))))))
+
+;; TODO move to edit behaviors abstraction
+(e/defn Checkbox [{::keys [status value]} Body]
+  (e/client
+    (dom/input
+      (dom/props {:type :checkbox})
+      (when (= ::pending status) (dom/props {:disabled true}))
+      (Body.)
+      (InputController. dom/node "change" value status #(.. % -target -checked) #(set! (.-checked dom/node) %)
         (e/fn* [status value' write! done!]
-          (let [write! (if (dom/Focused?.) (constantly nil) write!)]
-            (cond
-              (#{::pending ::dirty ::rejected} status) ((fn [value'] (write! value') (done!) value') value')
-              (= ::accepted status)                    (do (done!) (write! value) value)
-              (= ::idle status)                        (do (write! value) nil)
-              :else                                    nil)))))))
+          (prn "checkbox" status value')
+          (cond
+            #_#_ (doto (dom/Focused?.) (prn "focused")) value ; ignore concurrent modifications while typing ; not appropriate for checkboxes
+
+            (= ::accepted status)         (do (done!) (write! value) value)
+            (= ::rejected status)         (do (done!) (write! value) nil)
+            (#{::dirty ::pending} status) value' ; ignore concurrent modifications until accepted ; TODO add popover ::dirty
+            ))))))
 
 (defn todo-edit-done [x v]
   [(assoc x :todo/checked v) ; TODO redundant in case of edits if we have `patch-dxs`
@@ -284,15 +333,15 @@
        ::EditForm (e/fn [x]
                     (e/client ; TODO v3 dynamic siting
                       (dom/li (dom/span (dom/text (pr-str x)))
-                        (concat
-                          (Field. {::value   (:todo/checked x false)
-                                   ::edit-fn (partial todo-edit-done x)} ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
-                            (e/fn [value status _tx!]
-                              (Checkbox. {::status status ::value  value} (e/fn* [] #_(dom/props ...)))))
-                          (Field. {::value   (:todo/text x)
-                                   ::edit-fn (partial todo-edit-text x)}
-                            (e/fn [value status _tx!]
-                              (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))))))))})))
+                              (concat
+                                (Field. {::value   (:todo/checked x false)
+                                         ::edit-fn (partial todo-edit-done x)} ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
+                                  (e/fn [value status]
+                                    (Checkbox. {::status status ::value  value} (e/fn* [] #_(dom/props ...)))))
+                                (Field. {::value   (:todo/text x)
+                                         ::edit-fn (partial todo-edit-text x)}
+                                  (e/fn [value status]
+                                    (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))))))))})))
 
 (e/defn Transactor [!tx-report conn dxs]
   (e/server
