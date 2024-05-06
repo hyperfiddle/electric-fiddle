@@ -160,7 +160,7 @@
             (= rejected tx) [::rejected (ex-message error)]
             :else           nil))))
 
-(defn optimistic [stable-kf xdxs authoritative-xs]
+(defn optimistic [stable-kf xdxs authoritative-xs] ; could this be modeled as a Spine?
   (let [index (contrib.data/index-by stable-kf authoritative-xs)]
     (vals (reduce (fn [index [x dxs]]
                     (if (contains? index (stable-kf x))
@@ -168,8 +168,10 @@
                       (assoc index (stable-kf x) x)))
             index xdxs))))
 
+;; TODO what's the value of forwarding value and edit-fn?
 (e/defn Field [{::keys [value edit-fn tx-parallelism]
-                :or    {tx-parallelism 1}} Body]
+                :or    {tx-parallelism 1}}
+               Body]
   (let [!status               (atom ::idle)
         [xdxs emit! retract!] (TxEmitter. tx-parallelism)
         !error                (atom nil), error (e/watch !error)]
@@ -177,11 +179,11 @@
     (e/for-by identity [xdx xdxs]
       (let [[status error] (TxMonitor. (second xdx))]
         (case status
-          ::accepted (do (retract! xdx) (reset! !status ::accepted)  (reset! !error nil))
-          ::rejected (do (retract! xdx) (reset! !status ::rejected)  (reset! !error error))
+          ::accepted (do (retract! xdx) (reset! !status ::accepted) (reset! !error nil))
+          ::rejected (do (retract! xdx) (reset! !status ::rejected) (reset! !error error))
           nil)))
     (when-some [v (Body. value (e/watch !status))]
-      ((fn [v] (emit! (edit-fn v))) v))
+      ((fn [v] (emit! (edit-fn v))) v)) ; TODO if emit-fn is not a thing, userland would return tx instead of v, and the IIFE is not needed anymore
     xdxs))
 
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
@@ -207,7 +209,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       (case (stage/Commit.) ; assumed called in a stage
         (done!)))))
 
-(e/defn AtomicEditsBehavior
+(e/defn AtomicInputEditsBehavior
   "Augment a dom input so it accumulate edits and:
   - emits the latest one on Enter pressed (submit)
   - cancel the edits and resets the input to the latest authoritative value (discard)
@@ -232,6 +234,65 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
     (TxUI. status) ; Render 4 colors ; FIXME misplaced, too low level here
     (when-not (dom/Focused?.) ; don't alter input while user-focused (UX)
       (set! (.-value node) value))))
+
+(e/defn CheckboxBehavior
+  "A checkbox is a special kind of input with extra UX constraints:
+   - binary state (checked or not checked) – no dirty state, user cannot loose dirty edits.
+     - no need to handle blur, as state
+   - submit is performed with mouse click or Space key
+   - Escape blurs, but doesn't mean discard, as there is no dirty state.
+   - focus is only meaningful with keyboard navigation (tab)
+     - local optimistic state doesn't prevail over authoritative state
+       For UX reasons, a checkbox should transition ASAP to the latest authoritative state
+       A checkbox should never wait user interaction to reset -> would damage user info flow.
+       This is what spreadsheet do.
+   - TODO DOM checkboxes have indeterminate state - e.g. for tree-like select-multi UIs
+     Not sure if this abstraction should handle this indeterminate state.
+     Probably leave control to user for custom UX."
+  [node status value]
+  (set! (.-value node) value)
+  (TxUI. status)
+  ;; autocommit checked state
+  (when-let [[value' done! running?] (new (listen node "change" #(.. % -target -checked)))]
+    (stage/stage! value')
+    (when running?
+      (case (stage/Commit.)
+        (done!)))))
+
+#?(:cljs
+   (defn watch-attributes [node html-attributes]
+     (let [html-attributes (set html-attributes)]
+       (m/relieve {}
+         (m/reductions into (into {} (map (juxt identity #(.getAttribute node %)) html-attributes))
+           (m/observe
+             (fn [!]
+               (let [observer (js/MutationObserver. (fn [mutation-list _observer]
+                                                     (! (filter (comp html-attributes first)
+                                                          (map (fn [mutation]
+                                                                 (let [attrName (.-attributeName mutation)]
+                                                                   [attrName (.getAttribute node attrName)]))
+                                                            mutation-list)))))]
+                 (.observe observer node #js{:attributes true})
+                 #(.disconnect observer)))))))))
+
+(e/defn Attributes [node html-attribute-names]
+  (e/client (new (watch-attributes node html-attribute-names))))
+
+(e/defn AtomicEditsBehavior
+  "Augment a dom input so it accumulate edits and:
+  - emits the latest one on Enter pressed (submit)
+  - cancel the edits and resets the input to the latest authoritative value (discard)
+   The input content will reflect the authoritative value unless:
+   - user has focused the input,
+   - user has staged edits."
+  [node status value]
+  ;; (e/client (js/console.log "input type" node (get (Attributes. node #{"type"}) "type")))
+  (case (get (Attributes. node #{"type"}) "type")
+    "checkbox" (CheckboxBehavior. node status value)
+    "submit"   nil ; TODO ; autocommit because button (binary state)
+    "button"   nil ; TODO ; ! in a form always use <button type="button">, cause submit is the default
+    (nil "text")     (AtomicInputEditsBehavior. node status value)
+    (AtomicInputEditsBehavior. node status value)))
 
 (e/defn ClearOnSubmitBehavior
   "Clear an input on submit. A common pattern to chat interfaces and todo-apps"
@@ -271,11 +332,11 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       (Body.)
       (with-stage (SpreadSheetCellBehavior. dom/node status value)))))
 
-(e/defn CreateNewInput [v0 status tx!] ; Not a regular input, doesn't hold on value, do not care about tx success/failure
+(e/defn CreateNewInput [value status] ; Not a regular input, doesn't hold on value, do not care about tx success/failure
   (e/client
     (dom/input
       (with-stage
-        (AtomicEditsBehavior. dom/node status v0)
+        (AtomicEditsBehavior. dom/node status value)
         (ClearOnSubmitBehavior. dom/node)))))
 
 ;; TODO remove
@@ -290,13 +351,16 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       (Body. status' value write! #((done!))))))
 
 ;; TODO move to edit behaviors abstraction
+;; FIXME odd behavior when failure. Seems to retry forever until settled
 (e/defn Checkbox [{::keys [status value]} Body]
   (e/client
     (dom/input
       (dom/props {:type :checkbox})
       (when (= ::pending status) (dom/props {:disabled true}))
       (Body.)
-      (InputController. dom/node "change" value status #(.. % -target -checked) #(set! (.-checked dom/node) %)
+      (doto (with-stage (AtomicEditsBehavior. dom/node status value))
+        (prn "checkbox" status))
+      #_(InputController. dom/node "change" value status #(.. % -target -checked) #(set! (.-checked dom/node) %)
         (e/fn* [status value' write! done!]
           (prn "checkbox" status value')
           (cond
@@ -315,8 +379,9 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       [:db/add (:db/id x) :todo/checked v]])])
 
 (defn todo-edit-text [x v]
-  [{:db/id (:db/id x) :todo/text v}
-   [[:db/add (:db/id x) :todo/text v]]])
+  [{:db/id (:db/id x) :todo/text v} ; x
+   [[:db/add (:db/id x) :todo/text v]] ; dx
+   ])
 
 (e/defn App []
   (e/server
@@ -345,7 +410,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 
 (e/defn Transactor [!tx-report conn dxs]
   (e/server
-    (let [dxs (let [!no-pending (atom (e/snapshot dxs))]
+    (let [dxs (let [!no-pending (atom (e/snapshot dxs))] ; TODO Peter: would't (try (ignore-pendings …) (catch Pending _ …)) work?
                 (try (reset! !no-pending dxs) (catch hyperfiddle.electric.Pending _))
                 (e/watch !no-pending))]
       (e/for-by identity [dx dxs]
@@ -361,13 +426,12 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
     (binding [conn (d/create-conn)]
       (binding [!tx-report (atom (d/transact! conn [{:db/id "-1", :todo/text "Hello"}
                                                     {:db/id "-2", :todo/text "world"}]))]
-
         (def repl-conn conn)
         (def repl-transact! #(reset! !tx-report (d/transact! conn %)))
         (binding [tx-report (new (m/stream (m/watch !tx-report)))] ; ensures all dependants sees individual tx-reports
           (binding [db (:db-after tx-report)]
-            (let [xdxs (App.)
-                  dxs (remove nil? (map second xdxs))]
+            (let [xdxs (App.) ; xdxs :: collection of pairs [x dx]
+                  dxs (keep second xdxs)]
               (Transactor. !tx-report conn dxs)
               (e/client
                 (dom/pre (dom/text (contrib.str/pprint-str xdxs)))
