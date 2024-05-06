@@ -57,7 +57,7 @@
 (e/defn Transact!* [conn tx tx-meta]
   (e/server
     (when tx
-      (e/offload-task #(do (Thread/sleep 3000)
+      (e/offload-task #(do (Thread/sleep 2000)
                            (d/transact! conn tx tx-meta))))))
 
 (e/defn Transact!
@@ -162,28 +162,31 @@
 
 (defn optimistic [stable-kf xdxs authoritative-xs] ; could this be modeled as a Spine?
   (let [index (contrib.data/index-by stable-kf authoritative-xs)]
-    (vals (reduce (fn [index [x dxs]]
+    (vals (reduce (fn [index [txid x dxs]]
                     (if (contains? index (stable-kf x))
                       (update index (stable-kf x) #(patch-dxs stable-kf % dxs))
                       (assoc index (stable-kf x) x)))
             index xdxs))))
 
-;; TODO what's the value of forwarding value and edit-fn?
+;; What's the value of forwarding value and edit-fn? A: Cleaner API.
 (e/defn Field [{::keys [value edit-fn tx-parallelism]
                 :or    {tx-parallelism 1}}
                Body]
-  (let [!status               (atom ::idle)
+  (let [field-id              (str (gensym "field_"))
+        tx-id                 (partial swap! (atom 0) inc)
+        !status               (atom ::idle)
         [xdxs emit! retract!] (TxEmitter. tx-parallelism)
+        emit!                 (fn [xdx] (emit! (vec (cons (str field-id "-" (tx-id)) xdx))))
         !error                (atom nil), error (e/watch !error)]
     ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
-    (e/for-by identity [xdx xdxs]
-      (let [[status error] (TxMonitor. (second xdx))]
+    (e/for-by identity [[txid x dx :as xdx] xdxs]
+      (let [[status error] (TxMonitor. dx)]
         (case status
           ::accepted (do (retract! xdx) (reset! !status ::accepted) (reset! !error nil))
-          ::rejected (do (retract! xdx) (reset! !status ::rejected) (reset! !error error))
+          ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
           nil)))
     (when-some [v (Body. value (e/watch !status))]
-      ((fn [v] (emit! (edit-fn v))) v)) ; TODO if emit-fn is not a thing, userland would return tx instead of v, and the IIFE is not needed anymore
+      ((e/snapshot (fn [v] (emit! (edit-fn v)))) v))
     xdxs))
 
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
@@ -217,17 +220,31 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
    - user has focused the input,
    - user has staged edits."
   [node status value]
-  ;; stage typed text
-  (when-let [[value' done! _running?] (new (listen node "input" #(.. % -target -value)))]
-    (stage/stage! value')
-    (done!))
-  ;; Emit (commit) on Enter pressed / discard on Escape
-  (when-let [[event done! _] (new (listen node "keyup"))]
-    (done!)
-    (case (.-key event)
-      "Enter"  (stage/Commit.)
-      "Escape" (do (stage/discard!) (.blur node))
-      nil))
+  (let [!last-stage (atom nil)]
+    ;; stage typed text
+    (when-let [[value' done! _running?] (new (listen node "input" #(.. % -target -value)))]
+      (stage/stage! value')
+      (reset! !last-stage value')
+      (done!))
+    ;; reset retry tx state on focus
+    (when-let [[_event done! running?] (new (listen node "focus"))]
+      (when running?
+        (reset! !last-stage value)
+        (done!)))
+    ;; Allow user to press enter again to retry tx
+    (when (and (nil? stage/stage) (= ::rejected status))
+      (stage/Commit.)) ; emit nil WIP
+    ;; Emit (commit) on Enter pressed / discard on Escape
+    (when-let [[event done! running?] (new (listen node "keyup"))]
+      (when running?
+        (case (.-key event)
+          "Enter"  (case (case status
+                           ::rejected (stage/Commit. @!last-stage)
+                           (stage/Commit.))
+                     (done!))
+          "Escape" (case (do (stage/discard!) (.blur node))
+                     (done!))
+          (done!)))))
   (let [value  (or stage/stage value) ; don't damage user uncommitted typing
         status (cond (some? stage/stage) ::dirty
                      :else               status)]
@@ -250,12 +267,17 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
      Not sure if this abstraction should handle this indeterminate state.
      Probably leave control to user for custom UX."
   [node status value]
-  (set! (.-value node) value)
+  (set! (.-checked node)
+    (case status
+      ::rejected (not value) ; reset checkbox state so user can retry
+      value))
+  (when (and (nil? stage/stage) (= ::rejected status)) ; retry tx
+    (stage/Commit.))
   (TxUI. status)
   ;; autocommit checked state
   (when-let [[value' done! running?] (new (listen node "change" #(.. % -target -checked)))]
-    (stage/stage! value')
     (when running?
+      (stage/stage! value')
       (case (stage/Commit.)
         (done!)))))
 
@@ -319,7 +341,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   (let [!value (atom nil)]
     (stage/staged (e/fn* [value] (reset! !value value))
       (Body.))
-    (e/watch !value)))
+    (new (m/stream (m/watch !value)))))
 
 (defmacro with-stage
   "Run `Body` in a `stage` and return latest committed value."
@@ -339,18 +361,6 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         (AtomicEditsBehavior. dom/node status value)
         (ClearOnSubmitBehavior. dom/node)))))
 
-;; TODO remove
-(e/defn InputController [node event-type v0 status read write! Body]
-  (let [[value done! running? :as _triple] (new (listen node event-type (let [cb ((capture) read)] #((cb) %))))
-        value   (if (some? value) value v0)
-        done!   ((capture) done!)
-        !status (atom (e/snapshot status))]
-    (reset! !status status)
-    (let [status' (e/watch !status)] ; TODO rename status' -> status
-      (TxUI. status')
-      (Body. status' value write! #((done!))))))
-
-;; TODO move to edit behaviors abstraction
 ;; FIXME odd behavior when failure. Seems to retry forever until settled
 (e/defn Checkbox [{::keys [status value]} Body]
   (e/client
@@ -358,29 +368,18 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       (dom/props {:type :checkbox})
       (when (= ::pending status) (dom/props {:disabled true}))
       (Body.)
-      (doto (with-stage (AtomicEditsBehavior. dom/node status value))
-        (prn "checkbox" status))
-      #_(InputController. dom/node "change" value status #(.. % -target -checked) #(set! (.-checked dom/node) %)
-        (e/fn* [status value' write! done!]
-          (prn "checkbox" status value')
-          (cond
-            #_#_ (doto (dom/Focused?.) (prn "focused")) value ; ignore concurrent modifications while typing ; not appropriate for checkboxes
-
-            (= ::accepted status)         (do (done!) (write! value) value)
-            (= ::rejected status)         (do (done!) (write! value) nil)
-            (#{::dirty ::pending} status) value' ; ignore concurrent modifications until accepted ; TODO add popover ::dirty
-            ))))))
+      (with-stage (AtomicEditsBehavior. dom/node status value)))))
 
 (defn todo-edit-done [x v]
   [(assoc x :todo/checked v) ; TODO redundant in case of edits if we have `patch-dxs`
-   (if (zero? (rand-int 2))
+   (if false #_(zero? (rand-int 2))
      [[:db/add (:db/id x) :todo/checked v]]
      [[] ; bad tx, for demo
       [:db/add (:db/id x) :todo/checked v]])])
 
 (defn todo-edit-text [x v]
   [{:db/id (:db/id x) :todo/text v} ; x
-   [[:db/add (:db/id x) :todo/text v]] ; dx
+   [[][:db/add (:db/id x) :todo/text v]] ; dx
    ])
 
 (e/defn App []
@@ -392,7 +391,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                         (Field. {::value   nil
                                  ::edit-fn (fn [v] (genesis
                                                      (fn [tempid] {:db/id tempid, :todo/text v}) ; TODO not used today, instead dxs are interpreted (see `patch-dxs`)
-                                                     (fn [tempid] [[:db/add tempid :todo/text v]])))
+                                                     (fn [tempid] [[] [:db/add tempid :todo/text v]])))
                                  ::tx-parallelism ##Inf}
                           CreateNewInput)))
        ::EditForm (e/fn [x]
@@ -413,7 +412,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
     (let [dxs (let [!no-pending (atom (e/snapshot dxs))] ; TODO Peter: would't (try (ignore-pendings …) (catch Pending _ …)) work?
                 (try (reset! !no-pending dxs) (catch hyperfiddle.electric.Pending _))
                 (e/watch !no-pending))]
-      (e/for-by identity [dx dxs]
+      (e/for-by first [[txid dx] dxs]
         (let [[status _txid tx-report] (Transact!. conn dx)]
           (case (ignore-pendings status)
             ::success (reset! !tx-report (assoc tx-report ::accepted dx))
@@ -431,7 +430,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         (binding [tx-report (new (m/stream (m/watch !tx-report)))] ; ensures all dependants sees individual tx-reports
           (binding [db (:db-after tx-report)]
             (let [xdxs (App.) ; xdxs :: collection of pairs [x dx]
-                  dxs (keep second xdxs)]
+                  dxs (map (juxt first last) (filter some? xdxs))]
               (Transactor. !tx-report conn dxs)
               (e/client
                 (dom/pre (dom/text (contrib.str/pprint-str xdxs)))
