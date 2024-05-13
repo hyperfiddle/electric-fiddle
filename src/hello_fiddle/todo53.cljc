@@ -58,7 +58,7 @@
 (e/defn Transact!* [conn tx tx-meta]
   (e/server
     (when tx
-      (e/offload-task #(do (Thread/sleep 3000)
+      (e/offload-task #(do (Thread/sleep 1000)
                            (d/transact! conn tx tx-meta))))))
 
 (e/defn Transact!
