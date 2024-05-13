@@ -137,9 +137,12 @@
 
 (e/defn TxMonitor [stable-kf eid] ; Monitor dx succes for x. ; TODO could two = txs race?
   (e/client
-    (let [tx-report                      (ignore-pendings (e/server (select-keys tx-report ; ignore current tx-report, only look at next one
-                                                  [::status ::last-x ::error])))
-          {::keys [status last-x error]} (Drop. 2 tx-report)]
+    (let [tx-report                      (e/server (select-keys tx-report ; ignore current tx-report, only look at next one
+                                                     [::status
+                                                      ::last-x
+                                                      ::last-txid ; selected to skip deduplication and ensure network transfer
+                                                      ::error]))
+          {::keys [status last-x error]} (Drop. 2 tx-report)] ; drop 2 instead of 1 due to runaway pendings
       (when (= eid (stable-kf last-x))
         (case status
           ::accepted [::accepted]
@@ -189,6 +192,9 @@
             nil)))
       (when-some [v (Body. value (e/watch !status))]
         ((e/snapshot (fn [v] (emit! (edit-fn v)))) v))
+      (when field-error
+        (e/client
+          (dom/span (dom/props {:class "field-error"}) (dom/text field-error))))
       xdxs)))
 
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
@@ -356,12 +362,9 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 
 (e/defn Input [{::keys [status value]} Body]
   (e/client
-    (let [value (dom/input
-                  (Body.)
-                  (with-stage (SpreadSheetCellBehavior. dom/node status value)))]
-      (when field-error
-        (dom/span (dom/props {:class "error"}) (dom/text field-error)))
-      value)))
+    (dom/input
+      (Body.)
+      (with-stage (SpreadSheetCellBehavior. dom/node status value)))))
 
 (e/defn CreateNewInput [value status] ; Not a regular input, doesn't hold on value, do not care about tx success/failure
   (e/client
@@ -462,8 +465,8 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       (let [[status _txid tx-report] (Transact!. conn dx)]
         (swap! !tx-report merge-tx-reports
           (case (ignore-pendings status)
-            ::success (assoc tx-report ::last-x x, ::status ::accepted)
-            ::failure {::last-x x, ::status ::rejected ::error (ex-message tx-report)}
+            ::success (assoc tx-report ::last-x x, ::last-txid txid, ::status ::accepted)
+            ::failure {::last-x x, ::last-txid txid ::status ::rejected ::error (ex-message tx-report)}
             nil))
         nil))
     nil))

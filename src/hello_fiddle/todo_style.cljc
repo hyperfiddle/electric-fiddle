@@ -101,8 +101,9 @@
               {:background-color COLOR-SUCCESS})
             (css/rule "li:has(.failure)"
               {:background-color COLOR-FAILURE})
-            (css/rule "li .error"
+            (css/rule "li .field-error"
               {:grid-column "1/3"
+               :grid-row    "2"
                :font-size   "1rem"
                :color       :orangered
                :text-align  :justify
