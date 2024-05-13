@@ -120,7 +120,8 @@
                :position      :absolute
                :box-sizing    :border-box
                :z-index       2
-               :top           0, :right "1rem", :bottom 0, :margin :auto
+               :top           "1.2rem" ; Same as input's line-height
+               :right         "1rem"
                :width         "20px"
                :height        "20px"
                :border-top    :none
