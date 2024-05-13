@@ -126,7 +126,7 @@
     [(x! tempid) (dx! tempid)]))
 
 (e/defn TxEmitter [tx-parallelism]
-  (let [!txs (atom ())]
+  (let [!txs (atom ())] ; Experiment: unbundle and return atom in xdxs
     [(e/watch !txs)
      (fn emit! [tx] (swap! !txs #(cons tx (take (dec tx-parallelism) %))) nil)
      (fn retract! [tx] (swap! !txs (partial remove #{tx})) nil)]))
@@ -155,6 +155,11 @@
             index xdxs))))
 
 ;; What's the value of forwarding value and edit-fn? A: Cleaner API.
+;; Experiment: move tx parallism to the MasterList
+;; Ensure only the masterlist has a for-by.
+;; The masterlist would create ##inf createnew inputs instead
+;; and immediately apply the optimistic entity
+;; while emitting collected dxs to the transactor.
 (e/defn Field [{::keys [stable-kf eid value edit-fn tx-parallelism]
                 :or    {tx-parallelism 1}}
                Body]
@@ -296,7 +301,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (e/defn Attributes [node html-attribute-names]
   (e/client (new (watch-attributes node html-attribute-names))))
 
-(e/defn AtomicEditsBehavior
+(e/defn AtomicEditsBehavior ; D: Used to be called HyperControl?
   "Augment a dom input so it accumulate edits and:
   - emits the latest one on Enter pressed (submit)
   - cancel the edits and resets the input to the latest authoritative value (discard)
@@ -321,7 +326,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 )
     (set! (.-value node) nil)))
 
-(e/defn SpreadSheetCellBehavior
+(e/defn SpreadSheetCellBehavior ; TODO rename? SpreadSheet TEXT input cell
   "Augment a dom input to make it behave like a spreadsheet cell.
    The input will accumulate changes until:
    - Enter, Tab is pressed or user click outside , emitting the value.
@@ -436,6 +441,15 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
      (update ::revids merge (rev-ids report2))))
   #_([report1 report2 & reports]
    (reduce merge-tx-reports (merge-tx-reports report1 report2) reports)))
+
+;; 3 types of TX errors
+;; - Transaction content rejected
+;; - Some system part is failing and tx should be retained and retried
+;; - Transaction rejected but the conflict has been resolved elsewhere
+;;   and tx will be accepted next time
+;; Is it the error due to the tx data at point in time or to the machine being
+;; broken?
+;; We want to avoid tx to be discrete 
 
 (e/defn Transactor [!tx-report conn xdxs]
   (e/server
