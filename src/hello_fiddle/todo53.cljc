@@ -11,7 +11,8 @@
    [hello-fiddle.todo-style]
    [datascript.core :as d]
    [missionary.core :as m]
-   [hello-fiddle.stage :as stage])
+   [hello-fiddle.stage :as stage]
+   [clojure.string :as str])
   (:import
    (missionary Cancelled)))
 
@@ -125,25 +126,32 @@
   (let [tempid (- (uid))]
     [(x! tempid) (dx! tempid)]))
 
+(defn field-identifier [[e a _id :as tx-id]]
+  [e a])
+
 (e/defn TxEmitter [tx-parallelism]
   (let [!txs (atom ())] ; Experiment: unbundle and return atom in xdxs
     [(e/watch !txs)
      (fn emit! [tx] (swap! !txs #(cons tx (take (dec tx-parallelism) %))) nil)
-     (fn retract! [tx] (swap! !txs (partial remove #{tx})) nil)]))
+     (fn retract! [[e a _id]] (swap! !txs (partial remove (fn [[tx-id _x _dx]]
+                                                            (= [e a] (field-identifier tx-id)))))
+       nil)]))
 
 (e/defn Drop [n value]
   (e/client
     (new (m/relieve {} (m/reductions {} nil (m/eduction (drop n) (e/fn* [] value)))))))
 
-(e/defn TxMonitor [stable-kf eid] ; Monitor dx succes for x. ; TODO could two = txs race?
+(e/defn TxMonitor [stable-kf txid eid] ; Monitor dx succes for x. ; TODO could two = txs race?
   (e/client
     (let [tx-report                      (e/server (select-keys tx-report ; ignore current tx-report, only look at next one
                                                      [::status
                                                       ::last-x
                                                       ::last-txid ; selected to skip deduplication and ensure network transfer
                                                       ::error]))
-          {::keys [status last-x error]} (Drop. 2 tx-report)] ; drop 2 instead of 1 due to runaway pendings
-      (when (= eid (stable-kf last-x))
+          {::keys [status last-x last-txid error]} (Drop. 2 tx-report)] ; drop 2 instead of 1 due to runaway pendings
+      (when (and (= eid (stable-kf last-x))
+              (or (nil? txid)
+                (= (field-identifier txid) (field-identifier last-txid))))
         (case status
           ::accepted [::accepted]
           ::rejected [::rejected error]
@@ -165,18 +173,18 @@
 ;; The masterlist would create ##inf createnew inputs instead
 ;; and immediately apply the optimistic entity
 ;; while emitting collected dxs to the transactor.
-(e/defn Field [{::keys [stable-kf eid value edit-fn tx-parallelism]
+(e/defn Field [{::keys [attribute stable-kf eid value edit-fn tx-parallelism]
                 :or    {tx-parallelism 1}}
                Body]
   (let [tx-id                 (partial swap! (atom 0) inc)
         !status               (atom ::idle)
         [xdxs emit! retract!] (TxEmitter. tx-parallelism)
-        emit!                 (fn [[x dx :as xdx]] (emit! (vec (cons (str (stable-kf x) "_" (tx-id)) xdx))))
+        emit!                 (fn [[x dx :as xdx]] (emit! (vec (cons [(stable-kf x) attribute (tx-id)] xdx))))
         !error                (atom nil)]
     (binding [field-error (e/watch !error)]
       (when eid
         (reset! !status ::pending)
-        (let [[status error] (TxMonitor. stable-kf eid)]
+        (let [[status error] (TxMonitor. stable-kf nil eid)]
           ;; (prn "optimistic status" status)
           (case status
             ::accepted (do (reset! !status ::accepted) (reset! !error nil))
@@ -184,17 +192,20 @@
             nil)))
       ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
       (e/for-by identity [[txid x dx :as xdx] xdxs]
-        (let [[status error] (ignore-pendings (TxMonitor. stable-kf (stable-kf x)))]
+        (let [[status error] (ignore-pendings (TxMonitor. stable-kf txid (stable-kf x)))]
           ;; (prn (stable-kf x) status)
           (case status
-            ::accepted (do (retract! xdx) (reset! !status ::accepted) (reset! !error nil))
+            ::accepted (do (retract! txid) (reset! !status ::accepted) (reset! !error nil))
             ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
             nil)))
       (when-some [v (Body. value (e/watch !status))]
         (emit! (edit-fn v))) ; edit-fn must be stable!
       (when field-error
         (e/client
-          (dom/span (dom/props {:class "field-error"}) (dom/text field-error))))
+          (dom/span
+            (dom/props {:class "field-error"})
+            (dom/text "Failed to persist " attribute)
+            #_(dom/text field-error))))
       xdxs)))
 
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
@@ -386,21 +397,30 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (defn to-dx [x]
   (map (fn [[k v]] [:db/add (:db/id x) k v]) (dissoc x :db/id)))
 
+(defn base [entity] (select-keys entity [:db/id])) ; TODO infer best identity
+
+
+
 (defn todo-edit-done [stable-kf get-x v]
   (let [x (get-x)
-        x+dx (assoc x :todo/checked v)]
+        x+dx (assoc (base x) :todo/checked v)] ; Only alter one attr, or get races between fields of same entity FIXME
     [x+dx
-     (if (tempid? (stable-kf x))
-       (to-dx x+dx)
-       [[:db/add (:db/id x) :todo/checked v]])])) ; TODO infer best identity instead of :db/id
+     (cond->
+         (if (tempid? (stable-kf x))
+           (to-dx (assoc x :todo/checked v))
+           [[:db/add (:db/id x) :todo/checked v]]) ; TODO infer best identity instead of :db/id
+       (str/starts-with? (:todo/text x "") "fail")
+       ,, (cons []))]))
 
 (defn todo-edit-text [stable-kf get-x v]
   (let [x    (get-x)
-        x+dx (assoc x :todo/text v)]
+        x+dx (assoc (base x) :todo/text v)] ; Only alter one attr, or get races between fields of same entity FIXME
     [x+dx
-     (if (tempid? (stable-kf x))
-       (to-dx x+dx)
-       [[:db/add (:db/id x) :todo/text v]])])) ; TODO infer best identity instead of :db/id
+     (cond->
+         (if (tempid? (stable-kf x))
+           (to-dx (assoc x :todo/text v))
+           [[:db/add (:db/id x) :todo/text v]]) ; TODO infer best identity instead of :db/id
+       (= "fail" v) (cons []))]))
 
 (e/defn App []
   (e/client
@@ -412,7 +432,8 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
              ::CreateForm
              (e/fn []
                (e/client ; TODO v3 dynamic siting
-                 (Field. {::stable-kf      stable-kf
+                 (Field. {::attribute      :todo/text
+                          ::stable-kf      stable-kf
                           ::value          nil
                           ::edit-fn        (fn [v]
                                              (genesis
@@ -428,14 +449,17 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
              ::EditForm
              (e/fn [x]
                (e/client ; TODO v3 dynamic siting
-                 (dom/li #_(dom/span (dom/text (pr-str x)))
+                 (dom/li
+                   (e/client (dom/props {:title (pr-str x)}))
                    (concat
-                     (Field. {::stable-kf stable-kf
+                     (Field. {::attribute :todo/checked
+                              ::stable-kf stable-kf
                               ::value     (:todo/checked x false)
                               ::edit-fn   (partial todo-edit-done stable-kf ((capture) x))} ; FIXME abstract over `capture` ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
                        (e/fn [value status]
                          (Checkbox. {::status status ::value value} (e/fn* [] #_(dom/props ...)))))
-                     (Field. {::stable-kf stable-kf
+                     (Field. {::attribute :todo/text
+                              ::stable-kf stable-kf
                               ::eid       (when (tempid? (stable-kf x)) (stable-kf x))
                               ::value     (:todo/text x)
                               ::edit-fn   (partial todo-edit-text stable-kf ((capture) x))}
@@ -462,12 +486,16 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 ;;   and tx will be accepted next time
 ;; Is it the error due to the tx data at point in time or to the machine being
 ;; broken?
-;; We want to avoid tx to be discrete 
+;; We want to avoid tx to be discrete
 
 (e/defn Transactor [!tx-report conn xdxs]
   (e/server
+    ;; (prn "xdxs" xdxs)
     (e/for-by first [[txid x dx] (ignore-pendings (filter some? xdxs))]
       (let [[status _txid tx-report] (Transact!. conn dx)]
+        ;; (prn "up" txid)
+        ;; (prn "track" txid status)
+        ;; (e/on-unmount #(prn "down" txid))
         (swap! !tx-report merge-tx-reports
           (case (ignore-pendings status)
             ::success (assoc tx-report ::last-x x, ::last-txid txid, ::status ::accepted)
@@ -480,7 +508,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   (e/server
     (binding [conn (d/create-conn)]
       (binding [!tx-report (atom (d/transact! conn [{:todo/text "Hello", :todo/created-at (inst-ms (java.util.Date.))}
-                                                    {:todo/text "world", :todo/created-at (inst-ms (java.util.Date.))}]))]
+                                                    {:todo/text "world", :todo/created-at (inc (inst-ms (java.util.Date.)))}]))]
         (def repl-conn conn)
         (def repl-transact! #(reset! !tx-report (d/transact! conn %)))
         (binding [tx-report (new (m/stream (m/watch !tx-report)))] ; ensures all dependants sees individual tx-reports
@@ -489,7 +517,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
             (let [xdxs (App.)] ; xdxs :: collection of pairs [txid x dx]
               (Transactor. !tx-report conn xdxs)
               (e/client
-                (dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
                 (dom/pre (dom/text (contrib.str/pprint-str xdxs)))
+                (dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
                 (hello-fiddle.todo-style/Style.)
                 nil))))))))

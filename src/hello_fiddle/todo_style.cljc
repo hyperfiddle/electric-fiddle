@@ -60,6 +60,7 @@
                :border-bottom         "2px dotted lightgray"}
               (css/rule "input[type='checkbox']"
                 {:grid-column  1
+                 :grid-row     1
                  :appearance   :none
                  :text-align   :center
                  :width        "40px"
@@ -87,6 +88,7 @@
                    :color           "#a9a9a9"}))
               (css/rule "input[type='text']"
                 {:grid-column      2
+                 :grid-row         1
                  :position         :relative
                  :padding          "15px"
                  :font-size        :inherit
@@ -106,7 +108,6 @@
               {:background-color COLOR-FAILURE})
             (css/rule "li .field-error"
               {:grid-column "1/3"
-               :grid-row    "2"
                :font-size   "1rem"
                :color       :orangered
                :text-align  :justify
