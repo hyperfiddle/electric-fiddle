@@ -44,7 +44,10 @@
              :border-bottom "2px dotted lightgray"}
             (css/rule "&::placeholder"
               {:font-style :italic
-               :color      "#a9a9a9"}))
+               :color      "#a9a9a9"})
+            (css/rule "&~.field-error" ; input's sibling (~) with .field-error class
+              {:display :none}) ; HACK not needed in next design iteration
+            )
           (css/rule "ul"
             {:margin 0, :padding 0, :list-style :none}
             (css/rule "li"
