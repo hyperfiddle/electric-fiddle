@@ -7,8 +7,8 @@
 (ns hello-fiddle.todo53
   (:require
    [hyperfiddle.electric :as e]
-   [hyperfiddle.electric-css :as css]
    [hyperfiddle.electric-dom2 :as dom]
+   [hello-fiddle.todo-style]
    [datascript.core :as d]
    [missionary.core :as m]
    [hello-fiddle.stage :as stage])
@@ -154,6 +154,8 @@
                       (assoc index (stable-kf x) x)))
             index xdxs))))
 
+(e/def field-error nil)
+
 ;; What's the value of forwarding value and edit-fn? A: Cleaner API.
 ;; Experiment: move tx parallism to the MasterList
 ;; Ensure only the masterlist has a for-by.
@@ -167,26 +169,27 @@
         !status               (atom ::idle)
         [xdxs emit! retract!] (TxEmitter. tx-parallelism)
         emit!                 (fn [[x dx :as xdx]] (emit! (vec (cons (str (stable-kf x) "_" (tx-id)) xdx))))
-        !error                (atom nil), error (e/watch !error)]
-    (when eid
-      (reset! !status ::pending)
-      (let [[status error] (TxMonitor. stable-kf eid)]
-        ;; (prn "optimistic status" status)
-        (case status
-          ::accepted (do (reset! !status ::accepted) (reset! !error nil))
-          ::rejected (do (reset! !status ::rejected) (reset! !error error))
-          nil)))
-    ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
-    (e/for-by identity [[txid x dx :as xdx] xdxs]
-      (let [[status error] (ignore-pendings (TxMonitor. stable-kf (stable-kf x)))]
-        ;; (prn (stable-kf x) status)
-        (case status
-          ::accepted (do (retract! xdx) (reset! !status ::accepted) (reset! !error nil))
-          ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
-          nil)))
-    (when-some [v (Body. value (e/watch !status))]
-      ((e/snapshot (fn [v] (emit! (edit-fn v)))) v))
-    xdxs))
+        !error                (atom nil)]
+    (binding [field-error (e/watch !error)]
+      (when eid
+        (reset! !status ::pending)
+        (let [[status error] (TxMonitor. stable-kf eid)]
+          ;; (prn "optimistic status" status)
+          (case status
+            ::accepted (do (reset! !status ::accepted) (reset! !error nil))
+            ::rejected (do (reset! !status ::rejected) (reset! !error error))
+            nil)))
+      ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
+      (e/for-by identity [[txid x dx :as xdx] xdxs]
+        (let [[status error] (ignore-pendings (TxMonitor. stable-kf (stable-kf x)))]
+          ;; (prn (stable-kf x) status)
+          (case status
+            ::accepted (do (retract! xdx) (reset! !status ::accepted) (reset! !error nil))
+            ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
+            nil)))
+      (when-some [v (Body. value (e/watch !status))]
+        ((e/snapshot (fn [v] (emit! (edit-fn v)))) v))
+      xdxs)))
 
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
   (e/client
@@ -240,7 +243,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         (case (.-key event)
           "Enter"  (case status
                      ::rejected (stage/Commit. @!last-stage)
-                     (do (prn "stage/stage" stage/stage)
+                     (do #_(prn "stage/stage" stage/stage)
                          (case (stage/Commit.)
                            (done!))))
           "Escape" (case (do (stage/discard!) (.blur node))
@@ -320,7 +323,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (e/defn ClearOnSubmitBehavior
   "Clear an input on submit. A common pattern to chat interfaces and todo-apps"
   [node]
-  (prn "ClearOnSubmitBehavior" stage/stage)
+  ;; (prn "ClearOnSubmitBehavior" stage/stage)
   (when (empty? stage/stage)
     #_(when (not-empty ((fn [_] (.-value node)) stage/stage)) ; not composed in a single (and …) so expr reruns
 )
@@ -353,13 +356,17 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 
 (e/defn Input [{::keys [status value]} Body]
   (e/client
-    (dom/input
-      (Body.)
-      (with-stage (SpreadSheetCellBehavior. dom/node status value)))))
+    (let [value (dom/input
+                  (Body.)
+                  (with-stage (SpreadSheetCellBehavior. dom/node status value)))]
+      (when field-error
+        (dom/span (dom/props {:class "error"}) (dom/text field-error)))
+      value)))
 
 (e/defn CreateNewInput [value status] ; Not a regular input, doesn't hold on value, do not care about tx success/failure
   (e/client
     (dom/input
+      (dom/props {:placeholder "What needs to be done?"})
       (with-stage
         (AtomicEditsBehavior. dom/node status value)
         (ClearOnSubmitBehavior. dom/node)))))
@@ -375,7 +382,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 
 (defn todo-edit-done [x v]
   [(assoc x :todo/checked v) ; TODO redundant in case of edits if we have `patch-dxs`
-   (if (zero? (rand-int 2))
+   (if false #_(zero? (rand-int 2))
      [[:db/add (:db/id x) :todo/checked v]]
      [[] ; bad tx, for demo
       [:db/add (:db/id x) :todo/checked v]])])
@@ -389,43 +396,43 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 
 (e/defn App []
   (e/client
-    (binding [stable-kf (StableKf.)]
-      (e/server
-        (MasterList.
-          {::authoritative-xs (query-todos db)
-           ::CreateForm
-           (e/fn []
-             (e/client ; TODO v3 dynamic siting
-               (Field. {::stable-kf      stable-kf
-                        ::value          nil
-                        ::edit-fn        (fn [v]
-                                           (genesis
-                                             (fn [tempid] {:db/id tempid
-                                                           :todo/text v,
-                                                           :todo/created-at (inst-ms (js/Date.))}) ; TODO not used today, instead dxs are interpreted (see `patch-dxs`)
-                                             (fn [tempid]
-                                               [[]
-                                                [:db/add tempid, :todo/text v]
-                                                [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]])))
-                        ::tx-parallelism ##Inf}
-                 CreateNewInput)))
-           ::EditForm
-           (e/fn [x]
-             (e/client ; TODO v3 dynamic siting
-               (dom/li (dom/span (dom/text (pr-str x)))
-                       (concat
-                         (Field. {::stable-kf stable-kf
-                                  ::value     (:todo/checked x false)
-                                  ::edit-fn   (partial todo-edit-done x)} ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
-                           (e/fn [value status]
-                             (Checkbox. {::status status ::value value} (e/fn* [] #_(dom/props ...)))))
-                         (Field. {::stable-kf stable-kf
-                                  ::eid       (when (tempid? (stable-kf x)) (stable-kf x))
-                                  ::value     (:todo/text x)
-                                  ::edit-fn   (partial todo-edit-text x)}
-                           (e/fn [value status]
-                             (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))))))))})))))
-
+    (dom/div (dom/props {:class "todomvc"})
+      (binding [stable-kf (StableKf.)]
+        (e/server
+          (MasterList.
+            {::authoritative-xs (query-todos db)
+             ::CreateForm
+             (e/fn []
+               (e/client ; TODO v3 dynamic siting
+                 (Field. {::stable-kf      stable-kf
+                          ::value          nil
+                          ::edit-fn        (fn [v]
+                                             (genesis
+                                               (fn [tempid] {:db/id tempid
+                                                             :todo/text v,
+                                                             :todo/created-at (inst-ms (js/Date.))}) ; TODO not used today, instead dxs are interpreted (see `patch-dxs`)
+                                               (fn [tempid]
+                                                 [[]
+                                                  [:db/add tempid, :todo/text v]
+                                                  [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]])))
+                          ::tx-parallelism ##Inf}
+                   CreateNewInput)))
+             ::EditForm
+             (e/fn [x]
+               (e/client ; TODO v3 dynamic siting
+                 (dom/li #_(dom/span (dom/text (pr-str x)))
+                   (concat
+                     (Field. {::stable-kf stable-kf
+                              ::value     (:todo/checked x false)
+                              ::edit-fn   (partial todo-edit-done x)} ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
+                       (e/fn [value status]
+                         (Checkbox. {::status status ::value value} (e/fn* [] #_(dom/props ...)))))
+                     (Field. {::stable-kf stable-kf
+                              ::eid       (when (tempid? (stable-kf x)) (stable-kf x))
+                              ::value     (:todo/text x)
+                              ::edit-fn   (partial todo-edit-text x)}
+                       (e/fn [value status]
+                         (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))))))))}))))))
 
 (defn rev-ids [report]
   (let [tempids (dissoc (:tempids report) :db/current-tx)]
@@ -438,9 +445,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
               report))
   ([report1 report2]
    (-> (merge (merge-tx-reports report1) (into {} report2))
-     (update ::revids merge (rev-ids report2))))
-  #_([report1 report2 & reports]
-   (reduce merge-tx-reports (merge-tx-reports report1 report2) reports)))
+     (update ::revids merge (rev-ids report2)))))
 
 ;; 3 types of TX errors
 ;; - Transaction content rejected
@@ -463,8 +468,6 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         nil))
     nil))
 
-;; (merge-tx-reports {:tempids {1 :a}} {:tempids {2 :b}} nil {:tempids {3 :c}})
-
 (e/defn Todo5 []
   (e/server
     (binding [conn (d/create-conn)]
@@ -473,25 +476,12 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         (def repl-conn conn)
         (def repl-transact! #(reset! !tx-report (d/transact! conn %)))
         (binding [tx-report (new (m/stream (m/watch !tx-report)))] ; ensures all dependants sees individual tx-reports
-          ;; (prn (select-keys tx-report [::accepted ::rejected ::error ::revids]))
           (binding [db (:db-after tx-report)]
+            (e/client (dom/h1 (dom/text "todos")))
             (let [xdxs (App.)] ; xdxs :: collection of pairs [txid x dx]
               (Transactor. !tx-report conn xdxs)
               (e/client
+                (dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
                 (dom/pre (dom/text (contrib.str/pprint-str xdxs)))
-                (css/style
-                  (css/keyframes "spin"
-                    (css/keyframe :from {:transform "rotate(0deg)"})
-                    (css/keyframe :to   {:transform "rotate(360deg)"}))
-                  (css/rule "ul li" {:display :grid, :grid-auto-flow :column, :width :fit-content}
-                            (css/rule "input[type='checkbox']" {:grid-column 1})
-                            (css/rule "input[type='text']" {:grid-column 2})
-                            )
-                  (css/rule "input"
-                    (css/rule {:outline "2px solid gray"})
-                    (css/rule "&.dirty"   {:outline-color "orange"})
-                    (css/rule "&.pending" {:outline-color "yellow"}
-                              (css/rule "&[type=\"checkbox\"]" {:animation "spin 1s linear infinite"}))
-                    (css/rule "&.success" {:outline-color "green"})
-                    (css/rule "&.failure" {:outline-color "red"})) )
+                (hello-fiddle.todo-style/Style.)
                 nil))))))))
