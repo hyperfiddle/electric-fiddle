@@ -191,7 +191,7 @@
             ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
             nil)))
       (when-some [v (Body. value (e/watch !status))]
-        ((e/snapshot (fn [v] (emit! (edit-fn v)))) v))
+        (emit! (edit-fn v))) ; edit-fn must be stable!
       (when field-error
         (e/client
           (dom/span (dom/props {:class "field-error"}) (dom/text field-error))))
@@ -383,19 +383,24 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       (Body.)
       (with-stage (AtomicEditsBehavior. dom/node status value)))))
 
-(defn todo-edit-done [x v]
-  [(assoc x :todo/checked v) ; TODO redundant in case of edits if we have `patch-dxs`
-   (if false #_(zero? (rand-int 2))
-     [[:db/add (:db/id x) :todo/checked v]]
-     [[] ; bad tx, for demo
-      [:db/add (:db/id x) :todo/checked v]])])
-
 (defn to-dx [x]
   (map (fn [[k v]] [:db/add (:db/id x) k v]) (dissoc x :db/id)))
 
-(defn todo-edit-text [x v]
-  (let [x' (assoc x :todo/text v)]
-    [x' (to-dx x')]))
+(defn todo-edit-done [stable-kf get-x v]
+  (let [x (get-x)
+        x+dx (assoc x :todo/checked v)]
+    [x+dx
+     (if (tempid? (stable-kf x))
+       (to-dx x+dx)
+       [[:db/add (:db/id x) :todo/checked v]])])) ; TODO infer best identity instead of :db/id
+
+(defn todo-edit-text [stable-kf get-x v]
+  (let [x    (get-x)
+        x+dx (assoc x :todo/text v)]
+    [x+dx
+     (if (tempid? (stable-kf x))
+       (to-dx x+dx)
+       [[:db/add (:db/id x) :todo/text v]])])) ; TODO infer best identity instead of :db/id
 
 (e/defn App []
   (e/client
@@ -413,7 +418,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                                              (genesis
                                                (fn [tempid] {:db/id tempid
                                                              :todo/text v,
-                                                             :todo/created-at (inst-ms (js/Date.))}) ; TODO not used today, instead dxs are interpreted (see `patch-dxs`)
+                                                             :todo/created-at (inst-ms (js/Date.))})
                                                (fn [tempid]
                                                  [[]
                                                   [:db/add tempid, :todo/text v]
@@ -427,13 +432,13 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                    (concat
                      (Field. {::stable-kf stable-kf
                               ::value     (:todo/checked x false)
-                              ::edit-fn   (partial todo-edit-done x)} ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
+                              ::edit-fn   (partial todo-edit-done stable-kf ((capture) x))} ; FIXME abstract over `capture` ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
                        (e/fn [value status]
                          (Checkbox. {::status status ::value value} (e/fn* [] #_(dom/props ...)))))
                      (Field. {::stable-kf stable-kf
                               ::eid       (when (tempid? (stable-kf x)) (stable-kf x))
                               ::value     (:todo/text x)
-                              ::edit-fn   (partial todo-edit-text x)}
+                              ::edit-fn   (partial todo-edit-text stable-kf ((capture) x))}
                        (e/fn [value status]
                          (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))))))))}))))))
 
