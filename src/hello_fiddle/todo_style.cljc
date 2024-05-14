@@ -5,8 +5,8 @@
 
 (def COLOR-DIRTY   "rgba(255,255,0,0.15)")
 (def COLOR-PENDING "rgba(255,157,0,0.15)")
-(def COLOR-SUCCESS "rgba(0,255,0,0.10)")
-(def COLOR-FAILURE "rgba(255,0,0,0.05)")
+(def COLOR-ACCEPTED "rgba(0,255,0,0.10)")
+(def COLOR-REJECTED "rgba(255,0,0,0.05)")
 
 (e/defn Style []
   (e/client
@@ -102,10 +102,10 @@
                   {:box-shadow "0 0 0.25rem lightgray inset"
                    :outline    "1px gray solid"
                    :z-index    "1"})))
-            (css/rule "li:has(.success)"
-              {:background-color COLOR-SUCCESS})
-            (css/rule "li:has(.failure)"
-              {:background-color COLOR-FAILURE})
+            (css/rule "li:has(.accepted)"
+              {:background-color COLOR-ACCEPTED})
+            (css/rule "li:has(.rejected)"
+              {:background-color COLOR-REJECTED})
             (css/rule "li .field-error"
               {:grid-column "1/3"
                :font-size   "1rem"

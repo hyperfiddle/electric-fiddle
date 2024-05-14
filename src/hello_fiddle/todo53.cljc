@@ -1,6 +1,5 @@
 ;; Next up:
-;; - Figure out how to correlate tx between create new and optimistic row
-;; - Add Form abstraction
+;; - Add Form abstraction - only meaningful as a stage and for validation
 ;; - Figure out Form/Field/Input's API
 ;; - Figure out how to cancel pending txs — if even needed
 
@@ -45,14 +44,14 @@
             args (e/snapshot args)]
         (try
           ((fn [_] (reset! !run? false))
-           (reset! !last-state [::success id (e/apply F args)]))
+           (reset! !last-state [::accepted id (e/apply F args)]))
           (catch hyperfiddle.electric.Pending _
             (reset! !last-state [::pending id]))
           (catch Cancelled c (throw c))
           (catch Throwable t
             ((fn [& _] (reset! !run? false))
              t
-             (reset! !last-state [::failure id t]))))))
+             (reset! !last-state [::rejected id t]))))))
     (e/watch !last-state)))
 
 (e/defn Transact!* [conn tx tx-meta]
@@ -85,14 +84,7 @@
 
 (e/defn TxUI [status]
   (e/client
-    (case (ignore-pendings status)
-      (nil ::idle) nil
-      ::dirty      (dom/props {:class "dirty"})
-      ::pending    (dom/props {:class "pending"})
-      ::accepted   (dom/props {:class "success"})
-      ::rejected   (dom/props {:class "failure"}))
-    status))
-
+    (dom/props {:class (case status (nil ::idle) nil, (name status))})))
 
 ;;; ------------
 
@@ -113,6 +105,7 @@
         (:db/id entity)
         (get @!tempids (:db/id entity) (:db/id entity))))))
 
+
 (e/def stable-kf :db/id)
 
 ;; How do we stabilize tempid to db/id?
@@ -122,9 +115,9 @@
 
 (defn uid [] (Math/abs (hash (random-uuid))))
 
-(defn genesis [x! dx!] ;; TODO looks like x! is unused. Why? Is dx! enough to model genesis? x₀ = id ⊕ dx₀ = dx₀ ?
+(defn genesis [x! dx!]
   (let [tempid (- (uid))]
-    [(x! tempid) (dx! tempid)]))
+    ((juxt x! dx!) tempid)))
 
 (defn field-identifier [[e a _id :as tx-id]]
   [e a])
@@ -141,7 +134,7 @@
   (e/client
     (new (m/relieve {} (m/reductions {} nil (m/eduction (drop n) (e/fn* [] value)))))))
 
-(e/defn TxMonitor [stable-kf txid eid] ; Monitor dx succes for x. ; TODO could two = txs race?
+(e/defn TxMonitor [stable-kf txid eid] ; Monitor dx succes for x.
   (e/client
     (let [tx-report                      (e/server (select-keys tx-report ; ignore current tx-report, only look at next one
                                                      [::status
@@ -173,6 +166,7 @@
 ;; The masterlist would create ##inf createnew inputs instead
 ;; and immediately apply the optimistic entity
 ;; while emitting collected dxs to the transactor.
+
 (e/defn Field [{::keys [attribute stable-kf eid value edit-fn tx-parallelism]
                 :or    {tx-parallelism 1}}
                Body]
@@ -185,7 +179,6 @@
       (when eid
         (reset! !status ::pending)
         (let [[status error] (TxMonitor. stable-kf nil eid)]
-          ;; (prn "optimistic status" status)
           (case status
             ::accepted (do (reset! !status ::accepted) (reset! !error nil))
             ::rejected (do (reset! !status ::rejected) (reset! !error error))
@@ -193,7 +186,6 @@
       ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
       (e/for-by identity [[txid x dx :as xdx] xdxs]
         (let [[status error] (ignore-pendings (TxMonitor. stable-kf txid (stable-kf x)))]
-          ;; (prn (stable-kf x) status)
           (case status
             ::accepted (do (retract! txid) (reset! !status ::accepted) (reset! !error nil))
             ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
@@ -219,8 +211,7 @@
             (CreateForm.))
           (dom/ul
             (apply concat
-              (e/for-by stable-kf [x (sort-by :todo/created-at (ignore-pendings optimistic-xs))] ; FIXME stabilize ; FIXME for-by on wrong peer
-                ;; (prn "x" x)
+              (e/for-by stable-kf [x (sort-by :todo/created-at (ignore-pendings optimistic-xs))] ; FIXME for-by on wrong peer
                 (e/server  ; TODO v3 dynamic siting
                   (EditForm. x))))))))))
 
@@ -260,16 +251,15 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         (case (.-key event)
           "Enter"  (case status
                      ::rejected (stage/Commit. @!last-stage)
-                     (do #_(prn "stage/stage" stage/stage)
-                         (case (stage/Commit.)
-                           (done!))))
+                     (case (stage/Commit.)
+                       (done!)))
           "Escape" (case (do (stage/discard!) (.blur node))
                      (done!))
           (done!)))))
   (let [value  (or stage/stage value) ; don't damage user uncommitted typing
         status (cond (some? stage/stage) ::dirty
                      :else               status)]
-    (TxUI. status) ; Render 4 colors ; FIXME misplaced, too low level here
+    (TxUI. status) ; Tag control with status as CSS class
     (when-not (dom/Focused?.) ; don't alter input while user-focused (UX)
       (set! (.-value node) value))))
 
@@ -340,14 +330,11 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (e/defn ClearOnSubmitBehavior
   "Clear an input on submit. A common pattern to chat interfaces and todo-apps"
   [node]
-  ;; (prn "ClearOnSubmitBehavior" stage/stage)
   (when (empty? stage/stage)
-    #_(when (not-empty ((fn [_] (.-value node)) stage/stage)) ; not composed in a single (and …) so expr reruns
-)
     (set! (.-value node) nil)))
 
-(e/defn SpreadSheetCellBehavior ; TODO rename? SpreadSheet TEXT input cell
-  "Augment a dom input to make it behave like a spreadsheet cell.
+(e/defn SpreadSheetTextInputBehavior ; TODO rename? SpreadSheet TEXT input cell
+  "Augment a dom input to make it behave like a spreadsheet text input.
    The input will accumulate changes until:
    - Enter, Tab is pressed or user click outside , emitting the value.
    - Escape is pressed, rolling back the value to the latest authoritative one.
@@ -375,9 +362,9 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   (e/client
     (dom/input
       (Body.)
-      (with-stage (SpreadSheetCellBehavior. dom/node status value)))))
+      (with-stage (SpreadSheetTextInputBehavior. dom/node status value)))))
 
-(e/defn CreateNewInput [value status] ; Not a regular input, doesn't hold on value, do not care about tx success/failure
+(e/defn CreateNewInput [value status] ; Not a regular input, doesn't hold on value, do not care about tx accepted/rejected
   (e/client
     (dom/input
       (dom/props {:placeholder "What needs to be done?"})
@@ -385,7 +372,6 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         (AtomicEditsBehavior. dom/node status value)
         (ClearOnSubmitBehavior. dom/node)))))
 
-;; FIXME odd behavior when failure. Seems to retry forever until settled
 (e/defn Checkbox [{::keys [status value]} Body]
   (e/client
     (dom/input
@@ -397,9 +383,23 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (defn to-dx [x]
   (map (fn [[k v]] [:db/add (:db/id x) k v]) (dissoc x :db/id)))
 
-(defn base [entity] (select-keys entity [:db/id])) ; TODO infer best identity
+(defn best-identity
+  "TODO wire up schema
+  Return the best identity for a given entity and schema.
+  (e.g. :db/id, :user-domain/id)"
+  ([] (best-identity nil nil))
+  ([_schema _entity] :db/id)) ; stub
 
+(defn best-identity-value
+  "TODO wire up schema
+  Return the best identity's value for a given entity and schema.
+  (e.g. 42, [:lookup/ref 42])"
+  ([entity] (best-identity-value nil entity)) ; stub
+  ([schema entity] (get entity (best-identity schema entity)))) ; stub
 
+(defn base
+  ([entity] (base nil entity)) ; stub
+  ([schema entity] (select-keys entity [(best-identity schema entity)])))
 
 (defn todo-edit-done [stable-kf get-x v]
   (let [x (get-x)
@@ -408,7 +408,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
      (cond->
          (if (tempid? (stable-kf x))
            (to-dx (assoc x :todo/checked v))
-           [[:db/add (:db/id x) :todo/checked v]]) ; TODO infer best identity instead of :db/id
+           [[:db/add (best-identity-value x) :todo/checked v]])
        (str/starts-with? (:todo/text x "") "fail")
        ,, (cons []))]))
 
@@ -419,7 +419,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
      (cond->
          (if (tempid? (stable-kf x))
            (to-dx (assoc x :todo/text v))
-           [[:db/add (:db/id x) :todo/text v]]) ; TODO infer best identity instead of :db/id
+           [[:db/add (best-identity-value x) :todo/text v]])
        (= "fail" v) (cons []))]))
 
 (e/defn App []
@@ -490,16 +490,12 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 
 (e/defn Transactor [!tx-report conn xdxs]
   (e/server
-    ;; (prn "xdxs" xdxs)
     (e/for-by first [[txid x dx] (ignore-pendings (filter some? xdxs))]
       (let [[status _txid tx-report] (Transact!. conn dx)]
-        ;; (prn "up" txid)
-        ;; (prn "track" txid status)
-        ;; (e/on-unmount #(prn "down" txid))
         (swap! !tx-report merge-tx-reports
           (case (ignore-pendings status)
-            ::success (assoc tx-report ::last-x x, ::last-txid txid, ::status ::accepted)
-            ::failure {::last-x x, ::last-txid txid ::status ::rejected ::error (ex-message tx-report)}
+            ::accepted (assoc tx-report ::last-x x, ::last-txid txid, ::status ::accepted)
+            ::rejected {::last-x x, ::last-txid txid ::status ::rejected ::error (ex-message tx-report)}
             nil))
         nil))
     nil))
@@ -514,10 +510,10 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
         (binding [tx-report (new (m/stream (m/watch !tx-report)))] ; ensures all dependants sees individual tx-reports
           (binding [db (:db-after tx-report)]
             (e/client (dom/h1 (dom/text "todos")))
-            (let [xdxs (App.)] ; xdxs :: collection of pairs [txid x dx]
+            (let [xdxs (App.)] ; xdxs :: collection of tuples [txid x dx]
               (Transactor. !tx-report conn xdxs)
               (e/client
-                (dom/pre (dom/text (contrib.str/pprint-str xdxs)))
+                (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str xdxs)))
                 (dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
                 (hello-fiddle.todo-style/Style.)
                 nil))))))))
