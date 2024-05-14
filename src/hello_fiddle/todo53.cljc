@@ -2,6 +2,7 @@
 ;; - Add Form abstraction - only meaningful as a stage and for validation
 ;; - Figure out Form/Field/Input's API
 ;; - Figure out how to cancel pending txs — if even needed
+;; - Remove e/for-by from Field. Only the masterlist and transactor should have a for-by
 
 (ns hello-fiddle.todo53
   (:require
@@ -57,7 +58,7 @@
 (e/defn Transact!* [conn tx tx-meta]
   (e/server
     (when tx
-      (e/offload-task #(do (Thread/sleep 1000)
+      (e/offload-task #(do (Thread/sleep 3000)
                            (d/transact! conn tx tx-meta))))))
 
 (e/defn Transact!
@@ -200,10 +201,45 @@
             #_(dom/text field-error))))
       xdxs)))
 
+#_
+(e/defn Field [{::keys [attribute stable-kf eid value edit-fn tx-parallelism]
+                :or    {tx-parallelism 1}}
+               Body]
+  (let [tx-id                 (partial swap! (atom 0) inc)
+        !status               (atom ::idle)
+        !xdx                  (atom nil)
+        emit!                 (fn [[x dx :as xdx]] (reset! !xdx (vec (cons [(stable-kf x) attribute (tx-id)] xdx))))
+        ;; HERE <-----------------------
+        !error                (atom nil)]
+    (binding [field-error (e/watch !error)]
+      (when eid
+        (reset! !status ::pending)
+        (let [[status error] (TxMonitor. stable-kf nil eid)]
+          (case status
+            ::accepted (do (reset! !status ::accepted) (reset! !error nil))
+            ::rejected (do (reset! !status ::rejected) (reset! !error error))
+            nil)))
+      ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
+      (e/for-by identity [[txid x dx :as xdx] xdxs]
+        (let [[status error] (ignore-pendings (TxMonitor. stable-kf txid (stable-kf x)))]
+          (case status
+            ::accepted (do (retract! txid) (reset! !status ::accepted) (reset! !error nil))
+            ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
+            nil)))
+      (when-some [v (Body. value (e/watch !status))]
+        (emit! (edit-fn v))) ; edit-fn must be stable!
+      (when field-error
+        (e/client
+          (dom/span
+            (dom/props {:class "field-error"})
+            (dom/text "Failed to persist " attribute)
+            #_(dom/text field-error))))
+      xdxs)))
+
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
   (e/client
     (let [!xdxs         (atom ())
-          optimistic-xs (optimistic #(stable-kf %1 %2) (e/watch !xdxs) authoritative-xs); FIXME not compatible with virtual scroll, authoritative-xs transfers entirely
+          optimistic-xs (optimistic #(stable-kf %1 %2) (e/watch !xdxs) authoritative-xs) ; FIXME not compatible with virtual scroll, authoritative-xs transfers entirely
           ]
       (reset! !xdxs
         (concat
@@ -405,22 +441,17 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   (let [x (get-x)
         x+dx (assoc (base x) :todo/checked v)] ; Only alter one attr, or get races between fields of same entity FIXME
     [x+dx
-     (cond->
-         (if (tempid? (stable-kf x))
-           (to-dx (assoc x :todo/checked v))
-           [[:db/add (best-identity-value x) :todo/checked v]])
-       (str/starts-with? (:todo/text x "") "fail")
-       ,, (cons []))]))
+     (if (tempid? (stable-kf x))
+       (to-dx (assoc x :todo/checked v))
+       [[:db/add (best-identity-value x) :todo/checked v]])]))
 
 (defn todo-edit-text [stable-kf get-x v]
   (let [x    (get-x)
         x+dx (assoc (base x) :todo/text v)] ; Only alter one attr, or get races between fields of same entity FIXME
     [x+dx
-     (cond->
-         (if (tempid? (stable-kf x))
-           (to-dx (assoc x :todo/text v))
-           [[:db/add (best-identity-value x) :todo/text v]])
-       (= "fail" v) (cons []))]))
+     (if (tempid? (stable-kf x))
+       (to-dx (assoc x :todo/text v))
+       [[:db/add (best-identity-value x) :todo/text v]])]))
 
 (e/defn App []
   (e/client
@@ -441,9 +472,11 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                                                              :todo/text v,
                                                              :todo/created-at (inst-ms (js/Date.))})
                                                (fn [tempid]
-                                                 [[]
-                                                  [:db/add tempid, :todo/text v]
-                                                  [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]])))
+                                                 (prn "v" v)
+                                                 (cond->
+                                                     [[:db/add tempid, :todo/text v]
+                                                      [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]]
+                                                   (= "exercise" v) (cons [])))))
                           ::tx-parallelism ##Inf}
                    CreateNewInput)))
              ::EditForm
@@ -464,7 +497,18 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                               ::value     (:todo/text x)
                               ::edit-fn   (partial todo-edit-text stable-kf ((capture) x))}
                        (e/fn [value status]
-                         (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))))))))}))))))
+                         (let [v (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))
+                               retry-v (when field-error
+                                         (dom/div (dom/props {:class "retry-container"})
+                                           (dom/button
+                                             (dom/text "retry")
+                                             (TxUI. status)
+                                             (when-let [[event !done running?] (new (listen dom/node "click"))]
+                                               (!done)
+                                               value))))]
+                           ;; (prn "v retry-v" value status v retry-v)
+                           (or retry-v v))))
+                     ))))}))))))
 
 (defn rev-ids [report]
   (let [tempids (dissoc (:tempids report) :db/current-tx)]
@@ -503,8 +547,8 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (e/defn Todo5 []
   (e/server
     (binding [conn (d/create-conn)]
-      (binding [!tx-report (atom (d/transact! conn [{:todo/text "Hello", :todo/created-at (inst-ms (java.util.Date.))}
-                                                    {:todo/text "world", :todo/created-at (inc (inst-ms (java.util.Date.)))}]))]
+      (binding [!tx-report (atom (d/transact! conn [#_{:todo/text "Hello", :todo/created-at (inst-ms (java.util.Date.))}
+                                                    #_{:todo/text "world", :todo/created-at (inc (inst-ms (java.util.Date.)))}]))]
         (def repl-conn conn)
         (def repl-transact! #(reset! !tx-report (d/transact! conn %)))
         (binding [tx-report (new (m/stream (m/watch !tx-report)))] ; ensures all dependants sees individual tx-reports
@@ -513,7 +557,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
             (let [xdxs (App.)] ; xdxs :: collection of tuples [txid x dx]
               (Transactor. !tx-report conn xdxs)
               (e/client
-                (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str xdxs)))
+                ;; (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str xdxs)))
                 (dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
                 (hello-fiddle.todo-style/Style.)
                 nil))))))))

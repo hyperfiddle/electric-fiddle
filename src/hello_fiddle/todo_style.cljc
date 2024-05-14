@@ -54,7 +54,7 @@
               {:position              :relative
                :display               :grid
                :grid-template-columns "auto 1fr"
-               :gap                   "2px"
+               ;; :gap                   "2px"
                :font-size             "24px"
                :border                "2px dotted transparent"
                :border-bottom         "2px dotted lightgray"}
@@ -102,19 +102,20 @@
                   {:box-shadow "0 0 0.25rem lightgray inset"
                    :outline    "1px gray solid"
                    :z-index    "1"})))
-            (css/rule "li:has(.accepted)"
+            (css/rule "li input.accepted"
               {:background-color COLOR-ACCEPTED})
-            (css/rule "li:has(.rejected)"
+            (css/rule "li input.rejected"
               {:background-color COLOR-REJECTED})
             (css/rule "li .field-error"
-              {:grid-column "1/3"
-               :font-size   "1rem"
-               :color       :orangered
-               :text-align  :justify
-               :padding     ".25rem .75rem"})
-            (css/rule "li:has(.dirty)"
+              {:grid-column      "1/4"
+               :font-size        "1rem"
+               :color            :orangered
+               :text-align       :justify
+               :padding          ".25rem .75rem"
+               :background-color COLOR-REJECTED})
+            (css/rule "li input.dirty"
               {:background-color COLOR-DIRTY})
-            (css/rule "li:has(.pending)"
+            (css/rule "li input.pending"
               {:background-color COLOR-PENDING})
             (css/rule "li:has(.pending)::before"
               {:content       "''"
@@ -129,7 +130,23 @@
                :border        "2px gray solid"
                :border-radius "50%"
                :font-size     "24px"
-               :animation     "spin 1s linear infinite"}))))
+               :animation     "spin 1s linear infinite"})
+            (css/rule "li .retry-container"
+              {:background-color COLOR-REJECTED
+               :grid-row         1, :grid-column 3
+               :display          :flex
+               :align-items      :center}
+              (css/rule "button"
+                {:border           "1px lightgray solid"
+                 :border-radius    "3px"
+                 :font-size        "1.25rem"
+                 :padding          "0.25rem 0.5rem"
+                 :font-variant     :small-caps
+                 :background-color :white
+                 :cursor           :pointer
+                 :margin           "auto 1rem"}
+                (css/rule "&.pending"
+                  {:display :none}))))))
 
       (css/keyframes "spin"
         (css/keyframe :from {:transform "rotate(0deg)"})
