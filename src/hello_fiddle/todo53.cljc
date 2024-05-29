@@ -9,6 +9,7 @@
    [hyperfiddle.electric :as e]
    [hyperfiddle.electric-dom2 :as dom]
    [hello-fiddle.todo-style]
+   [contrib.debug :as dbg]
    [datascript.core :as d]
    [missionary.core :as m]
    [hello-fiddle.stage :as stage]
@@ -58,7 +59,7 @@
 (e/defn Transact!* [conn tx tx-meta]
   (e/server
     (when tx
-      (e/offload-task #(do (Thread/sleep 3000)
+      (e/offload-task #(do (Thread/sleep 1000)
                            (d/transact! conn tx tx-meta))))))
 
 (e/defn Transact!
@@ -168,14 +169,39 @@
 ;; and immediately apply the optimistic entity
 ;; while emitting collected dxs to the transactor.
 
-(e/defn Field [{::keys [attribute stable-kf eid value edit-fn tx-parallelism]
-                :or    {tx-parallelism 1}}
-               Body]
-  (let [tx-id                 (partial swap! (atom 0) inc)
-        !status               (atom ::idle)
-        [xdxs emit! retract!] (TxEmitter. tx-parallelism)
-        emit!                 (fn [[x dx :as xdx]] (emit! (vec (cons [(stable-kf x) attribute (tx-id)] xdx))))
-        !error                (atom nil)]
+(defn set-releaser! [!release! v down?]
+  (when-not (down? v) (compare-and-set! !release! nil #(reset! !release! nil))))
+
+(e/defn LatchingRelay
+  ([v] (new LatchingRelay v nil?))
+  ([v down?]
+   (let [!release! (atom nil)]
+     (set-releaser! !release! v down?)
+     (e/watch !release!))))
+
+(defn set-held! [!held v down?]
+  (let [[_v release! :as held] @!held]
+    (if (or release! (down? v))
+      held
+      (compare-and-set! !held held [v #(swap! !held assoc 1 nil)]))))
+
+(e/defn DLatchingRelay
+  ([v] (new DLatchingRelay v nil?))
+  ([v down?]
+   (let [!held (atom [(e/snapshot v) nil])]
+     (set-held! !held v down?)
+     (e/watch !held))))
+
+(e/defn Filter [pred v]
+  (let [!ret (atom (e/snapshot v))]
+    (when (pred v) (reset! !ret v))
+    (e/watch !ret)))
+
+(e/defn Field [{::keys [attribute stable-kf eid value edit-fn]} Body]
+  (let [tx-id   (partial swap! (atom 0) inc)
+        !status (atom ::idle)
+        ->txid     (fn [x] [(stable-kf x) attribute (tx-id)])
+        !error  (atom nil)]
     (binding [field-error (e/watch !error)]
       (when eid
         (reset! !status ::pending)
@@ -184,23 +210,25 @@
             ::accepted (do (reset! !status ::accepted) (reset! !error nil))
             ::rejected (do (reset! !status ::rejected) (reset! !error error))
             nil)))
-      ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
-      (e/for-by identity [[txid x dx :as xdx] xdxs]
-        (let [[status error] (ignore-pendings (TxMonitor. stable-kf txid (stable-kf x)))]
-          (case status
-            ::accepted (do (retract! txid) (reset! !status ::accepted) (reset! !error nil))
-            ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
-            nil)))
-      (when-some [v (Body. value (e/watch !status))]
-        (emit! (edit-fn v))) ; edit-fn must be stable!
       (when field-error
         (e/client
           (dom/span
             (dom/props {:class "field-error"})
             (dom/text "Failed to persist " attribute)
             #_(dom/text field-error))))
-      xdxs)))
-
+      (let [v (Filter. some? (Body. value (e/watch !status)))
+            release! (LatchingRelay. v)]
+        (if release!
+          (let [[x dx]   (edit-fn v)
+                txid     (->txid x)
+                xdx      [txid x dx]
+                [[status error] drelease!] (DLatchingRelay. (TxMonitor. stable-kf txid (stable-kf x)))]
+            (reset! !status ::pending)
+            (case status
+              ::accepted (do (reset! !status ::accepted) (reset! !error nil) (release!) [])
+              ::rejected (do (reset! !status ::rejected) (reset! !error error) (when drelease! (drelease!)) [xdx])
+              #_else     [xdx]))
+          [])))))
 #_
 (e/defn Field [{::keys [attribute stable-kf eid value edit-fn tx-parallelism]
                 :or    {tx-parallelism 1}}
@@ -269,10 +297,11 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   [node status value]
   (let [!last-stage (atom nil)]
     ;; stage typed text
-    (when-let [[value' done! _running?] (new (listen node "input" #(.. % -target -value)))]
-      (stage/stage! value')
-      (reset! !last-stage value')
-      (done!))
+    (when-let [[value' done! running?] (new (listen node "input" #(.. % -target -value)))]
+      (when running?
+        (stage/stage! value')
+        (reset! !last-stage value')
+        (done!)))
     ;; reset retry tx state on focus
     (when-let [[_event done! running?] (new (listen node "focus"))]
       (when running?
@@ -385,9 +414,10 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   "Run `Body` in a `stage` and return latest committed value."
   [Body]
   (let [!value (atom nil)]
-    (stage/staged (e/fn* [value] (reset! !value value))
+    (add-watch !value ::whatever (fn [_key _ref old-value new-value] (prn 'atom-changed 'from old-value 'to new-value)))
+    (stage/staged (e/fn* [value] (doto (reset! !value value) (prn 'reset!)))
       (Body.))
-    (new (m/stream (m/watch !value)))))
+    (doto (e/watch !value) (prn 'watch))))
 
 (defmacro with-stage
   "Run `Body` in a `stage` and return latest committed value."
@@ -472,7 +502,6 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                                                              :todo/text v,
                                                              :todo/created-at (inst-ms (js/Date.))})
                                                (fn [tempid]
-                                                 (prn "v" v)
                                                  (cond->
                                                      [[:db/add tempid, :todo/text v]
                                                       [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]]
@@ -557,7 +586,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
             (let [xdxs (App.)] ; xdxs :: collection of tuples [txid x dx]
               (Transactor. !tx-report conn xdxs)
               (e/client
-                ;; (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str xdxs)))
+                (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str xdxs)))
                 (dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
                 (hello-fiddle.todo-style/Style.)
                 nil))))))))
