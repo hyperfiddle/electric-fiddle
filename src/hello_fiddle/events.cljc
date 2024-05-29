@@ -166,4 +166,26 @@ the result of `(f event)`.
       (contrib.debug/dbg 'committed committed)
       (dom/pre (dom/text (contrib.str/pprint-str {:committed committed}))))
 
-    ))
+    (dom/h2 (dom/text "Stage3"))
+    (let [!committed (atom "authoritative"), committed (e/watch !committed)
+          in (dom/input (set! (.-value dom/node) committed) dom/node)]
+      (dom/button (dom/text "commit!") (EventListener. "click" (fn [_] (reset! !committed (.-value in)))))
+      (dom/button (dom/text "discard!") (EventListener. "click" (fn [_] (set! (.-value in) @!committed))))
+      (dom/pre (dom/text (contrib.str/pprint-str {:committed committed}))))
+
+    (dom/h2 (dom/text "Stage with server value"))
+    (e/server
+      (let [!committed (atom "authoritative"), committed (e/watch !committed)]
+        (e/client
+          (let [in (dom/input (set! (.-value dom/node) committed) dom/node)]
+            (dom/button (dom/text "commit!")
+              (let [e (EventListener. "click")
+                    release! (LatchingRelay. e)]
+                (when release!
+                  (case (e/server (reset! !committed (e/client (.-value in)))) (release!)))))
+            (dom/button (dom/text "discard!")
+              (let [e (EventListener. "click")
+                    release! (LatchingRelay. e)]
+                (when release!
+                  (case (set! (.-value in) committed) (release!)))))
+            (dom/pre (dom/text (contrib.str/pprint-str {:committed committed})))))))))
