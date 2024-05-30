@@ -8,7 +8,8 @@
    ;; [hello-fiddle.todo52 :as todo52]
    [hello-fiddle.todo53 :as todo53]
    [hello-fiddle.todo54 :as todo54]
-   [hello-fiddle.events :as events]
+   ;; [hello-fiddle.events :as events]
+   [hello-fiddle.electronics :as electronics]
    ))
 
 (e/defn Hello []
@@ -23,8 +24,9 @@
                 ;; `todo51/Todo5 todo51/Todo5
                 ;; `todo52/Todo5 todo52/Todo5
                 `todo53/Todo5 todo53/Todo5
-                `events/Events events/Events
-                `todo54/Todo54 todo54/Todo54
+                ;; `todo54/Todo54 todo54/Todo54
+                ;; `events/Events events/Events
+                `electrionics/Electronics electronics/Electronics
                 })
 
 ;; Prod entrypoint, called by `prod.clj`
