@@ -11,8 +11,6 @@
    [hello-fiddle.todo-style]
    [datascript.core :as d]
    [missionary.core :as m]
-   [hello-fiddle.stage :as stage]
-   [clojure.string :as str]
    [hello-fiddle.electronics :as el])
   (:import
    (missionary Cancelled)))
@@ -213,9 +211,7 @@
 (e/defn CommitOnBlurBehavior "Commit current stage when given `node` is blured.
 An input can be blurred e.g. by clicking outside or pressing Tab."
   [node]
-  (when-let [release! (el/FlipFlop. (el/EventListener. node "blur" identity))]
-    (case (stage/Commit.)
-      (release!))))
+  (el/EventListener. node "blur" #(el/commit!)))
 
 (e/defn AtomicInputEditsBehavior
   "Augment a dom input so it accumulate edits and:
@@ -225,31 +221,21 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
    - user has focused the input,
    - user has staged edits."
   [node status value]
-  (let [!last-stage (atom nil)]
+  (set! (.-value node) value)
+  ;; Tag control with status as CSS class
+  (TxUI. (cond (some? el/stage) ::dirty
+               :else            status))
+  ;; Emit (commit) on Enter pressed / discard on Escape
+  (el/EventListener. node "keyup" #(case (.-key %)
+                                     "Enter"  (el/commit!)
+                                     "Escape" (do (el/discard!) (.blur node))
+                                     nil))
+  (or
     ;; stage typed text
-    (stage/stage! (reset! !last-stage (el/EventListener. node "input" #(.. % -target -value))))
+    (el/EventListener. node "input" #(.. % -target -value))
     ;; reset retry tx state on focus
-    (el/EventListener. node "focus" #(reset! !last-stage value))
-    ;; Allow user to press enter again to retry tx
-    (when (and (nil? stage/stage) (= ::rejected status))
-      (stage/Commit.)) ; emit nil WIP
-    ;; Emit (commit) on Enter pressed / discard on Escape
-    (let [event (el/EventListener. node "keyup" identity)]
-      (when-let [release! (el/FlipFlop. event)]
-        (case (.-key event)
-          "Enter"  (case status
-                     ::rejected (stage/Commit. @!last-stage)
-                     (case (stage/Commit.)
-                       (release!)))
-          "Escape" (case (do (stage/discard!) (.blur node))
-                     (release!))
-          (release!)))))
-  (let [value  (or stage/stage value) ; don't damage user uncommitted typing
-        status (cond (some? stage/stage) ::dirty
-                     :else               status)]
-    (TxUI. status) ; Tag control with status as CSS class
-    (when-not (dom/Focused?.) ; don't alter input while user-focused (UX) ; TODO port to new EventListener
-      (set! (.-value node) value))))
+    (when (= ::rejected status)
+      (el/EventListener. node "focus" #(.. % -target -value)))))
 
 (e/defn CheckboxBehavior
   "A checkbox is a special kind of input with extra UX constraints:
@@ -270,15 +256,11 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
     (case status
       ::rejected (not value) ; reset checkbox state so user can retry
       value))
-  (when (and (nil? stage/stage) (= ::rejected status)) ; retry tx
-    (stage/Commit.))
+  (when (and (nil? el/stage) (= ::rejected status)) ; retry tx ; FIXME
+    (el/commit!))
   (TxUI. status)
   ;; autocommit checked state
-  (when-let [release! (->> (el/EventListener. node "change" #(.. % -target -checked))
-                        (stage/stage!)
-                        (el/FlipFlop.))]
-    (case (stage/Commit.)
-      (release!))))
+  (el/commit! (el/EventListener. node "change" #(.. % -target -checked))))
 
 #?(:cljs
    (defn watch-attributes [node html-attributes]
@@ -307,7 +289,6 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
    - user has focused the input,
    - user has staged edits."
   [node status value]
-  ;; (e/client (js/console.log "input type" node (get (Attributes. node #{"type"}) "type")))
   (case (get (Attributes. node #{"type"}) "type")
     "checkbox" (CheckboxBehavior. node status value)
     "submit"   nil ; TODO ; autocommit because button (binary state)
@@ -318,7 +299,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (e/defn ClearOnSubmitBehavior
   "Clear an input on submit. A common pattern to chat interfaces and todo-apps"
   [node]
-  (when (empty? stage/stage)
+  (when (empty? el/stage)
     (set! (.-value node) nil)))
 
 (e/defn SpreadSheetTextInputBehavior ; TODO rename? SpreadSheet TEXT input cell
@@ -330,35 +311,27 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
    - user has focused the input,
    - user has staged edits."
   [node status value]
-  (AtomicEditsBehavior. node status value)
-  (CommitOnBlurBehavior. node))
-
-(e/defn WithStage
-  "Run `Body` in a `stage` and return latest committed value."
-  [Body]
-  (let [!value (atom nil)]
-    (stage/staged (e/fn* [value] (reset! !value value))
-      (Body.))
-    (new (m/stream (m/watch !value)))))
-
-(defmacro with-stage
-  "Run `Body` in a `stage` and return latest committed value."
-  [& body]
-  `(new WithStage (e/fn* [] ~@body)))
+  (CommitOnBlurBehavior. node)
+  (AtomicEditsBehavior. node status value))
 
 (e/defn Input [{::keys [status value]} Body]
   (e/client
     (dom/input
       (Body.)
-      (with-stage (SpreadSheetTextInputBehavior. dom/node status value)))))
+      (el/Stage. value
+        (e/fn [stage commit! discard!]
+          (binding [el/commit! (comp discard! commit!)] ; FIXME causes a flash between stage and optimistic value applied
+            (SpreadSheetTextInputBehavior. dom/node status stage)))))))
 
-(e/defn CreateNewInput [value status] ; Not a regular input, doesn't hold on value, do not care about tx accepted/rejected
+(e/defn CreateNewInput [_value status] ; Not a regular input, doesn't hold on value, do not care about tx accepted/rejected
   (e/client
     (dom/input
       (dom/props {:placeholder "What needs to be done?"})
-      (with-stage
-        (AtomicEditsBehavior. dom/node status value)
-        (ClearOnSubmitBehavior. dom/node)))))
+      (el/Stage.
+        (e/fn [stage commit! discard!]
+          (binding [el/commit! (comp discard! commit!)] ; discard after commit (clear input on enter) causes a flash
+            (ClearOnSubmitBehavior. dom/node)
+            (AtomicEditsBehavior. dom/node status stage)))))))
 
 (e/defn Checkbox [{::keys [status value]} Body]
   (e/client
@@ -366,7 +339,9 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
       (dom/props {:type :checkbox})
       (when (= ::pending status) (dom/props {:disabled true}))
       (Body.)
-      (with-stage (AtomicEditsBehavior. dom/node status value)))))
+      (el/Stage. value
+        (e/fn [stage commit! discard!]
+          (AtomicEditsBehavior. dom/node status stage))))))
 
 (defn to-dx [x]
   (map (fn [[k v]] [:db/add (:db/id x) k v]) (dissoc x :db/id)))
@@ -424,7 +399,6 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                                                              :todo/text v,
                                                              :todo/created-at (inst-ms (js/Date.))})
                                                (fn [tempid]
-                                                 (prn "v" v)
                                                  (cond->
                                                      [[:db/add tempid, :todo/text v]
                                                       [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]]
@@ -458,7 +432,6 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                                              (when-let [[event !done running?] (new (listen dom/node "click"))]
                                                (!done)
                                                value))))]
-                           ;; (prn "v retry-v" value status v retry-v)
                            (or retry-v v))))
                      ))))}))))))
 
