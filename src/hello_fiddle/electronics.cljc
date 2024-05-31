@@ -90,20 +90,24 @@ the result of `(f event)`.
 (e/def commit! (constantly nil))
 (e/def discard! (constantly nil))
 
-(e/defn Stage
-  ([Body] (Stage. nil Body))
-  ([init Body]
-   (Sampler. (e/fn [sample!]
-               (let [!stage (atom nil)]
-                 (binding [stage    (e/watch !stage)
-                           commit!  sample!
-                           discard! (fn [& _] (reset! !stage nil))]
-                   (reset! !stage (Body. (or stage init) commit! discard!))
-                   stage))))))
-
 (e/defn Pulse [v] ; emit [v Ack] for every new `v`, emit nil after ack is called. Ack is a serializable e/fn (in v3)
-  (when-let [release! (FlipFlop. v)]
-    [v (e/fn* [] (release!))]))
+  (let [[v' release!] (AutoLatch. v)]
+    (when release!
+      [v' (e/fn [& _] (when release! (release!)))])))
+
+(defn flash! [!ref v] (reset! !ref v) (reset! !ref nil))
+
+;; commit!* moved out due to v2 compiler bug on self-recursive cc/fn
+(let [commit!* (fn rec ([!stage !final] (rec !stage !final @!stage)) ([!stage !final x] (flash! !final x) x))]
+  (e/defn Stage
+    [Body]
+    (let [!stage (atom nil)
+          !final (atom nil)]
+      (binding [stage    (e/watch !stage)
+                commit!  (partial commit!* !stage !final)
+                discard! (fn [& _] (reset! !stage nil))]
+        (reset! !stage (Body.))
+        (e/watch !final)))))
 
 (e/defn Filter [pred v] ; continuous time filter. (e.g. (Filter. some? v) will drop nils from v
   (e/with-cycle [ret (e/snapshot v)]
@@ -162,28 +166,30 @@ the result of `(f event)`.
 
     (dom/h2 (dom/text "Stage"))
     (let [committed
-          (Stage.
-            (e/fn [stage commit! discard!]
-              (let [v (dom/input
-                        (set! (.-value dom/node) stage)
-                        (new EventListener "input" #(.. % -target -value)))]
-                (dom/button (dom/text "commit!") (EventListener. "click" commit!))
-                (dom/button (dom/text "discard!") (EventListener. "click" discard!))
-                (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
-                v)))]
+          (Filter. some?
+            (Stage.
+              (e/fn []
+                (let [v (dom/input
+                          (set! (.-value dom/node) stage)
+                          (EventListener. "input" #(.. % -target -value)))]
+                  (dom/button (dom/text "commit!") (EventListener. "click" #(commit!)))
+                  (dom/button (dom/text "discard!") (EventListener. "click" #(discard!)))
+                  (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
+                  v))))]
       (dom/pre (dom/text (contrib.str/pprint-str {:committed committed}))))
 
     (dom/h2 (dom/text "Rollback"))
     (let [committed (e/with-cycle [authoritative "authoritative"]
-                      (Stage. authoritative
-                        (e/fn [stage commit! discard!]
-                          (let [value (dom/input
-                                        (set! (.-value dom/node) stage)
-                                        (new EventListener "input" #(.. % -target -value)))]
-                            (dom/button (dom/text "commit!") (EventListener. "click" commit!))
-                            (dom/button (dom/text "discard!") (EventListener. "click" discard!))
-                            (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
-                            value))))]
+                      (Filter. some?
+                        (Stage.
+                          (e/fn []
+                            (let [value (dom/input
+                                          (set! (.-value dom/node) (or stage authoritative))
+                                          (EventListener. "input" #(.. % -target -value)))]
+                              (dom/button (dom/text "commit!") (EventListener. "click" #(commit!)))
+                              (dom/button (dom/text "discard!") (EventListener. "click" #(discard!)))
+                              (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
+                              value)))))]
       (dom/pre (dom/text (contrib.str/pprint-str {:committed committed}))))
 
     (dom/h2 (dom/text "Transactional transfer"))
@@ -191,12 +197,12 @@ the result of `(f event)`.
     (dom/p (dom/text "Pulse take a value and return [v ack]. Capture will call ack when it sees v. Pulse then return nil."))
     (let [committed
           (Stage.
-            (e/fn [stage commit! discard!]
+            (e/fn []
               (let [v (dom/input
                         (set! (.-value dom/node) stage)
-                        (new EventListener "input" #(.. % -target -value)))]
-                (dom/button (dom/text "commit!") (EventListener. "click" commit!))
-                (dom/button (dom/text "discard!") (EventListener. "click" discard!))
+                        (EventListener. "input" #(.. % -target -value)))]
+                (dom/button (dom/text "commit!") (EventListener. "click" #(commit!)))
+                (dom/button (dom/text "discard!") (EventListener. "click" #(discard!)))
                 (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
                 v)))
           pulse    (Pulse. committed)
