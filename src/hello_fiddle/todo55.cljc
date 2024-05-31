@@ -227,15 +227,9 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   [node status value]
   (let [!last-stage (atom nil)]
     ;; stage typed text
-    (let [value' (el/EventListener. node "input" #(.. % -target -value))]
-      (when-let [release! (el/FlipFlop. value')]
-        (stage/stage! value')
-        (reset! !last-stage value')
-        (release!)))
+    (stage/stage! (reset! !last-stage (el/EventListener. node "input" #(.. % -target -value))))
     ;; reset retry tx state on focus
-    (when-let [release! (el/FlipFlop. (el/EventListener. node "focus" identity))]
-      (reset! !last-stage value)
-      (release!))
+    (el/EventListener. node "focus" #(reset! !last-stage value))
     ;; Allow user to press enter again to retry tx
     (when (and (nil? stage/stage) (= ::rejected status))
       (stage/Commit.)) ; emit nil WIP
@@ -280,11 +274,11 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
     (stage/Commit.))
   (TxUI. status)
   ;; autocommit checked state
-  (let [value' (el/EventListener. node "change" #(.. % -target -checked))]
-    (when-let [release! (el/FlipFlop. value')]
-      (stage/stage! value')
-      (case (stage/Commit.)
-        (release!)))))
+  (when-let [release! (->> (el/EventListener. node "change" #(.. % -target -checked))
+                        (stage/stage!)
+                        (el/FlipFlop.))]
+    (case (stage/Commit.)
+      (release!))))
 
 #?(:cljs
    (defn watch-attributes [node html-attributes]
