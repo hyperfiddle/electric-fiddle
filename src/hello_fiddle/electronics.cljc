@@ -53,7 +53,7 @@ the result of `(f event)`.
 (e/defn Sampler [Body] ; used by Stage
   (let [!sampled (atom nil)
         !samplee (atom nil)]
-    (reset! !samplee (Body. (fn [& _] (reset! !sampled @!samplee) nil)))
+    (reset! !samplee (Body. (fn ([] (reset! !sampled @!samplee) nil) ([x] (reset! !sampled x) x))))
     (e/watch !sampled)))
 
 (defn set-releaser! [!release! v down?]
@@ -86,12 +86,19 @@ the result of `(f event)`.
      (set-held! !held v down?)
      (e/watch !held))))
 
+(e/def stage nil)
+(e/def commit! (constantly nil))
+(e/def discard! (constantly nil))
+
 (e/defn Stage
   ([Body] (Stage. nil Body))
   ([init Body]
    (Sampler. (e/fn [sample!]
                (let [!stage (atom nil)]
-                 (reset! !stage (Body. (or (e/watch !stage) init) sample! (fn [& _] (reset! !stage nil)))))))))
+                 (binding [stage    (e/watch !stage)
+                           commit!  sample!
+                           discard! (fn [& _] (reset! !stage nil))]
+                   (reset! !stage (Body. (or stage init) commit! discard!))))))))
 
 (e/defn Pulse [v] ; emit [v Ack] for every new `v`, emit nil after ack is called. Ack is a serializable e/fn (in v3)
   (when-let [release! (FlipFlop. v)]
