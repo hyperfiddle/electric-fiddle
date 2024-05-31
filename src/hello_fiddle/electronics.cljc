@@ -10,6 +10,17 @@
    [hyperfiddle.electric-dom2 :as dom]
    [missionary.core :as m]))
 
+(defn capture-fn
+  "Captures variability of a function under a stable identity.
+  Return a proxy to the captured function.
+  Use case: prevent unmount and remount when a cc/fn argument updates due to an inner variable dependency."
+  []
+  (let [!state (object-array 1)
+        ret (fn [& args] (apply (aget !state 0) args))]
+    (fn [x]
+      (aset !state 0 x)
+      ret)))
+
 #?(:cljs
    (defn listen "Takes the same arguments as `addEventListener` and returns an uninitialized
   missionary flow that handles the listener's lifecycle producing `(f e)`.
@@ -37,7 +48,7 @@ the result of `(f event)`.
   ([node event-type f] (new EventListener node event-type f {}))
   ([node event-type f opts] (new EventListener node event-type f opts nil))
   ([node event-type f opts init-v]
-   (e/client (new (m/reductions {} init-v (listen node event-type f opts))))))
+   (e/client (new (m/reductions {} init-v (listen node event-type ((capture-fn) f) opts))))))
 
 (e/defn Sampler [Body] ; used by Stage
   (let [!sampled (atom nil)
