@@ -280,11 +280,11 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
     (stage/Commit.))
   (TxUI. status)
   ;; autocommit checked state
-  (when-let [[value' done! running?] (new (listen node "change" #(.. % -target -checked)))]
-    (when running?
+  (let [value' (el/EventListener. node "change" #(.. % -target -checked))]
+    (when-let [release! (el/FlipFlop. value')]
       (stage/stage! value')
       (case (stage/Commit.)
-        (done!)))))
+        (release!)))))
 
 #?(:cljs
    (defn watch-attributes [node html-attributes]
