@@ -213,10 +213,9 @@
 (e/defn CommitOnBlurBehavior "Commit current stage when given `node` is blured.
 An input can be blurred e.g. by clicking outside or pressing Tab."
   [node]
-  (when-let [[_event done! running?] (new (listen node "blur"))]
-    (when running?
-      (case (stage/Commit.) ; assumed called in a stage
-        (done!)))))
+  (when-let [release! (el/FlipFlop. (el/EventListener. node "blur" identity))]
+    (case (stage/Commit.)
+      (release!))))
 
 (e/defn AtomicInputEditsBehavior
   "Augment a dom input so it accumulate edits and:
