@@ -98,7 +98,8 @@ the result of `(f event)`.
                  (binding [stage    (e/watch !stage)
                            commit!  sample!
                            discard! (fn [& _] (reset! !stage nil))]
-                   (reset! !stage (Body. (or stage init) commit! discard!))))))))
+                   (reset! !stage (Body. (or stage init) commit! discard!))
+                   stage))))))
 
 (e/defn Pulse [v] ; emit [v Ack] for every new `v`, emit nil after ack is called. Ack is a serializable e/fn (in v3)
   (when-let [release! (FlipFlop. v)]
