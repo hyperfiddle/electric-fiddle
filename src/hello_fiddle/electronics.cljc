@@ -93,7 +93,7 @@ the result of `(f event)`.
 (e/defn Pulse [v] ; emit [v Ack] for every new `v`, emit nil after ack is called. Ack is a serializable e/fn (in v3)
   (let [[v' release!] (AutoLatch. v)]
     (when release!
-      [v' (e/fn [& _] (when release! (release!)))])))
+      [v' (e/fn [& [x]] (when release! (release!)) x)])))
 
 (defn flash! [!ref v] (reset! !ref v) (reset! !ref nil))
 
