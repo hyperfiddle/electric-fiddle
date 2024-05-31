@@ -227,34 +227,34 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   [node status value]
   (let [!last-stage (atom nil)]
     ;; stage typed text
-    (when-let [[value' done! _running?] (new (listen node "input" #(.. % -target -value)))]
-      (stage/stage! value')
-      (reset! !last-stage value')
-      (done!))
+    (let [value' (el/EventListener. node "input" #(.. % -target -value))]
+      (when-let [release! (el/FlipFlop. value')]
+        (stage/stage! value')
+        (reset! !last-stage value')
+        (release!)))
     ;; reset retry tx state on focus
-    (when-let [[_event done! running?] (new (listen node "focus"))]
-      (when running?
-        (reset! !last-stage value)
-        (done!)))
+    (when-let [release! (el/FlipFlop. (el/EventListener. node "focus" identity))]
+      (reset! !last-stage value)
+      (release!))
     ;; Allow user to press enter again to retry tx
     (when (and (nil? stage/stage) (= ::rejected status))
       (stage/Commit.)) ; emit nil WIP
     ;; Emit (commit) on Enter pressed / discard on Escape
-    (when-let [[event done! running?] (new (listen node "keyup"))]
-      (when running?
+    (let [event (el/EventListener. node "keyup" identity)]
+      (when-let [release! (el/FlipFlop. event)]
         (case (.-key event)
           "Enter"  (case status
                      ::rejected (stage/Commit. @!last-stage)
                      (case (stage/Commit.)
-                       (done!)))
+                       (release!)))
           "Escape" (case (do (stage/discard!) (.blur node))
-                     (done!))
-          (done!)))))
+                     (release!))
+          (release!)))))
   (let [value  (or stage/stage value) ; don't damage user uncommitted typing
         status (cond (some? stage/stage) ::dirty
                      :else               status)]
     (TxUI. status) ; Tag control with status as CSS class
-    (when-not (dom/Focused?.) ; don't alter input while user-focused (UX)
+    (when-not (dom/Focused?.) ; don't alter input while user-focused (UX) ; TODO port to new EventListener
       (set! (.-value node) value))))
 
 (e/defn CheckboxBehavior
