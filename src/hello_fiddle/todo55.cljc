@@ -195,41 +195,6 @@
             #_(dom/text field-error))))
       xdxs)))
 
-#_
-(e/defn Field [{::keys [attribute stable-kf eid value edit-fn tx-parallelism]
-                :or    {tx-parallelism 1}}
-               Body]
-  (let [tx-id                 (partial swap! (atom 0) inc)
-        !status               (atom ::idle)
-        !xdx                  (atom nil)
-        emit!                 (fn [[x dx :as xdx]] (reset! !xdx (vec (cons [(stable-kf x) attribute (tx-id)] xdx))))
-        ;; HERE <-----------------------
-        !error                (atom nil)]
-    (binding [field-error (e/watch !error)]
-      (when eid
-        (reset! !status ::pending)
-        (let [[status error] (TxMonitor. stable-kf nil eid)]
-          (case status
-            ::accepted (do (reset! !status ::accepted) (reset! !error nil))
-            ::rejected (do (reset! !status ::rejected) (reset! !error error))
-            nil)))
-      ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
-      (e/for-by identity [[txid x dx :as xdx] xdxs]
-        (let [[status error] (ignore-pendings (TxMonitor. stable-kf txid (stable-kf x)))]
-          (case status
-            ::accepted (do (retract! txid) (reset! !status ::accepted) (reset! !error nil))
-            ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
-            nil)))
-      (when-some [v (Body. value (e/watch !status))]
-        (emit! (edit-fn v))) ; edit-fn must be stable!
-      (when field-error
-        (e/client
-          (dom/span
-            (dom/props {:class "field-error"})
-            (dom/text "Failed to persist " attribute)
-            #_(dom/text field-error))))
-      xdxs)))
-
 (e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
   (e/client
     (let [!xdxs         (atom ())
@@ -237,12 +202,12 @@
           ]
       (reset! !xdxs
         (concat
-          (e/server  ; TODO v3 dynamic siting
+          (e/server  ; NOTE v3 dynamic siting
             (CreateForm.))
           (dom/ul
             (apply concat
               (e/for-by stable-kf [x (sort-by :todo/created-at (ignore-pendings optimistic-xs))] ; FIXME for-by on wrong peer
-                (e/server  ; TODO v3 dynamic siting
+                (e/server  ; NOTE v3 dynamic siting
                   (EditForm. x))))))))))
 
 (e/defn CommitOnBlurBehavior "Commit current stage when given `node` is blured.
@@ -456,7 +421,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
             {::authoritative-xs (query-todos db)
              ::CreateForm
              (e/fn []
-               (e/client ; TODO v3 dynamic siting
+               (e/client ; NOTE v3 dynamic siting
                  (Field. {::attribute      :todo/text
                           ::stable-kf      stable-kf
                           ::value          nil
@@ -475,7 +440,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                    CreateNewInput)))
              ::EditForm
              (e/fn [x]
-               (e/client ; TODO v3 dynamic siting
+               (e/client ; NOTE v3 dynamic siting
                  (dom/li
                    (e/client (dom/props {:title (pr-str x)}))
                    (concat
