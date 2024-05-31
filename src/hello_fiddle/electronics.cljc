@@ -39,7 +39,7 @@ the result of `(f event)`.
   ([node event-type f opts init-v]
    (e/client (new (m/reductions {} init-v (listen node event-type f opts))))))
 
-(e/defn Sampler [Body]
+(e/defn Sampler [Body] ; used by Stage
   (let [!sampled (atom nil)
         !samplee (atom nil)]
     (reset! !samplee (Body. (fn [& _] (reset! !sampled @!samplee) nil)))
@@ -48,14 +48,14 @@ the result of `(f event)`.
 (defn set-releaser! [!release! v down?]
   (when-not (down? v) (compare-and-set! !release! nil #(reset! !release! nil))))
 
-(e/defn FlipFlop
+(e/defn FlipFlop ; use by Pulse
   ([control] (new FlipFlop control nil?))
   ([control down?]
    (let [!release! (atom nil)]
      (set-releaser! !release! control down?)
      (e/watch !release!))))
 
-(e/defn Latch [Body]
+(e/defn Latch [Body] ; for event handlers
   (let [!latch (atom false)
         v (Body. #(reset! !latch true) #(reset! !latch false))]
     (if (e/watch !latch)
@@ -63,12 +63,12 @@ the result of `(f event)`.
       v)))
 
 (defn set-held! [!held v down?]
-  (let [[held-v release! :as held] @!held]
+  (let [[_held-v release! :as held] @!held]
     (if (or release! (down? v))
       held
-      (compare-and-set! !held held [v #(swap! !held assoc 1 nil)]))))
+      (compare-and-set! !held held [v (fn rec ([] (rec nil)) ([x] (swap! !held assoc 1 nil) x))]))))
 
-(e/defn AutoLatch
+(e/defn AutoLatch ; for event handlers
   ([v] (AutoLatch. v nil?))
   ([v down?]
    (let [!held (atom [(e/snapshot v) nil])]
@@ -81,6 +81,19 @@ the result of `(f event)`.
    (Sampler. (e/fn [sample!]
                (let [!stage (atom nil)]
                  (reset! !stage (Body. (or (e/watch !stage) init) sample! (fn [& _] (reset! !stage nil)))))))))
+
+(e/defn Pulse [v] ; emit [v Ack] for every new `v`, emit nil after ack is called. Ack is a serializable e/fn (in v3)
+  (when-let [release! (FlipFlop. v)]
+    [v (e/fn* [] (release!))]))
+
+(e/defn Filter [pred v] ; continuous time filter. (e.g. (Filter. some? v) will drop nils from v
+  (e/with-cycle [ret (e/snapshot v)]
+    (if (pred v) v ret)))
+
+(e/defn Capture [[v Ack]] ; Take a [v ack] pair emitted by Pulse and latch on the Pulsed value, then call ack.
+  (let [latched-v (Filter. some? v)]
+    (when (and (= v latched-v) Ack) (Ack.))
+    latched-v))
 
 (e/defn Electronics []
   (e/client
@@ -139,12 +152,10 @@ the result of `(f event)`.
                 (dom/button (dom/text "discard!") (EventListener. "click" discard!))
                 (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
                 v)))]
-      (contrib.debug/dbg 'committed committed)
       (dom/pre (dom/text (contrib.str/pprint-str {:committed committed}))))
 
     (dom/h2 (dom/text "Rollback"))
     (let [committed (e/with-cycle [authoritative "authoritative"]
-                      (prn "authoritative" authoritative)
                       (Stage. authoritative
                         (e/fn [stage commit! discard!]
                           (let [value (dom/input
@@ -155,28 +166,21 @@ the result of `(f event)`.
                             (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
                             value))))]
       (dom/pre (dom/text (contrib.str/pprint-str {:committed committed}))))
-    
 
-    #_(dom/h2 (dom/text "Stage3"))
-    #_(let [!committed (atom "authoritative"), committed (e/watch !committed)
-            in         (dom/input (set! (.-value dom/node) committed) dom/node)]
-      (dom/button (dom/text "commit!") (EventListener. "click" (fn [_] (reset! !committed (.-value in)))))
-      (dom/button (dom/text "discard!") (EventListener. "click" (fn [_] (set! (.-value in) @!committed))))
-      (dom/pre (dom/text (contrib.str/pprint-str {:committed committed}))))
-
-    #_(dom/h2 (dom/text "Stage with server value"))
-    #_(e/server
-        (let [!committed (atom "authoritative"), committed (e/watch !committed)]
-        (e/client
-          (let [in (dom/input (set! (.-value dom/node) committed) dom/node)]
-            (dom/button (dom/text "commit!")
-                        (let [e        (EventListener. "click")
-                              release! (FlipFlop. e)]
-                (when release!
-                  (case (e/server (reset! !committed (e/client (.-value in)))) (release!)))))
-            (dom/button (dom/text "discard!")
-                        (let [e        (EventListener. "click")
-                              release! (FlipFlop. e)]
-                (when release!
-                  (case (set! (.-value in) committed) (release!)))))
-            (dom/pre (dom/text (contrib.str/pprint-str {:committed committed})))))))))
+    (dom/h2 (dom/text "Transactional transfer"))
+    (dom/p (dom/text "Ensure a value transfers between two points in the DAG, in continuous time"))
+    (dom/p (dom/text "Pulse take a value and return [v ack]. Capture will call ack when it sees v. Pulse then return nil."))
+    (let [committed
+          (Stage.
+            (e/fn [stage commit! discard!]
+              (let [v (dom/input
+                        (set! (.-value dom/node) stage)
+                        (new EventListener "input" #(.. % -target -value)))]
+                (dom/button (dom/text "commit!") (EventListener. "click" commit!))
+                (dom/button (dom/text "discard!") (EventListener. "click" discard!))
+                (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
+                v)))
+          pulse    (Pulse. committed)
+          captured (Capture. pulse)]
+      (contrib.debug/dbg pulse)
+      (dom/pre (dom/text (contrib.str/pprint-str {:committed committed, :captured captured}))))))
