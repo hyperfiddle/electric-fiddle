@@ -56,16 +56,6 @@ the result of `(f event)`.
     (reset! !samplee (Body. (fn ([] (reset! !sampled @!samplee) nil) ([x] (reset! !sampled x) x))))
     (e/watch !sampled)))
 
-(defn set-releaser! [!release! v down?]
-  (when-not (down? v) (compare-and-set! !release! nil #(reset! !release! nil))))
-
-(e/defn FlipFlop ; use by Pulse
-  ([control] (new FlipFlop control nil?))
-  ([control down?]
-   (let [!release! (atom nil)]
-     (set-releaser! !release! control down?)
-     (e/watch !release!))))
-
 (e/defn Latch [Body] ; for event handlers
   (let [!latch (atom false)
         v (Body. #(reset! !latch true) #(reset! !latch false))]
@@ -79,19 +69,60 @@ the result of `(f event)`.
       held
       (compare-and-set! !held held [v (fn rec ([] (rec nil)) ([x] (swap! !held assoc 1 nil) x))]))))
 
-(e/defn AutoLatch ; for event handlers
-  ([v] (AutoLatch. v nil?))
-  ([v down?]
-   (let [!held (atom [(e/snapshot v) nil])]
-     (set-held! !held v down?)
-     (e/watch !held))))
+;; TODO documentation
+;;
+;; @Peter:
+;; - start with the DFlipFlop. It is the actual thing that exists in the world
+;;   and FlipFlop is just an optimization of it. We explain how it
+;;   snapshots/latches the input value until reset is called. We show code how
+;;   to use it on an event listener like the click(s) on a pay button.
+;; - Next we explain that in many cases we don't care about the latched value,
+;;   we actually want to use the latest value. For that case there's a simpler
+;;   FlipFlop that returns only the reset fn.
+;; - Next we explain the flip flops interpret the input signal. Non-nil values
+;;   trigger the flip flop. A user now might ask "what if I need to trigger on
+;;   nil values too?" or "what if I want to trigger on all changes?". Here we
+;;   show the optional up? argument and say to e.g. react on all changes you can
+;;   pass (constantly true). This is more intuitive than (constantly false),
+;;   which we'd need to use if we keep the down? fn
+
+(let [->done-fn (fn [!held] (fn f ([] (f nil)) ([ret] (swap! !held assoc 1 nil) ret)))
+      step      (fn [!held v up?]
+                  (let [[_ done! :as held] @!held]
+                    (if (or done! (not (up? v)))
+                      held
+                      (compare-and-set! !held held [v (->done-fn !held)]))))]
+  (e/defn DFlipFlop
+    "Takes a continuous time value `v` and toggle as soon as `v` changes. Toggles
+immedately on mount. On toggle, latch on the current value of `v`, returning
+`[latched-v release!]`. `release!` is a reset function, releasing the latch.
+When `release!` is called, the FlipFlop toggles and return [last-latched-v nil],
+until `v` changes again, at which point `[new-latched-v release!]` is returned."
+    ([v] (new DFlipFlop v some?))
+    ([v up?] (let [!held (atom [nil nil])] (step !held v up?) (e/watch !held)))))
+
+(e/defn FlipFlop "A toggle. Toggles up when `control` changes, returning a
+\"reset\" function. Calling this \"reset\" function toggles the flip-flop down,
+at which point the flip-flop returns nil, until `control` changes again. Similar
+to DFlipFlop, but without an output signal. Use case: track effect completion on
+a value in continuous time, when we don't care about the value."
+  ([control] (new FlipFlop control some?))
+  ([control up?]
+   (second (DFlipFlop. control up?))))
+
+;; Alternative FlipFlop impl
+#_(let [->done-fn (fn [!done!] (fn f ([] (f nil)) ([ret] (reset! !done! nil) ret)))
+      step      (fn [!done! v up?] (when (up? v) (compare-and-set! !done! nil (->done-fn !done!))))]
+  (e/defn FlipFlop
+    ([v]     (new FlipFlop v some?))
+    ([v up?] (let [!done! (atom nil)] (step !done! v up?) (e/watch !done!)))))
 
 (e/def stage nil)
 (e/def commit! (constantly nil))
 (e/def discard! (constantly nil))
 
 (e/defn Pulse [v] ; emit [v Ack] for every new `v`, emit nil after ack is called. Ack is a serializable e/fn (in v3)
-  (let [[v' release!] (AutoLatch. v)]
+  (let [[v' release!] (DFlipFlop. v)]
     (when release!
       [v' (e/fn [& [x]] (when release! (release!)) x)])))
 
@@ -156,10 +187,10 @@ the result of `(f event)`.
                         v)))]
       (dom/pre (dom/text "latched value: " v)))
 
-    (dom/h2 (dom/text "AutoLatch"))
+    (dom/h2 (dom/text "DFlipFlop"))
     (dom/p (dom/text "Automatically latch next value. Use case: hold onto a DOM event, drop all next events until we a ready to process the next one."))
     (let [v                    (dom/input (new EventListener "input" #(.. % -target -value)))
-          [latched-v release!] (AutoLatch. v)]
+          [latched-v release!] (DFlipFlop. v)]
       (dom/button (dom/text "RELEASE")
                   (new EventListener "click" (fn [_] (when release! (release!)))))
       (dom/pre (dom/text (contrib.str/pprint-str {:input-value v, :latched-value latched-v}))))
