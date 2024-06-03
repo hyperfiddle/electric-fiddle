@@ -23,6 +23,12 @@
                         :text-shadow "-1px -1px rgba(0, 0, 0, 0.2)"
                         :font-size   "70px"
                         :text-align  :center})
+        (css/rule ".todomvc-wrapper"
+          {:display               :grid
+           :gap "1rem"
+           :grid-template-columns "auto auto"
+           :max-width "1000px"
+           :width "100%"})
         (css/rule ".todomvc"
           {:display        :flex
            :max-width      "800px"

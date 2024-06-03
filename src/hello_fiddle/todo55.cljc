@@ -16,7 +16,7 @@
    (missionary Cancelled)))
 
 (e/defn Transaction! [id F & args]
-  (let [[[id args] release!] (el/AutoLatch. [id args])]
+  (let [[[id args] release!] (el/DFlipFlop. [id args])]
     (e/with-cycle [state [::idle nil]]
       (if-not release!
         state
@@ -193,12 +193,12 @@
                        next-state)
                      {::status  status
                       ::tx      tx
-                      ::impulse [[tx (e/fn [& [status reason]]
-                                       (prn "ACK" status reason)
-                                       (case status
-                                         ::pending  nil
-                                         ::accepted (reset! !next-state {::status ::accepted})
-                                         ::rejected (reset! !next-state (assoc state ::status ::rejected, ::reason reason))))]]})))))))
+                      ::impulse [tx (e/fn [& [status reason]]
+                                      (prn "ACK" status reason)
+                                      (case status
+                                        ::pending  nil
+                                        ::accepted (reset! !next-state {::status ::accepted})
+                                        ::rejected (reset! !next-state (assoc state ::status ::rejected, ::reason reason))))]})))))))
       (prn 'impulse))))
 
 (defn optimistic [stable-kf xdxs authoritative-xs] ; could this be modeled as a Spine?
@@ -210,19 +210,40 @@
                       (assoc index (stable-kf x) x)))
             index xdxs))))
 
-(e/defn MasterList [{::keys [authoritative-xs CreateForm EditForm]}]
+(e/defn Fork [[v Ack :as pulse]]
+  (let [!branches (atom #{})] ; TODO use an ordered set
+    (when (and v Ack)
+      (swap! !branches conj (e/snapshot pulse)))
+    (e/for-by first [[v Ack :as pulse] (e/watch !branches)]
+      [v (e/fn [& args]
+           (let [pulse                     (e/snapshot pulse)
+                 {::keys [status] :as ret} (e/apply Ack args)]
+             (when ret
+               (case status
+                 ::pending  ret
+                 ::rejected ret
+                 ::accepted (do (swap! !branches disj pulse) ret) ; ret won't be returned as the branch will unmount first
+                 ))))])))
+
+(e/defn MasterList [{::keys [stable-kf create-new-fn authoritative-xs CreateForm EditForm]}]
   (e/client
     (let [!xdxs         (atom ())
           optimistic-xs (optimistic #(stable-kf %1 %2) (e/watch !xdxs) authoritative-xs) ; FIXME not compatible with virtual scroll, authoritative-xs transfers entirely
           ]
       (reset! !xdxs
         (concat
-          (CreateForm.)
+          (Fork.
+            (Field. {::attribute :hf/new
+                     ::stable-kf stable-kf
+                     ::value     nil
+                     ::edit-fn   create-new-fn}
+              CreateForm))
           (dom/ul
             (apply concat
               (e/for-by stable-kf [x (sort-by :todo/created-at (ignore-pendings optimistic-xs))] ; FIXME for-by on wrong peer
                                         ; NOTE v3 dynamic siting
-                (EditForm. x)))))))))
+                (EditForm. x))))
+            )))))
 
 (e/defn CommitOnBlurBehavior "Commit current stage when given `node` is blured.
 An input can be blurred e.g. by clicking outside or pressing Tab."
@@ -396,59 +417,61 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
        (to-dx (assoc x :todo/text v))
        [[:db/add (best-identity-value x) :todo/text v]])]))
 
+(defn mempty ([] []) ([v] (if v [v] [])))
+
+
 (e/defn App []
   (e/client
     (dom/div (dom/props {:class "todomvc"})
-      (binding [stable-kf (StableKf.)]
+             (binding [stable-kf (StableKf.)]
         #_(e/server)
         (MasterList.
           {::authoritative-xs (e/server (query-todos db)) ; FIXME should not transfer, waiting for v3
+           ::stable-kf        stable-kf
+           ::create-new-fn    (fn [v]
+                                (genesis
+                                  (fn [tempid] {:db/id           tempid
+                                                :todo/text       v,
+                                                :todo/created-at (inst-ms (js/Date.))})
+                                  (fn [tempid]
+                                    (cond->
+                                        [[:db/add tempid, :todo/text v]
+                                         [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]]
+                                      (= "exercise" v) (cons [])))))
            ::CreateForm
-           (e/fn []
+           (e/fn [value status]
              (e/client ; NOTE v3 dynamic siting
-               (Field. {::attribute      :todo/text
-                        ::stable-kf      stable-kf
-                        ::value          nil
-                        ::edit-fn        (fn [v]
-                                           (genesis
-                                             (fn [tempid] {:db/id tempid
-                                                           :todo/text v,
-                                                           :todo/created-at (inst-ms (js/Date.))})
-                                             (fn [tempid]
-                                               (cond->
-                                                   [[:db/add tempid, :todo/text v]
-                                                    [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]]
-                                                 (= "exercise" v) (cons [])))))
-                        ::tx-parallelism ##Inf}
-                 CreateNewInput)))
+               (CreateNewInput. value status)))
            ::EditForm
            (e/fn [x]
              (e/client ; NOTE v3 dynamic siting
                (dom/li
                  (e/client (dom/props {:title (pr-str x)}))
-                 (concat
-                   (Field. {::attribute :todo/checked
-                            ::stable-kf stable-kf
-                            ::value     (:todo/checked x false)
-                            ::edit-fn   (partial todo-edit-done stable-kf ((capture) x))} ; FIXME abstract over `capture` ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
-                     (e/fn [value status]
-                       (Checkbox. {::status status ::value value} (e/fn* [] #_(dom/props ...)))))
-                   (Field. {::attribute :todo/text
-                            ::stable-kf stable-kf
-                            ::eid       (when (tempid? (stable-kf x)) (stable-kf x))
-                            ::value     (:todo/text x)
-                            ::edit-fn   (partial todo-edit-text stable-kf ((capture) x))}
-                     (e/fn [value status]
-                       (let [v (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))
-                             retry-v nil #_(when field-error
-                                             (dom/div (dom/props {:class "retry-container"})
-                                                      (dom/button
-                                                        (dom/text "retry")
-                                                        (TxUI. status)
-                                                        (when-let [[event !done running?] (new (listen dom/node "click"))]
-                                                          (!done)
-                                                          value))))]
-                         (or retry-v v))))
+                 (concat ; e/amb emulation
+                   (mempty
+                     (Field. {::attribute :todo/checked
+                              ::stable-kf stable-kf
+                              ::value     (:todo/checked x false)
+                              ::edit-fn   (partial todo-edit-done stable-kf ((capture) x))} ; FIXME abstract over `capture` ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
+                       (e/fn [value status]
+                         (Checkbox. {::status status ::value value} (e/fn* [] #_(dom/props ...))))))
+                   (mempty
+                     (Field. {::attribute :todo/text
+                              ::stable-kf stable-kf
+                              ::eid       (when (tempid? (stable-kf x)) (stable-kf x))
+                              ::value     (:todo/text x)
+                              ::edit-fn   (partial todo-edit-text stable-kf ((capture) x))}
+                       (e/fn [value status]
+                         (let [v       (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))
+                               retry-v nil #_ (when field-error
+                                                (dom/div (dom/props {:class "retry-container"})
+                                                         (dom/button
+                                                           (dom/text "retry")
+                                                           (TxUI. status)
+                                                           (when-let [[event !done running?] (new (listen dom/node "click"))]
+                                                             (!done)
+                                                             value))))]
+                           (or retry-v v)))))
                    ))))})))))
 
 (defn rev-ids [report]
@@ -497,6 +520,18 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                                          ))]
        (new Ack# status# reason#))))
 
+(e/defn StagingArea [Body]
+  (e/client
+    (el/Pulse.
+      (el/Stage.
+        (e/fn []
+          (let [v (Body.)]
+            (dom/div
+              (dom/textarea (dom/text (contrib.str/pprint-str el/stage)))
+              (dom/br)
+              (dom/button (dom/text "commit") (el/EventListener. "click" #(do (el/commit!) (el/discard!))))
+              (dom/button (dom/text "discard" (el/EventListener. "click" #(el/discard!)))))))))))
+
 (e/defn Todo5 []
   (e/server
     (binding [conn (d/create-conn)]
@@ -508,10 +543,17 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
           (binding [db (:db-after tx-report)]
             (e/client (dom/h1 (dom/text "todos")))
             (e/client ; FIXME should be server-side
-              (let [xdxs (App.)]      ; xdxs :: collection of tuples [txid x dx]
+              (let [xdxs (dom/div (dom/props {:class "todomvc-wrapper"})       ; xdxs :: collection of tuples [txid x dx]
+                                  (App.)
+                                  #_(concat (StagingArea. App)
+                                    (StagingArea. App)))]
                 (Transactor !tx-report conn xdxs)
                 (e/client
-                  (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str xdxs)))
-                  (dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
+                  (dom/div
+                    (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str xdxs)))
+                    (dom/br)
+                    (dom/button (dom/text "commit"))
+                    (dom/button (dom/text "discard")))
+                  #_(dom/img (dom/props {:class "legend" :src "/hello_fiddle/state_machine.svg"}))
                   (hello-fiddle.todo-style/Style.)
                   nil)))))))))
