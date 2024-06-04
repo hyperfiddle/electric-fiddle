@@ -50,6 +50,7 @@ the result of `(f event)`.
   ([node event-type f opts init-v]
    (e/client (new (m/reductions {} init-v (listen node event-type ((capture-fn) f) opts))))))
 
+;; D: is this a relieved m/observe?
 (e/defn Sampler [Body] ; used by Stage
   (let [!sampled (atom nil)
         !samplee (atom nil)]
@@ -122,12 +123,17 @@ a value in continuous time, when we don't care about the value."
 (e/def discard! (constantly nil))
 
 (e/defn Pulse [v] ; emit [v Ack] for every new `v`, emit nil after ack is called. Ack is a serializable e/fn (in v3)
-  (let [[v' release!] (DFlipFlop. v)]
+  (let [[v' release!] (DFlipFlop. v)] ; P: Why isn't DFlipFlop enough? G: because release! isn't serializable, e/fn is in v3.
+    ;; NOTE P: release! should probably always be called on the client, and v3
+    ;; doesn't transfer client-only values (unlike v2), so there might not be a
+    ;; need for an e/fn wrapper. Pulse can be removed if true.
     (when release!
-      [v' (e/fn [& [x]] (when release! (release!)) x)])))
+      [v' (e/fn [& [x]] (when release! (release!)) x)] ; NOTE e/fn is not colored so calling it on the server would call release! on the wrong peer.
+      )))
 
 (defn flash! [!ref v] (reset! !ref v) (reset! !ref nil))
 
+;; D: is Stage the right name? What about Cell?
 ;; commit!* moved out due to v2 compiler bug on self-recursive cc/fn
 (let [commit!* (fn rec ([!stage !final] (rec !stage !final @!stage)) ([!stage !final x] (flash! !final x) x))]
   (e/defn Stage
@@ -163,7 +169,7 @@ a value in continuous time, when we don't care about the value."
           (Sampler.
             (e/fn [sample!]
               (let [v (dom/input (new EventListener "input" #(.. % -target -value)))]
-                (dom/button (dom/text "sample") (EventListener. "click" sample!))
+                (dom/button (dom/text "sample") (EventListener. "click" #(sample!)))
                 (dom/pre (dom/text (contrib.str/pprint-str {:input-value v})))
                 v)))]
       (dom/pre (dom/text (contrib.str/pprint-str {:sampled sampled}))))
@@ -185,15 +191,15 @@ a value in continuous time, when we don't care about the value."
                         (dom/button (dom/text "RELEASE") (new EventListener "click" release!))
                         (dom/pre (dom/text "input value: " v))
                         v)))]
-      (dom/pre (dom/text "latched value: " v)))
+      (dom/pre (dom/text "output: " v)))
 
     (dom/h2 (dom/text "DFlipFlop"))
-    (dom/p (dom/text "Automatically latch next value. Use case: hold onto a DOM event, drop all next events until we a ready to process the next one."))
+    (dom/p (dom/text "Automatically latch next value. Use case: hold onto a DOM event, drop all next events until we are ready to process the next one."))
     (let [v                    (dom/input (new EventListener "input" #(.. % -target -value)))
           [latched-v release!] (DFlipFlop. v)]
       (dom/button (dom/text "RELEASE")
                   (new EventListener "click" (fn [_] (when release! (release!)))))
-      (dom/pre (dom/text (contrib.str/pprint-str {:input-value v, :latched-value latched-v}))))
+      (dom/pre (dom/text (contrib.str/pprint-str {:input-value v, :latched-value latched-v, :flipflop (some? release!)}))))
 
     (dom/h2 (dom/text "Stage"))
     (let [committed
@@ -236,7 +242,7 @@ a value in continuous time, when we don't care about the value."
                 (dom/button (dom/text "discard!") (EventListener. "click" #(discard!)))
                 (dom/pre (dom/text (contrib.str/pprint-str {:stage stage})))
                 v)))
-          pulse    (Pulse. committed)
-          captured (Capture. pulse)]
+          pulse    (Pulse. committed) ; Pulse :: v -> [latched-v Ack]
+          captured (Capture. pulse)] ; Capture :: [latched-v Ack] -> latched-v
       (contrib.debug/dbg pulse)
       (dom/pre (dom/text (contrib.str/pprint-str {:committed committed, :captured captured}))))))

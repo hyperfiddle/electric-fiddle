@@ -112,7 +112,7 @@ the result of `(f event)`.
     (dom/input
       (dom/props {:placeholder "What needs to be done?"})
       (let [txt (EventListener. "keyup" #(case (.-key %) "Enter" (-> % .-target .-value) nil))
-            release! (LatchingRelay. txt)]
+            release! (LatchingRelay. txt)] ; FlipFlop
         (when release!
           (set! (.-value dom/node) "")
           (let [db-id (->temp-id), em {:db/id db-id, :todo/id (->todo-id), :todo/text txt,
