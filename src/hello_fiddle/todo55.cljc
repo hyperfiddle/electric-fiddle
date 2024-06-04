@@ -15,13 +15,28 @@
   (:import
    (missionary Cancelled)))
 
+;; FIXME rotate such that `release!` is called after state is set.
 (e/defn Transaction! [id F & args]
   (let [[[id args] release!] (el/DFlipFlop. [id args])]
     (e/with-cycle [state [::idle nil]]
       (if-not release!
-        state
+        state ; fix point
         (try
-          (release! [::accepted id (e/apply F args)])
+          (release! [::accepted id (e/apply F args)]) ; (!) release! or state set could race
+          (catch hyperfiddle.electric.Pending _
+            [::pending id])
+          (catch Cancelled c (throw c))
+          (catch Throwable t
+            (release! [::rejected id t])))))))
+
+;; TODO simpler impl
+#_
+(e/defn Transaction! [id F & args]
+  (let [[[id args] release!] (el/DFlipFlop. [id args])]
+    (Filter. some?
+      (when release! ; P: can the branch unmount before transfers are done?
+        (try
+          (release! [::accepted id (e/apply F args)]) ; (!) release! or return value could race
           (catch hyperfiddle.electric.Pending _
             [::pending id])
           (catch Cancelled c (throw c))
@@ -79,7 +94,6 @@
         (:db/id entity)
         (get @!tempids (:db/id entity) (:db/id entity))))))
 
-
 (e/def stable-kf :db/id)
 
 ;; How do we stabilize tempid to db/id?
@@ -93,37 +107,6 @@
   (let [tempid (- (uid))]
     ((juxt x! dx!) tempid)))
 
-(defn field-identifier [[e a _id :as tx-id]]
-  [e a])
-
-(e/defn TxEmitter [tx-parallelism]
-  (let [!txs (atom ())] ; Experiment: unbundle and return atom in xdxs
-    [(e/watch !txs)
-     (fn emit! [tx] (swap! !txs #(cons tx (take (dec tx-parallelism) %))) nil)
-     (fn retract! [[e a _id]] (swap! !txs (partial remove (fn [[tx-id _x _dx]]
-                                                            (= [e a] (field-identifier tx-id)))))
-       nil)]))
-
-(e/defn Drop [n value]
-  (e/client
-    (new (m/relieve {} (m/reductions {} nil (m/eduction (drop n) (e/fn* [] value)))))))
-
-(e/defn TxMonitor [stable-kf txid eid] ; Monitor dx succes for x.
-  (e/client
-    (let [tx-report                      (e/server (select-keys tx-report ; ignore current tx-report, only look at next one
-                                                     [::status
-                                                      ::last-x
-                                                      ::last-txid ; selected to skip deduplication and ensure network transfer
-                                                      ::error]))
-          {::keys [status last-x last-txid error]} (Drop. 2 tx-report)] ; drop 2 instead of 1 due to runaway pendings
-      (when (and (= eid (stable-kf last-x))
-              (or (nil? txid)
-                (= (field-identifier txid) (field-identifier last-txid))))
-        (case status
-          ::accepted [::accepted]
-          ::rejected [::rejected error]
-          nil)))))
-
 (e/def field-error nil)
 
 ;; What's the value of forwarding value and edit-fn? A: Cleaner API.
@@ -133,60 +116,31 @@
 ;; and immediately apply the optimistic entity
 ;; while emitting collected dxs to the transactor.
 
-#_(e/defn Field [{::keys [attribute stable-kf eid value edit-fn tx-parallelism]
-                :or    {tx-parallelism 1}}
-               Body]
-  (let [tx-id                 (partial swap! (atom 0) inc)
-        !status               (atom ::idle)
-        [xdxs emit! retract!] (TxEmitter. tx-parallelism)
-        emit!                 (fn [[x dx :as xdx]] (emit! (vec (cons [(stable-kf x) attribute (tx-id)] xdx))))
-        !error                (atom nil)]
-    (binding [field-error (e/watch !error)]
-      (when eid
-        (reset! !status ::pending)
-        (let [[status error] (TxMonitor. stable-kf nil eid)]
-          (case status
-            ::accepted (do (reset! !status ::accepted) (reset! !error nil))
-            ::rejected (do (reset! !status ::rejected) (reset! !error error))
-            nil)))
-      ((fn [xdxs] (when (not-empty xdxs) (reset! !status ::pending))) xdxs)
-      (e/for-by identity [[txid x dx :as xdx] xdxs]
-        (let [[status error] (ignore-pendings (TxMonitor. stable-kf txid (stable-kf x)))]
-          (case status
-            ::accepted (do (retract! txid) (reset! !status ::accepted) (reset! !error nil))
-            ::rejected (do #_(retract! xdx) (reset! !status ::rejected) (reset! !error error))
-            nil)))
-      (let [[v Ack] (Body. value (e/watch !status))]
-        (when Ack
-          (Ack. (emit! (edit-fn v)))))   ; edit-fn must be stable!
-      (when field-error
-        (e/client
-          (dom/span
-            (dom/props {:class "field-error"})
-            (dom/text "Failed to persist " attribute)
-            #_(dom/text field-error))))
-      xdxs)))
-
 (defn ->tx-id [stable-kf attribute]
   (let [next-tx-id (partial swap! (atom 0) inc)]
     (fn [[x dx]] [[(stable-kf x) attribute (next-tx-id)] x dx])))
 
-(e/defn Field [{::keys [attribute value edit-fn stable-kf]} Body]
-  (let [add-tx-id (->tx-id stable-kf attribute)]
-    (doto
-        (::impulse
-         (e/with-cycle [{::keys [status tx] :as state} {::status ::idle}]
-           (prn attribute state)
-           (let [[v Ack] (Body. value status)]
-             (case status
-               (::idle ::accepted)  {::status (if (and Ack v) ::dirty status)}
-               ::dirty (Ack. {::status ::pending, ::tx (add-tx-id (edit-fn v))})
-               (::pending ::rejected)
+;; Latch onto committed input value
+;; Prioritize new user committed values over pending tx
+;; careful state transitions to reflect TX progress
+(e/defn Field [{::keys [#_attribute edit-fn #_stable-kf]} Body]
+  (let [#_#_add-tx-id (->tx-id stable-kf attribute)]
+    (::impulse
+     (e/with-cycle [{::keys [status tx] :as state} {::status ::idle}]
+       (prn {:field-state state})
+       (let [[v Ack :as body] (Body. status)]
+         (prn {:body body})
+         ;; (prn "status" v Ack state)
+         (case status
+           (::idle ::accepted) {::status (if (and Ack v) ::dirty status)}
+           ::dirty             (contrib.debug/dbg (Ack. {::status ::pending, ::tx #_(add-tx-id) (edit-fn v)}))
+           (::pending ::rejected)
+           (do (prn status {:body body})
                (if Ack
                  {::status ::dirty} ; a new value came in while pending, restart from initial state
                  (let [!next-state (atom nil)
                        [tx Ack-tx] (el/Pulse. tx)
-                       Ack-tx      (e/fn [x] (when Ack-tx (Ack-tx. (when Ack (Ack. x)))) x)] ; when true bug workaround
+                       Ack-tx      (e/fn [x] (when Ack-tx (Ack-tx. (when Ack (Ack. x)))) x)] ; when true bug workaround. FIXME Ack should not be truthy in this branch!
                    (if-some [next-state (e/watch !next-state)]
                      (if (= ::accepted (::status next-state))
                        (Ack-tx. next-state)
@@ -194,56 +148,54 @@
                      {::status  status
                       ::tx      tx
                       ::impulse [tx (e/fn [& [status reason]]
-                                      (prn "ACK" status reason)
+                                      ;; (prn "ACK" status reason)
                                       (case status
                                         ::pending  nil
                                         ::accepted (reset! !next-state {::status ::accepted})
-                                        ::rejected (reset! !next-state (assoc state ::status ::rejected, ::reason reason))))]})))))))
-      (prn 'impulse))))
+                                        ::rejected (reset! !next-state (assoc state ::status ::rejected, ::reason reason))))]}))))))))))
 
 (defn optimistic [stable-kf xdxs authoritative-xs] ; could this be modeled as a Spine?
   (let [index (contrib.data/index-by (fn [x _index] (stable-kf x)) authoritative-xs)]
-    (vals (reduce (fn [index [[txid x dxs] _Ack]]
+    (vals (reduce (fn [index [[x dxs] _Ack]]
                     ;; (prn "inside" txid x dxs)
                     (if (contains? index (stable-kf x))
                       (update index (stable-kf x) #(merge % x))
                       (assoc index (stable-kf x) x)))
             index xdxs))))
 
-(e/defn Fork [[v Ack :as pulse]]
+(e/defn Fork
+  [[v Ack :as pulse]]
   (let [!branches (atom #{})] ; TODO use an ordered set
     (when (and v Ack)
       (swap! !branches conj (e/snapshot pulse)))
     (e/for-by first [[v Ack :as pulse] (e/watch !branches)]
       [v (e/fn [& args]
-           (let [pulse                     (e/snapshot pulse)
-                 {::keys [status] :as ret} (e/apply Ack args)]
-             (when ret
-               (case status
-                 ::pending  ret
-                 ::rejected ret
-                 ::accepted (do (swap! !branches disj pulse) ret) ; ret won't be returned as the branch will unmount first
-                 ))))])))
+           (prn "fork ack" args)
+           (let [{::keys [status] :as next} (e/apply Ack args)]
+             (when (= ::accepted status)
+               (swap! !branches disj pulse)
+               nil)))])))
 
 (e/defn MasterList [{::keys [stable-kf create-new-fn authoritative-xs CreateForm EditForm]}]
   (e/client
     (let [!xdxs         (atom ())
           optimistic-xs (optimistic #(stable-kf %1 %2) (e/watch !xdxs) authoritative-xs) ; FIXME not compatible with virtual scroll, authoritative-xs transfers entirely
+          index (into {} (Fork.
+                           (Field. {::edit-fn create-new-fn}
+                             (e/fn [_]
+                               (CreateForm.)))))
           ]
+      (prn "index" index)
+      (prn "optimistic" optimistic-xs)
       (reset! !xdxs
         (concat
-          (Fork.
-            (Field. {::attribute :hf/new
-                     ::stable-kf stable-kf
-                     ::value     nil
-                     ::edit-fn   create-new-fn}
-              CreateForm))
+          (seq index)
           (dom/ul
             (apply concat
               (e/for-by stable-kf [x (sort-by :todo/created-at (ignore-pendings optimistic-xs))] ; FIXME for-by on wrong peer
                                         ; NOTE v3 dynamic siting
                 (EditForm. x))))
-            )))))
+          )))))
 
 (e/defn CommitOnBlurBehavior "Commit current stage when given `node` is blured.
 An input can be blurred e.g. by clicking outside or pressing Tab."
@@ -264,10 +216,10 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
   (or
     ;; stage typed text, emit (commit) on Enter pressed / discard on Escape
     (el/EventListener. node "keyup" #(case (.-key %)
-                                       "Enter"  (when (#{::rejected ::dirty} status) (el/commit!))
+                                       "Enter"  (when (#{::rejected ::dirty ::idle} status) (el/commit!)) ; FIXME remove ::idle state, not meaningful
                                        "Escape" (do (el/discard!) (.blur node) nil)
                                        (.. % -target -value)))
-    ;; reset retry tx state on focus
+    ;; reset retry tx state on focus, so pressing enter commits again
     (when (= ::rejected status)
       (el/EventListener. node "focus" #(.. % -target -value)))))
 
@@ -356,18 +308,16 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
           (e/fn []
             (SpreadSheetTextInputBehavior. dom/node status value)))))))
 
-(e/defn CreateNewInput [value status] ; Not a regular input, doesn't hold on value, do not care about tx accepted/rejected
+(e/defn CreateNewInput [] ; Not a regular input, doesn't hold on value, do not care about tx accepted/rejected
   (e/client
     (dom/input
       (dom/props {:placeholder "What needs to be done?"})
       (el/Pulse.
         (el/Stage.
-          (e/fn []
+          (e/fn* []
             (binding [el/commit! (comp el/discard! el/commit!)] ; discard after commit (clear input on enter)
               (ClearOnSubmitBehavior. dom/node)
-              (AtomicEditsBehavior. dom/node
-                (if (and (some? el/stage) (not= el/stage value)) ::dirty status)
-                value))))))))
+              (AtomicEditsBehavior. dom/node ::idle el/stage))))))))
 
 (e/defn Checkbox [{::keys [status value]} Body]
   (e/client
@@ -423,7 +373,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
 (e/defn App []
   (e/client
     (dom/div (dom/props {:class "todomvc"})
-             (binding [stable-kf (StableKf.)]
+      (binding [stable-kf (StableKf.)]
         #_(e/server)
         (MasterList.
           {::authoritative-xs (e/server (query-todos db)) ; FIXME should not transfer, waiting for v3
@@ -438,10 +388,7 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                                         [[:db/add tempid, :todo/text v]
                                          [:db/add tempid, :todo/created-at (inst-ms (js/Date.))]]
                                       (= "exercise" v) (cons [])))))
-           ::CreateForm
-           (e/fn [value status]
-             (e/client ; NOTE v3 dynamic siting
-               (CreateNewInput. value status)))
+           ::CreateForm       CreateNewInput
            ::EditForm
            (e/fn [x]
              (e/client ; NOTE v3 dynamic siting
@@ -449,30 +396,13 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
                  (e/client (dom/props {:title (pr-str x)}))
                  (concat ; e/amb emulation
                    (mempty
-                     (Field. {::attribute :todo/checked
-                              ::stable-kf stable-kf
-                              ::value     (:todo/checked x false)
-                              ::edit-fn   (partial todo-edit-done stable-kf ((capture) x))} ; FIXME abstract over `capture` ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
-                       (e/fn [value status]
-                         (Checkbox. {::status status ::value value} (e/fn* [] #_(dom/props ...))))))
+                     (Field. {::edit-fn (partial todo-edit-done stable-kf ((capture) x))} ; FIXME abstract over `capture` ; FIXME v2 compiler bug when inlined: Cannot set properties of undefined (setting '3')
+                       (e/fn [status] ; D : could be called
+                         (Checkbox. {::status status ::value (:todo/checked x false)} (e/fn* [] #_(dom/props ...))))))
                    (mempty
-                     (Field. {::attribute :todo/text
-                              ::stable-kf stable-kf
-                              ::eid       (when (tempid? (stable-kf x)) (stable-kf x))
-                              ::value     (:todo/text x)
-                              ::edit-fn   (partial todo-edit-text stable-kf ((capture) x))}
-                       (e/fn [value status]
-                         (let [v       (Input. {::status status ::value value} (e/fn* [] (dom/props {:type :text})))
-                               retry-v nil #_ (when field-error
-                                                (dom/div (dom/props {:class "retry-container"})
-                                                         (dom/button
-                                                           (dom/text "retry")
-                                                           (TxUI. status)
-                                                           (when-let [[event !done running?] (new (listen dom/node "click"))]
-                                                             (!done)
-                                                             value))))]
-                           (or retry-v v)))))
-                   ))))})))))
+                     (Field. {::edit-fn (partial todo-edit-text stable-kf ((capture) x))}
+                       (e/fn [status]
+                         (Input. {::status status ::value (:todo/text x)} (e/fn* [] (dom/props {:type :text}))))))))))})))))
 
 (defn rev-ids [report]
   (let [tempids (dissoc (:tempids report) :db/current-tx)]
@@ -510,14 +440,14 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
     nil))
 
 (defmacro Transactor [!tx-report conn xdxs] ; should not be a macro, blocked on v3
-  `(e/for-by first [[[txid# x# dx#] Ack# :as xdx#] (ignore-pendings (filter some? ~xdxs))]
+  `(e/for-by first [[[x# dx#] Ack# :as xdx#] (ignore-pendings (filter some? ~xdxs))]
      ;; (prn "Transactor" txid# x# dx# Ack#)
      (let [[status# reason#] (e/server (let [[status# _txid# tx-report#] (Transact!. ~conn dx#)]
                                          (case (ignore-pendings status#)
                                            ::accepted (do (reset! ~!tx-report tx-report#) [status# nil])
                                            ::rejected [status# (ex-message tx-report#)]
-                                           [status# nil])
-                                         ))]
+                                           [status# nil])))]
+       (prn "tx result" status# x#)
        (new Ack# status# reason#))))
 
 (e/defn StagingArea [Body]
@@ -543,10 +473,8 @@ An input can be blurred e.g. by clicking outside or pressing Tab."
           (binding [db (:db-after tx-report)]
             (e/client (dom/h1 (dom/text "todos")))
             (e/client ; FIXME should be server-side
-              (let [xdxs (dom/div (dom/props {:class "todomvc-wrapper"})       ; xdxs :: collection of tuples [txid x dx]
-                                  (App.)
-                                  #_(concat (StagingArea. App)
-                                    (StagingArea. App)))]
+              (let [xdxs (dom/div (dom/props {:class "todomvc-wrapper"})   ; xdxs :: collection of tuples [[txid x dx] Ack]
+                                  (App.))]
                 (Transactor !tx-report conn xdxs)
                 (e/client
                   (dom/div
