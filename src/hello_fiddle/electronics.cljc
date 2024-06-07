@@ -21,6 +21,10 @@
       (aset !state 0 x)
       ret)))
 
+#?(:cljs (defn with-listener
+           ([n e f] (with-listener n e f nil))
+           ([n e f o] (.addEventListener n e f o) #(.removeEventListener n e f o))))
+
 #?(:cljs
    (defn listen "Takes the same arguments as `addEventListener` and returns an uninitialized
   missionary flow that handles the listener's lifecycle producing `(f e)`.
@@ -28,10 +32,7 @@
      ([node event-type] (listen node event-type identity))
      ([node event-type f] (listen node event-type f {}))
      ([node event-type f opts]
-      (->> (m/observe (fn [!]
-                        (let [! #(! (f %)), opts (clj->js opts)]
-                          (.addEventListener node event-type ! opts)
-                          #(.removeEventListener node event-type ! opts))))
+      (->> (m/observe (fn [!] (with-listener node event-type #(! (f %)) (clj->js opts))))
         (m/relieve {})))))
 
 ;; FIXME stabilize `f` to prevent DOM eventListener instance trashing
@@ -154,6 +155,28 @@ a value in continuous time, when we don't care about the value."
   (let [latched-v (Filter. some? v)]
     (when (and (= v latched-v) Ack) (Ack.))
     latched-v))
+
+#?(:cljs
+   (defn fork [n flow]
+     (m/ap
+       (let [!id (atom 0), !ret (atom (sorted-map))]
+         (m/amb= (m/?> (m/watch !ret))
+           (do (when-some [v (m/?> flow)]
+                 (swap! !ret (fn [ret]
+                               (let [id (swap! !id inc), ret (assoc ret id [v #(swap! !ret dissoc id)])]
+                                 (apply dissoc ret (take (- (count ret) n) (keys ret)))))))
+               (m/amb)))))))
+
+#?(:cljs (defn fork-events [n node event-type f opts] (fork n (listen node event-type f opts))))
+
+(e/defn ForkingEventListener
+  ([event-type]             (new ForkingEventListener          event-type identity))
+  ([event-type f]           (new ForkingEventListener dom/node event-type f))
+  ([node event-type f]      (new ForkingEventListener node     event-type f        {}))
+  ([node event-type f opts] (new ForkingEventListener node     event-type f        opts ##Inf))
+  ([node event-type f opts concurrency-factor]
+   (e/client (new (fork-events concurrency-factor node event-type f opts)))))
+
 
 (e/defn Electronics []
   (e/client

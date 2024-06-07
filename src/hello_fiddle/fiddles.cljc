@@ -7,8 +7,9 @@
    ;; [hello-fiddle.todo51 :as todo51]
    ;; [hello-fiddle.todo52 :as todo52]
    ;; [hello-fiddle.todo53 :as todo53]
-   ;; [hello-fiddle.todo54 :as todo54]
+   [hello-fiddle.todo54 :as todo54]
    [hello-fiddle.todo55 :as todo55]
+   [hello-fiddle.todo56 :as todo56]
    ;; [hello-fiddle.events :as events]
    [hello-fiddle.electronics :as electronics]
    ))
@@ -25,8 +26,9 @@
                 ;; `todo51/Todo5 todo51/Todo5
                 ;; `todo52/Todo5 todo52/Todo5
                 ;; `todo53/Todo5 todo53/Todo5
-                ;; `todo54/Todo54 todo54/Todo54
+                `todo54/Todo54 todo54/Todo54
                 `todo55/Todo55 todo55/Todo5
+                `todo56/Todo56 todo56/Todo56
                 ;; `events/Events events/Events
                 `electrionics/Electronics electronics/Electronics
                 })

@@ -6,7 +6,7 @@
 (def COLOR-DIRTY   "rgba(255,255,0,0.15)")
 (def COLOR-PENDING "rgba(255,157,0,0.15)")
 (def COLOR-ACCEPTED "rgba(0,255,0,0.10)")
-(def COLOR-REJECTED "rgba(255,0,0,0.05)")
+(def COLOR-REJECTED "rgba(255,0,0,0.25)")
 
 (e/defn Style []
   (e/client
@@ -107,7 +107,11 @@
                 (css/rule "&:focus"
                   {:box-shadow "0 0 0.25rem lightgray inset"
                    :outline    "1px gray solid"
-                   :z-index    "1"})))
+                   :z-index    "1"}))
+              (css/rule "&.pending" {:background-color COLOR-PENDING})
+              (css/rule "&.accepted" {:background-color COLOR-ACCEPTED})
+              (css/rule "&.rejected" {:background-color COLOR-REJECTED})
+              )
             (css/rule "li input.accepted"
               {:background-color COLOR-ACCEPTED})
             (css/rule "li input.rejected"
@@ -123,7 +127,7 @@
               {:background-color COLOR-DIRTY})
             (css/rule "li input.pending"
               {:background-color COLOR-PENDING})
-            (css/rule "li:has(.pending)::before"
+            (css/rule "li:has(.pending)::before, li.pending::before"
               {:content       "''"
                :position      :absolute
                :box-sizing    :border-box
