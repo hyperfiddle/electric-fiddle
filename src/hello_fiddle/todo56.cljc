@@ -64,11 +64,11 @@
 (defn entity->txs [e] (into [] (map (fn [[k v]] [:db/add (:db/id e) k v])) (dissoc e :db/id)))
 
 (defn x-text? [[_add _e a v]] (and (= :todo/text a) (re-find #"x" v)))
-(let [!i (atom 0)]
+(let [->id (->->id)]
   (defn unlucky-check? [x]
     (when-not (nnext x)
       (let [[[_add _e a _v]] x]
-        (and (= :todo/done a) (even? (swap! !i inc)))))))
+        (and (= :todo/done a) (even? (->id)))))))
 
 #?(:clj (defn transactT [conn tx-data]
           (m/sp (m/? (m/sleep 1000))
