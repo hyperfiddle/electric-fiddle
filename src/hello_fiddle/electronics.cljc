@@ -132,11 +132,20 @@ a value in continuous time, when we don't care about the value."
       [v' (e/fn [& [x]] (when release! (release!)) x)] ; NOTE e/fn is not colored so calling it on the server would call release! on the wrong peer.
       )))
 
+;; Leo: Beware, this work in an event handler but not in continuous time.
+;;      because in an event listener, reset! v will trigger a new propagation
+;;      turn, Then reset! nil will trigger another one. But in continuous time,
+;;      reset! v will update the atom and schedule a new propagation turn. then
+;;      reset to nil. So on the next propagation we'll see nil. Multiple reset!
+;;      on the same ref in a propagation turn cause a Last-Write-Wins behavior.
+;; HACK
 (defn flash! [!ref v] (reset! !ref v) (reset! !ref nil))
 
 ;; D: is Stage the right name? What about Cell?
 ;; commit!* moved out due to v2 compiler bug on self-recursive cc/fn
-(let [commit!* (fn rec ([!stage !final] (rec !stage !final @!stage)) ([!stage !final x] (flash! !final x) x))]
+(let [commit!* (fn rec
+                 ([!stage !final] (rec !stage !final @!stage))
+                 ([!stage !final x] (flash! !final x) x))]
   (e/defn Stage
     [Body]
     (let [!stage (atom nil)
@@ -147,6 +156,7 @@ a value in continuous time, when we don't care about the value."
         (reset! !stage (Body.))
         (e/watch !final)))))
 
+;; FIXME Leo: could introduce glitches. Maybe use (m/eduction (filter…)…) instead. Beware of pendings.
 (e/defn Filter [pred v] ; continuous time filter. (e.g. (Filter. some? v) will drop nils from v
   (e/with-cycle [ret (e/snapshot v)]
     (if (pred v) v ret)))
@@ -183,6 +193,9 @@ a value in continuous time, when we don't care about the value."
     (dom/h1 (dom/text "Electronics"))
     (dom/h2 (dom/text "Event Listener"))
     (let [v (dom/input
+              ;; NOTE Leo: I think passing an initial value should be mandatory.
+              ;; E.g. EventListener returns nil but input contains "", but
+              ;; depends on use case.
               (new EventListener "input" #(.. % -target -value)))]
       (dom/pre (dom/text v)))
 
@@ -223,6 +236,12 @@ a value in continuous time, when we don't care about the value."
       (dom/button (dom/text "RELEASE")
                   (new EventListener "click" (fn [_] (when release! (release!)))))
       (dom/pre (dom/text (contrib.str/pprint-str {:input-value v, :latched-value latched-v, :flipflop (some? release!)}))))
+
+
+(comment
+  (let [v "hello"
+        [latched-v release!] (DFlipFlop. v)
+        [latched-v release!2] [latched-v (fn [] (fn [] (release!)))]]))
 
     (dom/h2 (dom/text "Stage"))
     (let [committed
