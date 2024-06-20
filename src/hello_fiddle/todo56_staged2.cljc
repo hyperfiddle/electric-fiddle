@@ -1,8 +1,9 @@
-(ns hello-fiddle.todo56
+(ns hello-fiddle.todo56-staged2
   (:require
    [contrib.debug]
    [contrib.missionary-contrib :as mx]
    [datascript.core :as d]
+   [hello-fiddle.db2 :as db]
    [hello-fiddle.electronics :as el]
    [hello-fiddle.todo-style]
    [hyperfiddle.electric :as e]
@@ -18,9 +19,6 @@
 ;; (defn ->queue [] #?(:clj clojure.lang.PersistentQueue/EMPTY :cljs #queue []))
 
 (defn ->->id [] (let [!i (long-array [0])] (fn [] (aset !i 0 (unchecked-inc (aget !i 0))))))
-
-(e/def conn)
-(e/def db)
 
 (defn query-todos [db] (d/q '[:find [(pull ?e [*]) ...] :where [?e :todo/id]] db))
 (def stable-kf :todo/id)
@@ -43,15 +41,11 @@
        {:db/id (- (->tempid)), :todo/id (->todo-id), :todo/text txt, :todo/done false, :todo/created-at (inst-ms (js/Date.))})))
 
 (defn add-id [id !ids]
-  (m/observe (fn [!]
-               (swap! !ids update id (fnil inc 0))
-               (! nil)
-               #(swap! !ids (fn [m] (let [n (dec (get m id))]
-                                      (if (zero? n) (dissoc m id) (assoc m id n))))))))
+  (m/observe (fn [!] (swap! !ids conj id) (! nil) #(swap! !ids disj id))))
 
 (e/defn CollectIDs [locals globals stable-kf]
-  (let [!ids (atom {})]
-    (e/for-by first [[_ {::keys [entity]}] locals]  (new (add-id (stable-kf entity) !ids)))
+  (let [!ids (atom #{})]
+    (e/for-by first [[_ {::keys [entity]}] locals]  (swap! !ids conj (stable-kf entity)))
     (e/for-by first [[_ {::keys [entity]}] globals] (new (add-id (stable-kf entity) !ids)))
     (e/watch !ids)))
 
@@ -67,28 +61,28 @@
   (e/client
     (dom/props {:class (case status (nil ::idle) nil, (name status))})))
 
-(let [->done (fn [!status done! done!s]
+(let [->off (fn [!status off! off!*]
                (fn [[t :as tx-status]]
                  (reset! !status tx-status)
-                 (run! #(% nil) done!s)
-                 (when (not= ::rejected t) (done!))))]
-  (e/defn Form [id v done! ->tx-data Body]
+                 (run! #(% nil) off!*)
+                 (when (not= ::rejected t) (off!))))]
+  (e/defn Form [id v off! ->tx-data Body]
     (e/client
-      (let [!status (atom (e/snapshot (if done! [::pending] [::idle])))
-            field-data (or (new Body id v (e/watch !status)) [])]
-        (if done!
+      (let [!status (atom (e/snapshot (if off! [::pending] [::idle])))
+            field-data (or (new Body id v (e/watch !status)) {})]
+        (if off!
           (let [!tx-data (atom v)]
-            (run! #(swap! !tx-data merge %) (eduction (map ::x) field-data))
-            [{::tx-data (->tx-data (e/watch !tx-data))
-              ::done! (->done !status done! (eduction (map ::done!) field-data))}])
+            (run! #(swap! !tx-data merge %) (eduction (map ::db/x) (vals field-data)))
+            {(db/->tx-id) {::db/tx-data (->tx-data (e/watch !tx-data))
+                           ::db/off!    (->off !status off! (eduction (map ::db/off!) (vals field-data)))}})
           field-data)))))
 
-(let [->done (fn [!status done!] (fn [tx-status] (reset! !status tx-status) (done!)))]
+(let [->off (fn [!status off!] (fn [tx-status] (reset! !status tx-status) (off!)))]
   (e/defn Field [id a v ->tx-data Body]
-    (let [!status (atom [::idle]), [nx done!] (new Body id a v (e/watch !status))]
-      (when done!
+    (let [!status (atom [::idle]), [nx off!] (new Body id a v (e/watch !status))]
+      (when off!
         (reset! !status [::pending])
-        {::x {a nx} ::tx-data (->tx-data id a nx), ::done! (->done !status done!)}))))
+        {(db/->tx-id) {::db/x {a nx} ::db/tx-data (->tx-data id a nx), ::db/off! (->off !status off!)}}))))
 
 #?(:cljs (defn input-commit> [nd]
            (->> (mx/mix
@@ -103,9 +97,9 @@
                  (reset! !x v) (set! (.-value nd) v) (.blur nd)))]
   (e/defn InputValue [v]
     (let [!x (atom (e/snapshot v)), x (e/watch !x)]
-      (new el/EventListener "input" #(reset! !x (-> % .-target .-value)))
-      (new el/EventListener "keyup" (partial escape dom/node !x v))
-      (when-not (new dom/Focused?) (set! (.-value dom/node) x))
+      (new el/On "input" #(reset! !x (-> % .-target .-value)))
+      (new el/On "keyup" (partial escape dom/node !x v))
+      (when-not (new dom/Focused?) (set! (.-value dom/node) (contrib.debug/dbg x)))
       x)))
 
 (let [real? (fn real? [e nx v t] (if (= ::rejected t) (not= "blur" (.-type e)) (not= nx v)))]
@@ -116,55 +110,58 @@
           (new TxUI (case t (::pending ::rejected) t #_else (if (= txt v) t ::dirty)))
           (when ?e (dom/props {:title ?e}))
           (new Body)
-          (when-some [done! (new el/FlipFlop e)]
-            (if (e/snapshot (real? e nx v t)) [nx done!] (done! nil))))))))
+          (when-some [off! (new el/Switch e)]
+            (if (e/snapshot (real? e nx v t)) [nx off!] (off! nil))))))))
 
 (e/defn Checkbox [v [t ?e] Body]
   (e/client
     (dom/input
       (dom/props {:type "checkbox"})
-      (case t ::pending nil #_else (set! (.-checked dom/node) v))
+      (case (contrib.debug/dbg t) ::pending nil #_else (set! (.-checked dom/node) (case (e/server 1) (doto v (prn 'v)))))
       (new TxUI t)
       (when ?e (dom/props {:title ?e}))
       (new Body)
-      (let [[e nx] (new el/EventListener "change" (fn [e] [e (-> e .-target .-checked)]))]
-        (when-some [done! (new el/FlipFlop e)]
-          [nx done!])))))
+      (let [[e nx] (new el/On "change" (fn [e] [e (-> e .-target .-checked)]))]
+        (when-some [off! (new el/Switch e)]
+          [nx off!])))))
 
 (defn ->add [e a v] [[:db/add e a v]])
 
 (e/defn MasterList [local-flops globals stable-kf Body]
   (e/client
-    (let [locals  (into {} (e/for-by first [[_ [e done!]] local-flops]
-                             [(stable-kf e) {::entity e, ::done! done!}]))
+    (let [locals  (into {} (e/for-by first [[_ [e off!]] local-flops]
+                             [(stable-kf e) {::entity e, ::db/off! off!}]))
           globals (into {} (e/for-by stable-kf [e globals]
                              [(stable-kf e) {::entity e}]))
           ids (new CollectIDs locals globals stable-kf)]
+      (dom/pre (dom/text ids))
       (into [] cat
         (dom/ul
-          (e/for-by identity [id (keys ids)]
-            (let [done! (-> locals (get id) ::done!)
-                  v     (-> (if done! locals globals) (get id) ::entity)]
-              (new Body id v done!))))))))
+          (e/for-by identity [id ids]
+            (let [off! (-> locals (get id) ::db/off!)
+                  v    (-> (if off! locals globals) (get id) ::entity)]
+              (new Body id v off!))))))))
 
 (e/defn App []
   (e/client
-    (dom/div
-      (dom/props {:class "todomvc"})
-      (new MasterList (new CreateNew) (e/server (query-todos db)) stable-kf
-        (e/fn [id v done!]
-          (new Form id v done! entity->txs
-            (e/fn [id v [t ?e]]
-              (dom/li
-                (new TxUI t)
-                (dom/props {:title (if ?e ?e (pr-str v))})
-                (filterv some?
-                  [(new Field id :todo/done (:todo/done v) ->add
-                     (e/fn [id a v status]
-                       (new Checkbox v status (e/fn []))))
-                   (new Field id :todo/text (:todo/text v) ->add
-                     (e/fn [id a v status]
-                       (new Input v status (e/fn [] (dom/props {:type "text"})))))])))))))))
+    (let [txs (dom/div
+                (dom/props {:class "todomvc"})
+                (new MasterList (new CreateNew) (contrib.debug/dbg (e/server (e/offload #(query-todos db/db)))) stable-kf
+                  (e/fn [id v off!]
+                    (new Form id v off! entity->txs
+                      (e/fn [id v [t ?e]]
+                        (dom/li
+                          (new TxUI t)
+                          (dom/props {:title (if ?e ?e (pr-str v))})
+                          (apply merge (sorted-map)
+                            (new Field id :todo/done (:todo/done v) ->add
+                              (e/fn [id a v status]
+                                (new Checkbox v status (e/fn []))))
+                            (new Field id :todo/text (:todo/text v) ->add
+                              (e/fn [id a v status]
+                                (new Input v status (e/fn [] (dom/props {:type "text"}))))))))))))]
+      (new db/StageUI txs)
+      txs)))
 
 (defn x-text? [[_add _e a v]] (and (= :todo/text a) (re-find #"x" v)))
 (let [->id (->->id)]
@@ -173,24 +170,13 @@
       (let [[[_add _e a _v]] x]
         (and (= :todo/done a) (even? (->id)))))))
 
-#?(:clj (defn transactT [conn tx-data]
-          (m/sp (m/? (m/sleep 1000))
-                (cond (some x-text? tx-data)   [::rejected "no xs here"]
-                      (unlucky-check? tx-data) [::rejected "I guess it's just not your day"]
-                      :else                    (do (d/transact! conn tx-data) [::accepted])))))
-
-(e/defn Commit [tx-data done!] (done! (e/server (new (e/task->cp (transactT conn tx-data))))))
-
-(e/defn AutoCommit [txs] (e/for-by identity [{::keys [tx-data done!]} txs] (new Commit tx-data done!)))
-
-(e/defn Todo56 []
+(e/defn Todo56Staged []
   (e/server
-    (binding [conn (d/create-conn)]
-      (binding [db (e/watch conn)]
+    (binding [db/conn (d/create-conn), db/!db (atom nil)]
+      (reset! db/!db (e/watch db/conn))
+      (binding [db/db (e/watch db/!db)]
         (e/client
           (dom/h1 (dom/text "todos"))
-          (let [txs (App.)]
-            (dom/pre (dom/props {:style {:align-self :start}}) (dom/text (contrib.str/pprint-str (mapv ::tx-data txs))))
-            (new AutoCommit txs))
+          (db/branch App)
           (hello-fiddle.todo-style/Style.)
           nil)))))

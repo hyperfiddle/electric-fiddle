@@ -78,7 +78,7 @@ the result of `(f event)`.
 ;;   and FlipFlop is just an optimization of it. We explain how it
 ;;   snapshots/latches the input value until reset is called. We show code how
 ;;   to use it on an event listener like the click(s) on a pay button.
-;; - Next we explain that in many cases we don't care about the latched value,
+;; - Next we explain that in many cases we don't care about the latched? value,
 ;;   we actually want to use the latest value. For that case there's a simpler
 ;;   FlipFlop that returns only the reset fn.
 ;; - Next we explain the flip flops interpret the input signal. Non-nil values
@@ -118,6 +118,22 @@ a value in continuous time, when we don't care about the value."
   (e/defn FlipFlop
     ([v]     (new FlipFlop v some?))
     ([v up?] (let [!done! (atom nil)] (step !done! v up?) (e/watch !done!)))))
+
+#_(let [->done-fn (fn [!done!] (fn f ([] (f nil)) ([ret] (reset! !done! nil) ret)))
+      step      (fn [!done! _done! v up?] (when (up? v) (compare-and-set! !done! nil (->done-fn !done!))))]
+  (e/defn DLatch
+    ([v]     (new DLatch v some?))
+    ([v up?] (let [!done! (atom nil), done! (e/watch !done!)] (step !done! done! v up?) done!))))
+
+(let [->done-fn (fn [!held] (fn f ([] (f nil)) ([ret] (swap! !held assoc 1 nil) ret)))
+      step      (fn [!held _held v up?]
+                  (let [[_ done! :as held] @!held]
+                    (if (or done! (not (up? v)))
+                      held
+                      (compare-and-set! !held held [v (->done-fn !held)]))))]
+  (e/defn DLatch
+    ([v] (new DLatch v some?))
+    ([v up?] (let [!held (atom [nil nil]), held (e/watch !held)] (step !held held v up?) held))))
 
 (e/def stage nil)
 (e/def commit! (constantly nil))
@@ -288,3 +304,54 @@ a value in continuous time, when we don't care about the value."
           captured (Capture. pulse)] ; Capture :: [latched-v Ack] -> latched-v
       (contrib.debug/dbg pulse)
       (dom/pre (dom/text (contrib.str/pprint-str {:committed committed, :captured captured}))))))
+
+;;;;;;;;;;;;;
+;; RENAMES ;;
+;;;;;;;;;;;;;
+
+;; renamed from FlipFlop
+(let [->off-fn  (fn [!off!] (fn f ([] (f nil)) ([ret] (reset! !off! nil) ret)))
+      step      (fn [!off! v on?] (when (on? v) (compare-and-set! !off! nil (->off-fn !off!))))]
+  (e/defn Switch
+    ([v]     (new Switch v some?))
+    ([v on?] (let [!off! (atom nil)] (step !off! v on?) (e/watch !off!)))))
+
+(let [->off-fn  (fn [!off!] (fn f ([] (f nil)) ([ret] (reset! !off! nil) ret)))
+      step      (fn [!off! _off! v on?] (when (on? v) (compare-and-set! !off! nil (->off-fn !off!))))]
+  (e/defn HotSwitch
+    ([v]     (new HotSwitch v some?))
+    ([v on?] (let [!off! (atom nil), off! (e/watch !off!)] (step !off! off! v on?) off!))))
+
+;; renamed from DFlipFlop
+(let [->off-fn  (fn [!held] (fn f ([] (f nil)) ([ret] (swap! !held assoc 1 nil) ret)))
+      step      (fn [!held v on?]
+                  (let [[_ off! :as held] @!held]
+                    (when (and (not off!) (on? v))
+                      (compare-and-set! !held held [v (->off-fn !held)]))))]
+  (e/defn DataSwitch
+    ([v] (new DataSwitch v some?))
+    ([v on?] (let [!held (atom [nil nil])] (step !held v on?) (e/watch !held)))))
+
+;; renamed from DLatch
+(let [->done-fn (fn [!held] (fn f ([] (f nil)) ([ret] (swap! !held assoc 1 nil) ret)))
+      step      (fn [!held _held v on?]
+                  (let [[_ next! :as held] @!held]
+                    (when (and (not next!) (on? v))
+                      (compare-and-set! !held held [v (->done-fn !held)]))))]
+  (e/defn DataHotSwitch
+    ([v] (new DataHotSwitch v some?))
+    ([v on?] (let [!held (atom [nil nil]), held (e/watch !held)] (step !held held v on?) held))))
+
+;; renamed from EventListener
+(e/defn On
+  ([event]                    (new On          event identity))
+  ([event f]                  (new On          event f        {}))
+  ([event f opts]             (new On          event f        opts nil))
+  ([event f opts init-v]      (new On dom/node event f        opts init-v))
+  ([node event f opts init-v] (e/client (new (m/reductions {} init-v (listen node event ((capture-fn) f) opts))))))
+
+(letfn [(->off [!latched?]      (fn f ([] (f nil)) ([v] (reset! !latched? false) v)))
+        (->latch-fn [!latched?] (fn f ([] (f nil)) ([_] (reset! !latched? true) (->off !latched?))))]
+  (e/defn DataLatch [v]
+    (let [!latched? (atom false)]
+      [(if (e/watch !latched?) (e/snapshot v) v)  (->latch-fn !latched?)])))

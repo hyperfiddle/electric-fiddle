@@ -10,6 +10,9 @@
    [hello-fiddle.todo54 :as todo54]
    [hello-fiddle.todo55 :as todo55]
    [hello-fiddle.todo56 :as todo56]
+   [hello-fiddle.todo56-staged :as todo56-staged]
+   [hello-fiddle.todo56-staged2 :as todo56-staged2]
+   [hello-fiddle.two-todos :as two-todos]
    ;; [hello-fiddle.events :as events]
    [hello-fiddle.electronics :as electronics]
    ))
@@ -29,6 +32,9 @@
                 `todo54/Todo54 todo54/Todo54
                 `todo55/Todo55 todo55/Todo5
                 `todo56/Todo56 todo56/Todo56
+                `todo56-staged/Todo56Staged todo56-staged/Todo56Staged
+                `todo56-staged2/Todo56Staged todo56-staged2/Todo56Staged
+                `two-todos/TwoTodos two-todos/TwoTodos
                 ;; `events/Events events/Events
                 `electrionics/Electronics electronics/Electronics
                 })
