@@ -1,0 +1,43 @@
+(e/defn GitBrowser [& [repo-path selected-branch commit]]
+  (hfql
+    {^{:as repo}
+     (load-repo (or repo-path "."))
+
+     [{^{:as branch}
+       (branch-list repo)
+
+       [^{:link (if (:ref branch) #link `(GitBrowser ~repo-path ~(:full-name %) ~selected-commit))
+          :render (format-ref-link %)}
+        :name]}]}
+
+    {(Git-log. repo selected-branch ^{:placeholder "Search for commits"} .)
+     [^{:link `(GitBrowser ~repo-path ~selected-branch ~(git/short-commit-id id))
+        :style {:font-family "monospace"}}
+      :id
+
+      ^{:label "message"}
+      (RenderCommitMessage. %)
+
+      :author
+
+      ^{:sortable true,
+        :render  (format-relative-time time)
+        :tooltip (format-absolute-time time)}
+      :time]}
+
+    {selected-commit
+     [:id
+      :author
+      :merge
+      ^{:render (format-absolute-time time)}
+      :time
+      :email
+      :message]}
+
+    {^{::r/header? false}
+     (::git/changes selected-commit)
+     [^{:link [:diff path]} ::git/path
+      ::git/additions
+      ::git/deletions]}
+
+    (DiffView. selected-commit)))

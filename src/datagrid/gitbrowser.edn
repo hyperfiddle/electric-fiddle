@@ -1,19 +1,20 @@
-(e/defn GitBrowser [& [repo-path branch commit]]
+(e/defn GitBrowser [& [repo-path selected-branch commit]]
   (hfql
     {(props (load-repo (or repo-path ".")) {:as repo})
      [{(props (branch-list repo))
-       [(props :name {:link (if (:ref %) `(GitBrowser ~repo-path ~(:full-name %) ~commit))
+       [(props :name {:link (if (:ref %) `(GitBrowser ~repo-path ~(:full-name %) ~selected-commit))
                       :render (format-ref-link %)})]}]}
 
-    {(props (Git-log. repo branch (props . {:placeholder "Search for commits"})))
-     [(props :id {:link `(GitBrowser ~repo-path ~branch ~(git/short-commit-id id)) :style {:font-family "monospace"}})
+    {(props (Git-log. repo selected-branch (props . {:placeholder "Search for commits"})))
+     [(props :id {:link `(GitBrowser ~repo-path ~selected-branch ~(git/short-commit-id id))
+                  :style {:font-family "monospace"}})
       (props (RenderCommitMessage. %) {:label "message"})
       :author
       (props :time {:sortable true,
                     :render  (format-relative-time time)
                     :tooltip (format-absolute-time time)})]}
 
-    {commit
+    {selected-commit
      [:id
       :author
       :merge
@@ -21,9 +22,9 @@
       :email
       :message]}
 
-    {(props (::git/changes commit) {::r/header? false})
+    {(props (::git/changes selected-commit) {::r/header? false})
      [(props ::git/path {:link [:diff path]})
       ::git/additions
       ::git/deletions]}
 
-    (DiffView. commit)))
+    (DiffView. selected-commit)))
