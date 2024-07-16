@@ -1,0 +1,20 @@
+app = "agents"
+primary_region = "ewr"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[build.args]
+  HYPERFIDDLE_DOMAIN="agents"
+
+
+# NO_COLOR=1 fly deploy --config src/agents/fly.toml --remote-only --build-only
+
+# fly scale vm shared-cpu-8x --config src/agents/fly.toml
+# fly scale show  --config src/agents/fly.toml
+# fly status --config src/agents/fly.toml
