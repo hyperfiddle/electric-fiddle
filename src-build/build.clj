@@ -16,8 +16,8 @@ Note: Electric shadow compilation requires application classpath to be available
 so do not use `clj -T`"
   ; No point in sheltering shadow from app classpath, shadow loads it anyway!
   [argmap] ; invoke with -X
-  (let [{:keys [::hf/domain optimize debug verbose]
-         :or {optimize true, debug false, verbose false}
+  (let [{:keys [::hf/domain optimize debug verbose build]
+         :or {optimize true, debug false, verbose false, build :prod}
          :as config}
         (-> argmap 
           (update ::hf/domain str) ; coerce, -X under bash evals as symbol unless shell quoted like '"'foo'"'
@@ -34,7 +34,7 @@ so do not use `clj -T`"
     (shadow-server/start!)
     (binding [hf/*hyperfiddle-user-ns* (symbol (str (name (check string? domain)) ".fiddles"))]
       (as->
-        (shadow-api/release :prod
+        (shadow-api/release build
           {:debug debug,
            :verbose verbose,
            :config-merge
