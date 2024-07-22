@@ -4,7 +4,8 @@
    [hyperfiddle.electric :as e]
    [hyperfiddle.rcf :as rcf]
    #?(:clj config)
-   fiddles))
+   fiddles
+   [agents.agents]))
 
 (comment (-main)) ; repl entrypoint
 
@@ -46,8 +47,12 @@
        (comment (@shadow-stop!))
        (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/FiddleMain ring-req))
                     (assoc config :electric-fiddle.ring-middleware/accept-ws-connect-fn (fn [_] (not @!cljs-is-compiling)))))
+       (def connector (@start-server! (fn [ring-req] (e/boot-server {} agents.agents/ConnectAgents ring-req))
+                       (assoc config :electric-fiddle.ring-middleware/accept-ws-connect-fn (fn [_] (not @!cljs-is-compiling)))))
+       
        (comment
          (.stop server) ; jetty
+         (.stop connector) ; jetty
          (server)       ; httpkit
          )
 

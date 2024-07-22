@@ -12,17 +12,15 @@
    :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks/reload-clj)
                  (dev/pause-websocket-reconnect-while-compiling)
                  ]}
-  :agents
+  :node-agent
   {:target :node-library
    :compiler-options {:reader-features #{:node}}
    :devtools {:loader-mode :default} ; faster reload
-   :output-to  "scripts/agents.js"
-   :exports {:start agents.fiddles/start
-             :stop  agents.fiddles/stop}
-   :modules {:agents {:entries [agents.fiddles]}}
-   :build-hooks [#_(hyperfiddle.electric.shadow-cljs.hooks/reload-clj)
-                 #_(dev/pause-websocket-reconnect-while-compiling)
-                 ]}
+   :output-to  "scripts/node_agent.js"
+   :exports {:start agents.node/start
+             :stop  agents.node/stop}
+   :modules {:node-agents {:entries [agents.node]}}
+   :build-hooks []}
   :prod
   {:target :browser
    :output-dir "resources/public/js"
