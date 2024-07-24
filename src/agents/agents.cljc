@@ -8,7 +8,7 @@
 (defonce !agents (atom {})) ; {agent-id agent-info-map} - shared state
 
 (defn add-agent! [functions metadata]
-  (swap! !agents assoc (or (::id metadata) (random-uuid)) (assoc metadata ::functions (update-vals functions (constantly nil))))
+  (swap! !agents assoc (or (::id metadata) (random-uuid)) (assoc metadata ::functions functions))
   (doseq [[fsym f>] functions]
     (swap! ports/!ports ports/add-port fsym f>)))
 
@@ -29,25 +29,40 @@
           (e/on-unmount #(swap! !agents dissoc id)))))
     (e/for-by key [[fsym _] ports/ports]
       (e/server
-        (ports/Register. fsym (e/fn [& args] (e/client (ports/Call. fsym args))))))))
+        (ports/Register. fsym (e/fn [args] (e/client (ports/Call. fsym args))))))))
 
+#_
 (local/defn RunAgents []
   (let [ports (e/watch ports/!ports)]
     (e/for-by key [[_id agent] (e/watch !agents)]
       (e/for-by key [[fsym _] (::functions agent)]
         (let [port (get ports fsym)]
-          (e/for-by key [[args {::ports/keys [!result]}] (::ports/instances port)]
+          (e/for-by key [[args {::ports/keys [!result]}] (::ports/calls port)]
+            (try (reset! !result (new (::ports/F port)))
+                 (catch hyperfiddle.electric.Pending _))))))))
+
+(local/defn RunAgents []
+  (let [ports (e/watch ports/!ports)]
+    (e/for-by key [[_id agent] (e/watch !agents)]
+      (e/for-by key [[fsym f] (::functions agent)]
+        (prn "will register local" fsym "for" f)
+        (ports/RegisterLocal. fsym f)
+        #_(let [port (get ports fsym)]
+          (e/for-by key [[args {::ports/keys [!result]}] (::ports/calls port)]
             (try (reset! !result (new (::ports/F port)))
                  (catch hyperfiddle.electric.Pending _))))))))
 
 ;;; Interop helpers
 
+#_
 (defn call [f & args] (m/sp (apply f args)))
 
-(defn once
-  ([task] (once task nil))
+
+(defn once ; (once (call #(System/getProperties)))
+  ([task] (once task ::ports/init))
   ([task init] (m/reductions {} init (m/ap (m/? task)))))
 
+#_
 (defn every ; (every 1000 (call #(System/getProperties)))
   ([ms task] (every ms task nil))
   ([ms task init]
@@ -57,3 +72,18 @@
               (recur (m/? (m/? (m/sleep ms task)))))))
      (m/reductions {} init))))
 
+
+(defn call
+  ([f] (m/sp (f)))
+  ([f args] (m/sp (apply f args))))
+
+(defn every
+  "Return a flow running `task` every `ms` milliseconds, with optional initial value `init` (default to nil)."
+  ([ms task] (every ms task ::ports/init))
+  ([ms task init]
+   (->> (m/ap
+          (loop []
+            (m/amb (m/? task)
+              (do (m/? (m/sleep ms))
+                  (recur)))))
+     (m/reductions {} init))))
