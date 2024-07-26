@@ -35,7 +35,8 @@
        (e/boot-client {}
          ; in prod, fiddle owns the app and there's only one of them
          (let [FiddleMain (install-user-inject)]
-           (FiddleMain.))))
+           (FiddleMain.))
+         nil))
 
      (defonce reactor nil)
 

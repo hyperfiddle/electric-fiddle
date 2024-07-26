@@ -22,5 +22,5 @@ data
 /src/datomic_browser/state/
 /src/datagrid/state/
 /app.jar
-/scripts/agents.js
-/scripts/agents.js.map
+/scripts/node_agent.js
+/scripts/node_agent.js.map

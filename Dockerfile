@@ -23,8 +23,12 @@ ARG HYPERFIDDLE_DOMAIN
 ARG ELECTRIC_USER_VERSION
 RUN clojure -A:prod:$HYPERFIDDLE_DOMAIN -M -e ::ok         # preload
 RUN clojure -A:build:prod:$HYPERFIDDLE_DOMAIN -M -e ::ok   # preload
+ARG OPTIMIZE=true
 RUN clojure -X:build:prod:$HYPERFIDDLE_DOMAIN uberjar \
     :hyperfiddle/domain $HYPERFIDDLE_DOMAIN \
-    :build/jar-name user.jar
+    :build/jar-name user.jar \
+    :optimize $OPTIMIZE
 
-CMD java -cp user.jar clojure.main -m prod
+ARG ENTRYPOINT=prod
+ENV ENTRYPOINT=${ENTRYPOINT}
+CMD java -cp user.jar clojure.main -m $ENTRYPOINT

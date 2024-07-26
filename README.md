@@ -100,7 +100,12 @@ clj -M:prod:electric-tutorial -m prod
 clojure -X:build:prod uberjar :hyperfiddle/domain hello-fiddle :build/jar-name "app.jar"
 java -cp app.jar clojure.main -m prod
 
+
+# Docker build - see Dockerfile
+docker build -t hello-fiddle --build-arg HYPERFIDDLE_DOMAIN=hello-fiddle .
+
 # Fly.io deployment
 
 fly deploy --remote-only --config src/hello_fiddle/fly.toml
+
 ```
