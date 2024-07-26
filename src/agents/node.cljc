@@ -36,8 +36,7 @@
        (agents/add-agent!
          {`OnceTop once-top
           `LiveTop live-top} ;; run top every 250ms with ::pending initial value
-         {::agents/id    "NodeJs"
-          ::agents/specs {`OnceTop {::agents/args [[:max-lines {:type :int, :default 5}]]}
+         {::agents/specs {`OnceTop {::agents/args [[:max-lines {:type :int, :default 5}]]}
                           `LiveTop {::agents/args [[:refresh-rate {:type :int, :default 2000}]
                                                    [:max-lines {:type :int, :default 5}]]}}
           ::version      (.-version ^js js/process)

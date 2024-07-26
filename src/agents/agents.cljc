@@ -8,9 +8,10 @@
 (defonce !agents (atom {})) ; {agent-id agent-info-map} - shared state
 
 (defn add-agent! [functions metadata]
-  (swap! !agents assoc (or (::id metadata) (random-uuid)) (assoc metadata ::functions functions))
-  (doseq [[fsym f>] functions]
-    (swap! ports/!ports ports/add-port fsym f>)))
+  (let [id (or (::id metadata) (random-uuid))]
+    (swap! !agents assoc id (assoc metadata ::functions functions ::id id))
+    (doseq [[fsym f>] functions]
+      (swap! ports/!ports ports/add-port fsym f>))))
 
 (defn remove-agent! [id]
   (when-let [agent (get @!agents id)]
