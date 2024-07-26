@@ -31,47 +31,18 @@
       (e/server
         (ports/Register. fsym (e/fn [args] (e/client (ports/Call. fsym args))))))))
 
-#_
-(local/defn RunAgents []
-  (let [ports (e/watch ports/!ports)]
-    (e/for-by key [[_id agent] (e/watch !agents)]
-      (e/for-by key [[fsym _] (::functions agent)]
-        (let [port (get ports fsym)]
-          (e/for-by key [[args {::ports/keys [!result]}] (::ports/calls port)]
-            (try (reset! !result (new (::ports/F port)))
-                 (catch hyperfiddle.electric.Pending _))))))))
-
 (local/defn RunAgents []
   (let [ports (e/watch ports/!ports)]
     (e/for-by key [[_id agent] (e/watch !agents)]
       (e/for-by key [[fsym f] (::functions agent)]
         (prn "will register local" fsym "for" f)
-        (ports/RegisterLocal. fsym f)
-        #_(let [port (get ports fsym)]
-          (e/for-by key [[args {::ports/keys [!result]}] (::ports/calls port)]
-            (try (reset! !result (new (::ports/F port)))
-                 (catch hyperfiddle.electric.Pending _))))))))
+        (ports/RegisterLocal. fsym f)))))
 
 ;;; Interop helpers
-
-#_
-(defn call [f & args] (m/sp (apply f args)))
-
 
 (defn once ; (once (call #(System/getProperties)))
   ([task] (once task ::ports/init))
   ([task init] (m/reductions {} init (m/ap (m/? task)))))
-
-#_
-(defn every ; (every 1000 (call #(System/getProperties)))
-  ([ms task] (every ms task nil))
-  ([ms task init]
-   (->> (m/ap
-          (loop [v (m/? task)]
-            (m/amb v
-              (recur (m/? (m/? (m/sleep ms task)))))))
-     (m/reductions {} init))))
-
 
 (defn call
   ([f] (m/sp (f)))
@@ -87,3 +58,7 @@
               (do (m/? (m/sleep ms))
                   (recur)))))
      (m/reductions {} init))))
+
+(local/defn ConnectElectric [F]
+  (let [F (ports/InjectArgs. F)]
+    (fn [] F)))

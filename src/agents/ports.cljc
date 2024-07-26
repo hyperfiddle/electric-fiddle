@@ -1,8 +1,10 @@
 (ns agents.ports
+  (:refer-clojure :exclude [apply])
   (:require
    [hyperfiddle.electric :as e]
    [missionary.core :as m]
-   [hyperfiddle.electric-local-def :as local]))
+   [hyperfiddle.electric-local-def :as local])
+  #?(:cljs (:require-macros agents.ports)))
 
 ;;; Ports
 (defonce !ports (atom {}))
@@ -37,14 +39,17 @@
 
 (local/def local-ports (e/watch !ports))
 
+(local/def args)
+
 (local/defn RegisterLocal [fsym f]
   (swap! !ports add-port fsym f)
   (e/on-unmount #(swap! !ports remove-port fsym))
   (e/for-by key [[_instance-id {::keys [!result !args]}] (get-in local-ports [fsym ::calls])]
-    (try (let [result (new (apply f (e/watch !args)))]
-           ;; (when-not (= ::init result))
-           (reset! !result result))
-         (catch hyperfiddle.electric.Pending _))))
+    (binding [args (e/watch !args)]
+      (try (let [result (new (clojure.core/apply f args))]
+             ;; (when-not (= ::init result))
+             (reset! !result result))
+           (catch hyperfiddle.electric.Pending _)))))
 
 (def next-call-id (partial swap! (atom 0) inc))
 
@@ -57,4 +62,39 @@
       (reset! !args args)
       (new signal))))
 
-;; !ports
+;; Temporary workarounds until we get a better single-peer entrypoint
+;; Current local/run entrypoint cannot resolve e/defn, only local/defn
+
+(defn ^:no-doc -splicev [args] (if (empty? args) args (into [] cat [(pop args) (peek args)])))
+
+(local/defn Apply* [F args] ; we use `defn*` instead of e/def e/fn* for better stacktraces
+  (let [spliced (-splicev args)]
+    (case (count spliced)
+      0 (new F)
+      1 (new F (nth spliced 0))
+      2 (new F (nth spliced 0) (nth spliced 1))
+      3 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2))
+      4 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3))
+      5 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4))
+      6 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5))
+      7 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6))
+      8 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7))
+      9 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8))
+      10 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9))
+      11 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10))
+      12 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11))
+      13 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12))
+      14 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12) (nth spliced 13))
+      15 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12) (nth spliced 13) (nth spliced 14))
+      16 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12) (nth spliced 13) (nth spliced 14) (nth spliced 15))
+      17 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12) (nth spliced 13) (nth spliced 14) (nth spliced 15) (nth spliced 16))
+      18 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12) (nth spliced 13) (nth spliced 14) (nth spliced 15) (nth spliced 16) (nth spliced 17))
+      19 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12) (nth spliced 13) (nth spliced 14) (nth spliced 15) (nth spliced 16) (nth spliced 17) (nth spliced 18))
+      20 (new F (nth spliced 0) (nth spliced 1) (nth spliced 2) (nth spliced 3) (nth spliced 4) (nth spliced 5) (nth spliced 6) (nth spliced 7) (nth spliced 8) (nth spliced 9) (nth spliced 10) (nth spliced 11) (nth spliced 12) (nth spliced 13) (nth spliced 14) (nth spliced 15) (nth spliced 16) (nth spliced 17) (nth spliced 18) (nth spliced 19)))))
+
+(defmacro apply [F & args]
+  (assert (not (empty? args)) (str `apply " takes and Electric function and at least one argument. Given 0.")) ; matches clojure behavior
+  `(new Apply* ~F [~@args]))
+
+(local/defn InjectArgs [F]
+  (e/fn [] (apply F args)))

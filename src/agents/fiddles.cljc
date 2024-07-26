@@ -12,18 +12,10 @@
 
 (comment (reset! !args [1000 5]))
 
-(defn args-parser []
-  (let [!last (atom [nil nil])]
-    (fn [args-str]
-      (try (let [v (edn/read-string args-str)]
-             (if (vector? v)
-               (swap! !last assoc 0 v 1 nil)
-               (swap! !last assoc 1 (str "Invalid arg vector " (pr-str v)))))
-           (catch #?(:clj Throwable, :cljs :default) err
-             (swap! !last assoc 1 (ex-message err))))
-      @!last)))
-
-(def type->pred {:int int?})
+(def type->pred
+  {:int    int?
+   :vector vector?
+   nil     any?})
 
 (defn arg-parser [type-or-pred]
   (let [!last (atom [nil nil])
