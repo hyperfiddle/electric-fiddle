@@ -1,7 +1,8 @@
 (ns dev
   (:require
    #?(:clj [clojure.tools.logging :as log])
-   [hyperfiddle.electric :as e]
+   [hyperfiddle.electric-de :as e]
+   #?(:cljs [hyperfiddle.electric-client-de])
    [hyperfiddle.rcf :as rcf]
    #?(:clj config)
    fiddles))

@@ -1,15 +1,17 @@
 (ns fiddles
-  (:require [hyperfiddle.electric :as e]
+  (:require [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle :as hf]
             electric-fiddle.main
             ;; Inject fiddle namespaces, keeping clj and cljs builds in sync
             ;; :clj doesn't have #@ (read splicing), so we resort to #?@(:default ...)
-            #?@(:default #=(config/loaded-fiddles))))
+            #?@(:default #=(config/loaded-fiddles))
+            ))
 
-(e/def fiddles (merge #?@(:default #=(config/loaded-fiddles-entrypoints)))) ; ensures clj and cljs stays in sync
+;; FIXME DE - should be simplified to `(def fiddles (merge …))`
+(e/defn Fiddles [] (merge #?@(:default #=(config/loaded-fiddles-entrypoints)))) ; ensures clj and cljs stays in sync
 
 (e/defn FiddleMain [ring-req]
-  (e/client
-    (binding [hf/pages fiddles]
-      (e/server (electric-fiddle.main/Main. ring-req)))))
+  (binding [hf/pages ($ Fiddles)]
+    ($ electric-fiddle.main/Main ring-req)))
 

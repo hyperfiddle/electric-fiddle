@@ -9,7 +9,7 @@
       (edn/read-string (slurp config-file)))))
 
 (defn fiddle-entrypoint-ns [fiddle-sym] (symbol (str (name fiddle-sym) ".fiddles")))
-(defn fiddle-entrypoint [fiddle-sym] (symbol (str (fiddle-entrypoint-ns fiddle-sym)) "fiddles"))
+(defn fiddle-entrypoint [fiddle-sym] (list `hyperfiddle.electric-de/$ (symbol (str (fiddle-entrypoint-ns fiddle-sym)) "Fiddles")))
 
 (defn loaded-fiddles "Return a list symbols, representing currently loaded fiddles' namespaces"
   []
