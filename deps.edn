@@ -15,7 +15,7 @@
   {:extra-paths   ["src-dev"]
    :extra-deps    {ring/ring-jetty-adapter {:mvn/version "1.11.0"} ; same as `:jetty` alias
                    binaryage/devtools   {:mvn/version "1.0.7"}
-                   thheller/shadow-cljs {:mvn/version "2.26.2"}
+                   thheller/shadow-cljs {:mvn/version "2.26.2" :exclusions [org.clojure/clojurescript]}
                    io.github.clojure/tools.build
                    {:mvn/version "0.9.6"
                     :exclusions  [com.google.guava/guava ; Guava version conflict between tools.build and clojurescript.

@@ -1,21 +1,22 @@
 (ns dev
   (:require
    #?(:clj [clojure.tools.logging :as log])
-   [hyperfiddle.electric :as e]
-   [hyperfiddle.rcf :as rcf]
+   #?(:clj [electric-fiddle.server-jetty :as jetty])
+   #?(:clj [shadow.cljs.devtools.api :as shadow])
+   #?(:clj [shadow.cljs.devtools.server :as shadow-server])
    #?(:clj config)
-   fiddles))
+   #?(:cljs [hyperfiddle.electric-client-de])
+   ;; fiddles
+   [hyperfiddle.electric-de :as e]
+   ;; [hyperfiddle.rcf :as rcf]
+   repros
+   ))
 
 (comment (-main)) ; repl entrypoint
 
 #?(:clj
    (do
      ; lazy load heavy dependencies for faster REPL startup
-     (def shadow-start! (delay @(requiring-resolve 'shadow.cljs.devtools.server/start!)))
-     (def shadow-stop! (delay @(requiring-resolve 'shadow.cljs.devtools.server/stop!)))
-     (def shadow-watch (delay @(requiring-resolve 'shadow.cljs.devtools.api/watch)))
-     (def start-server! (delay @(requiring-resolve 'electric-fiddle.server-jetty/start-server!)))     ; jetty
-     #_(def start-server! (delay @(requiring-resolve 'electric-fiddle.server-httpkit/start-server!))) ; require `:httpkit` deps alias
 
      (def config
        {:host "0.0.0.0", :port 8080,
@@ -40,22 +41,22 @@
        (log/info (pr-str config))
        (log/info "Starting Electric compiler and server...") ; run after REPL redirects stdout
 
-       (@shadow-start!)
-       (@shadow-watch :dev)
+       (shadow-server/start!)
+       (shadow/watch :dev)
                                         ; todo block until finished?
-       (comment (@shadow-stop!))
-       (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/FiddleMain ring-req))
+       (comment (shadow-server/stop!))
+       (def server (jetty/start-server! (fn [ring-req] (e/boot-server {} repros/Entrypoint ring-req))
                     (assoc config :electric-fiddle.ring-middleware/accept-ws-connect-fn (fn [_] (not @!cljs-is-compiling)))))
        (comment
          (.stop server) ; jetty
          (server)       ; httpkit
          )
 
-       (rcf/enable!)
+       #_(rcf/enable!)
        )
 
      ;; autostart
-     (future (-main)) ; wrapped in future to not block user REPL
+     #_(future (-main)) ; wrapped in future to not block user REPL
      ))
 
 #?(:cljs
@@ -63,7 +64,7 @@
      (def electric-entrypoint
        ; in dev, we setup a merged fiddle config,
        ; fiddles must all opt in to the shared routing strategy
-       (e/boot-client {} fiddles/FiddleMain nil))
+       (e/boot-client {} repros/Entrypoint nil))
 
      (defonce reactor nil)
 
@@ -71,7 +72,7 @@
        (set! reactor (electric-entrypoint
                        #(js/console.log "Reactor success:" %)
                        #(js/console.error "Reactor failure:" %)))
-       (hyperfiddle.rcf/enable!))
+       #_(hyperfiddle.rcf/enable!))
 
      (defn ^:dev/before-load stop! []
        (when reactor (reactor)) ; teardown
