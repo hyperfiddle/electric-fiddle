@@ -13,7 +13,7 @@
 
 ;; Prod entrypoint, called by `prod.clj`
 (e/defn FiddleMain [ring-request]
-  #_(e/server (binding [e/http-request ring-request])) ; make ring request available through the app
+  #_(e/server (binding [e/http-request ring-request])) ; FIXME make ring request available through the app, bugged, see `main.cljc`
   (e/client
     (binding [dom/node js/document.body] ; where to mount dom elements
       ($ Hello))))

@@ -1,6 +1,8 @@
 {:lint-as {hyperfiddle.electric/def  clojure.core/def
            hyperfiddle.electric/defn clojure.core/defn
-           hyperfiddle.electric/for  clojure.core/for
+           hyperfiddle.electric-de/defn    clojure.core/defn
+           hyperfiddle.electric/with-cycle clojure.core/let
+           hyperfiddle.electric/cursor clojure.core/let
            hyperfiddle.electric/fn   clojure.core/fn
            hyperfiddle.electric/fn*  clojure.core/fn
            uix.core/defui            clojure.core/defn ; uix-demo

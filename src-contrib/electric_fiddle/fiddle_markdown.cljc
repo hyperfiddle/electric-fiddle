@@ -1,9 +1,9 @@
 (ns electric-fiddle.fiddle-markdown
   (:require clojure.string
             [electric-fiddle.fiddle :refer [Fiddle-fn]]
-            [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]
-            #?(:clj [markdown.core :refer [md-to-html-string]])
+            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric-dom3 :as dom]
+            #?(:clj [markdown.core])
             [hyperfiddle.rcf :refer [tests]]
             electric-fiddle.index))
 
@@ -14,10 +14,12 @@
 
 (comment (parse-sections (slurp (essays 'electric-y-combinator))))
 
+(defn md-to-html-string [md-str]
+  #?(:clj (markdown.core/md-to-html-string md-str)))
+
 (e/defn Markdown [?md-str]
-  (e/client
-    (let [html (e/server (some-> ?md-str md-to-html-string))]
-      (set! (.-innerHTML dom/node) html))))
+  (let [html (e/server (some-> ?md-str md-to-html-string))]
+    (set! (.-innerHTML dom/node) html)))
 
 (def essays
   {'electric-y-combinator "src/dustingetz/electric_y_combinator.md"
@@ -39,14 +41,18 @@
 (e/defn ExtensionNotFound [s & directive]
   (e/client (dom/div (dom/text "Unsupported markdown directive: " (pr-str directive)))))
 
+(comment 
+  (parse-sections (slurp "src/electric_tutorial/demo_two_clocks.md")))
+
 (e/defn Custom-markdown [extensions essay-filename]
   (e/server
-    (e/for [s (parse-sections (slurp essay-filename))]
-      (e/client
-        (if (.startsWith s "!")
-          (let [[extension & args] (parse-md-directive s)]
-            (if-let [F (get extensions extension)]
-              (e/apply F args)
-              (ExtensionNotFound. s)))
-          (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-            (e/server (Markdown. s))))))))
+    (e/cursor [s (e/diff-by identity (parse-sections (slurp essay-filename)))]
+      (if (clojure.string/starts-with? s "!")
+        (let [[extension & args] (parse-md-directive s)]
+          (if-let [F (get extensions extension)]
+            (e/apply F args)
+            ($ ExtensionNotFound s)))
+        (e/client
+          (dom/div
+            (dom/props {:class "markdown-body user-examples-readme"})
+            ($ Markdown s)))))))

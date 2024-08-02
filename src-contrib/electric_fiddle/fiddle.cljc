@@ -2,8 +2,8 @@
   (:require clojure.string
             [contrib.electric-codemirror :refer [CodeMirror]]
             [hyperfiddle :as hf]
-            [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]
+            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric-dom3 :as dom]
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src]])
             [electric-fiddle.index :refer [Index]]))
 
@@ -14,7 +14,7 @@
       (dom/fieldset
         (dom/props {:class "user-examples-code"})
         (dom/legend (dom/text "Code"))
-        (CodeMirror. {:parent dom/node :readonly true} identity identity src))
+        ($ CodeMirror {:parent dom/node :readonly true} identity identity src))
       (dom/fieldset
         (dom/props {:class ["user-examples-target" (some-> target name)]})
         (dom/legend (dom/text "Result"))
@@ -22,19 +22,19 @@
               Wrap (when ?wrap (get hf/pages ?wrap ::not-found))]
           (cond
             (= ::not-found Wrap) (dom/h1 (dom/text "not found, wrap: " ?wrap))
-            (some? Wrap) (Wrap. Target)
-            () (Target.)))))))
+            (some? Wrap) ($ Wrap Target)
+            () ($ Target)))))))
 
 (e/defn Fiddle-fn [& [alt-text target-s ?wrap :as args]]
   (let [target (symbol target-s)]
-    (Fiddle-impl. target (some-> ?wrap symbol)
+    ($ Fiddle-impl target (some-> ?wrap symbol)
       (e/server (read-src target)))))
 
 (e/defn Fiddle-ns [& [alt-text target-s ?wrap :as args]]
   (let [target (symbol target-s)]
-    (Fiddle-impl. target (some-> ?wrap symbol)
+    ($ Fiddle-impl target (some-> ?wrap symbol)
       (e/server (read-ns-src target)))))
 
 (e/defn Fiddle [& [target-s ?wrap :as route]] ; direct fiddle link http://localhost:8080/electric-fiddle.fiddle!Fiddle/dustingetz.y-fib!Y-fib
-  (if (nil? (seq route)) (Index.)
-    (Fiddle-ns. "" target-s ?wrap)))
+  (if (nil? (seq route)) ($ Index)
+    ($ Fiddle-ns "" target-s ?wrap)))

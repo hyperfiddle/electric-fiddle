@@ -1,11 +1,11 @@
-(ns electric-tutorial.demo-two-clocks 
-  (:require [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]))
+(ns electric-tutorial.demo-two-clocks
+  (:require [hyperfiddle.electric-de :as e]
+            [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn TwoClocks []
   (e/client
-    (let [c (e/client e/system-time-ms)
-          s (e/server e/system-time-ms)]
+    (let [c (e/client (e/input e/system-time-ms))
+          s (e/server (e/input e/system-time-ms))]
 
       (dom/div (dom/text "client time: " c))
       (dom/div (dom/text "server time: " s))
