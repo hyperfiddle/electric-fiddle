@@ -11,7 +11,7 @@
             [hyperfiddle.router-de :as r]
 
             [electric-tutorial.demo-two-clocks :refer [TwoClocks]]
-            ;; [electric-tutorial.demo-toggle :refer [Toggle]]
+            [electric-tutorial.demo-toggle :refer [Toggle]]
             ;; electric-tutorial.demo-system-properties
             ;; electric-tutorial.demo-chat
             ;; electric-tutorial.tutorial-backpressure
@@ -123,7 +123,7 @@
 (e/defn Fiddles []
   {
    `TwoClocks TwoClocks
-   ;; `Toggle Toggle
+   `Toggle Toggle
    ;; `electric-tutorial.demo-system-properties/SystemProperties electric-tutorial.demo-system-properties/SystemProperties
    ;; `electric-tutorial.demo-chat/Chat electric-tutorial.demo-chat/Chat
    ;; `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
