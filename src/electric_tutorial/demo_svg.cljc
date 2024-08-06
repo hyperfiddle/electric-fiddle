@@ -1,14 +1,15 @@
 (ns electric-tutorial.demo-svg
-  (:require [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]
-            [hyperfiddle.electric-svg :as svg]))
+  (:require
+   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric-dom3 :as dom]
+   [hyperfiddle.electric-svg3 :as svg]))
 
 (defn wave [time]
   (Math/cos (/ (* (mod (Math/round (/ time 10)) 360) Math/PI) 180)))
 
 (e/defn SVG []
   (e/client
-    (let [offset (* 3 (wave e/system-time-ms))] ; js animation clock
+    (let [offset (* 3 (wave ($ e/SystemTimeMs)))] ; js animation clock
       (svg/svg (dom/props {:viewBox "0 0 300 100"})
         (svg/circle
           (dom/props {:cx 50 :cy 50 :r (+ 30 offset)
