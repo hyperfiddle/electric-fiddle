@@ -15,7 +15,7 @@
             electric-tutorial.demo-system-properties
             electric-tutorial.demo-chat
             electric-tutorial.tutorial-backpressure
-            ;; electric-tutorial.tutorial-lifecycle
+            electric-tutorial.tutorial-lifecycle
             ;; electric-tutorial.demo-chat-extended
             ;; electric-tutorial.demo-webview
             ;; electric-tutorial.demo-todos-simple
@@ -127,7 +127,7 @@
    `electric-tutorial.demo-system-properties/SystemProperties electric-tutorial.demo-system-properties/SystemProperties
    `electric-tutorial.demo-chat/Chat electric-tutorial.demo-chat/Chat
    `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
-   ;; `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
+   `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
    ;; `electric-tutorial.demo-chat-extended/ChatExtended electric-tutorial.demo-chat-extended/ChatExtended
    ;; `electric-tutorial.demo-webview/Webview electric-tutorial.demo-webview/Webview
    ;; `electric-tutorial.demo-todos-simple/TodoList electric-tutorial.demo-todos-simple/TodoList  ; css fixes

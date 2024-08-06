@@ -1,6 +1,7 @@
 (ns electric-tutorial.tutorial-lifecycle
-  (:require [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]))
+  (:require
+   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn BlinkerComponent []
   (e/client
@@ -10,5 +11,5 @@
 
 (e/defn Lifecycle []
   (e/client
-    (if (= 0 (int (mod e/system-time-secs 2)))
-      (BlinkerComponent.))))
+    (when (zero? (mod ($ e/SystemTimeSecs) 2))
+      ($ BlinkerComponent))))
