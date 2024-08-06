@@ -1,35 +1,29 @@
 (ns electric-tutorial.demo-system-properties
   (:require [clojure.string :as str]
-            [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]
-            [hyperfiddle.electric-ui4 :as ui]))
+            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj
    (defn jvm-system-properties [?s]
      (->> (System/getProperties)
-       (filter (fn [^java.util.concurrent.ConcurrentHashMap$MapEntry kv]
-                 (str/includes? (str/lower-case (str (key kv))) 
-                                (str/lower-case (str ?s)))))
-       (sort-by key))))
+       (into {})
+       (filter (fn [[k _v]]
+                 (str/includes? (str/lower-case (str k))
+                   (str/lower-case (str ?s)))))
+       (sort-by first))))
 
 (e/defn SystemProperties []
-  (e/client
-    (let [!search (atom "")
-          search (e/watch !search)]
-      (e/server
-        (let [system-props (e/offload #(jvm-system-properties search))
-              matched-count (count system-props)]
-          (e/client
-            (dom/div (dom/text matched-count " matches"))
-            (ui/input search (e/fn [v] (reset! !search v))
-              (dom/props {:type "search" :placeholder "🔎  java.class.path"}))
-            (dom/table
-              (dom/tbody
-                (e/server
-                  ; reactive for, stabilized with "react key"
-                  (e/for-by key [[k v] system-props]
-                    (e/client
-                      (println 'rendering k)
-                      (dom/tr
-                        (dom/td (dom/text k))
-                        (dom/td (dom/text v))))))))))))))
+  (let [!search (atom "")
+        search (e/watch !search)
+        system-props (e/server ($ e/Offload #(jvm-system-properties search)))
+        matched-count (e/server (count system-props))]
+    (dom/div (dom/text matched-count " matches"))
+    (dom/input
+      (dom/props {:type "search", :placeholder "🔎  java.class.path"})
+      ($ dom/On "input" #(reset! !search (-> % .-target .-value))))
+    (dom/table
+      (dom/tbody
+        ;; Collection diffed on server, stabilized with "react key"
+        (e/cursor [[k v] (e/server (e/diff-by key system-props))]
+          (println 'rendering k #_v)
+          (dom/tr (dom/td (dom/text k)) (dom/td (dom/text v))))))))

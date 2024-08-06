@@ -12,7 +12,7 @@
 
             [electric-tutorial.demo-two-clocks :refer [TwoClocks]]
             [electric-tutorial.demo-toggle :refer [Toggle]]
-            ;; electric-tutorial.demo-system-properties
+            electric-tutorial.demo-system-properties
             ;; electric-tutorial.demo-chat
             ;; electric-tutorial.tutorial-backpressure
             ;; electric-tutorial.tutorial-lifecycle
@@ -124,7 +124,7 @@
   {
    `TwoClocks TwoClocks
    `Toggle Toggle
-   ;; `electric-tutorial.demo-system-properties/SystemProperties electric-tutorial.demo-system-properties/SystemProperties
+   `electric-tutorial.demo-system-properties/SystemProperties electric-tutorial.demo-system-properties/SystemProperties
    ;; `electric-tutorial.demo-chat/Chat electric-tutorial.demo-chat/Chat
    ;; `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
    ;; `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
