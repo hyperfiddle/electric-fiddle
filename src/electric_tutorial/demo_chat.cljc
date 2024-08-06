@@ -1,30 +1,23 @@
 (ns electric-tutorial.demo-chat
-  (:import [hyperfiddle.electric Pending])
-  (:require [contrib.data :refer [pad]]
-            [contrib.str :refer [empty->nil]]
-            [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]))
+  (:require
+   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric-dom3 :as dom]))
 
-#?(:clj (defonce !msgs (atom (list))))
-(e/def msgs (e/server (pad 10 nil (e/watch !msgs))))
+;; TODO spine and take 10? How would we pad?
+#?(:clj (def !msgs (atom (list))))
 
+;; TODO Implement pending state
 (e/defn Chat []
-  (e/client
-    (try
-      (dom/ul
-        (e/server
-          (e/for-by identity [msg (reverse msgs)] ; chat renders bottom up
-            (e/client
-              (dom/li (dom/style {:visibility (if (nil? msg)
-                                                "hidden" "visible")})
-                (dom/text msg))))))
-
-      (dom/input
-        (dom/props {:placeholder "Type a message" :maxlength 100})
-        (dom/on "keydown" (e/fn [e]
-                            (when (= "Enter" (.-key e))
-                              (when-some [v (empty->nil (.substr (.. e -target -value) 0 100))]
-                                (e/server (swap! !msgs #(cons v (take 9 %))))
-                                (set! (.-value dom/node) ""))))))
-      (catch Pending e
-        (dom/style {:background-color "yellow"})))))
+  (dom/ul
+    (e/cursor [msg (e/server (e/diff-by identity (into '() (comp cat (take 10)) [(e/watch !msgs) (repeat nil)])))]
+      (dom/li
+        (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")}})
+        (dom/text msg))))
+  (dom/input
+    (dom/props {:placeholder "Type a message" :maxlength 100})
+    (e/cursor [[msg spend!] ($ dom/OnAll "keydown"
+                              #(when (= "Enter" (.-key %))
+                                 (when-some [v (not-empty (.slice (-> % .-target .-value) 0 100))]
+                                   (set! (.-value dom/node) "")
+                                   v)))]
+      (spend! (e/server (swap! !msgs #(cons msg (take 9 %))))))))
