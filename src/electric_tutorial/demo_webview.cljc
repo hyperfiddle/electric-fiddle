@@ -1,8 +1,7 @@
 (ns electric-tutorial.demo-webview
   (:require #?(:clj [datascript.core :as d])
-            [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]
-            [hyperfiddle.electric-ui4 :as ui]))
+            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj
    (defonce conn ; state survives reload
@@ -22,25 +21,21 @@
          db (or ?email "")))))
 
 (e/defn Teeshirt-orders-view [db]
-  (e/client
-    (dom/div
-      (let [!search (atom ""), search (e/watch !search)]
-        (ui/input search (e/fn [v] (reset! !search v))
-          (dom/props {:placeholder "Filter..."}))
-        (dom/table (dom/props {:class "hyperfiddle"})
-          (e/server
-            (e/for [id (e/offload #(teeshirt-orders db search))]
-              (let [!e (d/entity db id)]
-                (e/client
-                  (dom/tr
-                    (dom/td (dom/text id))
-                    (dom/td (dom/text (e/server (:order/email !e))))
-                    (dom/td (dom/text (e/server (:order/gender !e))))))))))))))
+  (dom/div
+    (let [search (dom/input
+                   (dom/props {:placeholder "Filter..."})
+                   ($ dom/On "input" #(-> % .-target .-value)))]
+      (dom/table
+        (dom/props {:class "hyperfiddle"})
+        (e/cursor [id (e/server (e/diff-by identity ($ e/Offload #(teeshirt-orders db search))))]
+          (let [!e (e/server (d/entity db id))]
+            (dom/tr
+              (dom/td (dom/text id))
+              (dom/td (dom/text (e/server (:order/email !e))))
+              (dom/td (dom/text (e/server (:order/gender !e)))))))))))
 
 (e/defn Webview []
-  (e/server
-    (let [db (e/watch conn)] ; reactive "database value"
-      (Teeshirt-orders-view. db))))
+  ($ Teeshirt-orders-view (e/server (e/watch conn)))) ; reactive "database value"
 
 (comment
   #?(:clj (d/transact conn [{:db/id 2 :order/email "bob2@example.com"}]))

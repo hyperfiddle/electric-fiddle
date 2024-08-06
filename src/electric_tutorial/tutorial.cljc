@@ -17,7 +17,7 @@
             electric-tutorial.tutorial-backpressure
             electric-tutorial.tutorial-lifecycle
             ;; electric-tutorial.demo-chat-extended
-            ;; electric-tutorial.demo-webview
+            electric-tutorial.demo-webview
             ;; electric-tutorial.demo-todos-simple
             ;; #_electric-tutorial.demo-reagent-interop ; npm install
             ;; electric-tutorial.demo-svg
@@ -129,7 +129,7 @@
    `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
    `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
    ;; `electric-tutorial.demo-chat-extended/ChatExtended electric-tutorial.demo-chat-extended/ChatExtended
-   ;; `electric-tutorial.demo-webview/Webview electric-tutorial.demo-webview/Webview
+   `electric-tutorial.demo-webview/Webview electric-tutorial.demo-webview/Webview
    ;; `electric-tutorial.demo-todos-simple/TodoList electric-tutorial.demo-todos-simple/TodoList  ; css fixes
    ;; `electric-tutorial.demo-svg/SVG electric-tutorial.demo-svg/SVG
    ;; `electric-tutorial.tutorial-7guis-1-counter/Counter electric-tutorial.tutorial-7guis-1-counter/Counter
