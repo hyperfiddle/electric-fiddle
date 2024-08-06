@@ -14,7 +14,7 @@
             [electric-tutorial.demo-toggle :refer [Toggle]]
             electric-tutorial.demo-system-properties
             electric-tutorial.demo-chat
-            ;; electric-tutorial.tutorial-backpressure
+            electric-tutorial.tutorial-backpressure
             ;; electric-tutorial.tutorial-lifecycle
             ;; electric-tutorial.demo-chat-extended
             ;; electric-tutorial.demo-webview
@@ -126,7 +126,7 @@
    `Toggle Toggle
    `electric-tutorial.demo-system-properties/SystemProperties electric-tutorial.demo-system-properties/SystemProperties
    `electric-tutorial.demo-chat/Chat electric-tutorial.demo-chat/Chat
-   ;; `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
+   `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
    ;; `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
    ;; `electric-tutorial.demo-chat-extended/ChatExtended electric-tutorial.demo-chat-extended/ChatExtended
    ;; `electric-tutorial.demo-webview/Webview electric-tutorial.demo-webview/Webview
