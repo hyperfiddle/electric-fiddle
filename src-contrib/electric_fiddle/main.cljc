@@ -17,16 +17,17 @@
 	;;   at hyperfiddle.electric_ring_adapter_de$electric_ws_handler$on_message__45818.invoke(electric_ring_adapter_de.clj:205)
   (e/client
     (binding [dom/node js/document.body]
-      (r/router ($ r/HTML5-History)
-        (dom/pre (dom/text (pr-str r/route)))
-        (let [route       (or (ffirst r/route) `(Index)) ; route looks like {(f args) nil} or nil
-              [f & args]  route]
-          (set! (.-title js/document) (str (some-> f name (str " – ")) "Electric Fiddle"))
-          (case f
-            `Index ($ Index)
-            (r/focus [route]
-              (binding [hf/Entrypoint Entrypoint] ; allow for recursive navigation
-                (e/apply hf/Entrypoint f args)))))))))
+      (dom/div ; FIXME wrapper div to circumvent v3 mount-point mounting nodes in reverse order if there are existing foreign DOM children.
+        (r/router ($ r/HTML5-History)
+          (dom/pre (dom/text (pr-str r/route)))
+          (let [route       (or (ffirst r/route) `(Index)) ; route looks like {(f args) nil} or nil
+                [f & args]  route]
+            (set! (.-title js/document) (str (some-> f name (str " – ")) "Electric Fiddle"))
+            (case f
+              `Index ($ Index)
+              (r/focus [route]
+                (binding [hf/Entrypoint Entrypoint] ; allow for recursive navigation
+                  (e/apply hf/Entrypoint f args))))))))))
 
 
 
