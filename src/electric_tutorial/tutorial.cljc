@@ -18,7 +18,7 @@
             electric-tutorial.tutorial-lifecycle
             ;; electric-tutorial.demo-chat-extended
             electric-tutorial.demo-webview
-            ;; electric-tutorial.demo-todos-simple
+            electric-tutorial.demo-todos-simple
             ;; #_electric-tutorial.demo-reagent-interop ; npm install
             ;; electric-tutorial.demo-svg
             ;; electric-tutorial.tutorial-7guis-1-counter
@@ -130,8 +130,8 @@
    `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
    ;; `electric-tutorial.demo-chat-extended/ChatExtended electric-tutorial.demo-chat-extended/ChatExtended ; FIXME port to v3
    `electric-tutorial.demo-webview/Webview electric-tutorial.demo-webview/Webview
-   ;; `electric-tutorial.demo-todos-simple/TodoList electric-tutorial.demo-todos-simple/TodoList  ; css fixes
    ;; `electric-tutorial.demo-svg/SVG electric-tutorial.demo-svg/SVG
+   `electric-tutorial.demo-todos-simple/TodoList electric-tutorial.demo-todos-simple/TodoList  ; css fixes
    ;; `electric-tutorial.tutorial-7guis-1-counter/Counter electric-tutorial.tutorial-7guis-1-counter/Counter
    ;; `electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter
    ;; `electric-tutorial.tutorial-7guis-4-timer/Timer electric-tutorial.tutorial-7guis-4-timer/Timer
