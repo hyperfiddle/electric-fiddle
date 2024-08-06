@@ -1,12 +1,12 @@
 (ns electric-tutorial.demo-two-clocks
-  (:require [hyperfiddle.electric-de :as e]
-            [hyperfiddle.electric-dom3 :as dom]))
+  (:require
+   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn TwoClocks []
-  (e/client
-    (let [c (e/client (e/input e/system-time-ms))
-          s (e/server (e/input e/system-time-ms))]
+  (let [c (e/client ($ e/SystemTimeMs))
+        s (e/server ($ e/SystemTimeMs))]
 
-      (dom/div (dom/text "client time: " c))
-      (dom/div (dom/text "server time: " s))
-      (dom/div (dom/text "difference: " (- s c))))))
+    (dom/div (dom/text "client time: " c))
+    (dom/div (dom/text "server time: " s))
+    (dom/div (dom/text "difference: " (- s c)))))
