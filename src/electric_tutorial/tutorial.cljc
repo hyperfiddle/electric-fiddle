@@ -23,7 +23,7 @@
             electric-tutorial.demo-svg
             electric-tutorial.tutorial-7guis-1-counter
             electric-tutorial.tutorial-7guis-2-temperature
-            ;; electric-tutorial.tutorial-7guis-4-timer
+            electric-tutorial.tutorial-7guis-4-timer
             ;; electric-tutorial.tutorial-7guis-5-crud
             ))
 
@@ -134,7 +134,7 @@
    `electric-tutorial.demo-svg/SVG electric-tutorial.demo-svg/SVG
    `electric-tutorial.tutorial-7guis-1-counter/Counter electric-tutorial.tutorial-7guis-1-counter/Counter
    `electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter
-   ;; `electric-tutorial.tutorial-7guis-4-timer/Timer electric-tutorial.tutorial-7guis-4-timer/Timer
+   `electric-tutorial.tutorial-7guis-4-timer/Timer electric-tutorial.tutorial-7guis-4-timer/Timer
    ;; `electric-tutorial.tutorial-7guis-5-crud/CRUD electric-tutorial.tutorial-7guis-5-crud/CRUD
    ;`electric-tutorial.demo-reagent-interop/ReagentInterop electric-tutorial.demo-reagent-interop/ReagentInterop
    })
