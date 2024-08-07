@@ -1,8 +1,8 @@
 (ns electric-tutorial.tutorial-7guis-5-crud
-  (:require [clojure.string :as str]
-            [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]
-            [hyperfiddle.electric-ui4 :as ui4]))
+  (:require
+   [clojure.string :as str]
+   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric-dom3 :as dom]))
 
 (def !state (atom {:selected nil
                    :stage {:name ""
@@ -47,52 +47,50 @@
         names-map names-map))))
 
 (e/defn CRUD []
-  (e/client
-    (let [state (e/watch !state)
-          selected (:selected state)]
-      (dom/div (dom/props {:style {:display :grid
-                                   :grid-gap "0.5rem"
-                                   :align-items :baseline
-                                   :grid-template-areas "'a b c c'\n
-                                                         'd d e f'\n
-                                                         'd d g h'\n
-                                                         'd d i i'\n
-                                                         'j j j j'"}})
-        (dom/span (dom/props {:style {:grid-area "a"}})
-          (dom/text "Filter prefix:"))
-        (let [!needle (atom ""), needle (e/watch !needle)]
-          (ui4/input needle (e/fn [v] (reset! !needle v))
-            (dom/props {:style {:grid-area "b"}}))
-          (dom/ul (dom/props {:style {:grid-area "d"
-                                      :background-color :white
-                                      :list-style-type :none
-                                      :padding 0
-                                      :border "1px gray solid"
-                                      :height "100%"}})
-            (e/for [entry (filter-names (:names state) needle)]
-              (let [id (key entry)
-                    value (val entry)]
-                (dom/li (dom/text (:surname value) ", " (:name value))
-                  (dom/props 
-                   {:style {:cursor :pointer
-                            :color (if (= selected id) :white :inherit)
-                            :background-color (if (= selected id) :blue :inherit)
-                            :padding "0.1rem 0.5rem"}})
-                  (dom/on "click" (e/fn [_] (select! id))))))))
-        (let [stage (:stage state)]
-          (dom/span (dom/props {:style {:grid-area "e"}}) (dom/text "Name:"))
-          (ui4/input (:name stage) (e/fn [v] (set-name! v))
-            (dom/props {:style {:grid-area "f"}}))
-          (dom/span (dom/props {:style {:grid-area "g"}}) (dom/text "Surname:"))
-          (ui4/input (:surname stage) (e/fn [v] (set-surname! v))
-            (dom/props {:style {:grid-area "h"}})))
-        (dom/div (dom/props 
-                  {:style {:grid-area "j"
-                           :display :grid
-                           :grid-gap "0.5rem"
-                           :grid-template-columns "auto auto auto 1fr"}})
-          (ui4/button (e/fn [] (create!)) (dom/text "Create"))
-          (ui4/button (e/fn [] (update!)) (dom/text "Update")
-            (dom/props {:disabled (not selected)}))
-          (ui4/button (e/fn [] (delete!)) (dom/text "Delete")
-            (dom/props {:disabled (not selected)})))))))
+  (let [state (e/watch !state), selected (:selected state)]
+    (dom/div
+      (dom/props {:style {:display "grid", :grid-gap "0.5rem", :align-items "baseline"
+                          :grid-template-areas "'a b c c'\n
+                                                'd d e f'\n
+                                                'd d g h'\n
+                                                'd d i i'\n
+                                                'j j j j'"}})
+      (dom/span
+        (dom/props {:style {:grid-area "a"}})
+        (dom/text "Filter prefix:"))
+      (let [!needle (atom ""), needle (e/watch !needle)]
+        (dom/input
+          (dom/props {:style {:grid-area "b"}})
+          ($ dom/On "input" (fn [e] (reset! !needle (-> e .-target .-value)))))
+        (dom/ul
+          (dom/props {:style {:grid-area "d", :background-color "white"
+                              :line-style-type "none", :padding 0
+                              :border "1px gray solid", :height "100%"}})
+          (e/cursor [entry (e/diff-by key (filter-names (:names state) needle))]
+            (prn (type entry) entry)
+            (let [id (key entry), value (val entry)]
+              (dom/li
+                (dom/text (:surname value) ", " (:name value))
+                (dom/props {:style {:cursor "pointer", :padding "0.1rem 0.5rem"
+                                    :color (if (= selected id) "white" "inherit")
+                                    :background-color (if (= selected id) "blue" "inherit")}})
+                ($ dom/On "click" (fn [_] (select! id))))))))
+      (let [stage (:stage state)]
+        (dom/span (dom/props {:style {:grid-area "e"}}) (dom/text "Name:"))
+        (dom/input
+          (dom/props {:style {:grid-area "f"}})
+          ($ dom/On "input" (fn [e] (set-name! (-> e .-target .-value))))
+          (when-not ($ dom/Focused?) (set! (.-value dom/node) (:name stage))))
+        (dom/span (dom/props {:style {:grid-area "g"}}) (dom/text "Surname:"))
+        (dom/input
+          (dom/props {:style {:grid-area "h"}})
+          ($ dom/On "input" (fn [e] (set-surname! (-> e .-target .-value))))
+          (when-not ($ dom/Focused?) (set! (.-value dom/node) (:surname stage)))))
+      (dom/div
+        (dom/props {:style {:grid-area "j", :display "grid", :grid-gap "0.5rem"
+                            :grid-template-columns "auto auto auto 1fr"}})
+        (dom/button (dom/text "Create") ($ dom/On "click" (fn [_] (create!))))
+        (dom/button (dom/text "Update") ($ dom/On "click" (fn [_] (update!)))
+          (dom/props {:disabled (not selected)}))
+        (dom/button (dom/text "Delete") ($ dom/On "click" (fn [_] (delete!)))
+          (dom/props {:disabled (not selected)}))))))
