@@ -24,10 +24,12 @@
   (e/diff-by kf (window (vec xs!) offset limit)))
 
 (def record-count 100)
-(def !limit-x (atom 60))
-(def !limit-y (atom 24))
-(def !offset-x (atom 0))
-(def !offset-y (atom 0))
+#?(:clj
+   (do
+     (def !limit-x (atom 60))
+     (def !limit-y (atom 24))
+     (def !offset-x (atom 0))
+     (def !offset-y (atom 0))))
 
 (comment
   (swap! !offset-y inc)

@@ -4,6 +4,8 @@
             dustingetz.scratch
             [dustingetz.peter-counter :refer [Counter]]
             [dustingetz.painter :refer [Painter]]
+            [dustingetz.scroll-abc :refer [Scroll1]]
+            [dustingetz.scroll-dom :refer [ScrollDemo]]
 
             #_[dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
             #_[dustingetz.hfql-intro :refer [With-HFQL-Bindings
@@ -24,6 +26,8 @@
   {`dustingetz.scratch/Scratch dustingetz.scratch/Scratch
    `Counter Counter
    `Painter Painter
+   `ScrollDemo ScrollDemo
+   `Scroll1 Scroll1
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
    ;`Essay (With-HFQL-Bindings. Essay)
