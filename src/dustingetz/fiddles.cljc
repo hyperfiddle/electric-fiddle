@@ -2,6 +2,8 @@
   (:require [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle :as hf]
             dustingetz.scratch
+            [dustingetz.peter-counter :refer [Counter]]
+            [dustingetz.painter :refer [Painter]]
 
             #_[dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
             #_[dustingetz.hfql-intro :refer [With-HFQL-Bindings
@@ -20,6 +22,8 @@
 
 (e/defn Fiddles []
   {`dustingetz.scratch/Scratch dustingetz.scratch/Scratch
+   `Counter Counter
+   `Painter Painter
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
    ;`Essay (With-HFQL-Bindings. Essay)

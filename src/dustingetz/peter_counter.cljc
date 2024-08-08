@@ -1,6 +1,6 @@
 (ns dustingetz.peter-counter
   (:require
-   [hyperfiddle.electric3 :as e :refer [$]]
+   [hyperfiddle.electric-de :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn PeerAgnosticCounter [n Inc txt]
