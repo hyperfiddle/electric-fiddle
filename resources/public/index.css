@@ -23,7 +23,7 @@ body.hyperfiddle {
 .hyperfiddle ul,
 .hyperfiddle dl {
     margin-top: 0;
-    margin-bottom: 1rem;
+    /* margin-bottom: 1rem; */ /* why? interferes with dir-tree demo */
 }
 
 .hyperfiddle dl {
