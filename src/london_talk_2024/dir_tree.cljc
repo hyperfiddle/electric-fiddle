@@ -28,9 +28,9 @@
         (e/server (and (file-is-file h) (includes-str? name_ s)))
         (dom/li (dom/text name_))))))
 
-(e/defn Dir-tree-main []
+(e/defn DirTreeDemo []
   (e/client
-    (let [s (dom/input ($ dom/On "input" #(-> % .-target .-value)))
-          h (e/server (clojure.java.io/file (file-absolute-path "./src")))]
+    (let [s (dom/input ($ dom/On "input" #(-> % .-target .-value) {} ""))
+          h (e/server (clojure.java.io/file (file-absolute-path "./src/london_talk_2024")))]
       (dom/ul
         ($ Dir-tree h s)))))
