@@ -61,15 +61,11 @@
 
 #?(:cljs
    (do
-     (def electric-entrypoint
-       ; in dev, we setup a merged fiddle config,
-       ; fiddles must all opt in to the shared routing strategy
-       (e/boot-client {} fiddles/FiddleMain nil))
 
      (defonce reactor nil)
 
      (defn ^:dev/after-load ^:export start! []
-       (set! reactor (electric-entrypoint
+       (set! reactor ((e/boot-client {} fiddles/FiddleMain nil)
                        #(js/console.log "Reactor success:" %)
                        #(js/console.error "Reactor failure:" %)))
        (hyperfiddle.rcf/enable!))
