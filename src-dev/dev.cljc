@@ -45,7 +45,7 @@
        (@shadow-watch :dev)
                                         ; todo block until finished?
        (comment (@shadow-stop!))
-       (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/FiddleMain ring-req))
+       (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/FiddleMain (e/server ring-req)))
                     (assoc config :electric-fiddle.ring-middleware/accept-ws-connect-fn (fn [_] (not @!cljs-is-compiling)))))
        (comment
          (.stop server) ; jetty
@@ -65,7 +65,7 @@
      (defonce reactor nil)
 
      (defn ^:dev/after-load ^:export start! []
-       (set! reactor ((e/boot-client {} fiddles/FiddleMain nil)
+       (set! reactor ((e/boot-client {} fiddles/FiddleMain (e/server nil)) ; to match program shape for (e/server ring-req)
                        #(js/console.log "Reactor success:" %)
                        #(js/console.error "Reactor failure:" %)))
        (hyperfiddle.rcf/enable!))
