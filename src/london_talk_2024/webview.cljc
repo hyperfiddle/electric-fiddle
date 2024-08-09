@@ -30,5 +30,5 @@
 (e/defn Webview []
   (let [db (e/server (e/watch conn))]
     ($ GenericTable
-      (e/fn Query [search] ($ Teeshirt-orders db search))
-      (e/fn Row [id] ($ Render-order db id)))))
+      ($ e/Partial Teeshirt-orders db)
+      ($ e/Partial Render-order db))))
