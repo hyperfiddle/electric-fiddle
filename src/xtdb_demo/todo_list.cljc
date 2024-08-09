@@ -34,7 +34,7 @@
     (dom/input (dom/props {:placeholder "Buy milk"})
       (dom/on "keydown" (e/fn [e]
                           (when (= "Enter" (.-key e))
-                            (when-some [v (contrib.str/empty->nil (-> e .-target .-value))]
+                            (when-some [v (not-empty (-> e .-target .-value))]
                               (new F v)
                               (set! (.-value dom/node) ""))))))))
 
