@@ -27,15 +27,16 @@
      (def !n (atom 10))))
 
 (e/defn FizzBuzzDemo []
-  (let [xs (e/server
-             ($ FizzBuzz
-               (e/client (e/watch !fizz))
-               (e/client (e/watch !buzz))
-               (e/client ($ RangeN (e/watch !n)))))]
+  (let [fizz (e/watch !fizz)
+        buzz (e/watch !buzz)
+        n (e/watch !n)
+        ns ($ RangeN n)
+        xs ($ FizzBuzz fizz buzz ns)]
     (e/cursor [x xs]
       (dom/div (dom/text x)))))
 
 (comment
+  ($ Tap-diffs #(println 'diff %))
   (reset! !fizz 'pop)
   (reset! !fizz 'fizz)
   (reset! !buzz 'buzz)
