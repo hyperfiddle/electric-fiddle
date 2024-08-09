@@ -16,7 +16,7 @@
             electric-tutorial.demo-chat
             electric-tutorial.tutorial-backpressure
             electric-tutorial.tutorial-lifecycle
-            ;; electric-tutorial.demo-chat-extended
+            electric-tutorial.demo-chat-extended
             electric-tutorial.demo-webview
             electric-tutorial.demo-todos-simple
             ;; #_electric-tutorial.demo-reagent-interop ; npm install
@@ -36,7 +36,7 @@
      `electric-tutorial.tutorial-backpressure/Backpressure
      `electric-tutorial.tutorial-lifecycle/Lifecycle
      ; tutorial-entrypoint
-     ;; `electric-tutorial.demo-chat-extended/ChatExtended ; FIXME port to v3
+     `electric-tutorial.demo-chat-extended/ChatExtended ; FIXME port to v3
      `electric-tutorial.demo-webview/Webview
      `electric-tutorial.demo-todos-simple/TodoList
      #_`electric-tutorial.demo-reagent-interop/ReagentInterop
@@ -109,7 +109,7 @@
    `electric-tutorial.demo-chat/Chat "src/electric_tutorial/demo_chat.md"
    `electric-tutorial.tutorial-backpressure/Backpressure "src/electric_tutorial/tutorial_backpressure.md"
    `electric-tutorial.tutorial-lifecycle/Lifecycle "src/electric_tutorial/tutorial_lifecycle.md"
-   ;; `electric-tutorial.demo-chat-extended/ChatExtended "src/electric_tutorial/demo_chat_extended.md" ; FIXME port to v3
+   `electric-tutorial.demo-chat-extended/ChatExtended "src/electric_tutorial/demo_chat_extended.md" ; FIXME port to v3
    `electric-tutorial.demo-webview/Webview "src/electric_tutorial/demo_webview.md"
    `electric-tutorial.demo-todos-simple/TodoList "src/electric_tutorial/demo_todos_simple.md"
    `electric-tutorial.demo-svg/SVG "src/electric_tutorial/demo_svg.md"
@@ -128,7 +128,7 @@
    `electric-tutorial.demo-chat/Chat electric-tutorial.demo-chat/Chat
    `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
    `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
-   ;; `electric-tutorial.demo-chat-extended/ChatExtended electric-tutorial.demo-chat-extended/ChatExtended ; FIXME port to v3
+   `electric-tutorial.demo-chat-extended/ChatExtended electric-tutorial.demo-chat-extended/ChatExtended ; FIXME port to v3
    `electric-tutorial.demo-webview/Webview electric-tutorial.demo-webview/Webview
    `electric-tutorial.demo-todos-simple/TodoList electric-tutorial.demo-todos-simple/TodoList  ; css fixes
    `electric-tutorial.demo-svg/SVG electric-tutorial.demo-svg/SVG
