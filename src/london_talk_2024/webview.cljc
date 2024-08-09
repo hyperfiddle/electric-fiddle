@@ -15,6 +15,7 @@
   (dom/div
     (let [search (dom/input (dom/props {:placeholder "Filter..."})
                    ($ dom/On "input" #(-> % .-target .-value)))]
+      search
       (dom/table (dom/props {:class "hyperfiddle"})
         (e/cursor [x ($ Query search)]
           (dom/tr
