@@ -8,20 +8,24 @@
 #?(:clj (def !xs (atom [0 1 2])))
 #?(:clj (def !ys (atom [10 20])))
 (comment
-  (swap! !ys conj 30) ; gives us what was missing
+  (swap! !xs conj 3)
+  (swap! !xs pop)
+  (swap! !ys conj 30) ; just the changeset! What's missing?
   (swap! !ys conj 40)
+  (swap! !ys pop)
   (swap! !q not))
 
 (e/defn DifferentialTricks []
-  (dom/h1 (dom/text "tricks"))
+  (dom/h1 (dom/text "What's the applicative functor?"))
 
-  (e/server
-    (println
-      ($ Tap-diffs println
+  (let [xs ($ Tap-diffs #(println 'diff %)
+             #_(e/amb 0 1 2) (e/server (e/diff-by identity (e/watch !xs))))]
+    (println (inc xs))
 
-        42
+    #_(e/cursor [x xs]
+        (println x)))
 
-        ))))
+  )
 
 
 (comment
@@ -32,7 +36,7 @@
   e/as-vec
   (let [xs (e/diff-by identity (e/watch !xs))
         ys (e/diff-by identity (e/watch !ys))]
-    (vector xs ys)) ; just the changeset! What's missing?
+    (vector xs ys))
   (if (e/watch !q)
     42
     (e/amb))

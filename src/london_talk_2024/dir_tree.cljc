@@ -5,7 +5,6 @@
    [hyperfiddle.electric-de :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))
 
-; todo cannot inline interop - why not
 #?(:clj (defn file-is-dir [h] (.isDirectory h)))
 #?(:clj (defn file-is-file [h] (.isFile h)))
 #?(:clj (defn file-list-files [h] (.listFiles h)))
@@ -22,7 +21,7 @@
         (dom/li (dom/text name_)
           (dom/ul
             (e/server
-              (e/cursor [x (e/diff-by identity (file-list-files h))]
+              (e/for-by identity [x (file-list-files h)] ; here
                 ($ Dir-tree x s)))))
 
         (e/server (and (file-is-file h) (includes-str? name_ s)))
