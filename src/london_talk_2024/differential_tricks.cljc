@@ -18,9 +18,10 @@
 (e/defn DifferentialTricks []
   (dom/h1 (dom/text "What's the applicative functor?"))
 
-  (let [xs ($ Tap-diffs #(println 'diff %)
-             #_(e/amb 0 1 2) (e/server (e/diff-by identity (e/watch !xs))))]
-    (println (inc xs))
+  (let [xs (e/server (e/diff-by identity (e/watch !xs)))
+        ys (e/amb 0 1 2)]
+    (println xs)
+    (println ys)
 
     #_(e/cursor [x xs]
         (println x)))
