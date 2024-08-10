@@ -2,7 +2,8 @@
   (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders genders shirt-sizes]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric-de :as e :refer [$]]
-            [hyperfiddle.electric-dom3 :as dom]))
+            [hyperfiddle.electric-dom3 :as dom]
+            [missionary.core :as m]))
 
 (e/defn Typeahead [v-id Options & [OptionLabel]]
   (e/client
@@ -24,22 +25,23 @@
             (dom/props {:value ($ OptionLabel v-id)}))) ; controlled only when not focused
         v-id))))
 
-(e/defn Teeshirt-orders [db search]
-  (e/server (e/diff-by identity ($ e/Offload #(teeshirt-orders db search)))))
-
 (e/defn Genders [db search]
   (e/server (e/diff-by identity ($ e/Offload #(genders db search)))))
 
 (e/defn Shirt-sizes [db gender search]
   (e/server (e/diff-by identity ($ e/Offload #(shirt-sizes db gender search)))))
 
+(e/defn Teeshirt-orders [db search]
+  (e/server (e/diff-by identity ($ e/Offload #(teeshirt-orders db search)))))
+
 (e/defn TeeshirtOrders [db]
   (e/client
     (dom/div
       (let [search (dom/input (dom/props {:placeholder "Filter..."})
-                     ($ dom/On "input" #(-> % .-target .-value)))]
+                     ($ dom/On "input" #(-> % .-target .-value)))
+            ids ($ Teeshirt-orders db search)] ; e.g. [9 10 11]
         (dom/table
-          (e/cursor [id ($ Teeshirt-orders db search)] ; e.g. [9 10 11]
+          (e/cursor [id ids]
             (dom/tr
               (let [!e (e/server (d/entity db id))
                     email (e/server (-> !e :order/email))
