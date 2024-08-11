@@ -74,44 +74,55 @@
 (e/defn Query-page-size [row-height padding-top node]
   (e/client
     (let [[clientHeight] (e/input (resize-observer node))
-          page-size (Math/floor (/ (- clientHeight padding-top) row-height))]
+          page-size (Math/ceil (/ (- clientHeight padding-top) row-height))]
       page-size)))
 
-(e/defn Query-offset [record-count row-height node]
+(e/defn Query-offset [record-count row-height page-size overquery-factor node]
   (e/client
     (let [max-height (* record-count row-height)
           [scrollTop] (e/input (scroll-state node))
           clamped-scroll-top (js/Math.min scrollTop max-height)
-          offset (js/Math.floor (/ clamped-scroll-top row-height)) ; quantize scroll (no fractional row visibility)
-          padding-top clamped-scroll-top
-          padding-bottom (- max-height clamped-scroll-top)]
-      [offset padding-top padding-bottom])))
+          offset (js/Math.floor (/ clamped-scroll-top row-height))
+
+          ; overquery strategy - load more below only for simpler math at boundaries
+          q-limit (* page-size overquery-factor)
+          occluded (- q-limit page-size)
+          q-offset offset #_(- offset (js/Math.floor (/ occluded 2))) ; todo truncate at boundaries
+
+          padding-top clamped-scroll-top ; possible to quantize w/o fixing the divs?
+          occluded-height (* occluded row-height) ; todo truncate at boundary
+          padding-bottom (- max-height clamped-scroll-top occluded-height)]
+      [q-offset q-limit padding-top padding-bottom])))
 
 (e/defn TableScrollFixedCounted
   "Scrolls like google sheets. this can efficiently jump through a large indexed collection"
   [Page-fn Record-fn]
   (e/client
     (dom/div (dom/props {:class "viewport" :style {:overflowX "hidden" :overflowY "auto"}})
-      (let [row-height 22 ; todo relative measurement (note: browser zoom impacts px height)
+      (let [row-height 25 ; todo relative measurement (note: browser zoom impacts px height)
             padding-top 0 ; e.g. sticky header row
             !record-count (atom 25) ; initial guess
             record-count (e/watch !record-count)
-            limit ($ Query-page-size row-height padding-top dom/node)
-            [offset padding-top padding-bottom] ($ Query-offset record-count row-height dom/node)
-            [record-count xs] ($ Page-fn offset limit)]
+            page-size ($ Query-page-size row-height padding-top dom/node)
+            overquery-factor 1
+            [q-offset q-limit padding-top padding-bottom] ($ Query-offset record-count row-height page-size overquery-factor dom/node)
+            [record-count xs] ($ Page-fn q-offset q-limit)]
         (reset! !record-count record-count)
-        (dom/table (dom/props {:style (merge
-                                        {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
-                                         :display :grid}
-                                        (e/server ; align spacer latency with updated resultset
-                                          {:padding-top (str padding-top "px") ; seen elements are replaced with padding
-                                           :padding-bottom (str padding-bottom "px")}))})
+        (dom/table (dom/props {:style
+                               (merge
+                                 {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
+                                  :display "grid"
+                                  :grid-template-columns "4em 15em min-content min-content"}
+                                 (e/server ; align spacer latency with updated resultset
+                                   {:padding-top (str padding-top "px") ; seen elements are replaced with padding
+                                    :padding-bottom (str padding-bottom "px")}))})
           (e/cursor [id xs]
-            (dom/tr (dom/props {:style {:display               :grid
-                                        :grid-template-columns :subgrid
-                                        :grid-column           "1 / -1"}})
+            (dom/tr (dom/props {:style {:display               "grid"
+                                        :grid-template-columns "subgrid"
+                                        :grid-column           "1 / -1"
+                                        :height (str row-height "px")}})
               (e/cursor [Value ($ Record-fn id)]
-                (dom/td
+                (dom/td (dom/props {:style {:height (str row-height "px")}})
                   ($ Value))))))))))
 
 (e/defn Teeshirt-orders [db search offset limit]
@@ -130,10 +141,9 @@
 
       (dom/element "style" ; Requires css {box-sizing: border-box;}
         (dom/text ".header { position: fixed; z-index:1; top: 0; left: 0; right: 0; height: 100px; background-color: #abcdef; }"
-          ".footer { position: fixed; bottom: 0; left: 0; right: 0; height: 100px; background-color: #abcdef; }"
-          ".viewport { position: fixed; top: 100px; bottom: 100px; left: 0; right: 0; background-color: #F63; overflow: auto; }"))
+          ".viewport { position: fixed; top: 100px; bottom: 0px; left: 0; right: 0; background-color: #F63; overflow: auto; }"))
       (dom/div (dom/props {:class "header"})
-        (dom/p (dom/text "Try scrolling to the bottom, and resizing the window."))
+        (dom/p (dom/text "Try scrolling, and resizing the window."))
         (dom/dl
           (dom/dt (dom/text "search"))
           (dom/dd (reset! !search ($ SearchInput)))))
@@ -149,8 +159,5 @@
             (e/amb
               (e/fn [] (dom/text id))
               (e/fn [] (dom/text email))
-              (e/fn [] ($ Typeahead gender (e/fn [search] ($ Genders db search))))
-              (e/fn [] ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search)))))))))
-
-    (dom/div (dom/props {:class "footer"})
-      (dom/text "Try scrolling to the top, and resizing the window."))))
+              (e/fn [] ($ Typeahead gender (e/fn [search] ($ Genders db search))) #_(dom/text (name gender)))
+              (e/fn [] ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))) #_(dom/text (name shirt-size))))))))))
