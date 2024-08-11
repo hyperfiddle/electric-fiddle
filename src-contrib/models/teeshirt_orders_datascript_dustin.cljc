@@ -24,6 +24,19 @@
         {:db/id 10, :order/email "bob@example.com",     :order/gender :order/male,    :order/shirt-size :order/mens-large,   :order/tags  [:b]}
         {:db/id 11, :order/email "charlie@example.com", :order/gender :order/male,    :order/shirt-size :order/mens-medium}])
 
+(defn rand-str [len] (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
+
+(declare genders shirt-sizes conn)
+
+(defn more [N]
+  (let [db @conn]
+    (for [i (range N)]
+      (let [gender (rand-nth (genders db ""))]
+        {:db/id (+ 100 i)
+         :order/email (rand-str 10)
+         :order/gender gender
+         :order/shirt-size (rand-nth (shirt-sizes db gender ""))}))))
+
 (defn fixtures [db] (-> db (d/with a) :db-after (d/with b) :db-after (d/with c) :db-after))
 
 (declare conn)
@@ -33,6 +46,7 @@
   (d/transact conn a)
   (d/transact conn b)
   (d/transact conn c)
+  #_(d/transact conn (more 50))
   #_(alter-var-root #'hf/*$* (constantly (fixtures (d/db conn)))))
 
 (setup-db!)
