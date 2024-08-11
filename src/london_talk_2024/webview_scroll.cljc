@@ -100,10 +100,12 @@
             [offset padding-top padding-bottom] ($ Query-offset record-count row-height dom/node)
             [record-count xs] ($ Page-fn offset limit)]
         (reset! !record-count record-count)
-        (dom/table (dom/props {:style {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
-                                       :padding-top (str padding-top "px") ; seen elements are replaced with padding
-                                       :padding-bottom (str padding-bottom "px")
-                                       :display :grid}})
+        (dom/table (dom/props {:style (merge
+                                        {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
+                                         :display :grid}
+                                        (e/server ; align spacer latency with updated resultset
+                                          {:padding-top (str padding-top "px") ; seen elements are replaced with padding
+                                           :padding-bottom (str padding-bottom "px")}))})
           (e/cursor [id xs]
             (dom/tr (dom/props {:style {:display               :grid
                                         :grid-template-columns :subgrid
