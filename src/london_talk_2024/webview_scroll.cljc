@@ -68,39 +68,49 @@
 
 (e/defn Window [query! offset limit]
   (e/server
-    (let [[n xs] ($ e/Offload #(let [xs (query!)]
-                                 [(count xs)
-                                  (window xs offset limit)]))]
-      [n (e/diff-by identity xs)])))
+    (let [xs ($ e/Offload #(query!))] ; retain and reuse xs as offset changes
+      [(count xs) (e/diff-by identity (window xs offset limit))])))
+
+(e/defn Query-page-size [row-height padding-top node]
+  (e/client
+    (let [[clientHeight] (e/input (resize-observer node))
+          page-size (Math/floor (/ (- clientHeight padding-top) row-height))]
+      page-size)))
+
+(e/defn Query-offset [record-count row-height node]
+  (e/client
+    (let [max-height (* record-count row-height)
+          [scrollTop] (e/input (scroll-state node))
+          clamped-scroll-top (js/Math.min scrollTop max-height)
+          offset (js/Math.floor (/ clamped-scroll-top row-height)) ; quantize scroll (no fractional row visibility)
+          padding-top clamped-scroll-top
+          padding-bottom (- max-height clamped-scroll-top)]
+      [offset padding-top padding-bottom])))
 
 (e/defn TableScrollFixedCounted
   "Scrolls like google sheets. this can efficiently jump through a large indexed collection"
   [Page-fn Record-fn]
   (e/client
     (dom/div (dom/props {:class "viewport" :style {:overflowX "hidden" :overflowY "auto"}})
-      (let [!record-count (atom 25) ; initial guess
-            record-count (e/watch !record-count)
-            row-height 22 ; todo relative measurement (note: browser zoom impacts px height)
-            [scrollTop] (e/input (scroll-state dom/node))
-            [clientHeight] (e/input (resize-observer dom/node))
-            max-height (* record-count row-height)
-            clamped-scroll-top (js/Math.min scrollTop max-height)
-            offset (js/Math.floor (/ clamped-scroll-top row-height)) ; quantize scroll (no fractional row visibility)
+      (let [row-height 22 ; todo relative measurement (note: browser zoom impacts px height)
             padding-top 0 ; e.g. sticky header row
-            page-size (Math/floor (/ (- clientHeight padding-top) row-height))]
+            !record-count (atom 25) ; initial guess
+            record-count (e/watch !record-count)
+            limit ($ Query-page-size row-height padding-top dom/node)
+            [offset padding-top padding-bottom] ($ Query-offset record-count row-height dom/node)
+            [record-count xs] ($ Page-fn offset limit)]
+        (reset! !record-count record-count)
         (dom/table (dom/props {:style {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
-                                       :padding-top (str clamped-scroll-top "px") ; seen elements are replaced with padding
-                                       :padding-bottom (str (- max-height clamped-scroll-top) "px")
+                                       :padding-top (str padding-top "px") ; seen elements are replaced with padding
+                                       :padding-bottom (str padding-bottom "px")
                                        :display :grid}})
-          (let [[record-count xs] ($ Page-fn offset page-size)]
-            (reset! !record-count record-count)
-            (e/cursor [id xs]
-              (dom/tr (dom/props {:style {:display               :grid
-                                          :grid-template-columns :subgrid
-                                          :grid-column           "1 / -1"}})
-                (e/cursor [Value ($ Record-fn id)]
-                  (dom/td
-                    ($ Value)))))))))))
+          (e/cursor [id xs]
+            (dom/tr (dom/props {:style {:display               :grid
+                                        :grid-template-columns :subgrid
+                                        :grid-column           "1 / -1"}})
+              (e/cursor [Value ($ Record-fn id)]
+                (dom/td
+                  ($ Value))))))))))
 
 (e/defn Teeshirt-orders [db search offset limit]
   (e/server ($ Window (partial teeshirt-orders db search) offset limit)))
