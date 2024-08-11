@@ -105,16 +105,19 @@
             offset (js/Math.floor (/ clamped-scroll-top row-height)) ; quantize scroll (no fractional row visibility)
             padding-top 0 ; e.g. sticky header row
             page-size (Math/floor (/ (- clientHeight padding-top) row-height))]
-        (dom/div (dom/props {:style {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
+        (dom/table (dom/props {:style {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
                                      :padding-top (str clamped-scroll-top "px") ; seen elements are replaced with padding
-                                     :padding-bottom (str (- max-height clamped-scroll-top) "px")}})
+                                     :padding-bottom (str (- max-height clamped-scroll-top) "px")
+                                     :display :grid}})
 
           (let [[record-count xs] ($ Page-fn offset page-size)]
             (reset! !record-count record-count)
             (e/cursor [id xs]
-              (dom/div
+              (dom/tr (dom/props {:style {:display               :grid
+                                          :grid-template-columns :subgrid
+                                          :grid-column           "1 / -1"}})
                 (e/cursor [Value ($ Record-fn id)]
-                  (dom/div (dom/props {:style {:display "inline-block"}})
+                  (dom/td
                     ($ Value)))))))))))
 
 (e/defn Teeshirt-orders [db search offset limit]
