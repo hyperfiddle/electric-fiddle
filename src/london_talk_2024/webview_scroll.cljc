@@ -80,18 +80,18 @@
 (e/defn Query-offset [record-count row-height page-size overquery-factor node]
   (e/client
     (let [max-height (* record-count row-height)
-          [scrollTop] (e/input (scroll-state node))
-          clamped-scroll-top (js/Math.min scrollTop max-height)
-          offset (js/Math.floor (/ clamped-scroll-top row-height))
+          [scrollTop] (e/input (scroll-state node)) ; smooth scroll has already happened, cannot quantize the scroll
+          clamped-scroll-top (js/Math.min scrollTop max-height) ; dangerous, not quantized to record boundary
+          offset (js/Math.floor (/ clamped-scroll-top row-height)) ; quantized
 
           ; overquery strategy - load more below only for simpler math at boundaries
           q-limit (* page-size overquery-factor)
           occluded (- q-limit page-size)
           q-offset offset #_(- offset (js/Math.floor (/ occluded 2))) ; todo truncate at boundaries
 
-          padding-top clamped-scroll-top ; possible to quantize w/o fixing the divs?
+          padding-top (* offset row-height) ; reconstruct padding from quantized offset
           occluded-height (* occluded row-height) ; todo truncate at boundary
-          padding-bottom (- max-height clamped-scroll-top occluded-height)]
+          padding-bottom (- max-height padding-top occluded-height)]
       [q-offset q-limit padding-top padding-bottom])))
 
 (e/defn TableScrollFixedCounted
