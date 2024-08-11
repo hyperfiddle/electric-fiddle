@@ -39,6 +39,21 @@
                                                     ::clientHeight clientHeight})
                          s)))))
 
+#?(:cljs (defn resize-observer [node]
+           (->> (m/observe (fn [!]
+                             (! [(.-clientWidth node) (.-clientHeight node)])
+                             (let [obs (new js/ResizeObserver (fn [entries]
+                                                                (let [content-box-size (-> entries (aget 0) .-contentBoxSize (aget 0))]
+                                                                  (! [(.-inlineSize content-box-size) (.-blockSize content-box-size)]))))]
+                               (.observe obs node)
+                               #(.unobserve obs))))
+             (m/relieve {}))))
+
+(e/defn ResizeObserver
+  "Subscribe to [inlineSize blockSize] for the given `dom-node`."
+  [dom-node]
+  (e/client (e/input (resize-observer dom-node))))
+
 (e/defn SearchInput []
   (dom/input (dom/props {:placeholder "Filter..."})
     ($ dom/On "input" #(-> % .-target .-value))))
@@ -75,31 +90,32 @@
                                   (window xs offset limit)]))]
       [n (e/diff-by identity xs)])))
 
-(def record-count 500)
-(def page-size 100)
-
 (e/defn TableScrollFixedCounted
   "Scrolls like google sheets. this can efficiently jump through a large indexed collection"
-  [record-count-guess page-size Page-fn Record-fn]
+  [Page-fn Record-fn]
   (e/client
-    (let [!record-count (atom record-count-guess) record-count (e/watch !record-count)
-          row-height 22] ; todo use relative measurement (browser zoom impacts px height)
-      (dom/div (dom/props {:class "viewport" :style {:overflowX "hidden" :overflowY "auto"}})
-        (let [[scrollTop] (e/input (scroll-state< dom/node))
-              max-height (* record-count row-height)
-              clamped-scroll-top (js/Math.min scrollTop max-height)
-              offset (js/Math.floor (/ clamped-scroll-top row-height))]
-          (dom/div (dom/props {:style {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
-                                       :padding-top (str clamped-scroll-top "px") ; seen elements are replaced with padding
-                                       :padding-bottom (str (- max-height clamped-scroll-top) "px")}})
+    (dom/div (dom/props {:class "viewport" :style {:overflowX "hidden" :overflowY "auto"}})
+      (let [!record-count (atom 20) ; initial guess
+            record-count (e/watch !record-count)
+            row-height 22 ; todo relative measurement (note: browser zoom impacts px height)
+            [scrollTop] (e/input (scroll-state< dom/node))
+            [_ clientHeight] ($ ResizeObserver dom/node)
+            max-height (* record-count row-height)
+            clamped-scroll-top (js/Math.min scrollTop max-height)
+            offset (js/Math.floor (/ clamped-scroll-top row-height)) ; quantize scroll (no fractional row visibility)
+            padding-top 0 ; e.g. sticky header row
+            page-size (Math/floor (/ (- clientHeight padding-top) row-height))]
+        (dom/div (dom/props {:style {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
+                                     :padding-top (str clamped-scroll-top "px") ; seen elements are replaced with padding
+                                     :padding-bottom (str (- max-height clamped-scroll-top) "px")}})
 
-            (let [[record-count xs] ($ Page-fn offset page-size)]
-              (reset! !record-count record-count)
-              (e/cursor [id xs]
-                (dom/div
-                  (e/cursor [Value ($ Record-fn id)]
-                    (dom/div (dom/props {:style {:display "inline-block"}})
-                      ($ Value))))))))))))
+          (let [[record-count xs] ($ Page-fn offset page-size)]
+            (reset! !record-count record-count)
+            (e/cursor [id xs]
+              (dom/div
+                (e/cursor [Value ($ Record-fn id)]
+                  (dom/div (dom/props {:style {:display "inline-block"}})
+                    ($ Value)))))))))))
 
 (e/defn Teeshirt-orders [db search offset limit]
   (e/server ($ Window (partial teeshirt-orders db search) offset limit)))
@@ -127,8 +143,6 @@
           (dom/dd (reset! !search ($ SearchInput)))))
 
       ($ TableScrollFixedCounted
-        record-count page-size
-
         ($ e/Partial Teeshirt-orders db search)
 
         (e/fn Record [id]
