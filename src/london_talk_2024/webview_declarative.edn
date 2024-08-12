@@ -3,10 +3,10 @@
 (e/defn TeeshirtOrdersDeclarative [db]
   (hfql
     {($ Teeshirt-orders db .)
-     [:db/id
-      :order/email
-      ^{:hf/options ($ Genders db .)}
-      {:order/gender [:db/ident]}
-      ^{:hf/options ($ Shirt-sizes db gender .)}
-      {:order/shirt-size [:db/ident]}]}))
+     ['db/id
+      'order/email
+      {^{:hf/options ($ Genders db .)}
+       'order/gender ['db/ident]}
+      {^{:hf/options ($ Shirt-sizes db gender .)}
+       'order/shirt-size ['db/ident]}]}))
 

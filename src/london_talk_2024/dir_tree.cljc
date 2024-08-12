@@ -21,7 +21,7 @@
         (dom/li (dom/text name_)
           (dom/ul
             (e/server
-              (e/for-by identity [x (file-list-files h)] ; here
+              (e/for-by identity [x (file-list-files h)]
                 ($ Dir-tree x s)))))
 
         (e/server (and (file-is-file h) (includes-str? name_ s)))
