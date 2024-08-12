@@ -6,16 +6,16 @@
             [hyperfiddle.electric-dom3 :as dom]
             [missionary.core :as m]))
 
-(e/defn On-latest [event-type f opts init-v] ($ dom/On event-type f opts init-v))
+(e/defn On-latest [event-type f init-v] ($ dom/On event-type f init-v))
 
 (e/defn On-each [event-type f opts concurrency-factor] ($ dom/OnAll event-type f opts concurrency-factor))
 
-(e/defn On-one [event-type f opts]
-  (let [?e ($ dom/On event-type f opts nil)]
+(e/defn On-one [event-type f]
+  (let [?e ($ dom/On event-type f)]
     (when-let [e! ($ e/Token ?e)] ; clear on spend
       [?e e!])))
 
-(e/defn On-impulse [event-type f opts] ($ dom/On event-type f opts)) ; no token
+(e/defn On-impulse [event-type f] ($ dom/On event-type f)) ; no token
 ; not useful - because there's almost always latency on event callbacks, right?
 ; if in TodoMVC all events are handled at the root, then none of these are needed?
 
@@ -26,14 +26,14 @@
             !v-id (atom v-id) v-id (e/watch !v-id)]
         (dom/input
           (dom/props {:placeholder "Filter..."})
-          (if-some [[e e!] ($ On-one "focus" #() {})]
-            (let [search ($ On-latest "input" #(-> % .-target .-value) {} "")]
+          (if-some [[e e!] ($ On-one "focus" #())]
+            (let [search ($ On-latest "input" #(-> % .-target .-value) "")]
               (binding [dom/node container] ; portal
                 (dom/ul
                   (e/cursor [id ($ Options search)]
                     (dom/li (dom/text ($ OptionLabel id))
                       #_($ dom/On "click" (fn [e] (doto e (.stopPropagation) (.preventDefault)) (reset! !v-id id) (close!)))
-                      (when-some [[e2 e2!] ($ On-one "click" #(doto % (.stopPropagation) (.preventDefault)) {})]
+                      (when-some [[e2 e2!] ($ On-one "click" #(doto % (.stopPropagation) (.preventDefault)))]
                         (e! (e2! (reset! !v-id id)))))))))
             (dom/props {:value ($ OptionLabel v-id)}))) ; controlled only when not focused
         v-id))))
@@ -51,7 +51,7 @@
   (dom/div
     (let [search (dom/input
                    (dom/props {:placeholder "Filter..."})
-                   ($ On-latest "input" #(-> % .-target .-value) {} ""))]
+                   ($ On-latest "input" #(-> % .-target .-value) ""))]
       (dom/table
         (dom/props {:class "hyperfiddle"})
         (e/cursor [id ($ Teeshirt-orders db search)]

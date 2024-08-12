@@ -29,7 +29,7 @@
 
 (e/defn DirTreeDemo []
   (e/client
-    (let [s (dom/input ($ dom/On "input" #(-> % .-target .-value) {} ""))
+    (let [s (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))
           h (e/server (clojure.java.io/file (file-absolute-path "./src/london_talk_2024")))]
       (dom/ul
         ($ Dir-tree h s)))))

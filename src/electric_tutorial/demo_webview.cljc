@@ -24,7 +24,7 @@
   (dom/div
     (let [search (dom/input
                    (dom/props {:placeholder "Filter..."})
-                   ($ dom/On "input" #(-> % .-target .-value)))]
+                   ($ dom/On "input" #(-> % .-target .-value) ""))]
       (dom/table
         (dom/props {:class "hyperfiddle"})
         (e/cursor [id (e/server (e/diff-by identity ($ e/Offload #(teeshirt-orders db search))))]

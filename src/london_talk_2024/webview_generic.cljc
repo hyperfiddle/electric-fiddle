@@ -13,7 +13,7 @@
         (dom/input
           (dom/props {:placeholder "Filter..."})
           (if-some [close! ($ e/Token ($ dom/On "focus"))]
-            (let [search ($ dom/On "input" #(-> % .-target .-value))]
+            (let [search ($ dom/On "input" #(-> % .-target .-value) "")]
               (binding [dom/node container] ; portal
                 (dom/ul
                   (e/for [id ($ Options search)]
@@ -35,7 +35,7 @@
 
 (e/defn SearchInput []
   (dom/input (dom/props {:placeholder "Filter..."})
-    ($ dom/On "input" #(-> % .-target .-value))))
+    ($ dom/On "input" #(-> % .-target .-value) "")))
 
 (e/defn GenericTable [Query Record]
   (e/client

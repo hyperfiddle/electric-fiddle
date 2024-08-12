@@ -14,7 +14,7 @@
         (dom/input
           (dom/props {:placeholder "Filter..."})
           (if-some [close! ($ e/Token ($ dom/On "focus"))]
-            (let [search ($ dom/On "input" #(-> % .-target .-value))]
+            (let [search ($ dom/On "input" #(-> % .-target .-value) "")]
               (binding [dom/node container] ; portal
                 (dom/ul
                   (e/for [id ($ Options search)]
@@ -38,7 +38,7 @@
   (e/client
     (dom/div
       (let [search (dom/input (dom/props {:placeholder "Filter..."})
-                     ($ dom/On "input" #(-> % .-target .-value)))
+                     ($ dom/On "input" #(-> % .-target .-value) ""))
             ids ($ Teeshirt-orders db search)] ; e.g. [9 10 11]
         (dom/table
           (e/for [id ids]

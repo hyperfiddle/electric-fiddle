@@ -20,7 +20,7 @@
     (dom/div (dom/text matched-count " matches"))
     (dom/input
       (dom/props {:type "search", :placeholder "🔎  java.class.path"})
-      ($ dom/On "input" #(reset! !search (-> % .-target .-value))))
+      (reset! !search ($ dom/On "input" #(-> % .-target .-value) "")))
     (dom/table
       (dom/tbody
         ;; Collection diffed on server, stabilized with "react key"
