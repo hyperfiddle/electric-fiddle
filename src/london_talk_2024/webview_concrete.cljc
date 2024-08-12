@@ -17,7 +17,7 @@
             (let [search ($ dom/On "input" #(-> % .-target .-value))]
               (binding [dom/node container] ; portal
                 (dom/ul
-                  (e/cursor [id ($ Options search)]
+                  (e/for [id ($ Options search)]
                     (dom/li (dom/text ($ OptionLabel id))
                       ($ dom/On "click" (fn [e]
                                           (doto e (.stopPropagation) (.preventDefault))
@@ -41,7 +41,7 @@
                      ($ dom/On "input" #(-> % .-target .-value)))
             ids ($ Teeshirt-orders db search)] ; e.g. [9 10 11]
         (dom/table
-          (e/cursor [id ids]
+          (e/for [id ids]
             (dom/tr
               (let [!e (e/server (d/entity db id))
                     email (e/server (-> !e :order/email))

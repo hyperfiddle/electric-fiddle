@@ -53,7 +53,7 @@
             (let [search ($ dom/On "input" #(-> % .-target .-value))]
               (binding [dom/node container] ; portal
                 (dom/ul
-                  (e/cursor [id ($ Options search)]
+                  (e/for [id ($ Options search)]
                     (dom/li (dom/text ($ OptionLabel id))
                       ($ dom/On "click" (fn [e]
                                           (doto e (.stopPropagation) (.preventDefault))
@@ -116,12 +116,12 @@
                                  (e/server ; align spacer latency with updated resultset
                                    {:padding-top (str padding-top "px") ; seen elements are replaced with padding
                                     :padding-bottom (str padding-bottom "px")}))})
-          (e/cursor [id xs]
+          (e/for [id xs]
             (dom/tr (dom/props {:style {:display               "grid"
                                         :grid-template-columns "subgrid"
-                                        :grid-column           "1 / -1"
+                                        :grid-column           "1 / f-1"
                                         :height (str row-height "px")}})
-              (e/cursor [Value ($ Record-fn id)]
+              (e/for [Value ($ Record-fn id)]
                 (dom/td (dom/props {:style {:height (str row-height "px")}})
                   ($ Value))))))))))
 

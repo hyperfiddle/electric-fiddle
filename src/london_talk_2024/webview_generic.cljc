@@ -16,7 +16,7 @@
             (let [search ($ dom/On "input" #(-> % .-target .-value))]
               (binding [dom/node container] ; portal
                 (dom/ul
-                  (e/cursor [id ($ Options search)]
+                  (e/for [id ($ Options search)]
                     (dom/li (dom/text ($ OptionLabel id))
                       ($ dom/On "click" (fn [e]
                                           (doto e (.stopPropagation) (.preventDefault))
@@ -40,9 +40,9 @@
 (e/defn GenericTable [Query Record]
   (e/client
     (dom/table
-      (e/cursor [id ($ Query)]
+      (e/for [id ($ Query)]
         (dom/tr
-          (e/cursor [Value ($ Record id)]
+          (e/for [Value ($ Record id)]
             (dom/td
               ($ Value))))))))
 

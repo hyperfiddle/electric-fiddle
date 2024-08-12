@@ -23,7 +23,7 @@
     (println xs)
     (println ys)
 
-    #_(e/cursor [x xs]
+    #_(e/for [x xs]
         (println x)))
 
   )

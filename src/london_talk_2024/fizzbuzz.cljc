@@ -13,7 +13,7 @@
   (e/diff-by identity (range 1 (inc n))))
 
 (e/defn FizzBuzz [fizz buzz ns]
-  (e/cursor [n ns] ; materialize individual elements from collection diffs
+  (e/for [n ns] ; materialize individual elements from collection diffs
     (cond
       (zero? (mod n (* 3 5))) (str fizz buzz)
       (zero? (mod n 3)) fizz
@@ -32,7 +32,7 @@
         n (e/watch !n)
         ns ($ RangeN n)
         xs ($ FizzBuzz fizz buzz ns)]
-    (e/cursor [x xs]
+    (e/for [x xs]
       (dom/div (dom/text x)))))
 
 (comment

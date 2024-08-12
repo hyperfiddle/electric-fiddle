@@ -27,7 +27,7 @@
 
 (e/defn FizzBuzzDemo []
   (let [ns ($ RangeN (e/watch !n))]
-    (e/cursor [n ns]
+    (e/for [n ns]
       (let [x ($ FizzBuzz (e/watch !fizz) (e/watch !buzz) n)]
         (dom/div (dom/text x))))))
 
