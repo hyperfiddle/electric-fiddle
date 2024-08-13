@@ -20,10 +20,12 @@
         (file-is-dir h)
         (dom/li (dom/text name_)
           (dom/ul
-            (e/for-by identity [x (file-list-files h)]
-              ($ Dir-tree x s))))
+            (e/server ; suppress wrong warning
+              (e/for-by identity [x (file-list-files h)]
+                ($ Dir-tree x s)))))
 
-        (and (file-is-file h) (includes-str? name_ s))
+        (e/server ; suppress wrong warning
+          (and (file-is-file h) (includes-str? name_ s)))
         (dom/li (dom/text name_))))))
 
 (e/defn DirTreeDemo []
