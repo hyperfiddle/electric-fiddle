@@ -24,6 +24,12 @@
    :jvm-opts      ["-XX:-OmitStackTraceInFastThrow" ; For RCF
                    ]}
 
+  :profile {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
+                         com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.2.2"}}
+            :jvm-opts ["-Djdk.attach.allowAttachSelf"
+                       "-XX:+UnlockDiagnosticVMOptions"
+                       "-XX:+DebugNonSafepoints"]}
+
   :build
   ;; use `clj -X:build build-client`, NOT -T! build/app classpath contamination cannot be prevented
   {:extra-paths ["src-build"]
