@@ -14,22 +14,21 @@
             .toAbsolutePath str)))
 
 (e/defn Dir-tree [h s]
-  (e/client
-    (let [name_ (e/server (file-get-name h))]
+  (e/server
+    (let [name_ (file-get-name h)]
       (cond
-        (e/server (file-is-dir h))
+        (file-is-dir h)
         (dom/li (dom/text name_)
           (dom/ul
-            (e/server
-              (e/for-by identity [x (file-list-files h)]
-                ($ Dir-tree x s)))))
+            (e/for-by identity [x (file-list-files h)]
+              ($ Dir-tree x s))))
 
-        (e/server (and (file-is-file h) (includes-str? name_ s)))
+        (and (file-is-file h) (includes-str? name_ s))
         (dom/li (dom/text name_))))))
 
 (e/defn DirTreeDemo []
   (e/client
     (let [s (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))
-          h (e/server (clojure.java.io/file (file-absolute-path "./src/london_talk_2024")))]
+          h (e/server (clojure.java.io/file (file-absolute-path "./vendor/electric/src/hyperfiddle")))]
       (dom/ul
         ($ Dir-tree h s)))))
