@@ -32,24 +32,22 @@
   (let [db @conn]
     (for [i (range N)]
       (let [gender (rand-nth (genders db ""))]
-        {:db/id (+ 100 i)
+        {:db/id (+ 1000 i)
          :order/email (rand-str 10)
          :order/gender gender
          :order/shirt-size (rand-nth (shirt-sizes db gender ""))}))))
 
 (defn fixtures [db] (-> db (d/with a) :db-after (d/with b) :db-after (d/with c) :db-after))
 
-(declare conn)
-
 (defn setup-db! []
   (def conn (d/create-conn schema))
   (d/transact conn a)
   (d/transact conn b)
   (d/transact conn c)
-  #_(d/transact conn (more 50))
+  #_(d/transact conn (more 1000)) ; careful, cyclic dependency, install with repl
   #_(alter-var-root #'hf/*$* (constantly (fixtures (d/db conn)))))
 
-(setup-db!)
+(setup-db!) ; test db - intended to have simple fixtures only, and not transacted. fixme
 
 #_(def db hf/*$*) ; for @(requiring-resolve 'user.example-datascript-db/db)
 
