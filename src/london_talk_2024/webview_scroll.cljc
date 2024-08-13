@@ -96,7 +96,7 @@
 
 (e/defn TableScrollFixedCounted
   "Scrolls like google sheets. this can efficiently jump through a large indexed collection"
-  [Page-fn Record-fn]
+  [Query Record]
   (e/client
     (dom/div (dom/props {:class "viewport" :style {:overflowX "hidden" :overflowY "auto"}})
       (let [row-height 25 ; todo relative measurement (note: browser zoom impacts px height)
@@ -106,7 +106,7 @@
             page-size ($ Query-page-size row-height padding-top dom/node)
             overquery-factor 1
             [q-offset q-limit padding-top padding-bottom] ($ Query-offset record-count row-height page-size overquery-factor dom/node)
-            [record-count xs] ($ Page-fn q-offset q-limit)]
+            [record-count xs] ($ Query q-offset q-limit)]
         (reset! !record-count record-count)
         (dom/table (dom/props {:style
                                (merge
@@ -121,7 +121,7 @@
                                         :grid-template-columns "subgrid"
                                         :grid-column           "1 / f-1"
                                         :height (str row-height "px")}})
-              (e/for [Value ($ Record-fn id)]
+              (e/for [Value ($ Record id)]
                 (dom/td (dom/props {:style {:height (str row-height "px")}})
                   ($ Value))))))))))
 
