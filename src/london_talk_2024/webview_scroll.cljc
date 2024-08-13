@@ -45,14 +45,12 @@
             padding-bottom (- max-height padding-top occluded-height)
             [record-count xs] ($ Query q-offset q-limit)]
         (reset! !record-count record-count)
-        (dom/table (dom/props {:style
-                               (merge
-                                 {:height (str (* row-height record-count) "px") ; optional absolute scrollbar
-                                  :display "grid"
-                                  :grid-template-columns "4em 15em min-content min-content"}
-                                 (e/server ; align spacer latency with updated resultset
-                                   {:padding-top (str padding-top "px") ; seen elements are replaced with padding
-                                    :padding-bottom (str padding-bottom "px")}))})
+        (dom/table
+          (dom/props {:style {:display "grid" :grid-template-columns "4em 15em min-content min-content"}})
+          (dom/props {:style {:height (str (* row-height record-count) "px")}}) ; record-count blinks on scroll, isolate
+          (dom/props {:style (e/server ; align spacer latency with updated resultset
+                               {:padding-top (str padding-top "px") ; seen elements are replaced with padding
+                                :padding-bottom (str padding-bottom "px")})})
           (e/for [id xs]
             (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1"
                                         :height (str row-height "px")}})
