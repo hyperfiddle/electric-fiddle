@@ -10,9 +10,12 @@
       (dom/text label ": " n " ")
       (dom/button (dom/text "inc")
         (let [e ($ dom/On "click")]
-          (when-let [release! ($ e/Token e)]
+          (when-let [t ($ e/Token e)]
             (dom/props {:disabled true, :aria-busy true})
-            (dom/text " " ($ F! release!))))))))
+            (dom/text " " ($ F! t))))
+
+        #_(e/for [[e t] ($ dom/OnAll "click")]
+            (dom/text " " ($ F! t)))))))
 
 (e/defn CounterMain []
   (let [!c (e/client (atom 0)), c (e/client (e/watch !c))
@@ -20,7 +23,8 @@
 
     ($ Counter "client" c (e/fn [!] (! (e/client (swap! !c inc)))))
     ($ Counter "server" s (e/fn [!]
-                            (! (e/server (Thread/sleep 300) (swap! !s inc))) ; illegal block
+                            (! (e/server ($ e/Task (m/via m/blk (Thread/sleep 500) (swap! !s inc)))))
+                            #_(! (e/server (Thread/sleep 500) (swap! !s inc))) ; illegal block
                             ($ e/SystemTimeMs)))))
 
 
