@@ -18,8 +18,7 @@
 (e/defn TeeshirtOrders [db]
   (e/client
     (dom/div
-      (let [search (dom/input (dom/props {:placeholder "Filter..."})
-                     ($ dom/On "input" #(-> % .-target .-value) ""))
+      (let [search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))
             ids ($ Teeshirt-orders db search)] ; e.g. [9 10 11]
         (dom/table
           (e/for [id ids]
