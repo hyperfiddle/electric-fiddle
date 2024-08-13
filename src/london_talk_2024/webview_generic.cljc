@@ -2,7 +2,8 @@
   (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders genders shirt-sizes]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric-de :as e :refer [$]]
-            [hyperfiddle.electric-dom3 :as dom]))
+            [hyperfiddle.electric-dom3 :as dom]
+            [missionary.core :as m]))
 
 (e/defn Typeahead [v-id Options & [OptionLabel]]
   (e/client
@@ -37,27 +38,37 @@
   (dom/input (dom/props {:placeholder "Filter..."})
     ($ dom/On "input" #(-> % .-target .-value) "")))
 
-(e/defn GenericTable [Query Record]
+(e/defn GenericTable [colspec Query Record]
   (e/client
     (dom/table
       (e/for [id ($ Query)]
         (dom/tr
-          (e/for [Value ($ Record id)]
-            (dom/td
-              ($ Value))))))))
+          (let [m ($ Record id)]
+            (e/for [col colspec]
+              (dom/td
+                ($ (get m col))))))))))
+
+(e/defn Record [db id]
+  (let [!e (e/server (d/entity db id))
+        email (e/server (-> !e :order/email))
+        gender (e/server (-> !e :order/gender :db/ident))
+        shirt-size (e/server (-> !e :order/shirt-size :db/ident))]
+    {:db/id (e/fn [] (dom/text id))
+     :order/email (e/fn [] (dom/text email))
+     :order/gender (e/fn [] ($ Typeahead gender (e/fn [search] ($ Genders db search))))
+     :order/shirt-size (e/fn [] ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))}))
+
+#?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
+(comment
+  (reset! !colspec [:db/id :order/email])
+  (reset! !colspec [:db/id :order/email :order/gender :order/shirt-size]))
 
 (e/defn WebviewGeneric []
-  (let [db (e/server (e/watch conn))
-        search ($ SearchInput)]
-    ($ GenericTable
-      (e/fn Query [] ($ Teeshirt-orders db search))
-      (e/fn Record [id]
-        (let [!e (e/server (d/entity db id))
-              email (e/server (-> !e :order/email))
-              gender (e/server (-> !e :order/gender :db/ident))
-              shirt-size (e/server (-> !e :order/shirt-size :db/ident))]
-          (e/amb
-            (e/fn [] (dom/text id))
-            (e/fn [] (dom/text email))
-            (e/fn [] ($ Typeahead gender (e/fn [search] ($ Genders db search))))
-            (e/fn [] ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))))))))
+  (e/client
+    (let [db (e/server (e/watch conn))
+          search ($ SearchInput)
+          colspec (e/diff-by identity (e/watch !colspec))]
+      ($ GenericTable
+        colspec
+        ($ e/Partial Teeshirt-orders db search)
+        ($ e/Partial Record db)))))
