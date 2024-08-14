@@ -19,7 +19,7 @@
 (e/defn Teeshirt-orders [db search offset limit]
   (e/server ($ Window (partial teeshirt-orders db search) offset limit)))
 
-(e/defn TableScrollFixedCounted [colspec Query Record]
+(e/defn TableScrollFixedCounted [colspec Query Row]
   (e/client
     (dom/div (dom/props {:style {:overflowX "hidden" :overflowY "auto" ; Requires css {box-sizing: border-box;}
                                  :position "fixed" :top "0" :bottom "0" :left "0" :right "0"}})
@@ -45,6 +45,7 @@
             padding-bottom (- max-height padding-top occluded-height)
             [record-count xs] ($ Query q-offset q-limit)]
         (reset! !record-count record-count)
+
         (dom/table
           (dom/props {:style {:display "grid" :grid-template-columns "4em 15em min-content min-content"}})
           (dom/props {:style {:height (str (* row-height record-count) "px")}}) ; record-count blinks on scroll, isolate
@@ -54,7 +55,7 @@
           (e/for [id xs]
             (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1"
                                         :height (str row-height "px")}})
-              (let [m ($ Record id)]
+              (let [m ($ Row id)]
                 (e/for [k colspec]
                   (dom/td (dom/props {:style {:height (str row-height "px")}})
                     ($ (get m k))))))))))))

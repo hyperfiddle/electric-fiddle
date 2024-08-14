@@ -3,8 +3,9 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
-            [london-talk-2024.typeahead :refer [Typeahead]]
-            [missionary.core :as m]))
+            [london-talk-2024.typeahead :refer [Typeahead]]))
+
+(e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
 
 (e/defn Genders [db search]
   (e/server (e/diff-by identity ($ e/Offload #(genders db search)))))
@@ -13,13 +14,13 @@
   (e/server (e/diff-by identity ($ e/Offload #(shirt-sizes db gender search)))))
 
 (e/defn Teeshirt-orders [db search]
-  (e/server (e/diff-by identity ($ e/Offload #(teeshirt-orders db search)))))
+  (e/server (e/diff-by identity ($ e/Offload #(teeshirt-orders db search))))) ; e.g. [9 10 11]
 
 (e/defn TeeshirtOrders [db]
   (e/client
     (dom/div
       (let [search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))
-            ids ($ Teeshirt-orders db search)] ; e.g. [9 10 11]
+            ids ($ Teeshirt-orders db search)]
         (dom/table
           (e/for [id ids]
             (dom/tr

@@ -4,8 +4,7 @@
             [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             [london-talk-2024.typeahead :refer [Typeahead]]
-            [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes]]
-            [missionary.core :as m]))
+            [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes]]))
 
 (e/defn GenericTable [colspec Query Row]
   (e/client
@@ -13,9 +12,9 @@
       (e/for [id ($ Query)]
         (dom/tr
           (let [m ($ Row id)]
-            (e/for [col colspec]
+            (e/for [k colspec]
               (dom/td
-                ($ (get m col))))))))))
+                ($ (get m k))))))))))
 
 (e/defn Row [db id]
   (let [!e         (e/server (d/entity db id))
