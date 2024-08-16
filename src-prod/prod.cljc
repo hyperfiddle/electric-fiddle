@@ -6,7 +6,8 @@
             electric-fiddle.main
             #?(:clj [electric-fiddle.server-jetty :refer [start-server!]])
             [hyperfiddle :as hf]
-            [hyperfiddle.electric :as e]
+            [hyperfiddle.electric-de :as e :refer [$]]
+            #?(:cljs hyperfiddle.electric-client-de)
             #?(:cljs #=(clojure.core/identity hyperfiddle/*hyperfiddle-user-ns*)))) ; domain DI here
 
 (def config
@@ -20,29 +21,23 @@
    (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
-     (check string? (::e/user-version config))
+     (check string? (:hyperfiddle.electric/user-version config))
      (check string? (::hf/domain config))
      (let [entrypoint (symbol (str (::hf/domain config) ".fiddles") "FiddleMain")]
        (requiring-resolve entrypoint) ; load userland server
-       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint ring-req#)))
+       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#))))
          config))))
 
 (defmacro install-user-inject [] (symbol (name hf/*hyperfiddle-user-ns*) "FiddleMain"))
 
 #?(:cljs
    (do
-     (def electric-entrypoint
-       (e/boot-client {}
-         ; in prod, fiddle owns the app and there's only one of them
-         (let [FiddleMain (install-user-inject)]
-           (FiddleMain.))))
-
      (defonce reactor nil)
 
      (defn ^:dev/after-load ^:export start! []
-       (set! reactor (electric-entrypoint
-                       #(js/console.log "Reactor success:" %)
-                       #(js/console.error "Reactor failure:" %))))
+       (set! reactor ((e/boot-client {} (install-user-inject) (e/server nil))
+                      #(js/console.log "Reactor success:" %)
+                      #(js/console.error "Reactor failure:" %))))
 
      (defn ^:dev/before-load stop! []
        (when reactor (reactor)) ; teardown
