@@ -25,7 +25,7 @@
                 (e/for-by identity [x (file-list-files h)]
                   ($ Dir-tree x s))))))
 
-        (and (file-is-file h) (includes-str? name_ s))
+        (e/server (and (file-is-file h) (includes-str? name_ s)))
         (e/client (dom/li (dom/text name_)))))))
 
 (e/defn DirTreeDemo []
