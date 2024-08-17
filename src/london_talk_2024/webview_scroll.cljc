@@ -6,6 +6,8 @@
             [london-talk-2024.webview-generic :refer [Row]]
             #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])))
 
+(e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
+
 (defn window [xs offset limit]
   (subvec (vec xs) ; fast cast
     (Math/max offset 0)
@@ -16,8 +18,8 @@
     (let [xs ($ e/Offload #(query!))] ; retain and reuse xs as offset changes
       [(count xs) (e/diff-by identity (window xs offset limit))])))
 
-(e/defn Teeshirt-orders [db search offset limit]
-  (e/server ($ Window (partial teeshirt-orders db search) offset limit)))
+(e/defn Teeshirt-orders [db search sort-key offset limit]
+  (e/server ($ Window (partial teeshirt-orders db search sort-key) offset limit)))
 
 (e/defn TableScrollFixedCounted [colspec Query Row]
   (e/client
@@ -43,7 +45,7 @@
             padding-top (* offset row-height) ; reconstruct padding from quantized offset
             occluded-height (* occluded row-height) ; todo truncate at boundary
             padding-bottom (- max-height padding-top occluded-height)
-            [record-count xs] ($ Query q-offset q-limit)]
+            [record-count ids] ($ Query q-offset q-limit)]
         (reset! !record-count record-count)
 
         (dom/table
@@ -52,7 +54,7 @@
           (dom/props {:style (e/server ; align spacer latency with updated resultset
                                {:padding-top (str padding-top "px") ; seen elements are replaced with padding
                                 :padding-bottom (str padding-bottom "px")})})
-          (e/for [id xs]
+          (e/for [id ids]
             (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1"
                                         :height (str row-height "px")}})
               (let [m ($ Row id)]
@@ -61,6 +63,7 @@
                     ($ (get m k))))))))))))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
+#?(:cljs (def !sort-key (atom [:order/email]))) ; serializable
 
 (e/defn WebviewScroll []
   (e/client
@@ -68,11 +71,15 @@
           colspec (e/diff-by identity (e/watch !colspec))]
       ($ TableScrollFixedCounted
         colspec
-        ($ e/Partial Teeshirt-orders db "")
+        ($ e/Partial Teeshirt-orders db "" (e/watch !sort-key))
         ($ e/Partial Row db)))))
 
 (comment
   (reset! !colspec [:db/id])
   (swap! !colspec conj :order/email)
   (swap! !colspec conj :order/gender)
-  (swap! !colspec conj :order/shirt-size))
+  (swap! !colspec conj :order/shirt-size)
+
+  (reset! !sort-key [:db/id])
+  (reset! !sort-key [:order/shirt-size :db/ident])
+  )

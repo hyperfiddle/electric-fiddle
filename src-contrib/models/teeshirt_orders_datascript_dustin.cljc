@@ -73,11 +73,16 @@
 (def bob     10 #_nil)
 (def charlie 11 #_nil)
 
-(defn teeshirt-orders [db ?email-search]
-  (sort (d/q '[:find [?e ...] :in $ ?email-search :where
-               [?e :order/email ?s]
-               [(clojure.string/includes? ?s ?email-search)]]
-          db (or ?email-search ""))))
+(defn teeshirt-orders [db ?email-search & [sort-directve]]
+  (let [kf (cond
+             (vector? sort-directve) #((reduce comp (reverse sort-directve)) (d/touch (d/entity db %)))
+             (fn? sort-directve) #(sort-directve (d/touch (d/entity db %)))
+             () identity)]
+    (sort-by kf
+      (d/q '[:find [?e ...] :in $ ?email-search :where
+             [?e :order/email ?s]
+             [(clojure.string/includes? ?s ?email-search)]]
+        db (or ?email-search "")))))
 
 (defn genders
   ([db] (genders db nil))
@@ -106,6 +111,10 @@
           db (or search ""))))))
 
 (tests
+  (teeshirt-orders @conn "" [:order/email])
+  (teeshirt-orders @conn "" [:db/id])
+  (teeshirt-orders @conn "" [:order/shirt-size :db/ident])
+  (teeshirt-orders @conn "" [:order/gender :db/ident])
   (teeshirt-orders @conn "bob")
   (genders @conn)
   (genders @conn "female") := [:order/female]

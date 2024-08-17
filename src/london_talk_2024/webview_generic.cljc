@@ -4,17 +4,18 @@
             [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             [london-talk-2024.typeahead :refer [Typeahead]]
-            [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes]]))
+            [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
 
 (e/defn GenericTable [colspec Query Row]
   (e/client
-    (dom/table
-      (e/for [id ($ Query)]
-        (dom/tr
-          (let [m ($ Row id)]
-            (e/for [k colspec]
-              (dom/td
-                ($ (get m k))))))))))
+    (let [ids ($ Query)]
+      (dom/table
+        (e/for [id ids]
+          (dom/tr
+            (let [m ($ Row id)]
+              (e/for [k colspec]
+                (dom/td
+                  ($ (get m k)))))))))))
 
 (e/defn Row [db id]
   (let [!e         (e/server (d/entity db id))
@@ -27,6 +28,7 @@
      :order/shirt-size (e/fn [] ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))}))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
+#?(:cljs (def !sort-key (atom [:order/email]))) ; serializable
 
 (e/defn WebviewGeneric []
   (e/client
@@ -35,11 +37,15 @@
           search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))]
       ($ GenericTable
         colspec
-        ($ e/Partial Teeshirt-orders db search)
+        ($ e/Partial Teeshirt-orders db search (e/watch !sort-key))
         ($ e/Partial Row db)))))
 
 (comment
   (reset! !colspec [:db/id])
   (swap! !colspec conj :order/email)
   (swap! !colspec conj :order/gender)
-  (swap! !colspec conj :order/shirt-size))
+  (swap! !colspec conj :order/shirt-size)
+
+  (reset! !sort-key [:db/id])
+  (reset! !sort-key [:order/shirt-size :db/ident])
+  )
