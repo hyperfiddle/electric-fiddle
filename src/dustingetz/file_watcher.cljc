@@ -1,4 +1,4 @@
-(ns london-talk-2024.file-watcher
+(ns dustingetz.file-watcher
   (:import
    (java.nio.file Path FileSystems Paths WatchEvent$Modifier StandardWatchEventKinds
      StandardWatchEventKinds$StdWatchEventKind WatchEvent)
