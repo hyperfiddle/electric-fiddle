@@ -1,13 +1,8 @@
 (ns london-talk-2024.fizzbuzz2
   (:require [hyperfiddle.electric-de :as e :refer [$]]
-            [hyperfiddle.electric-dom3 :as dom]
-            [missionary.core :as m]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
-(e/defn Tap-diffs [tap! xs]
-  (let [>dxs (e/pure xs)
-        >dxs (m/eduction (map tap!) >dxs)]
-    (e/input >dxs))
-  xs)
+(e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
 
 (e/defn RangeN [n]
   (e/diff-by identity (range 1 (inc n))))
@@ -26,13 +21,15 @@
      (def !n (atom 10))))
 
 (e/defn FizzBuzzDemo []
-  (let [ns ($ RangeN (e/watch !n))]
-    (e/for [n ns]
-      (let [x ($ FizzBuzz (e/watch !fizz) (e/watch !buzz) n)]
-        (dom/div (dom/text x))))))
+  (let [ns ($ RangeN (e/watch !n))
+        xs (e/for [n ns]
+             ($ FizzBuzz (e/watch !fizz) (e/watch !buzz) n))]
+    ($ Tap-diffs xs)
+    (e/for [x xs]
+      (dom/div (dom/text x)))))
 
 (comment
-  ($ Tap-diffs #(println 'diff %))
+
   (reset! !fizz 'pop)
   (reset! !fizz 'fizz)
   (reset! !buzz 'buzz)
