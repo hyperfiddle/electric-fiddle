@@ -6,46 +6,30 @@
             [london-talk-2024.typeahead :refer [Typeahead]]
             [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
 
-(e/defn GenericTable [colspec Query Row]
+(e/defn GenericTable [Query Row]
   (e/client
     (let [ids ($ Query)]
       (dom/table
         (e/for [id ids]
           (dom/tr
-            (let [m ($ Row id)]
-              (e/for [k colspec]
-                (dom/td
-                  ($ (get m k)))))))))))
+            ($ Row id)))))))
 
 (e/defn Row [db id]
-  (let [!e         (e/server (d/entity db id))
-        email      (e/server (-> !e :order/email))
-        gender     (e/server (-> !e :order/gender :db/ident))
-        shirt-size (e/server (-> !e :order/shirt-size :db/ident))]
-    {:db/id            (e/fn [] (dom/text id))
-     :order/email      (e/fn [] (dom/text email))
-     :order/gender     (e/fn [] ($ Typeahead gender (e/fn [search] ($ Genders db search))))
-     :order/shirt-size (e/fn [] ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))}))
-
-#?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
-#?(:cljs (def !sort-key (atom [:order/email]))) ; serializable
+  (e/server
+    (let [!e         (d/entity db id)
+          email      (-> !e :order/email)
+          gender     (-> !e :order/gender :db/ident)
+          shirt-size (-> !e :order/shirt-size :db/ident)]
+      (e/client
+        (dom/td (dom/text id))
+        (dom/td (dom/text email))
+        (dom/td ($ Typeahead gender (e/fn [search] ($ Genders db search))))
+        (dom/td ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))))))
 
 (e/defn WebviewGeneric []
   (e/client
     (let [db (e/server (e/watch conn))
-          colspec (e/diff-by identity (e/watch !colspec))
           search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))]
       ($ GenericTable
-        colspec
-        ($ e/Partial Teeshirt-orders db search (e/watch !sort-key))
+        ($ e/Partial Teeshirt-orders db search)
         ($ e/Partial Row db)))))
-
-(comment
-  (reset! !colspec [:db/id])
-  (swap! !colspec conj :order/email)
-  (swap! !colspec conj :order/gender)
-  (swap! !colspec conj :order/shirt-size)
-
-  (reset! !sort-key [:db/id])
-  (reset! !sort-key [:order/shirt-size :db/ident])
-  )

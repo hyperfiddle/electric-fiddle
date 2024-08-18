@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
-            [london-talk-2024.webview-generic :refer [Row]]
+            [london-talk-2024.webview-dynamic :refer [Row]]
             #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])))
 
 (e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
@@ -54,6 +54,7 @@
           (dom/props {:style (e/server ; align spacer latency with updated resultset
                                {:padding-top (str padding-top "px") ; seen elements are replaced with padding
                                 :padding-bottom (str padding-bottom "px")})})
+          ($ Tap-diffs ids)
           (e/for [id ids]
             (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1"
                                         :height (str row-height "px")}})
@@ -63,15 +64,16 @@
                     ($ (get m k))))))))))))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
-#?(:cljs (def !sort-key (atom [:order/email]))) ; serializable
+#?(:cljs (def !sort-key (atom [:order/email])))
 
 (e/defn WebviewScroll []
   (e/client
     (let [db (e/server (e/watch conn))
-          colspec (e/diff-by identity (e/watch !colspec))]
+          colspec (e/diff-by identity (e/watch !colspec))
+          search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))]
       ($ TableScrollFixedCounted
         colspec
-        ($ e/Partial Teeshirt-orders db "" (e/watch !sort-key))
+        ($ e/Partial Teeshirt-orders db search (e/watch !sort-key))
         ($ e/Partial Row db)))))
 
 (comment
