@@ -1,6 +1,5 @@
 (ns london-talk-2024.webview-scroll
   (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders]])
-            #?(:clj [datascript.core :as d])
             [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             [london-talk-2024.webview-dynamic :refer [Row]]

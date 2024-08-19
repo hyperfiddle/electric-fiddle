@@ -34,5 +34,6 @@
                 (dom/td ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))))))))))
 
 (e/defn WebviewConcrete []
-  (let [db (e/server (e/watch conn))]
-    ($ TeeshirtOrders db)))
+  (e/client
+    (let [db (e/server (e/watch conn))]
+      ($ TeeshirtOrders db))))
