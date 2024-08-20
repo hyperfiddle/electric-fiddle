@@ -20,7 +20,8 @@
                                             :list-style "none"
                                             :background-color "white"
                                             :width "12em"
-                                            :font-size "smaller"}})
+                                            :font-size "smaller"
+                                            :border "2px solid black"}})
                   (e/for [id ($ Options search)]
                     (dom/li (dom/props {:style {}})
                       (dom/text ($ OptionLabel id))

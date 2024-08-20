@@ -72,7 +72,7 @@
           search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))]
       ($ TableScrollFixedCounted
         colspec
-        ($ e/Partial Teeshirt-orders db search (e/watch !sort-key))
+        ($ e/Partial Teeshirt-orders db "" (e/watch !sort-key))
         ($ e/Partial Row db)))))
 
 (comment

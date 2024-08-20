@@ -1,6 +1,4 @@
-
-
-(e/defn TeeshirtOrdersDeclarative [db]
+(e/defn WebviewDeclarative [db]
   (hfql
     {($ Teeshirt-orders db .)
      ['db/id
@@ -9,4 +7,3 @@
        'order/gender ['db/ident]}
       {^{:hf/options ($ Shirt-sizes db gender .)}
        'order/shirt-size ['db/ident]}]}))
-
