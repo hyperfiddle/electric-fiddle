@@ -1,4 +1,4 @@
-(ns london-talk-2024.fizzbuzz2
+(ns dustingetz.fizzbuzz
   (:require [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))
 
@@ -7,12 +7,13 @@
 (e/defn RangeN [n]
   (e/diff-by identity (range 1 (inc n))))
 
-(e/defn FizzBuzz [fizz buzz n]
-  (cond
-    (zero? (mod n (* 3 5))) (str fizz buzz)
-    (zero? (mod n 3)) fizz
-    (zero? (mod n 5)) buzz
-    :else n))
+(e/defn FizzBuzz [fizz buzz ns]
+  (e/for [n ns] ; materialize individual elements from collection diffs
+    (cond
+      (zero? (mod n (* 3 5))) (str fizz buzz)
+      (zero? (mod n 3)) fizz
+      (zero? (mod n 5)) buzz
+      :else n)))
 
 #?(:cljs
    (do
@@ -21,15 +22,17 @@
      (def !n (atom 10))))
 
 (e/defn FizzBuzzDemo []
-  (let [ns ($ RangeN (e/watch !n))
-        xs (e/for [n ns]
-             ($ FizzBuzz (e/watch !fizz) (e/watch !buzz) n))]
-    ($ Tap-diffs xs)
-    (e/for [x xs]
-      (dom/div (dom/text x)))))
+  (e/client
+    (let [fizz (e/watch !fizz)
+          buzz (e/watch !buzz)
+          n (e/watch !n)
+          ns ($ RangeN n)
+          xs ($ FizzBuzz fizz buzz ns)]
+      ($ Tap-diffs xs)
+      (e/for [x xs]
+          (dom/div (dom/text x))))))
 
 (comment
-
   (reset! !fizz 'pop)
   (reset! !fizz 'fizz)
   (reset! !buzz 'buzz)

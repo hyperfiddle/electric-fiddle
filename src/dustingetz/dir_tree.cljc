@@ -1,4 +1,4 @@
-(ns london-talk-2024.dir-tree
+(ns dustingetz.dir-tree
   (:require
    [contrib.str :refer [includes-str?]]
    #?(:clj [clojure.java.io])

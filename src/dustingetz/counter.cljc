@@ -1,4 +1,4 @@
-(ns london-talk-2024.counter
+(ns dustingetz.counter
   (:require
    [hyperfiddle.electric-de :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]
@@ -9,13 +9,13 @@
     (dom/div
       (dom/text label ": " n " ")
       (dom/button (dom/text "inc")
-        (let [e ($ dom/On "click")]
+        #_(let [e ($ dom/On "click")]
           (when-let [t ($ e/Token e)]
             (dom/props {:disabled true, :aria-busy true})
             (dom/text " " ($ F! t))))
 
-        #_(e/for [[e t] ($ dom/OnAll "click")]
-            (dom/text " " ($ F! t)))))))
+        (e/for [[e t] ($ dom/OnAll "click")]
+          (dom/text " " ($ F! t)))))))
 
 (e/defn CounterMain []
   (let [!c (e/client (atom 0)), c (e/client (e/watch !c))

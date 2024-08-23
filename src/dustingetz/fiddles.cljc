@@ -2,10 +2,13 @@
   (:require [hyperfiddle.electric-de :as e :refer [$]]
             [hyperfiddle :as hf]
             dustingetz.scratch
-            [dustingetz.peter-counter :refer [Counter]]
+            [dustingetz.counter :refer [CounterDemo]]
             [dustingetz.painter :refer [Painter]]
             [dustingetz.scroll-abc :refer [Scroll1]]
             [dustingetz.scroll-dom :refer [ScrollDemo]]
+            [dustingetz.dir-tree :refer [DirTreeDemo]]
+            [dustingetz.fizzbuzz :refer [FizzBuzzDemo]]
+            [dustingetz.fizzbuzz2 :refer [FizzBuzz2Demo]]
 
             #_[dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
             #_[dustingetz.hfql-intro :refer [With-HFQL-Bindings
@@ -24,10 +27,13 @@
 
 (e/defn Fiddles []
   {`dustingetz.scratch/Scratch dustingetz.scratch/Scratch
-   `Counter Counter
+   `CounterDemo CounterDemo
    `Painter Painter
    `ScrollDemo ScrollDemo
    `Scroll1 Scroll1
+   `DirTreeDemo DirTreeDemo
+   `FizzBuzzDemo FizzBuzzDemo
+   `FizzBuzz2Demo FizzBuzz2Demo
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
    ;`Essay (With-HFQL-Bindings. Essay)
