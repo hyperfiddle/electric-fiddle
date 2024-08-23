@@ -7,12 +7,11 @@
             [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
 
 (e/defn GenericTable [Query Row]
-  (e/client
-    (let [ids ($ Query)]
-      (dom/table
-        (e/for [id ids]
-          (dom/tr
-            ($ Row id)))))))
+  (let [ids ($ Query)]
+    (dom/table
+      (e/for [id ids]
+        (dom/tr
+          ($ Row id))))))
 
 (e/defn Row [db id]
   (e/server
@@ -27,9 +26,9 @@
         (dom/td ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))))))
 
 (e/defn WebviewGeneric []
-  (e/client
-    (let [db (e/server (e/watch conn))
-          search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))]
+  (e/server
+    (let [db (e/watch conn)
+          search (e/client (dom/input ($ dom/On "input" #(-> % .-target .-value) "")))]
       ($ GenericTable
         ($ e/Partial Teeshirt-orders db search)
         ($ e/Partial Row db)))))

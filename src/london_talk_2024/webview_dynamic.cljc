@@ -7,15 +7,14 @@
             [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
 
 (e/defn GenericTable [colspec Query Row]
-  (e/client
-    (let [ids ($ Query)]
-      (dom/table
-        (e/for [id ids]
-          (dom/tr
-            (let [m ($ Row id)]
-              (e/for [k colspec]
-                (dom/td
-                  ($ (get m k)))))))))))
+  (let [ids ($ Query)]
+    (dom/table
+      (e/for [id ids]
+        (dom/tr
+          (let [m ($ Row id)]
+            (e/for [k colspec]
+              (dom/td
+                ($ (get m k))))))))))
 
 (e/defn Row [db id]
   (e/server
@@ -25,20 +24,20 @@
           shirt-size (-> !e :order/shirt-size :db/ident)]
       {:db/id            (e/fn [] (dom/text id))
        :order/email      (e/fn [] (dom/text email))
-       :order/gender     (e/fn [] ($ Typeahead gender (e/fn [search] ($ Genders db search))))
-       :order/shirt-size (e/fn [] ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search))))})))
+       :order/gender     (e/fn [] (e/client ($ Typeahead gender (e/fn [search] ($ Genders db search)))))
+       :order/shirt-size (e/fn [] (e/client ($ Typeahead shirt-size (e/fn [search] ($ Shirt-sizes db gender search)))))})))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
 #?(:cljs (def !sort-key (atom [:order/email])))
 
 (e/defn WebviewDynamic []
-  (e/client
-    (let [db (e/server (e/watch conn))
-          colspec (e/diff-by identity (e/watch !colspec))
-          search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))]
+  (e/server
+    (let [db (e/watch conn)
+          colspec (e/client (e/diff-by identity (e/watch !colspec)))
+          search (e/client (dom/input ($ dom/On "input" #(-> % .-target .-value) "")))]
       ($ GenericTable
         colspec
-        ($ e/Partial Teeshirt-orders db search (e/watch !sort-key))
+        ($ e/Partial Teeshirt-orders db search (e/client (e/watch !sort-key)))
         ($ e/Partial Row db)))))
 
 (comment

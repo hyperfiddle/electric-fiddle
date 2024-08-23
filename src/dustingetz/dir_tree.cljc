@@ -18,19 +18,17 @@
     (let [name_ (file-get-name h)]
       (cond
         (file-is-dir h)
-        (e/client
-          (dom/li (dom/text name_)
-            (dom/ul
-              (e/server
-                (e/for-by identity [x (file-list-files h)]
-                  ($ Dir-tree x s))))))
+        (dom/li (dom/text name_)
+          (dom/ul
+            (e/for-by identity [x (file-list-files h)]
+              ($ Dir-tree x s))))
 
-        (e/server (and (file-is-file h) (includes-str? name_ s)))
-        (e/client (dom/li (dom/text name_)))))))
+        (and (file-is-file h) (includes-str? name_ s))
+        (dom/li (dom/text name_))))))
 
 (e/defn DirTreeDemo []
-  (e/client
-    (let [s (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))
-          h (e/server (clojure.java.io/file (file-absolute-path "./vendor/electric/src/hyperfiddle")))]
+  (e/server
+    (let [s (e/client (dom/input ($ dom/On "input" #(-> % .-target .-value) "")))
+          h (clojure.java.io/file (file-absolute-path "./vendor/electric/src/hyperfiddle"))]
       (dom/ul
         ($ Dir-tree h s)))))

@@ -43,9 +43,7 @@
 
             padding-top (* offset row-height) ; reconstruct padding from quantized offset
             occluded-height (* occluded row-height) ; todo truncate at boundary
-            padding-bottom (- max-height padding-top occluded-height)
-            [record-count ids] ($ Query q-offset q-limit)]
-        (reset! !record-count record-count)
+            padding-bottom (- max-height padding-top occluded-height)]
 
         (dom/table
           (dom/props {:style {:display "grid" :grid-template-columns "4em 15em min-content min-content"}})
@@ -53,26 +51,28 @@
           (dom/props {:style (e/server ; align spacer latency with updated resultset
                                {:padding-top (str padding-top "px") ; seen elements are replaced with padding
                                 :padding-bottom (str padding-bottom "px")})})
-          ($ Tap-diffs ids)
-          (e/for [id ids]
-            (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1"
-                                        :height (str row-height "px")}})
-              (let [m ($ Row id)]
-                (e/for [k colspec]
-                  (dom/td (dom/props {:style {:height (str row-height "px")}})
-                    ($ (get m k))))))))))))
+          (e/server
+            (let [[record-count ids] ($ Query q-offset q-limit)]
+              (e/client (reset! !record-count record-count))
+              (e/client ($ Tap-diffs ids))
+              (e/for [id ids]
+                (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1" :height (str row-height "px")}})
+                  (let [m ($ Row id)]
+                    (e/for [k colspec]
+                      (dom/td
+                        ($ (get m k))))))))))))))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
 #?(:cljs (def !sort-key (atom [:order/email])))
 
 (e/defn WebviewScroll []
-  (e/client
-    (let [db (e/server (e/watch conn))
-          colspec (e/diff-by identity (e/watch !colspec))
-          search (dom/input ($ dom/On "input" #(-> % .-target .-value) ""))]
+  (e/server
+    (let [db (e/watch conn)
+          colspec (e/client (e/diff-by identity (e/watch !colspec)))
+          search (e/client (dom/input ($ dom/On "input" #(-> % .-target .-value) "")))]
       ($ TableScrollFixedCounted
         colspec
-        ($ e/Partial Teeshirt-orders db "" (e/watch !sort-key))
+        ($ e/Partial Teeshirt-orders db "" (e/client (e/watch !sort-key)))
         ($ e/Partial Row db)))))
 
 (comment
