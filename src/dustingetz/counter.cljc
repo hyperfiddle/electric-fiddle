@@ -1,32 +1,26 @@
 (ns dustingetz.counter
-  (:require
-   [hyperfiddle.electric-de :as e :refer [$]]
-   [hyperfiddle.electric-dom3 :as dom]
-   [missionary.core :as m]))
+  (:require [clojure.math :refer [floor-div]]
+            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric-dom3 :as dom]
+            [missionary.core :as m]))
 
-(e/defn Counter [label n F!]
+(e/defn Countdown [from-n-inclusive dur-ms]
+  (+ (inc from-n-inclusive) ; end on 1
+    (floor-div
+      (- (e/snapshot ($ e/SystemTimeMs))
+         ($ e/SystemTimeMs))
+      (/ dur-ms from-n-inclusive))))
+
+(e/defn Clicker [n F!]
   (e/client
     (dom/div
-      (dom/text label ": " n " ")
+      (dom/text "count: " n " ")
       (dom/button (dom/text "inc")
-        #_(let [e ($ dom/On "click")]
-          (when-let [t ($ e/Token e)]
-            (dom/props {:disabled true, :aria-busy true})
-            (dom/text " " ($ F! t))))
-
         (e/for [[e t] ($ dom/OnAll "click")]
           (dom/text " " ($ F! t)))))))
 
-(e/defn CounterMain []
-  (let [!c (e/client (atom 0)), c (e/client (e/watch !c))
-        !s (e/server (atom 0)), s (e/server (e/watch !s))]
-
-    ($ Counter "client" c (e/fn [!] (! (e/client (swap! !c inc)))))
-    ($ Counter "server" s (e/fn [!]
-                            (! (e/server ($ e/Task (m/via m/blk (Thread/sleep 500) (swap! !s inc)))))
-                            #_(! (e/server (Thread/sleep 500) (swap! !s inc))) ; illegal block
-                            ($ e/SystemTimeMs)))))
-
-
 (e/defn CounterDemo []
-  ($ CounterMain))
+  (let [!n (e/server (atom 0)), n (e/server (e/watch !n))]
+    ($ Clicker n (e/fn [t]
+                   (t (e/server (case ($ e/Task (m/sleep 2000)) (swap! !n inc))))
+                   ($ Countdown 10 2000))))) ; progress indicator
