@@ -9,6 +9,7 @@
             [dustingetz.dir-tree :refer [DirTreeDemo]]
             [dustingetz.fizzbuzz :refer [FizzBuzzDemo]]
             [dustingetz.fizzbuzz2 :refer [FizzBuzz2Demo]]
+            [dustingetz.file-watcher :refer [FileWatcherDemo]]
 
             #_[dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
             #_[dustingetz.hfql-intro :refer [With-HFQL-Bindings
@@ -34,6 +35,7 @@
    `DirTreeDemo DirTreeDemo
    `FizzBuzzDemo FizzBuzzDemo
    `FizzBuzz2Demo FizzBuzz2Demo
+   `FileWatcherDemo FileWatcherDemo
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
    ;`Essay (With-HFQL-Bindings. Essay)
