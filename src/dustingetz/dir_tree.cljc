@@ -2,7 +2,7 @@
   (:require
    [contrib.str :refer [includes-str?]]
    #?(:clj [clojure.java.io])
-   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric-de :as e]
    [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj (defn file-is-dir [h] (.isDirectory h)))
@@ -21,14 +21,14 @@
         (dom/li (dom/text name_)
           (dom/ul
             (e/for-by identity [x (file-list-files h)]
-              ($ Dir-tree x s))))
+              (Dir-tree x s))))
 
         (and (file-is-file h) (includes-str? name_ s))
         (dom/li (dom/text name_))))))
 
 (e/defn DirTreeDemo []
   (e/server
-    (let [s (e/client (dom/input ($ dom/On "input" #(-> % .-target .-value) "")))
+    (let [s (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))
           h (clojure.java.io/file (file-absolute-path "./vendor/electric/src/hyperfiddle"))]
       (dom/ul
-        ($ Dir-tree h s)))))
+        (Dir-tree h s)))))

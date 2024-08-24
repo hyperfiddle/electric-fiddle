@@ -1,7 +1,7 @@
 (ns dustingetz.painter
   "video: https://gist.github.com/dustingetz/d58a6134be310e05307ca0b586c30947
 upstream: https://github.com/formicagreen/electric-clojure-painter"
-  (:require [hyperfiddle.electric-de :as e :refer [$]]
+  (:require [hyperfiddle.electric-de :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Painter []
@@ -11,8 +11,8 @@ upstream: https://github.com/formicagreen/electric-clojure-painter"
     (dom/div
       (dom/props {:style {:width "100vw" :height "100vh"}})
       (let [!current-emoji (atom "🐱")
-            mouse-down? ($ dom/MouseDown?)
-            dones (e/cursor [[[x y e] done!] ($ dom/OnAll "mousemove"
+            mouse-down? (dom/MouseDown?)
+            dones (e/cursor [[[x y e] done!] (dom/OnAll "mousemove"
                                                (fn [e]
                                                  (when mouse-down?
                                                    [(.-clientX e) (.-clientY e) @!current-emoji])))]
@@ -32,8 +32,8 @@ upstream: https://github.com/formicagreen/electric-clojure-painter"
           (e/for [emoji (e/amb "🕉" "🧬" "🧿" "🌀" "♻️" "🐍" "🐱" "🫥" "🌰" "🐞" "🐹" "🪙" "🕸" "📞")]
             (dom/div (dom/text emoji)
               (dom/props {:style {:cursor "pointer"}})
-              (reset! !current-emoji ($ dom/On "click" (constantly emoji)))))
+              (reset! !current-emoji (dom/On "click" (constantly emoji)))))
           (dom/div (dom/text "🗑️")
             (dom/props {:style {:cursor "pointer" :padding-top "50px"}})
-            (when-some [t ($ e/Token ($ dom/On "click"))]
+            (when-some [t (e/Token (dom/On "click"))]
               (t (dones)))))))))

@@ -1,10 +1,10 @@
 (ns dustingetz.fiddles
-  (:require [hyperfiddle.electric-de :as e :refer [$]]
+  (:require [hyperfiddle.electric-de :as e]
             [hyperfiddle :as hf]
             dustingetz.scratch
             [dustingetz.counter :refer [CounterDemo]]
             [dustingetz.painter :refer [Painter]]
-            [dustingetz.scroll-abc :refer [Scroll1]]
+            [dustingetz.scroll-abc :refer [Scroll-abc]]
             [dustingetz.scroll-dom :refer [ScrollDemo]]
             [dustingetz.dir-tree :refer [DirTreeDemo]]
             [dustingetz.fizzbuzz :refer [FizzBuzzDemo]]
@@ -31,7 +31,7 @@
    `CounterDemo CounterDemo
    `Painter Painter
    `ScrollDemo ScrollDemo
-   `Scroll1 Scroll1
+   `Scroll-abc Scroll-abc
    `DirTreeDemo DirTreeDemo
    `FizzBuzzDemo FizzBuzzDemo
    `FizzBuzz2Demo FizzBuzz2Demo

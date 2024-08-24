@@ -1,5 +1,5 @@
 (ns dustingetz.fizzbuzz2
-  (:require [hyperfiddle.electric-de :as e :refer [$]]
+  (:require [hyperfiddle.electric-de :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
@@ -21,10 +21,10 @@
      (def !n (atom 10))))
 
 (e/defn FizzBuzz2Demo []
-  (let [ns ($ RangeN (e/watch !n))
+  (let [ns (RangeN (e/watch !n))
         xs (e/for [n ns]
-             ($ FizzBuzz (e/watch !fizz) (e/watch !buzz) n))]
-    ($ Tap-diffs xs)
+             (FizzBuzz (e/watch !fizz) (e/watch !buzz) n))]
+    (Tap-diffs xs)
     (e/for [x xs]
       (dom/div (dom/text x)))))
 
@@ -35,6 +35,6 @@
   (reset! !buzz 'buzz)
   (swap! !n inc)
   (reset! !n 100)
-  (if (= 0 (int (mod ($ e/SystemTimeSecs) 2)))
+  (if (= 0 (int (mod (e/SystemTimeSecs) 2)))
     'fizz
     'pop))
