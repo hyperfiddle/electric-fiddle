@@ -1,5 +1,5 @@
 (ns london-talk-2024.typeahead
-  (:require [hyperfiddle.electric-de :as e :refer [$]]
+  (:require [hyperfiddle.electric-de :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
 (def ul-style {:position "absolute"
@@ -21,17 +21,17 @@
           t (e/client
               (dom/input
                 (dom/props {:placeholder "Filter..."})
-                (if-some [t ($ e/Token ($ dom/On "focus"))]
-                  (do (reset! !search ($ dom/On "input" #(-> % .-target .-value) "")) t)
-                  (dom/props {:value ($ OptionLabel v-id)}))))] ; controlled only when not focused
+                (if-some [t (e/Token (dom/On "focus"))]
+                  (do (reset! !search (dom/On "input" #(-> % .-target .-value) "")) t)
+                  (dom/props {:value (OptionLabel v-id)}))))] ; controlled only when not focused
 
       ; neutral
       (if (e/client (some? t)) ; token unserializable
         (dom/ul (dom/props {:style ul-style})
-          (e/for [x ($ Options search)] ; neutral
+          (e/for [x (Options search)] ; neutral
             (dom/li (dom/props {:style {}})
-              (dom/text ($ OptionLabel x))
-              ($ dom/On "click" (e/client
+              (dom/text (OptionLabel x))
+              (dom/On "click" (e/client
                                   (fn [e] (doto e (.stopPropagation) (.preventDefault))
                                     (reset! !v-id x) (t))))))))
       v-id)))

@@ -1,5 +1,5 @@
 (ns london-talk-2024.differential-tricks
-  (:require [hyperfiddle.electric-de :as e :refer [$]]
+  (:require [hyperfiddle.electric-de :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Tap-diffs [tap! x] (doto x (-> e/pure e/input tap!)))

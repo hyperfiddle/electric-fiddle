@@ -1,6 +1,6 @@
 (ns london-talk-2024.webview-scroll
   (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders]])
-            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric-de :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [london-talk-2024.webview-dynamic :refer [Row]]
             #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])))
@@ -14,11 +14,11 @@
 
 (e/defn Window [query! offset limit]
   (e/server
-    (let [xs ($ e/Offload #(query!))] ; retain and reuse xs as offset changes
+    (let [xs (e/Offload #(query!))] ; retain and reuse xs as offset changes
       [(count xs) (e/diff-by identity (window xs offset limit))])))
 
 (e/defn Teeshirt-orders [db search sort-key offset limit]
-  (e/server ($ Window (partial teeshirt-orders db search sort-key) offset limit)))
+  (e/server (Window (partial teeshirt-orders db search sort-key) offset limit)))
 
 (e/defn TableScrollFixedCounted [colspec Query Row]
   (e/client
@@ -52,15 +52,15 @@
                                {:padding-top (str padding-top "px") ; seen elements are replaced with padding
                                 :padding-bottom (str padding-bottom "px")})})
           (e/server
-            (let [[record-count ids] ($ Query q-offset q-limit)]
+            (let [[record-count ids] (Query q-offset q-limit)]
               (e/client (reset! !record-count record-count))
-              (e/client ($ Tap-diffs ids))
+              (e/client (Tap-diffs ids))
               (e/for [id ids]
                 (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1" :height (str row-height "px")}})
-                  (let [m ($ Row id)]
+                  (let [m (Row id)]
                     (e/for [k colspec]
                       (dom/td
-                        ($ (get m k))))))))))))))
+                        (e/call (get m k))))))))))))))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
 #?(:cljs (def !sort-key (atom [:order/email])))
@@ -69,11 +69,11 @@
   (e/server
     (let [db (e/watch conn)
           colspec (e/client (e/diff-by identity (e/watch !colspec)))
-          search (e/client (dom/input ($ dom/On "input" #(-> % .-target .-value) "")))]
-      ($ TableScrollFixedCounted
+          search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
+      (TableScrollFixedCounted
         colspec
-        ($ e/Partial Teeshirt-orders db "" (e/client (e/watch !sort-key)))
-        ($ e/Partial Row db)))))
+        (e/Partial Teeshirt-orders db "" (e/client (e/watch !sort-key)))
+        (e/Partial Row db)))))
 
 (comment
   (reset! !colspec [:db/id])
