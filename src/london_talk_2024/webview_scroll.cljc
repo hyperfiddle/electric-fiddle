@@ -20,40 +20,46 @@
 (e/defn Teeshirt-orders [db search sort-key offset limit]
   (e/server (Window (partial teeshirt-orders db search sort-key) offset limit)))
 
-(e/defn TableScrollFixedCounted [colspec Query Row]
+(e/defn TableScrollFixedCounted [colspec Query Row] ; todo remove all organic layout like studio
   (e/client
     (dom/div (dom/props {:style {:overflowX "hidden" :overflowY "auto" ; Requires css {box-sizing: border-box;}
                                  :position "fixed" :top "0" :bottom "0" :left "0" :right "0"}})
-      (let [row-height 25 ; todo relative measurement (note: browser zoom impacts px height)
+      (let [[clientHeight] (e/input (resize-observer dom/node))
+            [scrollTop] (e/input (scroll-state dom/node)) ; smooth scroll has already happened, cannot quantize the scroll
+
+            row-height 25 ; todo relative measurement (note: browser zoom impacts px height)
             padding-top 0 ; e.g. sticky header row
-            !record-count (atom 25) ; initial guess
-            record-count (e/watch !record-count)
-            [clientHeight] (e/input (resize-observer dom/node))
             page-size (Math/ceil (/ (- clientHeight padding-top) row-height))
+
+            !record-count (atom 0) ; initial guess
+            record-count (e/watch !record-count)
+
             overquery-factor 1
             max-height (* record-count row-height)
-            [scrollTop] (e/input (scroll-state dom/node)) ; smooth scroll has already happened, cannot quantize the scroll
-            clamped-scroll-top (js/Math.min scrollTop max-height) ; dangerous, not quantized to record boundary
-            offset (js/Math.floor (/ clamped-scroll-top row-height)) ; quantized
+
+            clamped-scroll-top (Math/min scrollTop max-height) ; dangerous, not quantized to record boundary
+            offset (Math/floor (/ clamped-scroll-top row-height)) ; quantized
 
             ; overquery strategy - load more below only for simpler math at boundaries
             q-limit (* page-size overquery-factor)
             occluded (- q-limit page-size)
-            q-offset offset #_(- offset (js/Math.floor (/ occluded 2))) ; todo truncate at boundaries
-
-            padding-top (* offset row-height) ; reconstruct padding from quantized offset
-            occluded-height (* occluded row-height) ; todo truncate at boundary
-            padding-bottom (- max-height padding-top occluded-height)]
+            q-offset offset #_(- offset (Math/floor (/ occluded 2))) ; todo truncate at boundaries
+            ]
 
         (dom/table
           (dom/props {:style {:display "grid" :grid-template-columns "4em 15em min-content min-content"}})
           (dom/props {:style {:height (str (* row-height record-count) "px")}}) ; record-count blinks on scroll, isolate
-          (dom/props {:style (e/server ; align spacer latency with updated resultset
-                               {:padding-top (str padding-top "px") ; seen elements are replaced with padding
-                                :padding-bottom (str padding-bottom "px")})})
           (e/server
-            (let [[record-count ids] (Query q-offset q-limit)]
+            (let [[record-count ids] (Query q-offset q-limit)
+                  padding-top (* offset row-height) ; reconstruct padding from quantized offset
+                  occluded-height (* occluded row-height) ; todo truncate at boundary
+                  padding-bottom (- max-height padding-top occluded-height)]
               (e/client (reset! !record-count record-count))
+
+              (dom/props {:style #_(e/client) {:padding-top (str padding-top "px")}}) ; seen elements are replaced with padding
+              (dom/props {:style #_(e/client) ; align spacer latency with updated resultset
+                          {:padding-bottom (str padding-bottom "px")}})
+
               (e/client (Tap-diffs ids))
               (e/for [id ids]
                 (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1" :height (str row-height "px")}})
