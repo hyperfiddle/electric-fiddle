@@ -1,5 +1,6 @@
 (ns london-talk-2024.webview-scroll
-  (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders]])
+  (:require [clojure.math :as math]
+            #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders]])
             [hyperfiddle.electric-de :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [london-talk-2024.webview-dynamic :refer [Row]]
@@ -7,66 +8,67 @@
 
 (e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
 
-(defn window [xs offset limit]
+(defn window [cnt xs offset limit]
   (subvec (vec xs) ; fast cast
-    (Math/max offset 0)
-    (Math/min (+ offset limit) (count xs))))
+    (max offset 0)
+    (min (+ offset limit) cnt)))
 
 (e/defn Window [query! offset limit]
-  (e/server
-    (let [xs (e/Offload #(query!))] ; retain and reuse xs as offset changes
-      [(count xs) (e/diff-by identity (window xs offset limit))])))
+  (let [xs (e/Offload #(query!)) ; retain and reuse xs as offset changes
+        n (count xs)
+        ; (mapv vector (range offset limit) (window n xs offset limit)) -- broken, why?
+        indexed-page (window n (map-indexed vector xs) offset limit)]
+    [n (e/diff-by second indexed-page)]))
 
 (e/defn Teeshirt-orders [db search sort-key offset limit]
   (e/server (Window (partial teeshirt-orders db search sort-key) offset limit)))
 
+(defn clamp [n left right] (min (max n left) right))
+
+(defn compute-overquery [overquery-factor record-count offset limit]
+  (let [q-limit (* limit overquery-factor)
+        occluded (clamp (- q-limit limit) 0 record-count)
+        q-offset (clamp (- offset (math/floor (/ occluded overquery-factor))) 0 record-count)]
+    [q-offset q-limit]))
+
+(defn compute-scroll-window [row-height record-count clientHeight scrollTop]
+  (let [padding-top 0 ; e.g. sticky header row
+        limit (math/ceil (/ (- clientHeight padding-top) row-height)) ; aka page-size
+        offset (int (/ (clamp scrollTop 0 (* record-count row-height)) ; prevent overscroll past the end
+                      row-height))
+        [offset limit] (compute-overquery 1 record-count offset limit)]
+    [offset limit]))
+
+(e/defn Scroll-window [row-height record-count node]
+  (e/client ; don't roundtrip destructuring
+    (let [[clientHeight] (e/input (resize-observer node))
+          [scrollTop] (e/input (scroll-state node))] ; smooth scroll has already happened, cannot quantize
+      (compute-scroll-window row-height record-count clientHeight scrollTop))))
+
 (e/defn TableScrollFixedCounted [colspec Query Row] ; todo remove all organic layout like studio
-  (e/client
-    (dom/div (dom/props {:style {:overflowX "hidden" :overflowY "auto" ; Requires css {box-sizing: border-box;}
-                                 :position "fixed" :top "0" :bottom "0" :left "0" :right "0"}})
-      (let [[clientHeight] (e/input (resize-observer dom/node))
-            [scrollTop] (e/input (scroll-state dom/node)) ; smooth scroll has already happened, cannot quantize the scroll
-
-            row-height 25 ; todo relative measurement (note: browser zoom impacts px height)
-            padding-top 0 ; e.g. sticky header row
-            page-size (Math/ceil (/ (- clientHeight padding-top) row-height))
-
-            !record-count (atom 0) ; initial guess
-            record-count (e/watch !record-count)
-
-            overquery-factor 1
-            max-height (* record-count row-height)
-
-            clamped-scroll-top (Math/min scrollTop max-height) ; dangerous, not quantized to record boundary
-            offset (Math/floor (/ clamped-scroll-top row-height)) ; quantized
-
-            ; overquery strategy - load more below only for simpler math at boundaries
-            q-limit (* page-size overquery-factor)
-            occluded (- q-limit page-size)
-            q-offset offset #_(- offset (Math/floor (/ occluded 2))) ; todo truncate at boundaries
-            ]
-
-        (dom/table
-          (dom/props {:style {:display "grid" :grid-template-columns "4em 15em min-content min-content"}})
-          (dom/props {:style {:height (str (* row-height record-count) "px")}}) ; record-count blinks on scroll, isolate
-          (e/server
-            (let [[record-count ids] (Query q-offset q-limit)
-                  padding-top (* offset row-height) ; reconstruct padding from quantized offset
-                  occluded-height (* occluded row-height) ; todo truncate at boundary
-                  padding-bottom (- max-height padding-top occluded-height)]
-              (e/client (reset! !record-count record-count))
-
-              (dom/props {:style #_(e/client) {:padding-top (str padding-top "px")}}) ; seen elements are replaced with padding
-              (dom/props {:style #_(e/client) ; align spacer latency with updated resultset
-                          {:padding-bottom (str padding-bottom "px")}})
-
-              (e/client (Tap-diffs ids))
-              (e/for [id ids]
-                (dom/tr (dom/props {:style {:display "grid" :grid-template-columns "subgrid" :grid-column "1 / f-1" :height (str row-height "px")}})
-                  (let [m (Row id)]
-                    (e/for [k colspec]
-                      (dom/td
-                        (e/call (get m k))))))))))))))
+  (dom/style (dom/text ".TableScrollFixedCounted tr { display:grid; grid-template-columns: 4em 15em min-content min-content; grid-column: 1 / f-1; }"))
+  (dom/div (dom/props {:class "TableScrollFixedCounted"
+                       :style {:overflowX "hidden" :overflowY "auto" ; Requires css {box-sizing: border-box;}
+                               :position "fixed" :top "0" :bottom "0" :left "0" :right "0"}})
+    (let [row-height 25 ; todo relative measurement (note: browser zoom impacts px height)
+          !record-count (e/client (atom 0)) record-count (e/client (e/watch !record-count))
+          o-l #_[offset limit] (Scroll-window row-height record-count dom/node)
+          offset (e/client (nth o-l 0))
+          limit (e/client (nth o-l 1))]
+      (dom/table
+        #_(dom/props ; uncomment for quantized scroll
+            (e/client {:style {:position "fixed" :transform (str "translate(0," (- (* offset row-height)) "px)")}}))
+        (let [[record-count indexed-page] (Query offset limit)] ; neutral
+          (e/client (reset! !record-count record-count))
+          (e/client (Tap-diffs indexed-page))
+          (e/for [[i x] indexed-page]
+            (dom/tr (dom/props {:style {:height (str row-height "px") ; todo shouldn't need this
+                                        :position "absolute" :top (str (* i row-height) "px")}})
+              (let [m (Row x)]
+                (e/for [k colspec]
+                  (dom/td
+                    (e/call (get m k)))))))))
+      (dom/div (dom/props {:style {:height (str (* row-height record-count) "px")}})))))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
 #?(:cljs (def !sort-key (atom [:order/email])))
