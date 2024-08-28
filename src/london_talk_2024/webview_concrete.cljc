@@ -17,18 +17,19 @@
   (e/server (e/diff-by identity (e/Offload #(teeshirt-orders db search sort-key))))) ; e.g. [9 10 11]
 
 (e/defn WebviewConcrete []
-  (e/client
-    (let [db (e/server (e/watch conn))
-          search (dom/input (dom/On "input" #(-> % .-target .-value) ""))
+  (e/server
+    (let [db (e/watch conn)
+          search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))
           ids (Teeshirt-orders db search)]
       (dom/table
         (e/for [id ids]
           (dom/tr
-            (let [!e (e/server (d/entity db id))
-                  email (e/server (-> !e :order/email))
-                  gender (e/server (-> !e :order/gender :db/ident))
-                  shirt-size (e/server (-> !e :order/shirt-size :db/ident))]
+            (let [!e (d/entity db id)
+                  email (-> !e :order/email)
+                  gender (-> !e :order/gender :db/ident)
+                  shirt-size (-> !e :order/shirt-size :db/ident)]
               (dom/td (dom/text id))
               (dom/td (dom/text email))
-              (dom/td (Typeahead gender (e/fn [search] (Genders db search))))
-              (dom/td (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search)))))))))))
+              (dom/td (e/client ; fixme
+                        (Typeahead gender (e/fn [search] (Genders db search)))))
+              (dom/td (e/client (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search))))))))))))
