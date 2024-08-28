@@ -20,7 +20,7 @@
         (file-is-dir h)
         (dom/li (dom/text name_)
           (dom/ul
-            (e/for-by identity [x (file-list-files h)]
+            (e/for-by hash [x (file-list-files h)]
               (Dir-tree x s))))
 
         (and (file-is-file h) (includes-str? name_ s))
