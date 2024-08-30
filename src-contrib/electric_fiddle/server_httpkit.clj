@@ -2,8 +2,8 @@
   (:require
    [clojure.tools.logging :as log]
    [electric-fiddle.ring-middleware :as middleware]
-   [hyperfiddle.electric-httpkit-adapter :as electric-httpkit]
-   [hyperfiddle.electric-ring-adapter :as electric-ring]
+   [hyperfiddle.electric-httpkit-adapter3 :as electric-httpkit]
+   [hyperfiddle.electric-ring-adapter3 :as electric-ring]
    [org.httpkit.server :as httpkit]
    [ring.middleware.cookies :as cookies]
    [ring.middleware.params :refer [wrap-params]])
