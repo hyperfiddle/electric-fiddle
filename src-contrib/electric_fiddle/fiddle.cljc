@@ -18,9 +18,10 @@
       (dom/fieldset
         (dom/props {:class ["user-examples-target" (some-> target name)]})
         (dom/legend (dom/text "Result"))
-        (let [Target (get hf/pages target)
+        (let [Target (get hf/pages target ::not-found)
               Wrap (when ?wrap (get hf/pages ?wrap ::not-found))]
           (cond
+            (= ::not-found Target) (dom/h1 (dom/text "not found: " target))
             (= ::not-found Wrap) (dom/h1 (dom/text "not found, wrap: " ?wrap))
             (some? Wrap) ($ Wrap Target)
             () ($ Target)))))))

@@ -26,7 +26,7 @@
    'hfql-intro "src/dustingetz/hfql_intro.md"
    'hfql-teeshirt-orders "src/dustingetz/hfql_teeshirt_orders.md"
 
-   'demo_two_clocks "src/electric_tutorial/demo_two_clocks.md"})
+   'demo_two_clocks "src/electric_tutorial/two_clocks.md"})
 
 (defn parse-md-directive [s]
   (let [[_ extension alt-text arg arg2] (re-find #"!(.*?)\[(.*?)\]\((.*?)\)(?:\((.*?)\))?" s)]
@@ -41,8 +41,8 @@
 (e/defn ExtensionNotFound [s & directive]
   (e/client (dom/div (dom/text "Unsupported markdown directive: " (pr-str directive)))))
 
-(comment 
-  (parse-sections (slurp "src/electric_tutorial/demo_two_clocks.md")))
+(comment
+  (parse-sections (slurp "src/electric_tutorial/two_clocks.md")))
 
 (e/defn Custom-markdown [extensions essay-filename]
   (e/server
