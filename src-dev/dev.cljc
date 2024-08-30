@@ -41,7 +41,7 @@
        (log/info (pr-str config))
        (log/info "Starting Electric compiler and server...") ; run after REPL redirects stdout
 
-       (@shadow-start!)
+       (@shadow-start!) ; no-op in calva shadow-cljs configuration which starts this out of band
        (@shadow-watch :dev)
                                         ; todo block until finished?
        (comment (@shadow-stop!))
