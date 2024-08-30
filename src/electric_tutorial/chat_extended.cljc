@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-chat-extended
+(ns electric-tutorial.chat-extended
   (:require [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))
 
@@ -14,7 +14,7 @@
 
     (dom/hr)
     (dom/ul
-      (e/cursor [{::keys [username msg]} (e/server (e/diff-by ::message-id (reverse (e/watch !msgs))))]
+      (e/cursor [{::keys [:electric-tutorial.chat-extended/username :electric-tutorial.chat-extended/msg]} (e/server (e/diff-by ::message-id (reverse (e/watch !msgs))))]
         (dom/li (dom/strong (dom/text username))
                 (dom/text " " msg))))
 

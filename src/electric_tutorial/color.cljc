@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-color
+(ns electric-tutorial.color
   (:require [hyperfiddle.electric :as e]
             [hyperfiddle.electric-dom2 :as dom]
             [hyperfiddle.router :as r]

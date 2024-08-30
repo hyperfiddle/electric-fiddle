@@ -1,5 +1,5 @@
-(ns electric-tutorial.demo-reagent-interop
-  #?(:cljs (:require-macros [electric-tutorial.demo-reagent-interop :refer [with-reagent]]))
+(ns electric-tutorial.reagent-interop
+  #?(:cljs (:require-macros [electric-tutorial.reagent-interop :refer [with-reagent]]))
   (:require [hyperfiddle.electric :as e]
             [hyperfiddle.electric-dom2 :as dom]
             #?(:cljs [reagent.core :as r])
@@ -41,7 +41,7 @@
 
 (defn MousePosition [x y]
   #?(:cljs
-     [:> ScatterChart {:width 300 :height 300 
+     [:> ScatterChart {:width 300 :height 300
                        :margin #js{:top 20, :right 20, :bottom 20, :left 20}}
       [:> CartesianGrid {:strokeDasharray "3 3"}]
       [:> XAxis {:type "number", :dataKey "x", :unit "px", :domain #js[0 2000]}]
@@ -57,7 +57,7 @@
                          (fn [e] [(.-clientX e) (.-clientY e)]))]
       (with-reagent MousePosition x y) ; reactive
       ;; Adapted from https://recharts.org/en-US/examples/TinyLineChart
-      (with-reagent TinyLineChart 
+      (with-reagent TinyLineChart
         [{:name "Page A" :uv 4000 :amt 2400 :pv 2400}
          {:name "Page B" :uv 3000 :amt 2210 :pv 1398}
          {:name "Page C" :uv 2000 :amt 2290 :pv (+ 6000 (* -5 y))} ; reactive

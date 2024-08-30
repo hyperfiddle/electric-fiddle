@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-two-clocks
+(ns electric-tutorial.two-clocks
   (:require
    [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))

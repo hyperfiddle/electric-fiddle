@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-toggle
+(ns electric-tutorial.toggle
   (:require [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))
 

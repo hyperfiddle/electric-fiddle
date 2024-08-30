@@ -1,4 +1,4 @@
-(ns electric-tutorial.tutorial-lifecycle
+(ns electric-tutorial.lifecycle
   (:require
    [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))

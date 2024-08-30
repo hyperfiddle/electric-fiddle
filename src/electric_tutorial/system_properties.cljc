@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-system-properties
+(ns electric-tutorial.system-properties
   (:require [clojure.string :as str]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))

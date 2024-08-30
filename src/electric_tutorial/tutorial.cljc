@@ -10,24 +10,24 @@
             [hyperfiddle.electric-svg3 :as svg]
             [hyperfiddle.router3 :as r]
 
-            [electric-tutorial.demo-two-clocks :refer [TwoClocks]]
-            [electric-tutorial.demo-toggle :refer [Toggle]]
-            [electric-tutorial.demo-system-properties :refer [SystemProperties]]
-            [electric-tutorial.demo-chat :refer [Chat]]
-            [electric-tutorial.tutorial-backpressure :refer [Backpressure]]
-            [electric-tutorial.tutorial-lifecycle :refer [Lifecycle]]
-            [electric-tutorial.demo-chat-extended :refer [ChatExtended]]
-            [electric-tutorial.demo-webview :refer [Webview]]
-            [electric-tutorial.demo-todos-simple :refer [TodoList]]
-            ;; #_[electric-tutorial.demo-reagent-interop :refer [ReagentInterop]] ; npm install
-            [electric-tutorial.demo-svg :refer [SVG]]
-            [electric-tutorial.tutorial-7guis-1-counter :refer [Counter]]
-            [electric-tutorial.tutorial-7guis-2-temperature :refer [TemperatureConverter]]
-            [electric-tutorial.tutorial-7guis-4-timer :refer [Timer]]
-            [electric-tutorial.tutorial-7guis-5-crud :refer [CRUD]]
-            #_[electric-tutorial.demo-todomvc :refer [TodoMVC]]
-            #_[electric-tutorial.demo-todomvc-composed :refer [TodoMVC-composed]]
-            #_[electric-tutorial.demo-explorer :refer [DirectoryExplorer]]
+            [electric-tutorial.two-clocks :refer [TwoClocks]]
+            [electric-tutorial.toggle :refer [Toggle]]
+            [electric-tutorial.system-properties :refer [SystemProperties]]
+            [electric-tutorial.chat :refer [Chat]]
+            [electric-tutorial.backpressure :refer [Backpressure]]
+            [electric-tutorial.lifecycle :refer [Lifecycle]]
+            [electric-tutorial.chat-extended :refer [ChatExtended]]
+            [electric-tutorial.webview :refer [Webview]]
+            [electric-tutorial.todos-simple :refer [TodoList]]
+            ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
+            [electric-tutorial.svg :refer [SVG]]
+            [electric-tutorial.counter :refer [Counter]]
+            [electric-tutorial.temperature :refer [TemperatureConverter]]
+            [electric-tutorial.timer :refer [Timer]]
+            [electric-tutorial.crud :refer [CRUD]]
+            #_[electric-tutorial.todomvc :refer [TodoMVC]]
+            #_[electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
+            #_[electric-tutorial.explorer :refer [DirectoryExplorer]]
 
             ))
 
@@ -105,21 +105,23 @@
             (dom/props {:class "user-examples-nav-next"})
             (dom/text (str (title next) " >"))))))))
 
+(def tutorial-path "src/electric_tutorial/")
+
 (def tutorials2
-  {`TwoClocks "src/electric_tutorial/demo_two_clocks.md"
-   `Toggle "src/electric_tutorial/demo_toggle.md"
-   `SystemProperties "src/electric_tutorial/demo_system_properties.md"
-   `Chat "src/electric_tutorial/demo_chat.md"
-   `Backpressure "src/electric_tutorial/tutorial_backpressure.md"
-   `Lifecycle "src/electric_tutorial/tutorial_lifecycle.md"
-   `ChatExtended "src/electric_tutorial/demo_chat_extended.md" ; FIXME port to v3
-   `Webview "src/electric_tutorial/demo_webview.md"
-   `TodoList "src/electric_tutorial/demo_todos_simple.md"
-   `SVG "src/electric_tutorial/demo_svg.md"
-   `Counter "src/electric_tutorial/tutorial_7guis_1_counter.md"
-   `TemperatureConverter "src/electric_tutorial/tutorial_7guis_2_temperature.md"
-   `Timer "src/electric_tutorial/tutorial_7guis_4_timer.md"
-   `CRUD "src/electric_tutorial/tutorial_7guis_5_crud.md"
+  {`TwoClocks "two_clocks.md"
+   `Toggle "toggle.md"
+   `SystemProperties "system_properties.md"
+   `Chat "chat.md"
+   `Backpressure "tutorial_backpressure.md"
+   `Lifecycle "tutorial_lifecycle.md"
+   `ChatExtended "chat_extended.md" ; FIXME port to v3
+   `Webview "webview.md"
+   `TodoList "todos_simple.md"
+   `SVG "svg.md"
+   `Counter "tutorial_7guis_1_counter.md"
+   `TemperatureConverter "tutorial_7guis_2_temperature.md"
+   `Timer "tutorial_7guis_4_timer.md"
+   `CRUD "tutorial_7guis_5_crud.md"
    ;`ReagentInterop ""
    })
 
@@ -139,7 +141,7 @@
    `TemperatureConverter TemperatureConverter
    `Timer Timer
    `CRUD CRUD
-   ;`electric-tutorial.demo-reagent-interop/ReagentInterop electric-tutorial.demo-reagent-interop/ReagentInterop
+   ;`ReagentInterop ReagentInterop
    })
 
 (e/defn Extensions []
@@ -149,7 +151,7 @@
 (e/defn RedirectLegacyLinks! [link]
   ;; Keep existing links working.
   ;; Demos used to be identified by their fully qualified name - e.g. `hello-fiddle.fiddles/Hello
-  ;; They are now represented by an s-expression - e.g. `(electric-tutorial.demo-color/Color h s l)
+  ;; They are now represented by an s-expression - e.g. `(Color h s l)
   (if (and (map? link) (ident? (ffirst link)))
     (do ($ r/Navigate! [(list (ffirst link))])
         nil)
@@ -162,7 +164,7 @@
       (dom/h1 (dom/text "Electric Tutorial"))
       (binding [hf/pages ($ Fiddles)]
         ($ Nav ?tutorial false)
-        (if-some [essay-filename (get tutorials2 ?tutorial)]
+        (if-some [essay-filename (str tutorial-path (get tutorials2 ?tutorial))]
           ($ Custom-markdown ($ Extensions) essay-filename)
           (dom/h1 (dom/text "Tutorial not found: " ?tutorial)))
         #_($ Nav ?tutorial true)))))

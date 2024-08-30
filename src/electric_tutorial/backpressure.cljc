@@ -1,4 +1,4 @@
-(ns electric-tutorial.tutorial-backpressure
+(ns electric-tutorial.backpressure
   (:require [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))
 

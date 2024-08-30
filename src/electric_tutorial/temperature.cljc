@@ -1,4 +1,4 @@
-(ns electric-tutorial.tutorial-7guis-2-temperature
+(ns electric-tutorial.temperature
   (:require [clojure.math]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]

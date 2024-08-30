@@ -1,4 +1,4 @@
-(ns electric-tutorial.tutorial-7guis-5-crud
+(ns electric-tutorial.crud
   (:require
    [clojure.string :as str]
    [hyperfiddle.electric3 :as e :refer [$]]

@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-webview
+(ns electric-tutorial.webview
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))

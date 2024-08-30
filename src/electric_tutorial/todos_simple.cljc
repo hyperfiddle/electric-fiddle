@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-todos-simple
+(ns electric-tutorial.todos-simple
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))

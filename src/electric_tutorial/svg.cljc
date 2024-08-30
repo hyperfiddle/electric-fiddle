@@ -1,4 +1,4 @@
-(ns electric-tutorial.demo-svg
+(ns electric-tutorial.svg
   (:require
    [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]

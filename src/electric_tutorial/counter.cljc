@@ -1,4 +1,4 @@
-(ns electric-tutorial.tutorial-7guis-1-counter
+(ns electric-tutorial.counter
   (:require
    [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))
