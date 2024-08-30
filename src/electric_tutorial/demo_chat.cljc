@@ -1,6 +1,6 @@
 (ns electric-tutorial.demo-chat
   (:require
-   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))
 
 ;; TODO spine and take 10? How would we pad?

@@ -5,10 +5,10 @@
             [electric-fiddle.fiddle :refer [Fiddle-fn Fiddle-ns]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown]]
             [hyperfiddle :as hf]
-            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-svg3 :as svg]
-            [hyperfiddle.router-de :as r]
+            [hyperfiddle.router3 :as r]
 
             [electric-tutorial.demo-two-clocks :refer [TwoClocks]]
             [electric-tutorial.demo-toggle :refer [Toggle]]

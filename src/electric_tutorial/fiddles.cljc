@@ -2,9 +2,9 @@
   (:require [electric-fiddle.main]
             [electric-tutorial.tutorial :refer [Tutorial]]
             [hyperfiddle :as hf]
-            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router-de :as r]))
+            [hyperfiddle.router3 :as r]))
 
 (e/defn Fiddles [] {`Tutorial Tutorial})
 

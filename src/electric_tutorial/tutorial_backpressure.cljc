@@ -1,5 +1,5 @@
 (ns electric-tutorial.tutorial-backpressure
-  (:require [hyperfiddle.electric-de :as e :refer [$]]
+  (:require [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Backpressure []

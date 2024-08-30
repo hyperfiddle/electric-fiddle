@@ -1,7 +1,7 @@
 (ns electric-tutorial.tutorial-7guis-5-crud
   (:require
    [clojure.string :as str]
-   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))
 
 (def !state (atom {:selected nil

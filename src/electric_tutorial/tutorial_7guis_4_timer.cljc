@@ -1,6 +1,6 @@
 (ns electric-tutorial.tutorial-7guis-4-timer
   (:require
-   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))
 
 (def initial-goal 10) ; seconds

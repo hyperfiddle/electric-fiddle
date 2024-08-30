@@ -1,6 +1,6 @@
 (ns electric-tutorial.demo-todos-simple
   (:require #?(:clj [datascript.core :as d])
-            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj (defonce !conn (d/create-conn {}))) ; database on server

@@ -1,5 +1,5 @@
 (ns electric-tutorial.demo-chat-extended
-  (:require [hyperfiddle.electric-de :as e :refer [$]]
+  (:require [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]))
 
 (defonce !msgs #?(:cljs nil, :clj (atom (list)))) ; server only state
