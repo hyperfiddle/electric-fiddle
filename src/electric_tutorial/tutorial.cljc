@@ -12,52 +12,55 @@
 
             [electric-tutorial.demo-two-clocks :refer [TwoClocks]]
             [electric-tutorial.demo-toggle :refer [Toggle]]
-            electric-tutorial.demo-system-properties
-            electric-tutorial.demo-chat
-            electric-tutorial.tutorial-backpressure
-            electric-tutorial.tutorial-lifecycle
-            electric-tutorial.demo-chat-extended
-            electric-tutorial.demo-webview
-            electric-tutorial.demo-todos-simple
-            ;; #_electric-tutorial.demo-reagent-interop ; npm install
-            electric-tutorial.demo-svg
-            electric-tutorial.tutorial-7guis-1-counter
-            electric-tutorial.tutorial-7guis-2-temperature
-            electric-tutorial.tutorial-7guis-4-timer
-            electric-tutorial.tutorial-7guis-5-crud
+            [electric-tutorial.demo-system-properties :refer [SystemProperties]]
+            [electric-tutorial.demo-chat :refer [Chat]]
+            [electric-tutorial.tutorial-backpressure :refer [Backpressure]]
+            [electric-tutorial.tutorial-lifecycle :refer [Lifecycle]]
+            [electric-tutorial.demo-chat-extended :refer [ChatExtended]]
+            [electric-tutorial.demo-webview :refer [Webview]]
+            [electric-tutorial.demo-todos-simple :refer [TodoList]]
+            ;; #_[electric-tutorial.demo-reagent-interop :refer [ReagentInterop]] ; npm install
+            [electric-tutorial.demo-svg :refer [SVG]]
+            [electric-tutorial.tutorial-7guis-1-counter :refer [Counter]]
+            [electric-tutorial.tutorial-7guis-2-temperature :refer [TemperatureConverter]]
+            [electric-tutorial.tutorial-7guis-4-timer :refer [Timer]]
+            [electric-tutorial.tutorial-7guis-5-crud :refer [CRUD]]
+            #_[electric-tutorial.demo-todomvc :refer [TodoMVC]]
+            #_[electric-tutorial.demo-todomvc-composed :refer [TodoMVC-composed]]
+            #_[electric-tutorial.demo-explorer :refer [DirectoryExplorer]]
+
             ))
 
 (def tutorials
-  [["Electric" 
-    [`electric-tutorial.demo-two-clocks/TwoClocks
-     `electric-tutorial.demo-toggle/Toggle
-     `electric-tutorial.demo-system-properties/SystemProperties
-     `electric-tutorial.demo-chat/Chat
-     `electric-tutorial.tutorial-backpressure/Backpressure
+  [["Electric"
+    [`TwoClocks
+     `Toggle
+     `SystemProperties
+     `Chat
+     `Backpressure
      `electric-tutorial.tutorial-lifecycle/Lifecycle
      ; tutorial-entrypoint
-     `electric-tutorial.demo-chat-extended/ChatExtended ; FIXME port to v3
-     `electric-tutorial.demo-webview/Webview
-     `electric-tutorial.demo-todos-simple/TodoList
-     #_`electric-tutorial.demo-reagent-interop/ReagentInterop
-     `electric-tutorial.demo-svg/SVG
+     `ChatExtended ; FIXME port to v3
+     `Webview
+     `TodoList
+     #_`ReagentInterop
+     `SVG
 
-     #_`electric-tutorial.demo-todomvc/TodoMVC
-     #_`electric-tutorial.demo-todomvc-composed/TodoMVC-composed
-     #_`electric-tutorial.demo-explorer/DirectoryExplorer
-     
+     #_`TodoMVC
+     #_`TodoMVC-composed
+     #_`DirectoryExplorer
+
      #_`electric-demo.demo-virtual-scroll/VirtualScroll ; virtual scroll Server-streamed virtual pagination over node_modules. Check the DOM!
      #_`electric-demo.wip.demo-stage-ui4/CrudForm
      #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]
    ["7 GUIs"
-    [`electric-tutorial.tutorial-7guis-1-counter/Counter
-     `electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter
-     `electric-tutorial.tutorial-7guis-4-timer/Timer
-     `electric-tutorial.tutorial-7guis-5-crud/CRUD
-     #_`wip.teeshirt-orders/Webview-HFQL ;HFQL hello world. HFQL is a data notation for CRUD apps.
-     ]]])
+    [`Counter
+     `TemperatureConverter
+     `Timer
+     `CRUD
+     #_`wip.teeshirt-orders/Webview-HFQL]]])
 
 (def tutorials-index (->> tutorials
                        (mapcat (fn [[_group entries]] entries))
@@ -103,39 +106,39 @@
             (dom/text (str (title next) " >"))))))))
 
 (def tutorials2
-  {`electric-tutorial.demo-two-clocks/TwoClocks "src/electric_tutorial/demo_two_clocks.md"
-   `electric-tutorial.demo-toggle/Toggle "src/electric_tutorial/demo_toggle.md"
-   `electric-tutorial.demo-system-properties/SystemProperties "src/electric_tutorial/demo_system_properties.md"
-   `electric-tutorial.demo-chat/Chat "src/electric_tutorial/demo_chat.md"
-   `electric-tutorial.tutorial-backpressure/Backpressure "src/electric_tutorial/tutorial_backpressure.md"
-   `electric-tutorial.tutorial-lifecycle/Lifecycle "src/electric_tutorial/tutorial_lifecycle.md"
-   `electric-tutorial.demo-chat-extended/ChatExtended "src/electric_tutorial/demo_chat_extended.md" ; FIXME port to v3
-   `electric-tutorial.demo-webview/Webview "src/electric_tutorial/demo_webview.md"
-   `electric-tutorial.demo-todos-simple/TodoList "src/electric_tutorial/demo_todos_simple.md"
-   `electric-tutorial.demo-svg/SVG "src/electric_tutorial/demo_svg.md"
-   `electric-tutorial.tutorial-7guis-1-counter/Counter "src/electric_tutorial/tutorial_7guis_1_counter.md"
-   `electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter "src/electric_tutorial/tutorial_7guis_2_temperature.md"
-   `electric-tutorial.tutorial-7guis-4-timer/Timer "src/electric_tutorial/tutorial_7guis_4_timer.md"
-   `electric-tutorial.tutorial-7guis-5-crud/CRUD "src/electric_tutorial/tutorial_7guis_5_crud.md"
-   ;`electric-tutorial.demo-reagent-interop/ReagentInterop ""
+  {`TwoClocks "src/electric_tutorial/demo_two_clocks.md"
+   `Toggle "src/electric_tutorial/demo_toggle.md"
+   `SystemProperties "src/electric_tutorial/demo_system_properties.md"
+   `Chat "src/electric_tutorial/demo_chat.md"
+   `Backpressure "src/electric_tutorial/tutorial_backpressure.md"
+   `Lifecycle "src/electric_tutorial/tutorial_lifecycle.md"
+   `ChatExtended "src/electric_tutorial/demo_chat_extended.md" ; FIXME port to v3
+   `Webview "src/electric_tutorial/demo_webview.md"
+   `TodoList "src/electric_tutorial/demo_todos_simple.md"
+   `SVG "src/electric_tutorial/demo_svg.md"
+   `Counter "src/electric_tutorial/tutorial_7guis_1_counter.md"
+   `TemperatureConverter "src/electric_tutorial/tutorial_7guis_2_temperature.md"
+   `Timer "src/electric_tutorial/tutorial_7guis_4_timer.md"
+   `CRUD "src/electric_tutorial/tutorial_7guis_5_crud.md"
+   ;`ReagentInterop ""
    })
 
 (e/defn Fiddles []
   {
    `TwoClocks TwoClocks
    `Toggle Toggle
-   `electric-tutorial.demo-system-properties/SystemProperties electric-tutorial.demo-system-properties/SystemProperties
-   `electric-tutorial.demo-chat/Chat electric-tutorial.demo-chat/Chat
-   `electric-tutorial.tutorial-backpressure/Backpressure electric-tutorial.tutorial-backpressure/Backpressure
-   `electric-tutorial.tutorial-lifecycle/Lifecycle electric-tutorial.tutorial-lifecycle/Lifecycle
-   `electric-tutorial.demo-chat-extended/ChatExtended electric-tutorial.demo-chat-extended/ChatExtended ; FIXME port to v3
-   `electric-tutorial.demo-webview/Webview electric-tutorial.demo-webview/Webview
-   `electric-tutorial.demo-todos-simple/TodoList electric-tutorial.demo-todos-simple/TodoList  ; css fixes
-   `electric-tutorial.demo-svg/SVG electric-tutorial.demo-svg/SVG
-   `electric-tutorial.tutorial-7guis-1-counter/Counter electric-tutorial.tutorial-7guis-1-counter/Counter
-   `electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter
-   `electric-tutorial.tutorial-7guis-4-timer/Timer electric-tutorial.tutorial-7guis-4-timer/Timer
-   `electric-tutorial.tutorial-7guis-5-crud/CRUD electric-tutorial.tutorial-7guis-5-crud/CRUD
+   `SystemProperties SystemProperties
+   `Chat Chat
+   `Backpressure Backpressure
+   `Lifecycle Lifecycle
+   `ChatExtended ChatExtended ; FIXME port to v3
+   `Webview Webview
+   `TodoList TodoList  ; css fixes
+   `SVG SVG
+   `Counter Counter
+   `TemperatureConverter TemperatureConverter
+   `Timer Timer
+   `CRUD CRUD
    ;`electric-tutorial.demo-reagent-interop/ReagentInterop electric-tutorial.demo-reagent-interop/ReagentInterop
    })
 
