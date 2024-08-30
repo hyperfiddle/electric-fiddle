@@ -24,8 +24,12 @@
           shirt-size (-> !e :order/shirt-size :db/ident)]
       {:db/id            (e/fn [] (dom/text id))
        :order/email      (e/fn [] (dom/text email))
-       :order/gender     (e/fn [] (e/client (Typeahead gender (e/fn [search] (Genders db search)))))
-       :order/shirt-size (e/fn [] (e/client (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search)))))})))
+       :order/gender     (e/fn [] (Typeahead gender
+                                    (e/fn Options [search] (Genders db search))
+                                    (e/fn OptionLabel [x] (pr-str x))))
+       :order/shirt-size (e/fn [] (Typeahead shirt-size
+                                    (e/fn Options [search] (Shirt-sizes db gender search))
+                                    (e/fn OptionLabel [x] (pr-str x))))})))
 
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))

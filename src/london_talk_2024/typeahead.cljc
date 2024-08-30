@@ -11,10 +11,10 @@
                :font-size "smaller"
                :border "2px solid black"})
 
-(e/defn Typeahead [v-id Options & [OptionLabel]]
+(e/defn Typeahead [v-id Options OptionLabel] ; & [OptionLabel] -- broken
   (dom/div (dom/props {:class "hyperfiddle-typeahead"
                        :style {:position "relative"}})
-    (let [OptionLabel (or OptionLabel (e/fn [x] (pr-str x)))
+    (let [#_#_OptionLabel (or OptionLabel (e/fn [x] (pr-str x)))
           !v-id (e/client (atom v-id)) v-id (e/client (e/watch !v-id))
           !search (e/client (atom nil)) search (e/client (e/watch !search))
 
