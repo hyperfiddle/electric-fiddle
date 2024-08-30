@@ -38,7 +38,7 @@
      `SystemProperties
      `Chat
      `Backpressure
-     `electric-tutorial.tutorial-lifecycle/Lifecycle
+     `Lifecycle
      ; tutorial-entrypoint
      `ChatExtended ; FIXME port to v3
      `Webview
@@ -112,16 +112,16 @@
    `Toggle "toggle.md"
    `SystemProperties "system_properties.md"
    `Chat "chat.md"
-   `Backpressure "tutorial_backpressure.md"
-   `Lifecycle "tutorial_lifecycle.md"
+   `Backpressure "backpressure.md"
+   `Lifecycle "lifecycle.md"
    `ChatExtended "chat_extended.md" ; FIXME port to v3
    `Webview "webview.md"
    `TodoList "todos_simple.md"
    `SVG "svg.md"
-   `Counter "tutorial_7guis_1_counter.md"
-   `TemperatureConverter "tutorial_7guis_2_temperature.md"
-   `Timer "tutorial_7guis_4_timer.md"
-   `CRUD "tutorial_7guis_5_crud.md"
+   `Counter "counter.md"
+   `TemperatureConverter "temperature_converter.md"
+   `Timer "timer.md"
+   `CRUD "crud.md"
    ;`ReagentInterop ""
    })
 

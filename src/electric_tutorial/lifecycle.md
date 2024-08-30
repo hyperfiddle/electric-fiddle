@@ -2,13 +2,13 @@
 
 mount/unmount component lifecycle
 
-!fiddle-ns[](electric-tutorial.tutorial-lifecycle/Lifecycle)
+!fiddle-ns[](electric-tutorial.lifecycle/Lifecycle)
 
 What's happening
 
 * The string "blink!" is being mounted/unmounted every 2 seconds
 * The mount/unmount "component lifecycle" is logged to the browser console with `println`
-* `(BlinkerComponent.)` is being constructed and destructed 
+* `(BlinkerComponent.)` is being constructed and destructed
 
 Novel forms
 
@@ -27,9 +27,9 @@ Key ideas
 New
 
 * Electric `new` is backwards compatible with Clojure/Script's new; if you pass it a class it will do the right thing.
-* Q: Why do we need syntax to call Electric fns, why not just use metadata on the var? A: Because lambdas. 
-  * Electric expressions can call both Electric lambdas and ordinary Clojure lambdas (like the sharp-lambda passed to e-unmount). 
-  * Due to Clojure being dynamically typed, there's no static information available for the compiler to infer the right call convention in this case. 
+* Q: Why do we need syntax to call Electric fns, why not just use metadata on the var? A: Because lambdas.
+  * Electric expressions can call both Electric lambdas and ordinary Clojure lambdas (like the sharp-lambda passed to e-unmount).
+  * Due to Clojure being dynamically typed, there's no static information available for the compiler to infer the right call convention in this case.
   * That's why Reagent uses `[F]` and Electric uses `(F.)`. Note both capitalize `F`!
 
 Dynamic extent
@@ -39,7 +39,7 @@ Dynamic extent
 - Like [RAII](https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization), this lifecycle is deterministic and intended for performing resource management effects.
 
 Process supervision
-- Electric `if` and other control flow nodes will mount and unmount their child branches (like switching the railroad track). 
+- Electric `if` and other control flow nodes will mount and unmount their child branches (like switching the railroad track).
 - If an `e/fn` were to be booted inside of an `if`, the lifetime of the booted lambda is the duration for which the branch of the `if` is active.
 - Electric objects can manage references (e.g. DOM node or atom in lexical scope).
 - A managed reference's lifetime is tied to the supervising object's lifetime.

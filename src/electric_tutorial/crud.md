@@ -2,4 +2,4 @@
 
 See <https://eugenkiss.github.io/7guis/tasks#crud>
 
-!fiddle-ns[](electric-tutorial.tutorial-7guis-5-crud/CRUD)
+!fiddle-ns[](electric-tutorial.crud/CRUD)

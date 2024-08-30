@@ -9,7 +9,8 @@
 ;; TODO Implement pending state
 (e/defn Chat []
   (dom/ul
-    (e/cursor [msg (e/server (e/diff-by identity (into '() (comp cat (take 10)) [(e/watch !msgs) (repeat nil)])))]
+    (e/cursor [msg (e/server (e/diff-by identity
+                               (into '() (comp cat (take 10)) [(e/watch !msgs) (repeat nil)])))]
       (dom/li
         (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")}})
         (dom/text msg))))

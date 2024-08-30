@@ -2,7 +2,7 @@
 
 A multiplayer chat app in 30 LOC, all one file. Try two tabs.
 
-!fiddle-ns[](electric-tutorial.demo-chat/Chat)
+!fiddle-ns[](electric-tutorial.chat/Chat)
 
 What's happening
 

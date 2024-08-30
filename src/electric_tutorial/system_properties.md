@@ -2,11 +2,11 @@
 
 A larger example of a HTML table backed by a server-side query. Type into the input and see the query update live.
 
-!fiddle-ns[](electric-tutorial.demo-system-properties/SystemProperties)
+!fiddle-ns[](electric-tutorial.system-properties/SystemProperties)
 
 What's happening
 
-* There's a HTML table on the frontend, backed by a backend "query" `jvm-system-properties` 
+* There's a HTML table on the frontend, backed by a backend "query" `jvm-system-properties`
 * The backend query is an ordinary Clojure function that only exists on the server.
 * Typing into the frontend input causes the backend query to rerun and update the table.
 * There's a reactive for loop to render the table.
@@ -28,7 +28,7 @@ Key ideas
 Reactive for details
 
 * `e/for-by` ensures that each table row is bound to a logical element of the collection, and only touched when a row dependency changes.
-* Notice there is a `println` inside the for loop. This is so you can see the efficient rendering in the browser console. 
+* Notice there is a `println` inside the for loop. This is so you can see the efficient rendering in the browser console.
 * Open the browser console now and confirm for yourself:
   * On initial render, each row is rendered once
   * Slowly input "java.class.path"
@@ -53,6 +53,6 @@ Network transparent composition is not the heavy, leaky abstraction you might th
   * Functions are an abstract mathematical object
   * Javascript already generalizes from function -> async function (`async/await`) -> generator function (`fn*/yield`)
   * Electric generalizes further: stream function -> reactive function -> distributed function
-* With Electric, you can refactor across the frontend/backend boundary, all in one place, without caring about any plumbing. 
-  * Refactoring is an algebraic activity with local reasoning, just as it should be. 
+* With Electric, you can refactor across the frontend/backend boundary, all in one place, without caring about any plumbing.
+  * Refactoring is an algebraic activity with local reasoning, just as it should be.
   * Functional programming without the BS

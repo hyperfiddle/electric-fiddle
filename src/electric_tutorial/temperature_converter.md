@@ -2,4 +2,4 @@
 
 See <https://eugenkiss.github.io/7guis/tasks#temp>
 
-!fiddle-ns[](electric-tutorial.tutorial-7guis-2-temperature/TemperatureConverter)
+!fiddle-ns[](electric-tutorial.temperature/TemperatureConverter)

@@ -2,7 +2,7 @@
 
 Streaming lexical scope. The server clock is streamed to the client.
 
-!fiddle-ns[](electric-tutorial.demo-two-clocks/TwoClocks)
+!fiddle-ns[](electric-tutorial.two-clocks/TwoClocks)
 
 What's happening
 

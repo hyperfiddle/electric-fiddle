@@ -2,7 +2,7 @@
 
 minimal todo list. it's multiplayer, try two tabs
 
-!fiddle-ns[](electric-tutorial.demo-todos-simple/TodoList)
+!fiddle-ns[](electric-tutorial.todos-simple/TodoList)
 
 What's happening
 * It's a functional todo list, the first "real app"

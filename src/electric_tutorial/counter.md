@@ -6,4 +6,4 @@ TODO Explain
 - State locallity (and latency implications)
 - Peer agnostic defn (and serializable lambdas)
 
-!fiddle-ns[](electric-tutorial.tutorial-7guis-1-counter/Counter)
+!fiddle-ns[](electric-tutorial.counter/Counter)

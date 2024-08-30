@@ -2,7 +2,7 @@
 
 This demo toggles between client and server with a button.
 
-!fiddle-ns[](electric-tutorial.demo-toggle/Toggle)
+!fiddle-ns[](electric-tutorial.toggle/Toggle)
 
 What's happening
 * There's a button on the frontend, with a callback, that toggles a boolean, stored in a server-side atom.
@@ -25,7 +25,7 @@ Key Ideas
 * **Clojure/Script interop**: The atom definition is ordinary Clojure code, which works because this is an ordinary `.cljc` file.
 
 Client/server value transfer
-* Only values can be serialized and moved across the network. 
+* Only values can be serialized and moved across the network.
 * Reference types (e.g. atoms, database connections, Java classes) are unserializable and therefore cannot be moved.
 * Quiz: in `(e/server (pr-str (type 1)))`, why do we `pr-str` on the server? Hint: what type is `java.lang.Long`?
 * Quiz: in `(e/def x (e/server (e/watch !x)))`, why do we `e/watch` on the server?

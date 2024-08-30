@@ -2,7 +2,7 @@
 
 Extended chat demo with auth and presence. When multiple sessions are connected, you can see who else is present.
 
-!fiddle-ns[](electric-tutorial.demo-chat-extended/ChatExtended)
+!fiddle-ns[](electric-tutorial.chat-extended/ChatExtended)
 
 What's happening
 * There is auth
