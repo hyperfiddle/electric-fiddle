@@ -6,8 +6,8 @@
             electric-fiddle.main
             #?(:clj [electric-fiddle.server-jetty :refer [start-server!]])
             [hyperfiddle :as hf]
-            [hyperfiddle.electric-de :as e :refer [$]]
-            #?(:cljs hyperfiddle.electric-client-de)
+            [hyperfiddle.electric3 :as e :refer [$]]
+            #?(:cljs hyperfiddle.electric-client3)
             #?(:cljs #=(clojure.core/identity hyperfiddle/*hyperfiddle-user-ns*)))) ; domain DI here
 
 (def config

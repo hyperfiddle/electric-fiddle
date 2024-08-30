@@ -39,7 +39,7 @@ so do not use `clj -T`"
            :verbose verbose,
            :config-merge
            [{:compiler-options {:optimizations (if optimize :advanced :simple)}
-             :closure-defines {'hyperfiddle.electric-client-de/ELECTRIC_USER_VERSION electric-user-version}}]})
+             :closure-defines {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION electric-user-version}}]})
         shadow-status (assert (= shadow-status :done) "shadow-api/release error"))) ; fail build on error
     (shadow-server/stop!)
     (log/info domain "client built")))
