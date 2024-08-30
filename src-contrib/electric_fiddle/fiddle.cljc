@@ -2,7 +2,7 @@
   (:require clojure.string
             [contrib.electric-codemirror :refer [CodeMirror]]
             [hyperfiddle :as hf]
-            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src]])
             [electric-fiddle.index :refer [Index]]))

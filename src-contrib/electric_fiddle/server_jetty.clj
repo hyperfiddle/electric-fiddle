@@ -2,7 +2,7 @@
   (:require
    [clojure.tools.logging :as log]
    [electric-fiddle.ring-middleware :as middleware]
-   [hyperfiddle.electric-ring-adapter-de :as electric-ring]
+   [hyperfiddle.electric-ring-adapter3 :as electric-ring]
    [ring.adapter.jetty :as ring]
    [ring.middleware.cookies :as cookies]
    [ring.middleware.params :refer [wrap-params]]

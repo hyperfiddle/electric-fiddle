@@ -1,7 +1,7 @@
 (ns electric-fiddle.fiddle-markdown
   (:require clojure.string
             [electric-fiddle.fiddle :refer [Fiddle-fn]]
-            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             #?(:clj [markdown.core])
             [hyperfiddle.rcf :refer [tests]]

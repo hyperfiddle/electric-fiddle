@@ -1,6 +1,6 @@
 (ns hello-fiddle.fiddles
   (:require
-   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Hello []

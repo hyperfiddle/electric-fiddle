@@ -1,6 +1,6 @@
 (ns hyperfiddle
   (:require #_[clojure.spec.alpha :as s]
-            [hyperfiddle.electric-de :as e]))
+            [hyperfiddle.electric3 :as e]))
 
 ; See discussion of single-segment namespaces here
 ; https://github.com/bbatsov/clojure-style-guide/pull/100

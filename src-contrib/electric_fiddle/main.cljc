@@ -1,9 +1,9 @@
 (ns electric-fiddle.main
   (:require
    [hyperfiddle :as hf]
-   [hyperfiddle.electric-de :as e :refer [$]]
+   [hyperfiddle.electric3 :as e :refer [$]]
    [hyperfiddle.electric-dom3 :as dom]
-   [hyperfiddle.router-de :as r]
+   [hyperfiddle.router3 :as r]
    [electric-fiddle.index :refer [Index]]
    ))
 

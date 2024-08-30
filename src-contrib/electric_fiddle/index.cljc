@@ -1,8 +1,8 @@
 (ns electric-fiddle.index
   (:require [hyperfiddle :as hf]
-            [hyperfiddle.electric-de :as e]
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router-de :as r]))
+            [hyperfiddle.router3 :as r]))
 
 (e/defn Index []
   (e/client
