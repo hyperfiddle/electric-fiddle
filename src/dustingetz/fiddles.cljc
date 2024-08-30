@@ -1,7 +1,8 @@
 (ns dustingetz.fiddles
   (:require [hyperfiddle.electric-de :as e]
             [hyperfiddle :as hf]
-            dustingetz.scratch
+            [dustingetz.scratch :refer [Scratch]]
+            [dustingetz.hello :refer [Hello]]
             [dustingetz.counter :refer [CounterDemo]]
             [dustingetz.painter :refer [Painter]]
             [dustingetz.scroll-abc :refer [Scroll-abc]]
@@ -21,14 +22,15 @@
                                              Teeshirt-orders-5]]
             #_[dustingetz.y-fib :refer [Y-fib]]
             #_[dustingetz.y-dir :refer [Y-dir]]
-            #_[dustingetz.essay :refer [Essay]]
+            [dustingetz.essay :refer [Essay]]
 
             #_electric-fiddle.main
             ;#?(:clj models.teeshirt-orders-datomic)
             ))
 
 (e/defn Fiddles []
-  {`dustingetz.scratch/Scratch dustingetz.scratch/Scratch
+  {`Scratch Scratch
+   `Hello Hello
    `CounterDemo CounterDemo
    `Painter Painter
    `ScrollDemo ScrollDemo
@@ -40,7 +42,7 @@
    `TreeDemo TreeDemo
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
-   ;`Essay (With-HFQL-Bindings. Essay)
+   `Essay Essay #_(With-HFQL-Bindings. Essay)
    ;`Teeshirt-orders-1 (With-HFQL-Bindings. Teeshirt-orders-1)
    ;`Teeshirt-orders-2 (With-HFQL-Bindings. Teeshirt-orders-2)
    ;`Teeshirt-orders-3 (With-HFQL-Bindings. Teeshirt-orders-3)
