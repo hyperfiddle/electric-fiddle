@@ -12,6 +12,9 @@
             [dustingetz.fizzbuzz2 :refer [FizzBuzz2Demo]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.electric-tree :refer [TreeDemo]]
+            [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
+            [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
+
 
             #_[dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
             #_[dustingetz.hfql-intro :refer [With-HFQL-Bindings
@@ -40,6 +43,8 @@
    `FizzBuzz2Demo FizzBuzz2Demo
    `FileWatcherDemo FileWatcherDemo
    `TreeDemo TreeDemo
+   `MillionCheckboxes MillionCheckboxes
+   `MillionCheckboxes2 MillionCheckboxes2
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
    `Essay Essay #_(With-HFQL-Bindings. Essay)
