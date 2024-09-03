@@ -107,7 +107,7 @@
 
 (def tutorial-path "src/electric_tutorial/")
 
-(def tutorials2
+(def essays
   {`TwoClocks "two_clocks.md"
    `Toggle "toggle.md"
    `SystemProperties "system_properties.md"
@@ -164,8 +164,8 @@
       (dom/h1 (dom/text "Electric Tutorial"))
       (binding [hf/pages ($ Fiddles)]
         ($ Nav ?tutorial false)
-        (if-some [essay-filename (str tutorial-path (get tutorials2 ?tutorial))]
-          ($ Custom-markdown ($ Extensions) essay-filename)
+        (if-some [essay-filename (get essays ?tutorial)]
+          ($ Custom-markdown ($ Extensions) (str tutorial-path essay-filename))
           (dom/h1 (dom/text "Tutorial not found: " ?tutorial)))
         #_($ Nav ?tutorial true)))))
 
