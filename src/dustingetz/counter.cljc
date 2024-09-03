@@ -17,6 +17,7 @@
       (dom/text "count: " n " ")
       (dom/button (dom/text "inc")
         (e/for [[e t] (dom/OnAll "click")]
+          #_(dom/props {:disabled true})
           (dom/text " " (F! t)))))))
 
 (e/defn CounterDemo []

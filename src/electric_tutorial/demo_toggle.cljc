@@ -21,5 +21,6 @@
 
     (dom/button
       (dom/text "toggle client/server")
-      (when-some [done! ($ e/Token ($ dom/On "click"))]
-        (done! (e/server (swap! !x not)))))))
+      (when-some [t ($ e/Token ($ dom/On "click"))]
+        (dom/props {:disabled true})
+        (t (e/server (swap! !x not)))))))
