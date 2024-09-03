@@ -1,53 +1,46 @@
 (ns xtdb-demo.todo-list
   (:require
    #?(:clj [xtdb-demo.xtdb-contrib :as db])
-   [hyperfiddle.electric :as e]
-   [hyperfiddle.electric-dom2 :as dom]
-   [hyperfiddle.electric-ui4 :as ui]
-   [xtdb.api #?(:clj :as :cljs :as-alias) xt]))
+   [hyperfiddle.electric3 :as e]
+   [hyperfiddle.electric-dom3 :as dom]
+   [xtdb.api #?(:clj :as :cljs :as-alias) xt]
+   [missionary.core :as m]))
 
-(e/def !xtdb)
-(e/def db) ; injected database ref; Electric defs are always dynamic
+(def !xtdb)
+(def db) ; injected database ref; Electric defs are always dynamic
+
+#?(:clj (defn submit-tx [!xtdb tx-data] (m/sp (xt/submit-tx !xtdb tx-data))))
 
 (e/defn TodoItem [id]
-  (e/server
-    (let [e (xt/entity db id)
-          status (:task/status e)]
-      (e/client
-        (dom/div
-          (ui/checkbox
-            (case status :active false, :done true)
-            (e/fn [v]
-              (e/server
-                (e/discard
-                  (e/offload
-                    #(xt/submit-tx !xtdb [[:xtdb.api/put
-                                           {:xt/id id
-                                            :task/description (:task/description e) ; repeat
-                                            :task/status (if v :done :active)}]])))))
-            (dom/props {:id id}))
-          (dom/label (dom/props {:for id}) (dom/text (e/server (:task/description e)))))))))
+  (let [e (e/server (xt/entity db id))]
+    (dom/div
+      (dom/input (dom/props {:type :checkbox})
+                 (set! (.-checked dom/node) (e/server (case (:task/status e) :active false, :done true)))
+                 (let [value (dom/On "change" (fn [event] (-> event .-target .-checked)))]
+                   (when-let [spend! (e/Token value)]
+                     (spend! (e/server (e/Task (submit-tx !xtdb [[:xtdb.api/put
+                                                                  {:xt/id            id
+                                                                   :task/description (:task/description e) ; repeat
+                                                                   :task/status      (if value :done :active)}]])))))))
+      (dom/label (dom/props {:for id}) (dom/text (e/server (:task/description e)))))))
 
 (e/defn InputSubmit [F]
   ; Custom input control using lower dom interface for Enter handling
   (e/client
     (dom/input (dom/props {:placeholder "Buy milk"})
-      (dom/on "keydown" (e/fn [e]
-                          (when (= "Enter" (.-key e))
-                            (when-some [v (not-empty (-> e .-target .-value))]
-                              (new F v)
-                              (set! (.-value dom/node) ""))))))))
+      (e/for [[value spend!] (dom/OnAll "keydown" (fn [event]
+                                                    (let [value (-> event .-target .-value)]
+                                                      (when (and (= "Enter" (.-key event)) (not-empty value))
+                                                        (set! (.-value dom/node) "")
+                                                        value))))]
+        (spend! (e/call F value))))))
 
 (e/defn TodoCreate []
-  (e/client
-    (InputSubmit. (e/fn [v]
-                    (e/server
-                      (e/discard
-                        (e/offload
-                          #(xt/submit-tx !xtdb [[:xtdb.api/put
-                                                 {:xt/id (random-uuid)
-                                                  :task/description v
-                                                  :task/status :active}]]))))))))
+  (InputSubmit (e/fn [value]
+                 (e/server (e/Task (submit-tx !xtdb [[:xtdb.api/put
+                                                      {:xt/id (random-uuid)
+                                                       :task/description value
+                                                       :task/status :active}]]))))))
 
 #?(:clj
    (defn todo-records [db]
@@ -64,20 +57,17 @@
               :active))))
 
 (e/defn Todo-list [!xtdb]
-  (e/server
-    (binding [xtdb-demo.todo-list/!xtdb !xtdb
-              db (new (db/latest-db> !xtdb))]
-      (e/client
-        (dom/link (dom/props {:rel :stylesheet :href "/todo-list.css"}))
-        (dom/h1 (dom/text "minimal todo list"))
-        (dom/p (dom/text "it's multiplayer, try two tabs"))
-        (dom/div (dom/props {:class "todo-list"})
-          (TodoCreate.)
-          (dom/div {:class "todo-items"}
-            (e/server
-              (e/for-by :xt/id [{:keys [xt/id]} (e/offload #(todo-records db))]
-                (TodoItem. id))))
-          (dom/p (dom/props {:class "counter"})
-            (dom/span (dom/props {:class "count"})
-              (dom/text (e/server (e/offload #(todo-count db)))))
-            (dom/text " items left")))))))
+  (binding [xtdb-demo.todo-list/!xtdb (e/server !xtdb)
+            db (e/server (e/input (db/latest-db> !xtdb)))]
+    (dom/h1 (dom/text "minimal todo list"))
+    (dom/p (dom/text "it's multiplayer, try two tabs"))
+    (dom/div
+      (dom/props {:class "todo-list"})
+      (TodoCreate)
+      (dom/div {:class "todo-items"}
+               (e/for [{:keys [xt/id]} (e/server (e/diff-by :xt/id (e/Offload #(todo-records db))))]
+                 (TodoItem id)))
+      (dom/p (dom/props {:class "counter"})
+             (dom/span (dom/props {:class "count"})
+                       (dom/text (e/server (e/Offload #(todo-count db)))))
+             (dom/text " items left")))))
