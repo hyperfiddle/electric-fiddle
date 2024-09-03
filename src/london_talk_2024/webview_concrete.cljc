@@ -30,6 +30,9 @@
                   shirt-size (-> !e :order/shirt-size :db/ident)]
               (dom/td (dom/text id))
               (dom/td (dom/text email))
-              (dom/td (e/client ; fixme
-                        (Typeahead gender (e/fn [search] (Genders db search)))))
-              (dom/td (e/client (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search))))))))))))
+              (dom/td (Typeahead gender
+                        (e/fn Options [search] (Genders db search))
+                        (e/fn OptionLabel [x] (pr-str x))))
+              (dom/td (Typeahead shirt-size
+                        (e/fn Options [search] (Shirt-sizes db gender search))
+                        (e/fn OptionLabel [x] (pr-str x)))))))))))
