@@ -11,6 +11,7 @@
             [hyperfiddle.router3 :as r]
 
             [electric-tutorial.two-clocks :refer [TwoClocks]]
+            [electric-tutorial.dir-tree :refer [DirTree]]
             [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.system-properties :refer [SystemProperties]]
             [electric-tutorial.chat :refer [Chat]]
@@ -34,6 +35,7 @@
 (def tutorials
   [["Electric"
     [`TwoClocks
+     `DirTree
      `Toggle
      `SystemProperties
      `Chat
@@ -109,6 +111,7 @@
 
 (def essays
   {`TwoClocks "two_clocks.md"
+   `DirTree "dir_tree.md"
    `Toggle "toggle.md"
    `SystemProperties "system_properties.md"
    `Chat "chat.md"
@@ -128,6 +131,7 @@
 (e/defn Fiddles []
   {
    `TwoClocks TwoClocks
+   `DirTree DirTree
    `Toggle Toggle
    `SystemProperties SystemProperties
    `Chat Chat

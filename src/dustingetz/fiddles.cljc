@@ -7,7 +7,6 @@
             [dustingetz.painter :refer [Painter]]
             [dustingetz.scroll-abc :refer [Scroll-abc]]
             [dustingetz.scroll-dom :refer [ScrollDemo]]
-            [dustingetz.dir-tree :refer [DirTreeDemo]]
             [dustingetz.fizzbuzz :refer [FizzBuzzDemo]]
             [dustingetz.fizzbuzz2 :refer [FizzBuzz2Demo]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
@@ -38,7 +37,6 @@
    `Painter Painter
    `ScrollDemo ScrollDemo
    `Scroll-abc Scroll-abc
-   `DirTreeDemo DirTreeDemo
    `FizzBuzzDemo FizzBuzzDemo
    `FizzBuzz2Demo FizzBuzz2Demo
    `FileWatcherDemo FileWatcherDemo
