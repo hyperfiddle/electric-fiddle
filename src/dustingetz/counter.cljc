@@ -1,6 +1,6 @@
 (ns dustingetz.counter
   (:require [clojure.math :refer [floor-div]]
-            [hyperfiddle.electric-de :as e]
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [missionary.core :as m]))
 

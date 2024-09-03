@@ -1,5 +1,5 @@
 (ns dustingetz.scratch
-  (:require [hyperfiddle.electric-de :as e]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
 

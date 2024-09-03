@@ -4,7 +4,7 @@
             #?(:clj [clojure.java.io :as io])
             #?(:clj [hawk.core :as hawk])
             [missionary.core :as m]
-            [hyperfiddle.electric-de :as e]
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj

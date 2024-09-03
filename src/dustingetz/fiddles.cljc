@@ -1,5 +1,5 @@
 (ns dustingetz.fiddles
-  (:require [hyperfiddle.electric-de :as e]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle :as hf]
             [dustingetz.scratch :refer [Scratch]]
             [dustingetz.hello :refer [Hello]]

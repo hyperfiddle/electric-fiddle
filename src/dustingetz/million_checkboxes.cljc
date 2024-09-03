@@ -1,6 +1,6 @@
 (ns dustingetz.million-checkboxes
   #?(:cljs (:require-macros dustingetz.million-checkboxes))
-  (:require [hyperfiddle.electric-de :as e]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-dom3-props :refer [#?(:cljs set-property!)]]
             [hyperfiddle.incseq :as i]

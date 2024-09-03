@@ -1,5 +1,5 @@
 (ns dustingetz.million-checkboxes2
-  (:require [hyperfiddle.electric-de :as e]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-dom3-props :refer [#?(:cljs set-property!)]]
             [hyperfiddle.incseq :as i]

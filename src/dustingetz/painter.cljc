@@ -1,7 +1,7 @@
 (ns dustingetz.painter
   "video: https://gist.github.com/dustingetz/d58a6134be310e05307ca0b586c30947
 upstream: https://github.com/formicagreen/electric-clojure-painter"
-  (:require [hyperfiddle.electric-de :as e]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Painter []

@@ -1,6 +1,6 @@
 (ns dustingetz.scroll-dom
   (:require [contrib.data :refer [unqualify]]
-            [hyperfiddle.electric-de :as e :refer [$]]
+            [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             #_[hyperfiddle.electric-ui4 :as ui]
             #?(:cljs goog.object)

@@ -2,7 +2,7 @@
   (:require
    [contrib.str :refer [includes-str?]]
    #?(:clj [clojure.java.io])
-   [hyperfiddle.electric-de :as e]
+   [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj (defn file-is-dir [h] (.isDirectory h)))

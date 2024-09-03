@@ -4,9 +4,9 @@
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown]]
             [electric-fiddle.index :refer [Index]]
             [hyperfiddle :as hf]
-            [hyperfiddle.electric-de :as e]
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router-de :as r]))
+            [hyperfiddle.router3 :as r]))
 
 (def fiddle-root "src/dustingetz/")
 
