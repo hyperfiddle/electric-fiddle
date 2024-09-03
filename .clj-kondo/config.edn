@@ -1,14 +1,8 @@
-{:lint-as {hyperfiddle.electric/def  clojure.core/def
-           hyperfiddle.electric/defn clojure.core/defn
-           hyperfiddle.electric-de/defn    clojure.core/defn
-           hyperfiddle.electric/with-cycle clojure.core/let
-           hyperfiddle.electric-de/cursor clojure.core/let
-           hyperfiddle.electric-de/for clojure.core/let
-           hyperfiddle.electric/fn   clojure.core/fn
-           hyperfiddle.electric/fn*  clojure.core/fn
-           hyperfiddle.electric-de/fn   clojure.core/fn
-           uix.core/defui            clojure.core/defn ; uix-demo
-           }
+{:lint-as {hyperfiddle.electric3/defn    clojure.core/defn
+           hyperfiddle.electric3/for     clojure.core/let
+           hyperfiddle.electric3/cursor  clojure.core/let
+           hyperfiddle.electric3/with-cycle clojure.core/let
+           hyperfiddle.electric3/fn      clojure.core/fn}
  :linters {:redundant-expression {:level :off}
            :var-same-name-except-case {:level :off}
            :clojure-lsp/unused-public-var {:level :off}}}

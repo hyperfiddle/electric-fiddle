@@ -1,7 +1,7 @@
 (ns london-talk-2024.webview-concrete
   (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders genders shirt-sizes]])
             #?(:clj [datascript.core :as d])
-            [hyperfiddle.electric-de :as e]
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [london-talk-2024.typeahead :refer [Typeahead]]))
 

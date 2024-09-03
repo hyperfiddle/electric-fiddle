@@ -1,6 +1,6 @@
 (ns london-talk-2024.two-clocks
   (:require
-   [hyperfiddle.electric-de :as e]
+   [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn TwoClocks []
