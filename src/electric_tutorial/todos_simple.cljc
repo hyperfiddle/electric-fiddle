@@ -15,19 +15,26 @@
             (d/q '[:find [(pull ?e [:db/id :task/description]) ...]
                    :where [?e :task/status]] db))))
 
+(e/defn Checkbox [checked label id]
+  (e/client
+    (e/amb
+      (dom/input (dom/props {:type "checkbox", :id id})
+        (let [pending (dom/OnAll "change" #(-> % .-target .-checked))]
+          (when-not (or (dom/Focused?) ; why? it's not an input
+                      (pos? (e/Count pending))) ; do not accept controlled values until caught up
+            (set! (.-checked dom/node) checked))
+          pending))
+      (dom/label (dom/props {:for id}) (dom/text label) (e/amb))))) ; todo bundle e/amb in all elements
+
 (e/defn TodoItem [db id]
   (e/client
-    (let [!e (e/server (d/entity db id))]
-      (dom/li
-        (dom/input (dom/props {:type "checkbox", :id id})
-          (let [v (dom/On "change" #(-> % .-target .-checked))]
-            (if-some [t (e/Token v)]
-              (t (e/server ({} (d/transact! !conn [{:db/id id, :task/status (if v :done :active)}]) nil)))
-              (when-not (dom/Focused?)
-                (set! (.-checked dom/node) (case (e/server (:task/status !e))
-                                             :active false, :done true))))))
-        (dom/label (dom/props {:for id})
-          (dom/text (e/server (:task/description !e))))))))
+    (let [!e (e/server (d/entity db id))
+          checked (case (e/server (:task/status !e)) :active false, :done true)
+          label (e/server (:task/description !e))]
+      (e/for [[v t] (Checkbox checked label id)]
+        (case (e/server (let [tx [{:db/id id, :task/status (if v :done :active)}]]
+                          ({} (d/transact! !conn tx) ::ok)))
+          ::ok (t))))))
 
 #?(:cljs (defn read! [node]
            (when-some [v (not-empty (subs (.-value node) 0 100))]
@@ -40,7 +47,8 @@
     (dom/input (dom/props {:placeholder "Buy milk", :maxLength 100})
       (e/for [[v t] (dom/OnAll "keydown" enter)]
         (let [tx [{:task/description v, :task/status :active}]]
-          (t (e/server ({} (d/transact! !conn tx) nil))))))))
+          (case (e/server ({} (d/transact! !conn tx) ::ok))
+            ::ok (t)))))))
 
 (e/defn TodoList []
   (e/server
@@ -50,5 +58,5 @@
         (e/amb ; hack
           (dom/ul (dom/props {:class "todo-items"})
             (e/for [{:keys [db/id]} (e/diff-by :db/id (e/Offload #(todo-records db)))]
-              (TodoItem db id)))
+              (dom/li (TodoItem db id))))
           (dom/p (dom/text (e/Offload #(todo-count db)) " items left")))))))
