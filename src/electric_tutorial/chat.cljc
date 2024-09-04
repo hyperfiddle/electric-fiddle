@@ -1,24 +1,30 @@
 (ns electric-tutorial.chat
-  (:require
-   [hyperfiddle.electric3 :as e :refer [$]]
-   [hyperfiddle.electric-dom3 :as dom]))
+  (:require [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric-dom3 :as dom]
+            [missionary.core :as m]))
 
-;; TODO spine and take 10? How would we pad?
-#?(:clj (def !msgs (atom (list))))
+#?(:clj (def !msgs (atom (repeat 10 nil))))
 
-;; TODO Implement pending state
 (e/defn Chat []
-  (dom/ul
-    (e/cursor [msg (e/server (e/diff-by identity
-                               (into '() (comp cat (take 10)) [(e/watch !msgs) (repeat nil)])))]
-      (dom/li
-        (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")}})
-        (dom/text msg))))
-  (dom/input
-    (dom/props {:placeholder "Type a message" :maxlength 100})
-    (e/cursor [[msg spend!] ($ dom/OnAll "keydown"
-                              #(when (= "Enter" (.-key %))
-                                 (when-some [v (not-empty (.slice (-> % .-target .-value) 0 100))]
-                                   (set! (.-value dom/node) "")
-                                   v)))]
-      (spend! (e/server (swap! !msgs #(cons msg (take 9 %))))))))
+  (e/server
+    (dom/ul
+      (e/for [msg (e/diff-by ; O(n) bad, fixme
+                    identity ; fixme flicker on duplicate
+                    (reverse (e/watch !msgs)))]
+        (dom/li
+          (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")}})
+          (dom/text msg))))
+
+    (e/client
+      (let [pending (dom/input (dom/props {:placeholder "Type a message" :maxlength 100})
+                      (dom/OnAll "keydown" #(when (= "Enter" (.-key %))
+                                              (when-some [v! (not-empty (-> % .-target .-value))] ; untrusted
+                                                (set! (.-value dom/node) "")
+                                                (.slice v! 0 100)))))]
+        (e/for [[v t] pending]
+          (t (e/server v ; preload v (hinting the inevitable outcome of the task)
+               (case (e/Task (m/sleep 300)) ; todo fix m/sp and use here
+                 ({} (swap! !msgs #(take 10 (cons v %))) nil)))))
+
+        (dom/props {:style {:background-color (when (pos? (e/Count pending)) "yellow")}})
+        (dom/text (e/Count pending))))))

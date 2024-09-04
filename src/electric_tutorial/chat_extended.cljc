@@ -1,44 +1,45 @@
 (ns electric-tutorial.chat-extended
-  (:require [hyperfiddle.electric3 :as e :refer [$]]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
-(defonce !msgs #?(:cljs nil, :clj (atom (list)))) ; server only state
-(defonce !present #?(:cljs nil, :clj (atom {}))) ; session-id -> user10M
+#?(:clj (defonce !msgs (atom (list)))) ; server only state
+#?(:clj (defonce !present (atom {}))) ; session-id -> user
 
-(e/defn Chat-UI [username]
-  (e/client
-    (dom/div (dom/text "Present: "))
+(e/defn Presence! [username]
+  (e/server
+    (let [session-id (get-in e/http-request [:headers "sec-websocket-key"])]
+      (swap! !present assoc session-id username)
+      (e/on-unmount #(swap! !present dissoc session-id)))
+    (e/diff-by key (e/watch !present))))
+
+(e/defn ChatExtended []
+  (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
+        present (Presence! username)]
+
+    (dom/div (dom/text "Present: " (e/Count present)))
     (dom/ul
-      (e/cursor [[session-id username] (e/server (e/diff-by first (e/watch !present)))]
-        (dom/li (dom/text username (str " (session-id: " session-id ")")))))
+      (e/for [[_ username] present]
+        (dom/li (dom/text username))))
 
     (dom/hr)
     (dom/ul
-      (e/cursor [{::keys [:electric-tutorial.chat-extended/username :electric-tutorial.chat-extended/msg]} (e/server (e/diff-by ::message-id (reverse (e/watch !msgs))))]
+      (e/for [{::keys [::username ::msg]} (e/server (e/diff-by ::message-id (reverse (e/watch !msgs))))]
         (dom/li (dom/strong (dom/text username))
-                (dom/text " " msg))))
+          (dom/text " " msg))))
 
-    (dom/input
-      (dom/props {:placeholder "Type a message" :maxlength 100})
-      (e/cursor [[msg spend!] ($ dom/OnAll "keydown"
-                                 #(when (= "Enter" (.-key %))
-                                    (when-some [v (not-empty (.slice (-> % .-target .-value) 0 100))]
-                                      (set! (.-value dom/node) "")
-                                      v)))]
-        (spend! (e/server (swap! !msgs #(cons {::message-id (random-uuid) ::username username ::msg msg}
-                                          (take 9 %)))))))))
+    (let [pending (dom/input (dom/props {:placeholder "Type a message" :maxlength 100 :disabled (nil? username)})
+                    (dom/OnAll "keydown" #(when (= "Enter" (.-key %))
+                                            (when-some [v! (not-empty (-> % .-target .-value))] ; untrusted
+                                              (set! (.-value dom/node) "")
+                                              (.slice v! 0 100)))))]
+      (e/for [[v t] pending]
+        (let [m {::message-id (random-uuid) ::username username ::msg v}]
+          (t (e/server ({} (swap! !msgs #(take 10 (cons m %))) nil)))))
 
-(e/defn ChatExtended []
-  (let [session-id (e/server (get-in e/http-request [:headers "sec-websocket-key"]))
-        username   (e/server (get-in e/http-request [:cookies "username" :value]))]
-    (if-not (some? username)
-      (dom/div
-        (dom/text "Set login cookie here: ")
-        (dom/a (dom/props {:href "/auth"}) (dom/text "/auth"))
-        (dom/text " (blank password)"))
-      (do
-        (e/server
-          (swap! !present assoc session-id username)
-          (e/on-unmount #(swap! !present dissoc session-id)))
-        (dom/div (dom/text "Authenticated as: " username))
-        ($ Chat-UI username)))))
+      (dom/props {:style {:background-color (when (pos? (e/Count pending)) "yellow")}})
+      (dom/text " " (e/Count pending)))
+
+    (dom/div
+      (if (some? username)
+        (dom/text "Authenticated as: " username)
+        (dom/a (dom/props {:href "/auth"}) (dom/text "Set login cookie (blank password)"))))))
