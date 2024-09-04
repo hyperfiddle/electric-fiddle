@@ -42,13 +42,17 @@
 
 #?(:cljs (defn enter [e] (when (= "Enter" (.-key e)) (read! (.-target e)))))
 
+(e/defn InputSubmit [& {:as props}]
+  (e/client
+    (dom/input (dom/props props)
+      (dom/OnAll "keydown" enter))))
+
 (e/defn TodoCreate [!conn]
   (e/client
-    (dom/input (dom/props {:placeholder "Buy milk", :maxLength 100})
-      (e/for [[v t] (dom/OnAll "keydown" enter)]
-        (let [tx [{:task/description v, :task/status :active}]]
-          (case (e/server ({} (d/transact! !conn tx) ::ok))
-            ::ok (t)))))))
+    (e/for [[v t] (InputSubmit :placeholder "Buy milk", :maxLength 100)]
+      (let [tx [{:task/description v, :task/status :active}]]
+        (case (e/server ({} (d/transact! !conn tx) ::ok))
+          ::ok (t))))))
 
 (e/defn TodoList []
   (e/server
