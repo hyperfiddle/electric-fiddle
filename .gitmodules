@@ -10,3 +10,6 @@
 [submodule "src/scratch"]
 	path = src/scratch
 	url = git@github.com:hyperfiddle/scratch.git
+[submodule "heroicons-electric"]
+	path = vendor/heroicons-electric
+	url = https://github.com/hyperfiddle/heroicons-electric
