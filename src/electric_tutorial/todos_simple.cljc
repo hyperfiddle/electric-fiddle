@@ -5,15 +5,18 @@
 
 #?(:clj (defonce !conn (d/create-conn {}))) ; database on server
 
-#?(:clj (defn todo-count [db]
-          (count (d/q '[:find [?e ...] :in $ ?status
-                        :where [?e :task/status ?status]]
-                   db :active))))
+(e/defn Todo-count [db]
+  (e/server (e/Offload #(count (d/q '[:find [?e ...] :in $ ?status
+                                      :where [?e :task/status ?status]]
+                                 db :active)))))
 
-#?(:clj (defn todo-records [db]
-          (sort-by :task/description
-            (d/q '[:find [(pull ?e [:db/id :task/description]) ...]
-                   :where [?e :task/status]] db))))
+(e/defn Todo-records [db]
+  (e/server
+    (->> (e/Offload ; good reason to not require offload to have # ?
+           #(->> (d/q '[:find [(pull ?e [:db/id :task/description]) ...]
+                        :where [?e :task/status]] db)
+              (sort-by :task/description)))
+      (e/diff-by :db/id))))
 
 (e/defn Checkbox [checked label id]
   (e/client
@@ -53,7 +56,7 @@
 (e/defn TodoList []
   (e/client ; bias for writes
     (let [db (e/server (e/watch !conn))
-          todos (e/server (e/diff-by :db/id (e/Offload #(todo-records db))))]
+          todos (Todo-records db)]
       (e/for [[t cmd a b & args]
               (dom/div (dom/props {:class "todo-list"})
                 (e/amb ; hack
@@ -61,7 +64,7 @@
                   (dom/ul (dom/props {:class "todo-items"})
                     (e/for [{:keys [db/id]} todos]
                       (dom/li (TodoItem db id))))
-                  (dom/p (dom/text (e/server (e/Offload #(todo-count db))) " items left"))))]
+                  (dom/p (dom/text (Todo-count db) " items left"))))]
 
         (case (e/server ; security
                 (when-some [tx (case cmd
