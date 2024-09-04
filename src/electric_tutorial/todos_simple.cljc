@@ -2,26 +2,10 @@
   (:require [contrib.data :refer [index-by]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.incseq :as i]
-            [missionary.core :as m]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj (def !conn (d/create-conn {}))) ; database on server
-
-(e/defn Todo-count [db]
-  (e/server (e/Offload #(count (d/q '[:find [?e ...] :in $ ?status
-                                      :where [?e :task/status ?status]]
-                                 db :active)))))
-
-(e/defn Todo-records [db]
-  (e/server
-    (->> (e/Offload ; good reason to not require offload to have # ?
-           #(->> (d/q '[:find [(pull ?e [:db/id
-                                         :task/status
-                                         :task/description]) ...]
-                        :where [?e :task/status]] db)
-             (sort-by :task/description)))
-      (e/diff-by :db/id))))
+#?(:clj (defn slow-transact! [& args] (Thread/sleep 500) (apply d/transact! args)))
 
 (e/defn Checkbox [checked label id]
   (e/client
@@ -35,16 +19,43 @@
             pending))
         (dom/label (dom/props {:for id}) (dom/text label) (e/amb)))))) ; todo bundle e/amb in all elements
 
-#?(:cljs (defn read! [node]
-           (when-some [v (not-empty (subs (.-value node) 0 100))]
+#?(:cljs (defn read! [maxlength node]
+           (when-some [v (not-empty (subs (.-value node) 0 maxlength))]
              (set! (.-value node) "") v)))
 
-#?(:cljs (defn enter [e] (when (= "Enter" (.-key e)) (read! (.-target e)))))
+#?(:cljs (defn enter [maxlength e]
+           (when (= "Enter" (.-key e))
+             (read! maxlength (.-target e)))))
 
-(e/defn InputSubmit [& {:as props}]
+(e/defn InputSubmit [& {:as props}] ; destr can cause roundtrips, fixme
   (e/client
     (dom/input (dom/props props) (dom/props {:maxLength 100})
-      (dom/OnAll "keydown" enter))))
+      (dom/OnAll "keydown" (partial enter 100)))))
+
+(e/defn Reconcile-records [stable-kf as bs]
+  (e/client
+    (->> (merge
+           (index-by stable-kf as)
+           (index-by stable-kf bs))
+      vals
+      (sort-by :task/description)
+      (e/diff-by stable-kf))))
+
+(e/defn CrudList [Query Item-wrap Create Edit]
+  (e/client
+    (let [!pending (atom {}) ; id -> [tx, prediction]
+          xs (Reconcile-records :db/id ; todo stable-kf
+               (e/as-vec (Query)) ; todo differential reconciliation
+               (vals (e/watch !pending)))
+          edits (e/amb
+                  (Create)
+                  (Item-wrap (e/fn []
+                               (e/for [m xs]
+                                 (Edit m)))))]
+      (e/for [[t id xcmd prediction :as all] edits]
+        (swap! !pending assoc id (assoc prediction ::pending true))
+        (e/on-unmount #(swap! !pending dissoc id))
+        all))))
 
 (e/defn TodoCreate []
   (e/client
@@ -57,15 +68,39 @@
 
 (e/defn TodoItem [{:keys [db/id task/status task/description ::pending] :as m}]
   (e/client
-    (dom/props {:style {:background-color (when pending "yellow")}})
-    (e/for [[v t] (Checkbox (case status :active false, :done true) description id)]
-      [t
-       id ; stable id
-       [::toggle id v] ; xcmd
-       (-> m (dissoc ::pending) (assoc :task/status v)) ; prediction
-       ])))
+    (dom/li
+      (dom/props {:style {:background-color (when pending "yellow")}})
+      (e/for [[v t] (Checkbox (case status :active false, :done true) description id)]
+        [t
+         id ; stable id
+         [::toggle id v] ; xcmd
+         (-> m (dissoc ::pending) (assoc :task/status v)) ; prediction
+         ]))))
 
-#?(:cljs (def !pending-records (atom {}))) ; id -> [tx, prediction]
+(e/defn Todo-count [db]
+  (e/server (e/Offload #(count (d/q '[:find [?e ...] :in $ ?status
+                                      :where [?e :task/status ?status]]
+                                 db :active)))))
+
+(e/defn Todo-records [db]
+  (e/server
+    (->> (e/Offload ; good reason to not require offload to have # ?
+           #(->> (d/q '[:find [(pull ?e [:db/id
+                                         :task/status
+                                         :task/description]) ...]
+                        :where [?e :task/status]] db)
+              (sort-by :task/description)))
+      (e/diff-by :db/id))))
+
+(e/defn TodoList* [db]
+  (dom/div (dom/props {:class "todo-list"})
+    (e/amb
+      (CrudList
+        (e/Partial Todo-records db)
+        (e/fn ItemWrap [Body] (dom/ul (dom/props {:class "todo-items"}) (Body)))
+        TodoCreate
+        TodoItem)
+      (dom/p (dom/text (Todo-count db) " items left") (e/amb)))))
 
 (defn cmd->tx [[cmd a b & args]]
   (case cmd
@@ -73,41 +108,14 @@
     ::toggle [{:db/id a, :task/status (if b :done :active)}]
     nil))
 
-(e/defn Reconcile-records [as bs]
-  (e/client
-    (->> (merge
-           (index-by :db/id as)
-           (index-by :db/id bs))
-      vals
-      (sort-by :task/description)
-      (e/diff-by :db/id))))
-
-#?(:clj (defn slow-transact! [& args] (Thread/sleep 500) (apply d/transact! args)))
+(e/defn Controller [App]
+  (e/client ; bias for writes because token doesn't transfer
+    (e/for [[t id xcmd prediction] (App)]
+      (case (e/server
+              (when-some [tx (cmd->tx xcmd)] ; secure
+                (case (e/Offload #(slow-transact! !conn tx)) ::ok)))
+        ::ok (t)))))
 
 (e/defn TodoList []
-  (e/client ; bias for writes because token doesn't transfer
-    (let [db (e/server (e/watch !conn))
-          todos (Reconcile-records
-                  (e/as-vec (Todo-records db))
-                  (vals (e/watch !pending-records)))]
-
-      (prn 'pending (e/watch !pending-records))
-      (prn 'todos (e/as-vec todos))
-
-      (e/for [[t id xcmd prediction]
-              (dom/div (dom/props {:class "todo-list"})
-                (e/amb ; hack
-                  (TodoCreate)
-                  (dom/ul (dom/props {:class "todo-items"})
-                    (e/for [m todos]
-                      (dom/li (TodoItem m))))
-                  (dom/p (dom/text (Todo-count db) " items left") (e/amb))))]
-
-        (prn 'top xcmd)
-        (prn 'prediction id prediction)
-        (swap! !pending-records assoc id (assoc prediction ::pending true))
-
-        (case (e/server
-                (when-some [tx (doto (cmd->tx xcmd) prn)] ; secure
-                  (case (e/Offload #(slow-transact! !conn tx)) ::ok)))
-          ::ok ({} (swap! !pending-records dissoc id) (t)))))))
+  (let [db (e/server (e/watch !conn))]
+    (Controller (e/Partial TodoList* db))))
