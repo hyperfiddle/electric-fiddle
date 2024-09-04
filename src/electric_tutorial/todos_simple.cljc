@@ -37,22 +37,30 @@
     (dom/input (dom/props props) (dom/props {:maxLength 100})
       (dom/OnAll "keydown" enter))))
 
+(e/defn TodoCreate []
+  (e/client
+    (e/for [[v t] (InputSubmit :placeholder "Buy milk")]
+      [t ::create-todo v])))
+
+(e/defn TodoItem [db id]
+  (e/client
+    (let [!e (e/server (d/entity db id))]
+      (e/for [[v t] (Checkbox
+                      (case (e/server (:task/status !e)) :active false, :done true)
+                      (e/server (:task/description !e)) id)]
+        [t ::toggle id v]))))
+
 (e/defn TodoList []
   (e/client ; bias for writes
-    (let [db (e/server (e/watch !conn))]
+    (let [db (e/server (e/watch !conn))
+          todos (e/server (e/diff-by :db/id (e/Offload #(todo-records db))))]
       (e/for [[t cmd a b & args]
               (dom/div (dom/props {:class "todo-list"})
                 (e/amb ; hack
-                  (e/for [[v t] (InputSubmit :placeholder "Buy milk")]
-                    [t ::create-todo v])
+                  (TodoCreate)
                   (dom/ul (dom/props {:class "todo-items"})
-                    (e/for [{:keys [db/id]} (e/server (e/diff-by :db/id (e/Offload #(todo-records db))))]
-                      (dom/li
-                        (let [!e (e/server (d/entity db id))]
-                          (e/for [[v t] (Checkbox
-                                          (case (e/server (:task/status !e)) :active false, :done true)
-                                          (e/server (:task/description !e)) id)]
-                            [t ::toggle id v])))))
+                    (e/for [{:keys [db/id]} todos]
+                      (dom/li (TodoItem db id))))
                   (dom/p (dom/text (e/server (e/Offload #(todo-count db))) " items left"))))]
 
         (case (e/server ; security
