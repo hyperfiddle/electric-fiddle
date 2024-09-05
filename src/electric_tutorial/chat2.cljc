@@ -25,24 +25,30 @@
              (index-by stable-kf bs!))
         vals
         (sort-by :t-ms)
+        (drop (count bs!)) ; todo fix flicker
         (e/diff-by stable-kf)))))
 
-(e/defn CrudList [Query List Item Create]
+(e/defn PendingController [kf xs edits]
+  (let [!pending (atom {}) ; [id -> prediction]
+        ps (val (e/diff-by key (e/watch !pending)))]
+    (e/for [[t id xcmd prediction] edits]
+      (prn 'pending-cmd xcmd)
+      (swap! !pending assoc id (assoc prediction ::pending true))
+      (e/on-unmount #(swap! !pending dissoc id))
+      (e/amb))
+    (Reconcile-records kf xs ps)))
+
+(e/defn CrudList [kf Query List Item Create]
   (e/client
-    (let [!pending (atom {}) ; [id -> prediction]
-          ps (val (e/diff-by key (e/watch !pending))) ; product
-          xs (Query #_search)
-          xs' (Reconcile-records :db/id xs ps)
-          edits (binding []
-                  (e/amb
-                    (List (e/fn Rows [] (e/for [x xs'] (Item x))))
-                    (Create (e/Count ps))))]
-      (prn 'pending-record ps)
-      (e/for [[t id xcmd prediction] edits]
-        (prn 'pending-cmd xcmd)
-        (swap! !pending assoc id (assoc prediction ::pending true))
-        (e/on-unmount #(swap! !pending dissoc id)))
-      edits)))
+    (e/diff-by first
+      (e/with-cycle [edits (e/as-vec (e/amb))] ; todo amb cycles
+        (let [edits (e/diff-by first edits)
+              xs (Query #_search)
+              xs' (PendingController kf xs edits)]
+          (e/as-vec
+            (e/amb
+              (List (e/fn Rows [] (e/for [x xs'] (Item x))))
+              (Create (e/Count edits)))))))))
 
 (e/defn ChatItem [x]
   (dom/li
@@ -63,10 +69,15 @@
 (e/defn ChatList [Rows]
   (dom/ul (Rows)))
 
+(def css "
+.ChatView ul {
+  display: grid; grid-template-rows: repeat(10, 20px);
+  grid-auto-flow: dense; align-content: end; height: 200px; }")
+
 (e/defn ChatView [!msgs]
+  (dom/props {:class "ChatView"}) (dom/style (dom/text css))
   (e/client
-    (CrudList
-      (e/server (e/Partial Query-todos !msgs))
+    (CrudList :db/id (e/server (e/Partial Query-todos !msgs))
       ChatList
       ChatItem
       ChatCreate)))
