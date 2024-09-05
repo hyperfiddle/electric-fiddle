@@ -2,7 +2,8 @@
   (:require [contrib.data :refer [index-by]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]))
+            [hyperfiddle.electric-dom3 :as dom]
+            [electric-tutorial.chat :refer [InputSubmit]]))
 
 #?(:clj (def !conn (d/create-conn {}))) ; database on server
 #?(:clj (defn slow-transact! [& args] (Thread/sleep 500) (apply d/transact! args)))
@@ -18,19 +19,6 @@
               (set! (.-checked dom/node) checked))
             pending))
         (dom/label (dom/props {:for id}) (dom/text label) (e/amb)))))) ; todo bundle e/amb in all elements
-
-#?(:cljs (defn read! [maxlength node]
-           (when-some [v (not-empty (subs (.-value node) 0 maxlength))]
-             (set! (.-value node) "") v)))
-
-#?(:cljs (defn enter [maxlength e]
-           (when (= "Enter" (.-key e))
-             (read! maxlength (.-target e)))))
-
-(e/defn InputSubmit [& {:as props}] ; destr can cause roundtrips, fixme
-  (e/client
-    (dom/input (dom/props props) (dom/props {:maxLength 100})
-      (dom/OnAll "keydown" (partial enter 100)))))
 
 (e/defn Reconcile-records [stable-kf as bs]
   (e/client
