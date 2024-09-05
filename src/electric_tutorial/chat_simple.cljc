@@ -1,4 +1,4 @@
-(ns electric-tutorial.chat
+(ns electric-tutorial.chat-simple
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.forms :refer [InputSubmit]]))
