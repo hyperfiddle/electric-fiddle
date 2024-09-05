@@ -1,4 +1,4 @@
-(ns electric-tutorial.todos-simple
+(ns electric-tutorial.todos2
   (:require [contrib.data :refer [index-by]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
@@ -29,7 +29,7 @@
       (sort-by :task/description)
       (e/diff-by stable-kf))))
 
-(e/defn CrudList [Query Item-wrap Create Edit]
+(e/defn CrudList [Query List-wrap Create Edit]
   (e/client
     (let [!pending (atom {}) ; id -> [tx, prediction]
           xs (Reconcile-records :db/id ; todo stable-kf
@@ -37,7 +37,7 @@
                (vals (e/watch !pending)))
           edits (e/amb
                   (Create)
-                  (Item-wrap (e/fn []
+                  (List-wrap (e/fn []
                                (e/for [m xs]
                                  (Edit m)))))]
       (e/for [[t id xcmd prediction :as all] edits]
@@ -85,7 +85,7 @@
     (e/amb
       (CrudList
         (e/Partial Todo-records db)
-        (e/fn ItemWrap [Body] (dom/ul (dom/props {:class "todo-items"}) (Body)))
+        (e/fn List-wrap [Body] (dom/ul (dom/props {:class "todo-items"}) (Body)))
         TodoCreate
         TodoItem)
       (dom/p (dom/text (Todo-count db) " items left") (e/amb)))))
