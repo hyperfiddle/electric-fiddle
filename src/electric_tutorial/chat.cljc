@@ -1,7 +1,6 @@
 (ns electric-tutorial.chat
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [missionary.core :as m]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 #?(:clj (def !msgs (atom (repeat 10 nil))))
 
@@ -18,6 +17,10 @@
     (dom/input (dom/props (assoc props :maxLength maxlength))
       (dom/OnAll "keydown" (partial submit! maxlength)))))
 
+#?(:clj (defn slow-send-message! [!msgs msg]
+          (Thread/sleep 500)
+          (swap! !msgs #(take 10 (cons msg %)))))
+
 (e/defn Chat []
   (e/server
     (dom/ul
@@ -31,9 +34,8 @@
     (e/client
       (let [pending (InputSubmit :placeholder "Type a message" :maxlength 100)]
         (e/for [[v t] pending]
-          (case (e/server v ; preload v (hinting the inevitable outcome of the case)
-                  (case (e/Task (m/sleep 300)) ; todo fix m/sp and use here
-                    ({} (swap! !msgs #(take 10 (cons v %))) ::ok)))
+          (case (e/server
+                  (case (e/Offload #(slow-send-message! !msgs v)) ::ok))
             ::ok (t)))
 
         (dom/props {:style {:background-color (when (pos? (e/Count pending)) "yellow")}})
