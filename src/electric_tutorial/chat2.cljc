@@ -1,5 +1,6 @@
 (ns electric-tutorial.chat2
   (:require [contrib.data :refer [index-by]]
+            [contrib.str :refer [pprint-str]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.chat :refer [InputSubmit
@@ -75,7 +76,6 @@
   grid-auto-flow: dense; align-content: end; height: 200px; }")
 
 (e/defn ChatView [!msgs]
-  (dom/props {:class "ChatView"}) (dom/style (dom/text css))
   (e/client
     (CrudList :db/id (e/server (e/Partial Query-todos !msgs))
       ChatList
@@ -92,8 +92,16 @@
                            (println 'success)))
             nil)))
 
+(e/defn Stage [edits]
+  (dom/pre
+    (e/for [[_ _ cmd _] edits]
+      (dom/text (pprint-str cmd)))
+    edits))
+
 (e/defn Chat2 []
   (e/client
+    (dom/props {:class "ChatView"}) (dom/style (dom/text css))
     (Service
       (e/server (partial chat-effects !msgs))
-      (ChatView (e/server (identity !msgs))))))
+      (Stage
+        (ChatView (e/server (identity !msgs)))))))
