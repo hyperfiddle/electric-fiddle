@@ -4,10 +4,10 @@
             [electric-tutorial.forms :refer [InputSubmit]]))
 
 (e/defn Login [username]
-  (dom/a (dom/props {:href "/auth"})
+  (dom/div
     (if (some? username)
       (dom/text "Authenticated as: " username)
-      (dom/text "Set login cookie (blank password)"))))
+      (dom/a (dom/props {:href "/auth"}) (dom/text "Set login cookie (blank password)")))))
 
 (e/defn Presence! [!present username]
   (e/server
@@ -36,14 +36,14 @@
 
 (e/defn Query-todos [!db] (e/server (e/diff-by :db/id (reverse (e/watch !db))))) ; O(n) bad, fixme
 
-#?(:clj (defn send-message! [!msgs msg] (swap! !msgs #(take 10 (cons msg %)))))
+#?(:clj (defn send-message! [!db msg] (swap! !db #(take 10 (cons msg %)))))
 
 #?(:clj (defonce !db (atom (repeat 10 nil))))
 #?(:clj (defonce !present (atom {}))) ; session-id -> user
 
 (e/defn Chat []
   (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
-        present (Presence! !present username)
+        present (e/server (Presence! !present username))
         msgs (e/server (Query-todos !db))]
     (Present present)
     (dom/hr)
