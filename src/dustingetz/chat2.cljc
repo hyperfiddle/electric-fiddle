@@ -4,8 +4,9 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [missionary.core :as m]
-            [electric-tutorial.chat :refer
-             [InputSubmit Query-todos #?(:clj !msgs) #?(:clj send-message!)]]))
+            [electric-tutorial.forms :refer [InputSubmit]]
+            [electric-tutorial.chat-simple :refer
+             [Query-todos #?(:clj !db) #?(:clj send-message!)]]))
 
 (e/defn ChatCreate [pending-count]
   (e/amb
@@ -33,7 +34,7 @@
                                (m/? (m/via m/blk (send-message! !msgs msg)))))
             nil)))
 
-(e/defn Stage [edits]
+(e/defn EditMonitor [edits]
   (dom/pre
     (e/for [[_ _ cmd _] edits]
       (dom/text (pprint-str cmd))))
@@ -45,9 +46,9 @@
   (e/client
     (dom/props {:class "ChatView"}) (dom/style (dom/text css))
     (Service
-      (e/server (partial chat-effects !msgs))
-      (Stage
-        (ChatView (e/server (identity !msgs)))))))
+      (e/server (partial chat-effects !db))
+      (EditMonitor
+        (ChatView (e/server (identity !db)))))))
 
 (def css "
 .ChatView ul {
