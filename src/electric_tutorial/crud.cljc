@@ -1,96 +1,65 @@
 (ns electric-tutorial.crud
-  (:require
-   [clojure.string :as str]
-   [hyperfiddle.electric3 :as e :refer [$]]
-   [hyperfiddle.electric-dom3 :as dom]))
+  (:require #?(:clj [datascript.core :as d])
+            [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric-dom3 :as dom]))
 
-(def !state (atom {:selected nil
-                   :stage {:name ""
-                           :surname ""}
-                   :names (sorted-map 0 {:name "Emil", :surname "Hans"})}))
+; Big idea:
+; someone, somewhere, needs to submit atomic edit transactions to the server.
+; "submit" implies a submit/discard interaction (e.g. enter/esc, or a button) to submit or discard the edit.
+; Submission can be field level (enter/esc), or form level, or higher
+; Submission implies a token, typically from dom/OnAll, attached to the submit control element.
+; field level means - dom/OnAll at field, submit/discard is implicit like a spreadsheet.
+; form level means - dom/On inside fields, collect values, explicit submit/discard buttons.
 
-(def next-id (partial swap! (atom 0) inc))
+(e/defn Input [v & {:keys [maxlength]
+                    :or {maxlength 100} :as props}]
+  (e/client
+    (dom/input (dom/props (assoc props :maxLength maxlength))
+      ; todo: submit on blur, cancel on esc
+      (let [pending (dom/OnAll "keydown"
+                      (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
+                              (submit! [e] (when (= "Enter" (.-key e)) (read! (.-target e))))]
+                        submit!))]
+        (when-not (or (dom/Focused?) (pos? (e/Count pending)))
+          (set! (.-value dom/node) v))
+        pending))))
 
-(defn select! [id]
-  (swap! !state (fn [state]
-                  (assoc state :selected id
-                               :stage (get-in state [:names id])))))
+(e/defn Checkbox [checked label id]
+  (e/client
+    (let [id (or id (random-uuid))]
+      (e/amb
+        (dom/input (dom/props {:type "checkbox", :id id})
+          (let [pending (dom/OnAll "change" #(-> % .-target .-checked))]
+            (when-not (or (dom/Focused?) (pos? (e/Count pending)))
+              (set! (.-checked dom/node) checked))
+            pending))
+        (dom/label (dom/props {:for id}) (dom/text label))))))
 
-(defn set-name! [name]
-  (swap! !state assoc-in [:stage :name] name))
+(e/defn Field [e a edits]
+  (e/for [[v t] edits]
+    [t [{:db/id e a v}]]))
 
-(defn set-surname! [surname]
-  (swap! !state assoc-in [:stage :surname] surname))
+(e/defn PendingMonitor [edits]
+  (dom/props {:style {:background-color (when (pos? (e/Count edits)) "yellow")}})
+  edits)
 
-(defn create! []
-  (swap! !state (fn [{:keys [stage] :as state}]
-                  (-> state
-                    (update :names assoc (next-id) stage)
-                    (assoc :stage {:name "", :surname ""})))))
-(defn delete! []
-  (swap! !state (fn [{:keys [selected] :as state}]
-                  (update state :names dissoc selected))))
+(e/defn Form [{:keys [db/id ::x-bool ::x-str]}]
+  (e/amb
+    (dom/div (PendingMonitor (Field id ::x-bool (Checkbox x-bool "toggle me rapidly!" nil))))
+    (dom/div (PendingMonitor (Field id ::x-str (Input x-str :placeholder "Message rapidly" :maxlength 100))))))
 
-(defn update! []
-  (swap! !state (fn [{:keys [selected stage] :as state}]
-                  (assoc-in state [:names selected] stage))))
+#?(:clj (defonce !conn (doto (d/create-conn {})
+                         (d/transact!
+                           [{:db/id 42 ::x-bool true ::x-str "hello"}]))))
 
-(defn filter-names [names-map needle]
-  (if (empty? needle)
-    names-map
-    (let [needle (str/lower-case needle)]
-      (reduce-kv (fn [r k {:keys [name surname]}]
-                   (if (or (str/includes? (str/lower-case name) needle)
-                         (str/includes? (str/lower-case surname) needle))
-                     r
-                     (dissoc r k)))
-        names-map names-map))))
-
-(e/defn CRUD []
-  (let [state (e/watch !state), selected (:selected state)]
-    (dom/div
-      (dom/props {:style {:display "grid", :grid-gap "0.5rem", :align-items "baseline"
-                          :grid-template-areas "'a b c c'\n
-                                                'd d e f'\n
-                                                'd d g h'\n
-                                                'd d i i'\n
-                                                'j j j j'"}})
-      (dom/span
-        (dom/props {:style {:grid-area "a"}})
-        (dom/text "Filter prefix:"))
-      (let [!needle (atom ""), needle (e/watch !needle)]
-        (dom/input
-          (dom/props {:style {:grid-area "b"}})
-          ($ dom/On "input" (fn [e] (reset! !needle (-> e .-target .-value)))))
-        (dom/ul
-          (dom/props {:style {:grid-area "d", :background-color "white"
-                              :line-style-type "none", :padding 0
-                              :border "1px gray solid", :height "100%"}})
-          (e/cursor [entry (e/diff-by key (filter-names (:names state) needle))]
-            (prn (type entry) entry)
-            (let [id (key entry), value (val entry)]
-              (dom/li
-                (dom/text (:surname value) ", " (:name value))
-                (dom/props {:style {:cursor "pointer", :padding "0.1rem 0.5rem"
-                                    :color (if (= selected id) "white" "inherit")
-                                    :background-color (if (= selected id) "blue" "inherit")}})
-                ($ dom/On "click" (fn [_] (select! id))))))))
-      (let [stage (:stage state)]
-        (dom/span (dom/props {:style {:grid-area "e"}}) (dom/text "Name:"))
-        (dom/input
-          (dom/props {:style {:grid-area "f"}})
-          ($ dom/On "input" (fn [e] (set-name! (-> e .-target .-value))))
-          (when-not ($ dom/Focused?) (set! (.-value dom/node) (:name stage))))
-        (dom/span (dom/props {:style {:grid-area "g"}}) (dom/text "Surname:"))
-        (dom/input
-          (dom/props {:style {:grid-area "h"}})
-          ($ dom/On "input" (fn [e] (set-surname! (-> e .-target .-value))))
-          (when-not ($ dom/Focused?) (set! (.-value dom/node) (:surname stage)))))
-      (dom/div
-        (dom/props {:style {:grid-area "j", :display "grid", :grid-gap "0.5rem"
-                            :grid-template-columns "auto auto auto 1fr"}})
-        (dom/button (dom/text "Create") ($ dom/On "click" (fn [_] (create!))))
-        (dom/button (dom/text "Update") ($ dom/On "click" (fn [_] (update!)))
-          (dom/props {:disabled (not selected)}))
-        (dom/button (dom/text "Delete") ($ dom/On "click" (fn [_] (delete!)))
-          (dom/props {:disabled (not selected)}))))))
+(e/defn Crud []
+  (let [db (e/server (e/watch !conn))
+        record (e/server (d/pull db [:db/id ::x-bool ::x-str] 42))
+        edits (dom/div (dom/props {:style {:display "grid" :grid-template-columns "1fr 1fr"}})
+                (e/amb
+                  (dom/div (Form record))
+                  (dom/div (Form record))))]
+    (e/for [[t tx] edits]
+      (case (e/server
+              (case (e/Offload #(do (Thread/sleep 1000) (d/transact! !conn tx))) ::ok))
+        ::ok (t)))))

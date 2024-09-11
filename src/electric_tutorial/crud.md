@@ -1,5 +1,5 @@
-# 7 GUIs 5: CRUD
+# Crud
 
-See <https://eugenkiss.github.io/7guis/tasks#crud>
 
-!fiddle-ns[](electric-tutorial.crud/CRUD)
+
+!fiddle-ns[](electric-tutorial.crud/Crud)
