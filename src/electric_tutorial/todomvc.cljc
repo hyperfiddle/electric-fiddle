@@ -1,13 +1,10 @@
 (ns electric-tutorial.todomvc
-  "Requires -Xss2m to compile. The Electric compiler exceeds the default 1m JVM ThreadStackSize
-  due to large macroexpansion resulting in false StackOverflowError during analysis."
   (:require [contrib.str :refer [blank->nil]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.forms :refer [Checkbox!]]
-            [electric-tutorial.temperature :refer [Input]]
-            [missionary.core :as m]))
+            [electric-tutorial.input-zoo :refer [Input]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -123,16 +120,6 @@
               (do (set! (.-value dom/node) "") [t ::create-todo desc])
               (e/amb))))))))
 
-(e/defn TodoMVC-UI [db state]
-  (dom/section (dom/props {:class "todoapp"})
-    (e/amb
-      (dom/header (dom/props {:class "header"})
-        (CreateTodo))
-      (e/When (e/server (pos? (todo-count db :all)))
-        (TodoList db state))
-      (dom/footer (dom/props {:class "footer"})
-        (TodoStats db state)))))
-
 (e/defn Diagnostics [db state]
   (dom/h1 (dom/text "Diagnostics"))
   (dom/dl
@@ -145,28 +132,36 @@
                                                  not-empty parse-long (vector #() ::set-delay))
                                           (dom/text " ms")))))
 
-(e/defn TodoMVC-body [db state]
-  (dom/div (dom/props {:class "todomvc"})
-    (e/amb
-      (TodoMVC-UI db state)
-      (dom/footer (dom/props {:class "info"})
-        (dom/p (dom/text "Double-click to edit a todo")))
-      #_(Diagnostics db state))))
+(e/defn TodoMVC-UI [db state]
+  (e/amb
+    (dom/section (dom/props {:class "todoapp"})
+      (e/amb
+        (dom/header (dom/props {:class "header"})
+          (CreateTodo))
+        (e/When (e/server (pos? (todo-count db :all)))
+          (TodoList db state))
+        (dom/footer (dom/props {:class "footer"})
+          (TodoStats db state))))
+    #_(Diagnostics db state)))
 
 (e/defn Slow-transact [delay !conn tx]
   (e/server (e/Offload #(try (Thread/sleep delay) ; artificial latency
                           (d/transact! !conn tx)
                           (catch InterruptedException _)))))
 
+;; #?(:clj (def db nil))
+;; #?(:clj (def Transact! nil))
 
-(e/defn Effects [cmd !conn db !state state] ; todo offload
+(e/defn Effects [!conn db !state state cmd] ; todo offload
   (e/client
+    ; todo dynamic scope dep injection then lift effect functions out
     (let [Transact! (e/server (e/Partial Slow-transact (e/client (::delay state)) !conn))]
       (case cmd
         ::clear-completed (e/fn []
-                            (e/server (let [tx (->> (seq (query-todos db :done))
-                                                 (mapv (fn [id] [:db/retractEntity id])))]
-                                        (Transact! tx))))
+                            (e/server
+                              (let [tx (->> (seq (query-todos db :done))
+                                         (mapv (fn [id] [:db/retractEntity id])))]
+                                (Transact! tx))))
 
         ::toggle (e/fn [id status]
                    (case (e/server (Transact! [{:db/id id, :task/status status}]))
@@ -186,32 +181,38 @@
                        (e/server (Transact! (->> (query-todos db (if (= :done status) :active :done))
                                               (mapv (fn [id] {:db/id id, :task/status status}))))))
 
-        ::create-todo (e/fn [desc]
-                        (e/server (println 'create-todo desc)
-                          (Transact! [{:task/description desc, :task/status :active}])))
+        ::create-todo (e/fn [desc] (e/server (Transact! [{:task/description desc, :task/status :active}])))
 
         ::set-delay (e/fn [v] (swap! !state assoc ::delay v))
         ::set-filter (e/fn [target] (swap! !state assoc ::filter target))))))
 
+(def state0 {::filter :all, ::editing nil, ::delay 0})
+#?(:cljs (def !state (atom state0)))
 #?(:clj (defonce !conn (d/create-conn {})))
-#?(:cljs (def !state (atom {::filter :all
-                            ::editing nil
-                            ::delay   0})))
+
+(e/defn Service [Effects edits]
+  (e/client ; client bias, t doesn't transfer
+    (e/for [[t cmd & args] (e/Filter some? edits)]
+      (prn 'cmd (name cmd) args)
+      (case (when-some [Effect (Effects cmd)]
+              (case (e/Apply Effect args) ::ok))
+        ::ok (t)))))
 
 (e/defn TodoMVC []
   (e/client
-    ; exclude #root style from todomvc-composed by inlining here
+    (dom/props {:class "todomvc"})
     (dom/link (dom/props {:rel :stylesheet, :href "/todomvc.css"}))
-    (let [state (e/watch !state)
-          !conn (e/server (identity !conn)) ; todo sited var resolution
+    (let [!conn (e/server (identity !conn)) ; todo sited var resolution
+          !state (e/client (identity !state)) ; sited var issue interacts badly with e/Partial
+          state (e/watch !state)
           db (e/server (e/watch !conn))]
-      (e/for [[t cmd & args] (e/Filter some?
-                               (TodoMVC-body db state))] ; client bias, t doesn't transfer
-        (prn 'cmd (name cmd) args)
-        (case (when-some [Effect (Effects cmd !conn db !state state)]
-                (case (binding []
-                        (e/Apply Effect args)) ::ok))
-          ::ok (t))))))
+
+      (Service
+        (e/Partial Effects !conn db !state state)
+        (TodoMVC-UI db state))
+
+      (dom/footer (dom/props {:class "info"})
+        (dom/p (dom/text "Double-click to edit a todo"))))))
 
 (comment
   (todo-count @!conn :all)

@@ -20,25 +20,7 @@ body.hyperfiddle {
 }
 
 .hyperfiddle ol,
-.hyperfiddle ul,
-.hyperfiddle dl {
+.hyperfiddle ul {
     margin-top: 0;
     /* margin-bottom: 1rem; */ /* why? interferes with dir-tree demo */
-}
-
-.hyperfiddle dl {
-    display: inline-grid;
-    grid-template-columns: auto auto;
-    grid-gap: 0 1em;
-}
-
-.hyperfiddle dt {
-    grid-column: 1;
-    font-weight: 700;
-}
-
-.hyperfiddle dd {
-    grid-column: 2;
-    margin-bottom: .5rem;
-    margin-left: 0;
 }

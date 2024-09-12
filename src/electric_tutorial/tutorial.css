@@ -1,0 +1,11 @@
+.user-examples-code { max-width: 80ch; }
+
+/* Forms, Crud, TodoMVC */
+.user-examples-target [aria-busy="true"] { background-color: yellow; }
+
+/* Toggle, TemperatureConverter, TodoMVC */
+.user-examples-target dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
+.user-examples-target dt { grid-column: 1; font-weight: 700; }
+.user-examples-target dd { grid-column: 2; margin-bottom: .5rem; margin-left: 1em; }
+
+.user-examples-target.Todos ul { list-style: none; padding-left: 0; }
