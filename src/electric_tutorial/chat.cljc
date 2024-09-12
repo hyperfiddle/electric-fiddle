@@ -1,7 +1,7 @@
 (ns electric-tutorial.chat
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.forms :refer [InputSubmit]]))
+            [electric-tutorial.forms :refer [InputSubmit!]]))
 
 (e/defn Login [username]
   (dom/div
@@ -12,7 +12,7 @@
 (e/defn Presence! [!present username]
   (e/server
     (let [session-id (get-in e/http-request [:headers "sec-websocket-key"])]
-      (swap! !present assoc session-id username)
+      (swap! !present assoc session-id (or username "anon"))
       (e/on-unmount #(swap! !present dissoc session-id)))
     (e/diff-by key (e/watch !present))))
 
@@ -29,12 +29,13 @@
         (dom/strong (dom/text username)) (dom/text " " msg)))))
 
 (e/defn SendMessage [username]
-  (let [pending (InputSubmit :placeholder "Type a message" :maxlength 100 :disabled (nil? username))]
+  (let [pending (InputSubmit! :placeholder (if username "Message" "Login to chat")
+                  :maxlength 100 :disabled (nil? username))]
     (dom/props {:style {:background-color (when (pos? (e/Count pending)) "yellow")}})
     (dom/text " " (e/Count pending))
     pending))
 
-(e/defn Query-todos [!db] (e/server (e/diff-by :db/id (reverse (e/watch !db))))) ; O(n) bad, fixme
+(e/defn Query-todos [!db] (e/server (e/diff-by :db/id (reverse (e/watch !db)))))
 
 #?(:clj (defn send-message! [!db msg] (swap! !db #(take 10 (cons msg %)))))
 
@@ -48,7 +49,7 @@
     (Present present)
     (dom/hr)
     (Channel msgs)
-    (e/for [[v t] (SendMessage username)]
+    (e/for [[t v] (SendMessage username)]
       (case (e/server
               (let [msg {:db/id (random-uuid) :username username :msg v}]
                 (case (e/Offload #(send-message! !db msg)) ::ok)))

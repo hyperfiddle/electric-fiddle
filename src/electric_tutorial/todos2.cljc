@@ -3,22 +3,8 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.chat :refer [InputSubmit]]))
-
-#?(:clj (def !conn (d/create-conn {}))) ; database on server
-#?(:clj (defn slow-transact! [& args] (Thread/sleep 500) (apply d/transact! args)))
-
-(e/defn Checkbox [checked label id]
-  (e/client
-    (let [id (or id (random-uuid))]
-      (e/amb
-        (dom/input (dom/props {:type "checkbox", :id id})
-          (let [pending (dom/OnAll "change" #(-> % .-target .-checked))]
-            (when-not (or (dom/Focused?) ; why? it's not an input
-                        (pos? (e/Count pending))) ; do not accept controlled values until caught up
-              (set! (.-checked dom/node) checked))
-            pending))
-        (dom/label (dom/props {:for id}) (dom/text label) (e/amb)))))) ; todo bundle e/amb in all elements
+            [electric-tutorial.forms :refer [InputSubmit! Checkbox!]]
+            [electric-tutorial.todos :refer [!conn]]))
 
 (e/defn Reconcile-records [stable-kf as bs]
   (e/client
@@ -47,7 +33,7 @@
 
 (e/defn TodoCreate []
   (e/client
-    (e/for [[v t] (InputSubmit :placeholder "Buy milk")]
+    (e/for [[v t] (InputSubmit! :placeholder "Buy milk")]
       (let [id (random-uuid)]
         [t
          id
@@ -58,7 +44,8 @@
   (e/client
     (dom/li
       (dom/props {:style {:background-color (when pending "yellow")}})
-      (e/for [[v t] (Checkbox (case status :active false, :done true) description id)]
+      (e/for [[v t] (Checkbox! (case status :active false, :done true)
+                      :label description :id id)]
         [t
          id ; stable id
          [::toggle id v] ; xcmd
@@ -96,9 +83,11 @@
     ::toggle [{:db/id a, :task/status (if b :done :active)}]
     nil))
 
-(e/defn Controller [App]
+#?(:clj (defn slow-transact! [& args] (Thread/sleep 500) (apply d/transact! args)))
+
+(e/defn Controller [edits]
   (e/client ; bias for writes because token doesn't transfer
-    (e/for [[t id xcmd prediction] (App)]
+    (e/for [[t id xcmd prediction] edits]
       (case (e/server
               (when-some [tx (cmd->tx xcmd)] ; secure
                 (case (e/Offload #(slow-transact! !conn tx)) ::ok)))
@@ -106,4 +95,4 @@
 
 (e/defn TodoList []
   (let [db (e/server (e/watch !conn))]
-    (Controller (e/Partial TodoList* db))))
+    (Controller (TodoList* db))))

@@ -13,34 +13,37 @@
                 (submit! [e] (when (= "Enter" (.-key e)) (read-clear! (.-target e))))]
           submit!)))))
 
-(e/defn Checkbox! [label & [id]]
+(e/defn Checkbox! [checked & {:keys [id label]
+                              :or {id (random-uuid)}}]
   (e/client
-    (let [id (or id (random-uuid))]
-      (e/amb
-        (dom/input (dom/props {:type "checkbox", :id id})
-          (dom/OnAll "change" #(-> % .-target .-checked)))
+    (e/amb
+      (dom/input (dom/props {:type "checkbox", :id id})
+        (let [pending (dom/OnAll "change" #(-> % .-target .-checked))]
+          (when-not (or (dom/Focused?) (pos? (e/Count pending)))
+            (set! (.-checked dom/node) checked))
+          pending))
+      (e/When label
         (dom/label (dom/props {:for id}) (dom/text label))))))
 
-(e/defn Monitor [log]
-  (dom/pre (dom/props {:style {:display "grid" :grid-template-columns "1fr 1fr"}})
-    (e/for [{:keys [::v ::pending]} log]
-      (dom/div (dom/text (pprint-str v)))
-      (dom/div (dom/props {:style {:text-align "right"}})
-        (dom/text (if pending "pending" "ok"))))))
-
-#?(:clj (def !log (atom [])))
+(e/defn Monitor [!log edits]
+  (let [log (e/amb
+              (e/server {::v (e/diff-by identity (e/watch !log))})
+              (e/client (e/for [[t v] edits] {::v v ::pending true})))]
+    (dom/pre (dom/props {:style {:display "grid" :grid-template-columns "1fr 1fr"}})
+      (e/for [{:keys [::v ::pending]} log]
+        (dom/div (dom/text (pprint-str v)))
+        (dom/div (dom/props {:style {:text-align "right"}})
+          (dom/text (if pending "pending" "ok")))))))
 
 (e/defn Forms []
-  (let [edits (e/amb
-                (dom/div (Checkbox! "toggle me rapidly!"))
+  (let [!log (e/server (atom []))
+        edits (e/amb
+                (dom/div (Checkbox! true :label "toggle me rapidly!"))
                 (dom/div (InputSubmit! :placeholder "Message rapidly" :maxlength 100)))]
 
-    (e/for [[v t] edits]
-      (case (e/server
-              (case (e/Offload #(do (Thread/sleep 1000) (swap! !log conj v))) ::ok))
-        ::ok (t)))
+    (Monitor !log edits)
 
-    (let [log (e/amb
-                (e/server {::v (e/diff-by identity (e/watch !log))})
-                (e/client (e/for [[v t] edits] {::v v ::pending true})))]
-      (Monitor log))))
+    (e/for [[t v] #_(Filter some?) edits]
+      (case (e/server
+              (case (e/Offload #(do (Thread/sleep 500) (swap! !log conj v))) ::ok))
+        ::ok (t)))))
