@@ -13,11 +13,11 @@
                 (submit! [e] (when (= "Enter" (.-key e)) (read-clear! (.-target e))))]
           submit!)))))
 
-(e/defn Checkbox! [checked & {:keys [id label]
+(e/defn Checkbox! [checked & {:keys [id label] :as props
                               :or {id (random-uuid)}}]
   (e/client
     (e/amb
-      (dom/input (dom/props {:type "checkbox", :id id})
+      (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
         (let [pending (dom/OnAll "change" #(-> % .-target .-checked))]
           (when-not (or (dom/Focused?) (pos? (e/Count pending)))
             (set! (.-checked dom/node) checked))
