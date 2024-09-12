@@ -196,7 +196,7 @@
 
 .hyperfiddle .todomvc .todo-list li.editing .edit {
 	display: block;
-	width: 506px;
+	width: calc(100% - 43px);
 	padding: 13px 17px 12px 17px;
 	margin: 0 0 0 43px;
 }

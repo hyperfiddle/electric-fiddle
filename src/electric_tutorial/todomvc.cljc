@@ -79,9 +79,8 @@
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
             (dom/input (dom/props {:class "edit" #_#_:autofocus true})
-              #_(dom/bind-value description) ; first set the initial value, then focus
               (set! (.-value dom/node) description)
-              #_(case description (.focus dom/node)) ; don't focus until description is available
+              (case description (.focus dom/node)) ; don't focus until description is available
               (PendingMonitor
                 (e/for [[t e] (dom/OnAll "keydown" identity)]
                   (case (.-key e)
@@ -134,66 +133,65 @@
       (dom/footer (dom/props {:class "footer"})
         (TodoStats db state)))))
 
-(e/defn TodoMVC-body [db state]
-  (dom/div (dom/props {:class "todomvc"})
-    (e/amb
-      (TodoMVC-UI db state)
-      (dom/footer (dom/props {:class "info"})
-        (dom/p (dom/text "Double-click to edit a todo"))))))
-
 (e/defn Diagnostics [db state]
   (dom/h1 (dom/text "Diagnostics"))
   (dom/dl
     (dom/dt (dom/text "count :all")) (dom/dd (dom/text (pr-str (e/server (todo-count db :all)))))
     (dom/dt (dom/text "query :all")) (dom/dd (dom/text (pr-str (e/server (query-todos db :all)))))
     (dom/dt (dom/text "state")) (dom/dd (dom/text (pr-str state)))
-    (dom/dt (dom/text "delay")) (dom/dd (some->> (Input (::delay state)
-                                                   :type "number" :step 1 :min 0
-                                                   :style {:width :min-content})
-                                          not-empty parse-long [(fn [_]) ::set-delay])
-                                  (dom/text " ms"))))
+    (dom/dt (dom/text "delay")) (dom/dd (e/amb (some->> (Input (::delay state)
+                                                          :type "number" :step 1 :min 0
+                                                          :style {:width :min-content})
+                                                 not-empty parse-long (vector #() ::set-delay))
+                                          (dom/text " ms")))))
 
-#?(:clj (defn slow-transact [delay !conn tx]
-          (m/via m/blk
-            (try (Thread/sleep delay) ; artificial latency
-              (d/transact! !conn tx)
-              (catch InterruptedException _)))))
+(e/defn TodoMVC-body [db state]
+  (dom/div (dom/props {:class "todomvc"})
+    (e/amb
+      (TodoMVC-UI db state)
+      (dom/footer (dom/props {:class "info"})
+        (dom/p (dom/text "Double-click to edit a todo")))
+      #_(Diagnostics db state))))
 
-#?(:clj (defn effects [[cmd & args] !conn db !state state]
-          (let [transact! (partial slow-transact (::delay state) !conn)]
-            (case cmd
-              ::clear-completed
-              (m/sp (let [tx (->> (seq (query-todos db :done))
-                               (mapv (fn [id] [:db/retractEntity id])))]
-                      (transact! tx)))
-              ::toggle
-              (m/sp (let [[id status] args]
-                      (transact! [{:db/id id, :task/status status}])
-                      (swap! !state assoc ::editing nil)))
-              ::editing-item
-              (m/sp (let [[id] args]
-                      (swap! !state assoc ::editing id)))
-              ::edit-todo-desc
-              (m/sp (let [[id desc] args]
-                      (transact! [{:db/id id, :task/description desc}])
-                      (swap! !state assoc ::editing nil)))
-              ::cancel-todo-edit-desc
-              (m/sp (swap! !state assoc ::editing nil))
-              ::delete-todo
-              (m/sp (let [[id] args]
-                      (transact! [[:db/retractEntity id]])))
-              ::toggle-all
-              (m/sp (let [[status] args]
-                      (transact! (->> (query-todos db (if (= :done status) :active :done))
-                                   (mapv (fn [id] {:db/id id, :task/status status}))))))
-              ::create-todo
-              (m/sp (let [[desc] args]
-                      (transact! [{:task/description desc, :task/status :active}])))
+(e/defn Slow-transact [delay !conn tx]
+  (e/server (e/Offload #(try (Thread/sleep delay) ; artificial latency
+                          (d/transact! !conn tx)
+                          (catch InterruptedException _)))))
 
-              ::set-delay (m/sp (let [[v] args] (swap! !state assoc ::delay v)))
-              ::set-filter (m/sp (let [[target] args] (swap! !state assoc ::filter target)))
 
-              ))))
+(e/defn Effects [cmd !conn db !state state] ; todo offload
+  (e/client
+    (let [Transact! (e/server (e/Partial Slow-transact (e/client (::delay state)) !conn))]
+      (case cmd
+        ::clear-completed (e/fn []
+                            (e/server (let [tx (->> (seq (query-todos db :done))
+                                                 (mapv (fn [id] [:db/retractEntity id])))]
+                                        (Transact! tx))))
+
+        ::toggle (e/fn [id status]
+                   (case (e/server (Transact! [{:db/id id, :task/status status}]))
+                     (swap! !state assoc ::editing nil)))
+
+        ::editing-item (e/fn [id] (swap! !state assoc ::editing id))
+
+        ::edit-todo-desc (e/fn [id desc]
+                           (case (e/server (Transact! [{:db/id id, :task/description desc}]))
+                             (swap! !state assoc ::editing nil)))
+
+        ::cancel-todo-edit-desc (e/fn [] (swap! !state assoc ::editing nil))
+
+        ::delete-todo (e/fn [id] (e/server (Transact! [[:db/retractEntity id]])))
+
+        ::toggle-all (e/fn [status]
+                       (e/server (Transact! (->> (query-todos db (if (= :done status) :active :done))
+                                              (mapv (fn [id] {:db/id id, :task/status status}))))))
+
+        ::create-todo (e/fn [desc]
+                        (e/server (println 'create-todo desc)
+                          (Transact! [{:task/description desc, :task/status :active}])))
+
+        ::set-delay (e/fn [v] (swap! !state assoc ::delay v))
+        ::set-filter (e/fn [target] (swap! !state assoc ::filter target))))))
 
 #?(:clj (defonce !conn (d/create-conn {})))
 #?(:cljs (def !state (atom {::filter :all
@@ -205,14 +203,15 @@
     ; exclude #root style from todomvc-composed by inlining here
     (dom/link (dom/props {:rel :stylesheet, :href "/todomvc.css"}))
     (let [state (e/watch !state)
+          !conn (e/server (identity !conn)) ; todo sited var resolution
           db (e/server (e/watch !conn))]
-      (e/for [[t & xcmd] (TodoMVC-body db state)] ; client bias, t doesn't transfer
-        (case (e/server ; secure
-                (when-some [effect (binding []
-                                     (effects xcmd !conn db !state state))]
-                  (case (e/Task effect) ::ok)))
-          ::ok (t)))
-      (Diagnostics db state))))
+      (e/for [[t cmd & args] (e/Filter some?
+                               (TodoMVC-body db state))] ; client bias, t doesn't transfer
+        (prn 'cmd (name cmd) args)
+        (case (when-some [Effect (Effects cmd !conn db !state state)]
+                (case (binding []
+                        (e/Apply Effect args)) ::ok))
+          ::ok (t))))))
 
 (comment
   (todo-count @!conn :all)
