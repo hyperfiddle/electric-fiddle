@@ -1,10 +1,11 @@
 (ns electric-tutorial.todomvc
   (:require [contrib.str :refer [blank->nil]]
+            [contrib.data :refer [unqualify]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.forms :refer [Checkbox!]]
-            [electric-tutorial.input-zoo :refer [Input]]))
+            [electric-tutorial.input-zoo :refer [Input!]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -33,7 +34,7 @@
     (dom/a (dom/props {:class (when (= state target) "selected")})
       (dom/text label)
       (e/for [[t _] (dom/OnAll "click" (constantly true))]
-        [t ::set-filter target]))))
+        [t `Set-filter target]))))
 
 (e/defn TodoStats [db state]
   (let [active (e/server (todo-count db :active))
@@ -54,7 +55,7 @@
           (dom/button (dom/props {:class "clear-completed"})
             (dom/text "Clear completed " done)
             (e/for [[t _] (dom/OnAll "click" (constantly true))]
-              [t ::clear-completed])))))))
+              [t `Clear-completed])))))))
 
 (e/defn TodoItem [db state id]
   (let [!e (e/server (d/entity db id))
@@ -69,10 +70,10 @@
             (PendingMonitor
               (e/for [[t v] (Checkbox! (= :done status) :class "toggle")]
                 (let [status (case v true :done, false :active, nil)]
-                  [t ::toggle id status])))
+                  [t `Toggle id status])))
             (dom/label (dom/text description)
               (e/for [[t _] (dom/OnAll "dblclick" (constantly true))]
-                [t ::editing-item id]))))
+                [t `Editing-item id]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
             (dom/input (dom/props {:class "edit" #_#_:autofocus true})
@@ -82,13 +83,13 @@
                 (e/for [[t e] (dom/OnAll "keydown" identity)]
                   (case (.-key e)
                     "Enter" (when-some [desc (blank->nil (-> e .-target .-value))]
-                              [t ::edit-todo-desc id desc])
-                    "Escape" [t ::cancel-todo-edit-desc]
+                              [t `Edit-todo-desc id desc])
+                    "Escape" [t `Cancel-todo-edit-desc]
                     (e/amb)))))))
         (dom/button (dom/props {:class "destroy"})
           (PendingMonitor
             (e/for [[t _] (dom/OnAll "click" (constantly true))]
-              [t ::delete-todo id])))))))
+              [t `Delete-todo id])))))))
 
 (e/defn Query-todos [db filter]
   (e/server (e/diff-by identity (sort (query-todos db filter)))))
@@ -104,7 +105,7 @@
             (e/for [[t v] (Checkbox! (cond (= all done) true (= all active) false :else nil)
                             :class "toggle-all")]
               (let [status (case v (true nil) :done, false :active)]
-                [t ::toggle-all status]))))
+                [t `Toggle-all status]))))
         (dom/label (dom/props {:for "toggle-all"}) (dom/text "Mark all as complete"))
         (dom/ul (dom/props {:class "todo-list"})
           (e/for [id (Query-todos db (::filter state))]
@@ -117,102 +118,105 @@
         (e/for [[t e] (dom/OnAll "keydown" identity)]
           (e/When (= "Enter" (.-key e))
             (if-some [desc (not-empty (-> e .-target .-value))]
-              (do (set! (.-value dom/node) "") [t ::create-todo desc])
+              (do (set! (.-value dom/node) "") [t `Create-todo desc])
               (e/amb))))))))
 
+(e/defn TodoMVC-UI [db state]
+  (dom/section (dom/props {:class "todoapp"})
+    (e/amb
+      (dom/header (dom/props {:class "header"})
+        (CreateTodo))
+      (e/When (e/server (pos? (todo-count db :all)))
+        (TodoList db state))
+      (dom/footer (dom/props {:class "footer"})
+        (TodoStats db state)))))
+
 (e/defn Diagnostics [db state]
-  (dom/h1 (dom/text "Diagnostics"))
   (dom/dl
     (dom/dt (dom/text "count :all")) (dom/dd (dom/text (pr-str (e/server (todo-count db :all)))))
     (dom/dt (dom/text "query :all")) (dom/dd (dom/text (pr-str (e/server (query-todos db :all)))))
-    (dom/dt (dom/text "state")) (dom/dd (dom/text (pr-str state)))
-    (dom/dt (dom/text "delay")) (dom/dd (e/amb (some->> (Input (::delay state)
-                                                          :type "number" :step 1 :min 0
-                                                          :style {:width :min-content})
-                                                 not-empty parse-long (vector #() ::set-delay))
+    (dom/dt (dom/text "state")) (dom/dd (dom/text (pr-str (update-keys state unqualify))))
+    (dom/dt (dom/text "delay")) (dom/dd (e/amb (e/for [[t v] (Input! (::delay state)
+                                                               :type "number" :step 1 :min 0
+                                                               :style {:width :min-content})]
+                                                 [t `Set-delay (parse-long v)])
                                           (dom/text " ms")))))
 
-(e/defn TodoMVC-UI [db state]
-  (e/amb
-    (dom/section (dom/props {:class "todoapp"})
-      (e/amb
-        (dom/header (dom/props {:class "header"})
-          (CreateTodo))
-        (e/When (e/server (pos? (todo-count db :all)))
-          (TodoList db state))
-        (dom/footer (dom/props {:class "footer"})
-          (TodoStats db state))))
-    #_(Diagnostics db state)))
-
 (e/defn Slow-transact [delay !conn tx]
-  (e/server (e/Offload #(try (Thread/sleep delay) ; artificial latency
-                          (d/transact! !conn tx)
-                          (catch InterruptedException _)))))
+  (e/server (e/Offload #(try (Thread/sleep delay) (d/transact! !conn tx) ::ok
+                          (catch InterruptedException _) ; never seen
+                          (catch Exception _ ::fail)))))
 
-;; #?(:clj (def db nil))
-;; #?(:clj (def Transact! nil))
+(def Transact! nil)
+(def db nil)
+(def !state nil)
+(def state nil)
 
-(e/defn Effects [!conn db !state state cmd] ; todo offload
+(e/defn Clear-completed []
+  (e/server (->> (seq (query-todos db :done))
+              (mapv (fn [id] [:db/retractEntity id])) Transact!)))
+
+(e/defn Toggle [id status]
+  (e/client (case (e/server (Transact! [{:db/id id, :task/status status}]))
+              (swap! !state assoc ::editing nil))))
+
+(e/defn Toggle-all [status]
+  (e/server (->> (query-todos db (if (= :done status) :active :done))
+              (mapv (fn [id] {:db/id id, :task/status status})) Transact!)))
+
+(e/defn Cancel-todo-edit-desc [] (e/client (swap! !state assoc ::editing nil)))
+(e/defn Delete-todo [id] (e/server (Transact! [[:db/retractEntity id]])))
+(e/defn Create-todo [desc] (e/server (Transact! [{:task/description desc, :task/status :active}])))
+(e/defn Editing-item [id] (e/client (swap! !state assoc ::editing id)))
+(e/defn Edit-todo-desc [id desc]
+  (e/client (case (e/server (Transact! [{:db/id id, :task/description desc}]))
+              (swap! !state assoc ::editing nil))))
+
+(e/defn Set-delay [v] (e/client (swap! !state assoc ::delay v)))
+(e/defn Set-filter [target] (e/client (swap! !state assoc ::filter target)))
+
+(e/defn Effects []
   (e/client
-    ; todo dynamic scope dep injection then lift effect functions out
-    (let [Transact! (e/server (e/Partial Slow-transact (e/client (::delay state)) !conn))]
-      (case cmd
-        ::clear-completed (e/fn []
-                            (e/server
-                              (let [tx (->> (seq (query-todos db :done))
-                                         (mapv (fn [id] [:db/retractEntity id])))]
-                                (Transact! tx))))
+    {`Clear-completed Clear-completed
+     `Toggle Toggle
+     `Editing-item Editing-item
+     `Edit-todo-desc Edit-todo-desc
+     `Cancel-todo-edit-desc Cancel-todo-edit-desc
+     `Delete-todo Delete-todo
+     `Toggle-all Toggle-all
+     `Create-todo Create-todo
+     `Set-delay Set-delay
+     `Set-filter Set-filter}))
 
-        ::toggle (e/fn [id status]
-                   (case (e/server (Transact! [{:db/id id, :task/status status}]))
-                     (swap! !state assoc ::editing nil)))
-
-        ::editing-item (e/fn [id] (swap! !state assoc ::editing id))
-
-        ::edit-todo-desc (e/fn [id desc]
-                           (case (e/server (Transact! [{:db/id id, :task/description desc}]))
-                             (swap! !state assoc ::editing nil)))
-
-        ::cancel-todo-edit-desc (e/fn [] (swap! !state assoc ::editing nil))
-
-        ::delete-todo (e/fn [id] (e/server (Transact! [[:db/retractEntity id]])))
-
-        ::toggle-all (e/fn [status]
-                       (e/server (Transact! (->> (query-todos db (if (= :done status) :active :done))
-                                              (mapv (fn [id] {:db/id id, :task/status status}))))))
-
-        ::create-todo (e/fn [desc] (e/server (Transact! [{:task/description desc, :task/status :active}])))
-
-        ::set-delay (e/fn [v] (swap! !state assoc ::delay v))
-        ::set-filter (e/fn [target] (swap! !state assoc ::filter target))))))
-
-(def state0 {::filter :all, ::editing nil, ::delay 0})
-#?(:cljs (def !state (atom state0)))
-#?(:clj (defonce !conn (d/create-conn {})))
-
-(e/defn Service [Effects edits]
+(e/defn Service [effects edits]
   (e/client ; client bias, t doesn't transfer
     (e/for [[t cmd & args] (e/Filter some? edits)]
       (prn 'cmd (name cmd) args)
-      (case (when-some [Effect (Effects cmd)]
-              (case (e/Apply Effect args) ::ok))
+      (case (when-some [Effect (get effects cmd)]
+              (let [res (e/Apply Effect args)]
+                (prn 'res res)
+                (case res ::ok ::ok, ::fail ::fail, ::ok)))
+        ::fail nil ; idea: (t err) to prompt for retry
         ::ok (t)))))
+
+(def state0 {::filter :all, ::editing nil, ::delay 0})
+#?(:clj (defonce !conn (d/create-conn {})))
 
 (e/defn TodoMVC []
   (e/client
-    (dom/props {:class "todomvc"})
     (dom/link (dom/props {:rel :stylesheet, :href "/todomvc.css"}))
-    (let [!conn (e/server (identity !conn)) ; todo sited var resolution
-          !state (e/client (identity !state)) ; sited var issue interacts badly with e/Partial
-          state (e/watch !state)
-          db (e/server (e/watch !conn))]
+    (dom/props {:class "todomvc"})
+    (binding [!state (atom state0)]
+      (binding [state (e/watch !state)]
+        (binding [db (e/server (e/watch !conn))
+                  Transact! (e/server (e/Partial Slow-transact (e/client (::delay state)) !conn))]
+          (Service (Effects)
+            (e/amb
+              (TodoMVC-UI db state)
+              (Diagnostics db state))))))
 
-      (Service
-        (e/Partial Effects !conn db !state state)
-        (TodoMVC-UI db state))
-
-      (dom/footer (dom/props {:class "info"})
-        (dom/p (dom/text "Double-click to edit a todo"))))))
+    (dom/footer (dom/props {:class "info"})
+      (dom/p (dom/text "Double-click to edit a todo")))))
 
 (comment
   (todo-count @!conn :all)
