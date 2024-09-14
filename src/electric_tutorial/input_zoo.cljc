@@ -2,6 +2,10 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
+(e/defn PendingMonitor [edits]
+  (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
+  edits)
+
 (e/defn Input* [& {:keys [maxlength] :or {maxlength 100} :as props}]
   (e/client ; explicit site on all controls for compat with neutral callers
     (dom/input (dom/props (assoc props :maxLength maxlength))
@@ -27,18 +31,18 @@
     (dom/pre (dom/text (pr-str v)) (dom/props {:style {:margin 0}}))))
 
 (e/defn Input! [v & {:keys [maxlength] :or {maxlength 100} :as props}]
-  (e/client ; todo: submit on blur
+  (e/client
     (dom/input (dom/props (assoc props :maxLength maxlength))
-      (letfn [(read! [node] (subs (.-value node) 0 maxlength))
-              (submit! [e] (let [k (.-key e)]
-                             (cond
-                               (= "Enter" k) (read! (.-target e))
-                               (= "Escape" k) (do (set! (.-value dom/node) v) nil)
-                               () nil)))]
-        (let [edits (dom/OnAll "keydown" submit!)]
-          (when-not (or (dom/Focused?) (pos? (e/Count edits)))
-            (set! (.-value dom/node) v))
-          edits)))))
+      (PendingMonitor
+        (letfn [(read! [node] (subs (.-value node) 0 maxlength))
+                (read [e] (let [k (.-key e)]
+                            (cond
+                              (= "Escape" k) (do (set! (.-value dom/node) v) nil) ; clear token with nil
+                              () (read! (.-target e)))))]
+          ; reuse token as value updates - i.e., singular edit not concurrent
+          (let [v' (dom/On "input" read nil) t (e/Token v')]
+            (when-not (or (dom/Focused?) (some? t)) (set! (.-value dom/node) v))
+            (if t [t v'] (e/amb))))))))
 
 (e/defn DemoInput! [] ; async, transactional, entity backed, never backpressure
   (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
@@ -64,7 +68,7 @@
         (dom/OnAll "keydown" submit!)))))
 
 (e/defn DemoInputSubmit! []  ; chat
-  (let [!v (e/server (atom "")) v (e/server (e/watch !v))
+  (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
         edits (e/amb ; in-flight edits
                 (InputSubmit! :placeholder "Send message")
                 (InputSubmit! :placeholder "Send message"))]
