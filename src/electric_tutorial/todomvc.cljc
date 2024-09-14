@@ -206,17 +206,18 @@
   (e/client
     (dom/link (dom/props {:rel :stylesheet, :href "/todomvc.css"}))
     (dom/props {:class "todomvc"})
-    (binding [!state (atom state0)]
-      (binding [state (e/watch !state)]
-        (binding [db (e/server (e/watch !conn))
-                  Transact! (e/server (e/Partial Slow-transact (e/client (::delay state)) !conn))]
-          (Service (Effects)
-            (e/amb
-              (TodoMVC-UI db state)
-              (Diagnostics db state))))))
+    (e/amb ; workaround crash, fixme
+      (binding [!state (atom state0)]
+        (binding [state (e/watch !state)]
+          (binding [db (e/server (e/watch !conn))
+                    Transact! (e/server (e/Partial Slow-transact (e/client (::delay state)) !conn))]
+            (Service (Effects)
+              (e/amb
+                (TodoMVC-UI db state)
+                (Diagnostics db state))))))
 
-    (dom/footer (dom/props {:class "info"})
-      (dom/p (dom/text "Double-click to edit a todo")))))
+      (dom/footer (dom/props {:class "info"})
+        (dom/p (dom/text "Double-click to edit a todo"))))))
 
 (comment
   (todo-count @!conn :all)

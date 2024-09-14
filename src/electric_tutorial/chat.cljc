@@ -52,12 +52,13 @@
   (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
         present (e/server (Presence! !present username))
         msgs (e/server (Query-todos !db))]
-    (Present present)
-    (dom/hr)
-    (Channel msgs)
-    (e/for [[t v] (SendMessage username)]
-      (case (e/server
-              (let [msg {:db/id (random-uuid) :username username :msg v}]
-                (case (e/Offload #(send-message! !db msg)) ::ok)))
-        ::ok (t)))
-    (Login username)))
+    (e/amb ; workaround crash, fixme
+      (Present present)
+      (dom/hr)
+      (Channel msgs)
+      (e/for [[t v] (SendMessage username)]
+        (case (e/server
+                (let [msg {:db/id (random-uuid) :username username :msg v}]
+                  (case (e/Offload #(send-message! !db msg)) ::ok)))
+          ::ok (t)))
+      (Login username))))
