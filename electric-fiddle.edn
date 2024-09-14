@@ -1,7 +1,7 @@
 ;; For dev only - listed fiddles will be loaded at REPL start.
 ;; Restart your REPL for changes to take effect.
 {:loaded-fiddles [hello-fiddle
-                  #_electric-tutorial ; requires :electric-tutorial alias and `npm install`
+                  electric-tutorial   ; requires :electric-tutorial alias
                   #_datomic-browser   ; requires :datomic-browser alias
                   #_xtdb-demo         ; requires :xtdb-demo alias
                   #_uix-demo          ; requires :uix-demo alias and `npm install`
