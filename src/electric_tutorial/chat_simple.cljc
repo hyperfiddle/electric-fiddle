@@ -1,7 +1,7 @@
 (ns electric-tutorial.chat-simple
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.forms :refer [InputSubmit]]))
+            [electric-tutorial.input-zoo :refer [InputSubmit!]]))
 
 #?(:clj (defn send-message! [!msgs msg] (swap! !msgs #(take 10 (cons msg %)))))
 (e/defn Query-todos [!db] (e/server (e/diff-by :db/id (reverse (e/watch !db))))) ; O(n) bad, fixme
@@ -15,7 +15,7 @@
         (dom/text msg))))
 
   (e/client
-    (let [pending (InputSubmit :placeholder "Type a message" :maxlength 100)]
+    (let [pending (InputSubmit! :placeholder "Type a message" :maxlength 100)]
       (e/for [[v t] pending]
         (case (e/server
                 (let [msg {:db/id (random-uuid) :msg v}]

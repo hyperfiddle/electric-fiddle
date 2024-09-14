@@ -3,7 +3,7 @@
             [hyperfiddle :as hf]
             [dustingetz.scratch :refer [Scratch]]
             [dustingetz.hello :refer [Hello]]
-            [dustingetz.counter :refer [CounterDemo]]
+            [electric-tutorial.counter :refer [Counter]]
             [dustingetz.painter :refer [Painter]]
             [dustingetz.scroll-abc :refer [Scroll-abc]]
             [dustingetz.scroll-dom :refer [ScrollDemo]]
@@ -13,6 +13,8 @@
             [dustingetz.electric-tree :refer [TreeDemo]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
+            [dustingetz.chat2 :refer [Chat2]]
+            [dustingetz.logic :refer [Logic]]
 
 
             #_[dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
@@ -33,8 +35,9 @@
 (e/defn Fiddles []
   {`Scratch Scratch
    `Hello Hello
-   `CounterDemo CounterDemo
+   `Counter Counter
    `Painter Painter
+   `Chat2 Chat2
    `ScrollDemo ScrollDemo
    `Scroll-abc Scroll-abc
    `FizzBuzzDemo FizzBuzzDemo
@@ -43,6 +46,7 @@
    `TreeDemo TreeDemo
    `MillionCheckboxes MillionCheckboxes
    `MillionCheckboxes2 MillionCheckboxes2
+   `Logic Logic
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
    `Essay Essay #_(With-HFQL-Bindings. Essay)

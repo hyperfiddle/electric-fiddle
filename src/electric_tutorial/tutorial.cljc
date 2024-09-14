@@ -1,5 +1,6 @@
 (ns electric-tutorial.tutorial
   (:require clojure.edn
+            #?(:clj [clojure.java.io :as io])
             clojure.string
             contrib.data
             [electric-fiddle.fiddle :refer [Fiddle-fn Fiddle-ns]]
@@ -14,55 +15,62 @@
             [electric-tutorial.dir-tree :refer [DirTree]]
             [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.system-properties :refer [SystemProperties]]
-            [electric-tutorial.chat :refer [Chat]]
             [electric-tutorial.backpressure :refer [Backpressure]]
             [electric-tutorial.lifecycle :refer [Lifecycle]]
-            [electric-tutorial.chat-extended :refer [ChatExtended]]
+            [electric-tutorial.forms :refer [Forms]]
+            [electric-tutorial.crud :refer [Crud]]
+            [electric-tutorial.chat :refer [Chat]]
+            [electric-tutorial.input-zoo :refer [InputZoo]]
             [electric-tutorial.webview :refer [Webview]]
-            [electric-tutorial.todos-simple :refer [TodoList]]
+            [electric-tutorial.todos :refer [Todos]]
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
             [electric-tutorial.counter :refer [Counter]]
             [electric-tutorial.temperature :refer [TemperatureConverter]]
             [electric-tutorial.timer :refer [Timer]]
-            [electric-tutorial.crud :refer [CRUD]]
-            #_[electric-tutorial.todomvc :refer [TodoMVC]]
-            #_[electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
+            [electric-tutorial.crud-7guis :refer [CRUD]]
+            [electric-tutorial.todomvc :refer [TodoMVC]]
+            [electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
             #_[electric-tutorial.explorer :refer [DirectoryExplorer]]
 
             ))
 
 (def tutorials
-  [["Electric"
+  [["Tutorial"
     [`TwoClocks
      `DirTree
-     `Toggle
-     `SystemProperties
-     `Chat
-     `Backpressure
-     `Lifecycle
-     ; tutorial-entrypoint
-     `ChatExtended ; FIXME port to v3
      `Webview
-     `TodoList
-     #_`ReagentInterop
-     `SVG
+     `Lifecycle
+     `Backpressure
+     `Toggle
+     `Counter
+     `TemperatureConverter
+     `Chat
+     `InputZoo
+     `Forms
+     `Crud
+     `Todos
+     ; Optimistic Updates
+     `TodoMVC
+     `TodoMVC-composed
+     ; Typeahead
+     ; Datagrid with typeahead
 
-     #_`TodoMVC
-     #_`TodoMVC-composed
-     #_`DirectoryExplorer
 
      #_`electric-demo.demo-virtual-scroll/VirtualScroll ; virtual scroll Server-streamed virtual pagination over node_modules. Check the DOM!
      #_`electric-demo.wip.demo-stage-ui4/CrudForm
      #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]
-   ["7 GUIs"
-    [`Counter
-     `TemperatureConverter
+   ["Demos"
+    [#_`DirectoryExplorer
+     `SVG
+     `SystemProperties
+     #_`ReagentInterop
      `Timer
-     `CRUD
-     #_`wip.teeshirt-orders/Webview-HFQL]]])
+     `CRUD]]
+   #_["HFQL"
+    [`wip.teeshirt-orders/Webview-HFQL]]])
 
 (def tutorials-index (->> tutorials
                        (mapcat (fn [[_group entries]] entries))
@@ -112,39 +120,64 @@
 (def essays
   {`TwoClocks "two_clocks.md"
    `DirTree "dir_tree.md"
-   `Toggle "toggle.md"
-   `SystemProperties "system_properties.md"
-   `Chat "chat.md"
-   `Backpressure "backpressure.md"
+   `Webview "webview.md" ; concrete
    `Lifecycle "lifecycle.md"
-   `ChatExtended "chat_extended.md" ; FIXME port to v3
-   `Webview "webview.md"
-   `TodoList "todos_simple.md"
-   `SVG "svg.md"
+   `Backpressure "backpressure.md"
+   `Toggle "toggle.md"
    `Counter "counter.md"
    `TemperatureConverter "temperature_converter.md"
+   `Chat "chat.md"
+   `InputZoo "input_zoo.md"
+   `Forms "forms.md"
+   `Crud "crud.md"
+   `Todos "todos.md"
+   ; Optimistic updates
+   `TodoMVC "todomvc.md"
+   `TodoMVC-composed "todomvc_composed.md"
+   ; Typeahead
+   ; webview dynamoic with typeahead
+
+
+   ; idioms
+   ; file-watcher
+   ; nested-documents
+
+   ;; demos
    `Timer "timer.md"
-   `CRUD "crud.md"
+   `CRUD "crud-7guis.md"
+   ; webview-scroll
+   ; waveform
+   ; painter
+   ; directory explorer
+   `SVG "svg.md"
+   ; color picker
+   ; fizzbuzz
+
+   ;; unused
    ;`ReagentInterop ""
+   ;`SystemProperties "system_properties.md"
    })
 
 (e/defn Fiddles []
-  {
-   `TwoClocks TwoClocks
+  {`TwoClocks TwoClocks
    `DirTree DirTree
-   `Toggle Toggle
-   `SystemProperties SystemProperties
-   `Chat Chat
-   `Backpressure Backpressure
-   `Lifecycle Lifecycle
-   `ChatExtended ChatExtended ; FIXME port to v3
    `Webview Webview
-   `TodoList TodoList  ; css fixes
-   `SVG SVG
+   `Lifecycle Lifecycle
+   `Toggle Toggle
    `Counter Counter
    `TemperatureConverter TemperatureConverter
+   `Backpressure Backpressure
+   `Forms Forms
+   `Crud Crud
+   `Chat Chat
+   `InputZoo InputZoo
+   `Todos Todos
+   `TodoMVC TodoMVC
+   `TodoMVC-composed TodoMVC-composed
    `Timer Timer
    `CRUD CRUD
+   `SystemProperties SystemProperties
+   `SVG SVG
    ;`ReagentInterop ReagentInterop
    })
 
@@ -163,6 +196,7 @@
 
 (e/defn Tutorial []
   (e/client
+    (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
     (let [[?tutorial] (ffirst ($ RedirectLegacyLinks! r/route))
           ?tutorial   (or ?tutorial `TwoClocks)]
       (dom/h1 (dom/text "Electric Tutorial"))

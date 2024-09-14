@@ -3,11 +3,11 @@
             [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Backpressure []
-  (let [c (e/client ($ e/SystemTimeSecs))
-        s (e/server (double ($ e/SystemTimeSecs)))]
+  (let [c (e/client (/ (e/SystemTimeMs) 1000))
+        s (e/server (double (/ (e/SystemTimeMs) 1000)))]
 
-    (println "s" (int s))
-    (println "c" (int c))
+    (println (int c)) ; check console
+    (println (int s))
 
     (dom/div (dom/text "client time: " c))
     (dom/div (dom/text "server time: " s))

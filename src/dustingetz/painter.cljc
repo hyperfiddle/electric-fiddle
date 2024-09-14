@@ -11,7 +11,7 @@ upstream: https://github.com/formicagreen/electric-clojure-painter"
     (dom/div
       (dom/props {:style {:width "100vw" :height "100vh"}})
       (let [!current-emoji (atom "🐱")
-            mouse-down? (dom/MouseDown?)
+            mouse-down? (dom/Mouse-down?)
             dones (e/cursor [[[x y e] done!] (dom/OnAll "mousemove"
                                                (fn [e]
                                                  (when mouse-down?

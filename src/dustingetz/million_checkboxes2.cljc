@@ -42,7 +42,7 @@
           (dom/props node {:data-index i :data-checked x})
           (.appendChild dom/node node)))
 
-      (let [mouse-down? (dom/MouseDown?)]
+      (let [mouse-down? (dom/Mouse-down?)]
         (e/for [[[i v] t] (dom/OnAll "mouseover"
                             (fn [e]
                               (when mouse-down?

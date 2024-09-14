@@ -25,14 +25,12 @@
         (e/for [id ids]
           (dom/tr
             (let [!e (d/entity db id)
-                  email (-> !e :order/email)
-                  gender (-> !e :order/gender :db/ident)
-                  shirt-size (-> !e :order/shirt-size :db/ident)]
+                  gender (-> !e :order/gender :db/ident)]
               (dom/td (dom/text id))
-              (dom/td (dom/text email))
+              (dom/td (dom/text (:order/email !e)))
               (dom/td (Typeahead gender
                         (e/fn Options [search] (Genders db search))
                         (e/fn OptionLabel [x] (pr-str x))))
-              (dom/td (Typeahead shirt-size
+              (dom/td (Typeahead (-> !e :order/shirt-size :db/ident)
                         (e/fn Options [search] (Shirt-sizes db gender search))
                         (e/fn OptionLabel [x] (pr-str x)))))))))))

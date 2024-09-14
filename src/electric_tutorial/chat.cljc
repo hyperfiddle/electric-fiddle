@@ -1,13 +1,13 @@
 (ns electric-tutorial.chat
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.forms :refer [InputSubmit!]]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Login [username]
   (dom/div
     (if (some? username)
       (dom/text "Authenticated as: " username)
-      (dom/a (dom/props {:href "/auth"}) (dom/text "Set login cookie (blank password)")))))
+      (dom/a (dom/props {:href "/auth"})
+        (dom/text "Set login cookie (blank password)")))))
 
 (e/defn Presence! [!present username]
   (e/server
@@ -28,6 +28,14 @@
       (dom/li (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")}})
         (dom/strong (dom/text username)) (dom/text " " msg)))))
 
+(e/defn InputSubmit! [& {:keys [maxlength] :or {maxlength 100} :as props}]
+  (e/client
+    (dom/input (dom/props (assoc props :maxLength maxlength))
+      (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
+              (read-clear! [node] (when-some [v (read! node)] (set! (.-value node) "") v))
+              (submit! [e] (when (= "Enter" (.-key e)) (read-clear! (.-target e))))]
+        (dom/OnAll "keydown" submit!)))))
+
 (e/defn SendMessage [username]
   (let [pending (InputSubmit! :placeholder (if username "Message" "Login to chat")
                   :maxlength 100 :disabled (nil? username))]
@@ -36,9 +44,7 @@
     pending))
 
 (e/defn Query-todos [!db] (e/server (e/diff-by :db/id (reverse (e/watch !db)))))
-
 #?(:clj (defn send-message! [!db msg] (swap! !db #(take 10 (cons msg %)))))
-
 #?(:clj (defonce !db (atom (repeat 10 nil))))
 #?(:clj (defonce !present (atom {}))) ; session-id -> user
 

@@ -1,6 +1,6 @@
 # Forms (callback-free!)
 
-Uncontrolled inputs.
+Controlled and uncontrolled inputs.
 
 !fiddle-ns[](electric-tutorial.forms/Forms)
 

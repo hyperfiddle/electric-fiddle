@@ -2,7 +2,8 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.forms :refer [InputSubmit! Checkbox!]]))
+            [electric-tutorial.input-zoo :refer [InputSubmit!]]
+            [electric-tutorial.forms :refer [Checkbox!]]))
 
 (e/defn Todo-count [db]
   (e/server

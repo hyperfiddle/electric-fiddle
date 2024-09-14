@@ -4,13 +4,13 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [missionary.core :as m]
-            [electric-tutorial.forms :refer [InputSubmit!]]
+            [electric-tutorial.input-zoo :refer [InputSubmit!]]
             [electric-tutorial.chat-simple :refer
              [Query-todos #?(:clj !db) #?(:clj send-message!)]]))
 
 (e/defn ChatCreate [pending-count]
   (e/amb
-    (e/for [[v t] (InputSubmit! :placeholder "Type a message" :maxlength 100)]
+    (e/for [[t v] (InputSubmit! :placeholder "Type a message" :maxlength 100)]
       (let [id (random-uuid)
             xcmd [::send-msg id v]
             prediction {:db/id id :msg v :t-ms (.now js/Date)}] ; guess time

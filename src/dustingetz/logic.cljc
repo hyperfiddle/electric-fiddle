@@ -60,8 +60,6 @@
 (e/defn Logic []
   (dom/pre (dom/text (pr-str (Logic*)))))
 
-(time
-  ((l/single {} (prn (Logic*))) prn prn))
-
+(comment (time ((l/single {} (prn (Logic*))) prn prn)))
 ;; {:mike ["red" "bird" "milk"], :sarah ["green" "dog" "coffee"], :john ["blue" "cat" "tea"]}
 ;; "Elapsed time: 231.37984 msecs"
