@@ -1,4 +1,5 @@
 (ns electric-tutorial.forms
+  #?(:cljs (:require-macros electric-tutorial.forms))
   (:require [contrib.str :refer [pprint-str]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
@@ -22,15 +23,20 @@
               (if t [t v'] (e/amb))))))
       (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
-(e/defn Field [e a edits]
-  (e/for [[t v] edits]
-    [t [{:db/id e a v}]])) ; insecure by design - txns from client authority
+(e/defn Field* [e a Control]
+  (e/amb
+    (dom/dt (dom/text (name a)))
+    (dom/dd (e/for [[t v] (Control)]
+              [t [{:db/id e a v}]])))) ; insecure by design - txns from client authority
+
+(defmacro Field [e a body] `(Field* ~e ~a (e/fn [] ~body)))
 
 (e/defn UserForm [{:keys [db/id user/x-bool user/x-str1 user/x-str2]}]
-  (e/amb
-    (dom/div (Field id :user/x-str1 (Input! x-str1)))
-    (dom/div (Field id :user/x-str2 (Input! x-str2)))
-    (dom/div (Field id :user/x-bool (Checkbox! x-bool)))))
+  (dom/dl
+    (e/amb
+      (Field id :user/x-str1 (Input! x-str1))
+      (Field id :user/x-str2 (Input! x-str2))
+      (Field id :user/x-bool (Checkbox! x-bool)))))
 
 (defn merge-tx [& txs] (vec (apply concat txs)))
 
