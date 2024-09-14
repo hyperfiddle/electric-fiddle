@@ -79,9 +79,9 @@
 (e/defn InputZoo []
   (dom/dl (dom/style (dom/text css))
     (e/amb ; workaround crash, fixme
-      (dom/dt (dom/text "Input*")) (dom/dd (DemoInput!))
-      (dom/dt (dom/text "Input")) (dom/dd (DemoInput!))
+      (dom/dt (dom/text "Input*")) (dom/dd (DemoInput*))
+      (dom/dt (dom/text "Input")) (dom/dd (DemoInput))
       (dom/dt (dom/text "Input!")) (dom/dd (DemoInput!))
-      (dom/dt (dom/text "InputSubmit!")) (dom/dd (DemoInput!)))))
+      (dom/dt (dom/text "InputSubmit!")) (dom/dd (DemoInputSubmit!)))))
 
 (def css ".user-examples-target.InputZoo dt { margin-bottom: 3em; }")
