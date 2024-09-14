@@ -18,9 +18,9 @@
       (dom/div (dom/props {:style {:width "fit-content"}}) ; for yellow background
         (PendingMonitor ; checkboxes don't have background so style wrapper div
           (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
-            (let [v' (dom/On "change" #(-> % .-target .-checked)) t (e/Token v')]
+            (let [e (dom/On "change" identity) t (e/Token e)]
               (when-not (or (dom/Focused?) (some? t)) (set! (.-checked dom/node) checked))
-              (if t [t v'] (e/amb))))))
+              (if t [t (-> e .-target .-checked)] (e/amb))))))
       (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
 (e/defn Field* [e a Control]

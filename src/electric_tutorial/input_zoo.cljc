@@ -34,13 +34,12 @@
   (e/client
     (dom/input (dom/props (assoc props :maxLength maxlength))
       (PendingMonitor
-        (letfn [(read! [node] (subs (.-value node) 0 maxlength))
-                (read [e] (let [k (.-key e)]
+        (letfn [(read [e] (let [k (.-key e)]
                             (cond
-                              (= "Escape" k) (do (set! (.-value dom/node) v) nil) ; clear token with nil
-                              () (read! (.-target e)))))]
+                              (= "Escape" k)  [nil (set! (.-value dom/node) v)] ; clear token
+                              () [e (-> e .-target .-value (subs 0 maxlength))])))]
           ; reuse token as value updates - i.e., singular edit not concurrent
-          (let [v' (dom/On "input" read nil) t (e/Token v')]
+          (let [[e v'] (dom/On "input" read nil) t (e/Token e)]
             (when-not (or (dom/Focused?) (some? t)) (set! (.-value dom/node) v))
             (if t [t v'] (e/amb))))))))
 
