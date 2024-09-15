@@ -49,14 +49,16 @@
 (e/defn Branch [[ts txs :as edits]] ; amb destructure
   (let [batch (apply merge-tx (e/as-vec txs))
         reset (let [ts (e/as-vec ts)] #(doseq [t ts] (t)))
-        n (e/Count edits)]
+        n (e/Count edits)
+        [ts _ :as btns] (e/amb
+                          (Button! ::commit :label "commit" :disabled (zero? n)) ; todo progress
+                          (Button! ::discard :label "discard" :disabled (zero? n))
+                          (dom/span (dom/text " " n " dirty")))]
     (e/amb
-      (e/for [[t cmd] (e/amb
-                        (Button! ::commit :label "commit" :disabled (zero? n)) ; todo progress
-                        (Button! ::discard :label "discard" :disabled (zero? n))
-                        (dom/span (dom/text " " n " dirty")))]
+      (e/for [[t cmd] btns]
         (case cmd
-          ::discard (case (t (reset)) (e/amb)) ; clear edits, controlled form will reset
+          ::discard (case (ts (reset)) ; clear any in-flight commit yet outstanding
+                      (e/amb)) ; clear edits, controlled form will reset
           ::commit [#(t (reset)) batch])) ; commit as atomic batch
 
       (dom/pre (dom/props {:style {:min-height "4em"}})
@@ -73,7 +75,7 @@
                   (dom/fieldset (Branch (UserForm record)))
                   (dom/fieldset (Branch (UserForm record)))))]
     (e/for [[t tx] edits] ; one batch per form
-      (prn 'batch (e/Count edits) t tx)
+      (prn 'batch (e/Count edits) t tx) ; fixme e/drain glitch
       (case (e/server ; insecure by design - wide open crud endpoint
               (e/Offload #(do (Thread/sleep 500) (d/transact! !conn tx) ::ok)))
         ::ok (t)))))
