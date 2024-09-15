@@ -2,8 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.input-zoo :refer [InputSubmit!]]
-            [electric-tutorial.forms :refer [Checkbox!]]))
+            [electric-tutorial.input-zoo :refer [InputSubmitClear! CheckboxSubmit!]]))
 
 (e/defn Todo-count [db]
   (e/server
@@ -24,14 +23,14 @@
 
 (e/defn TodoCreate []
   (e/client
-    (e/for [[t v] (InputSubmit! :placeholder "Buy milk")]
+    (e/for [[t v] (InputSubmitClear! :placeholder "Buy milk")]
       (let [id (random-uuid)]
         [t [::create-todo v id]]))))
 
 (e/defn TodoItem [{:keys [db/id task/status task/description]}]
   (e/client
     (dom/li
-      (e/for [[t v] (Checkbox! (case status :active false, :done true)
+      (e/for [[t v] (CheckboxSubmit! (case status :active false, :done true)
                       :label description :id id)]
         [t [::toggle id v]]))))
 

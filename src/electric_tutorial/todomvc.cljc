@@ -4,8 +4,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.forms :refer [Checkbox!]]
-            [electric-tutorial.input-zoo :refer [Input!]]))
+            [electric-tutorial.input-zoo :refer [Input! CheckboxSubmit!]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -68,7 +67,7 @@
         (dom/div (dom/props {:class "view"})
           (e/amb
             (PendingMonitor
-              (e/for [[t v] (Checkbox! (= :done status) :class "toggle")]
+              (e/for [[t v] (CheckboxSubmit! (= :done status) :class "toggle" :id id)]
                 (let [status (case v true :done, false :active, nil)]
                   [t `Toggle id status])))
             (dom/label (dom/text description)
@@ -76,6 +75,7 @@
                 [t `Editing-item id]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
+            ; todo InputSubmit! ?
             (dom/input (dom/props {:class "edit" #_#_:autofocus true})
               (set! (.-value dom/node) description)
               (case description (.focus dom/node)) ; don't focus until description is available
@@ -102,7 +102,7 @@
               all    (e/server (todo-count db :all))
               done   (e/server (todo-count db :done))]
           (PendingMonitor
-            (e/for [[t v] (Checkbox! (cond (= all done) true (= all active) false :else nil)
+            (e/for [[t v] (CheckboxSubmit! (cond (= all done) true (= all active) false :else nil)
                             :class "toggle-all")]
               (let [status (case v (true nil) :done, false :active)]
                 [t `Toggle-all status]))))
@@ -114,6 +114,7 @@
 (e/defn CreateTodo []
   (dom/span (dom/props {:class "input-load-mask"})
     (PendingMonitor
+      ; todo InputSubmitClear!
       (dom/input (dom/props {:class "new-todo", :placeholder "What needs to be done?"})
         (e/for [[t e] (dom/OnAll "keydown" identity)]
           (e/When (= "Enter" (.-key e))

@@ -2,7 +2,7 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
-(e/defn PendingMonitor [edits]
+(e/defn PendingMonitor [edits] ; todo DirtyMonitor
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
   edits)
 
@@ -54,7 +54,26 @@
               (e/Offload #(do (reset! !v v) ::ok)))
         ::ok (t))))) ; clear edit on success
 
-(e/defn InputSubmit! [& {:keys [maxlength] :or {maxlength 100} :as props}]
+(e/defn InputSubmit! [v & {:keys [maxlength]
+                           :or {maxlength 100} :as props}]
+  )
+
+(e/defn CheckboxSubmit! [checked & {:keys [id label] :as props
+                                    :or {id (random-uuid)}}]
+  (e/client
+    (e/amb
+      (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
+        (let [edits (dom/OnAll "change" #(-> % .-target .-checked))]
+          (when-not (or (dom/Focused?) (pos? (e/Count edits)))
+            (set! (.-checked dom/node) checked))
+          edits))
+      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
+
+(e/defn DemoInputSubmit! []
+  )
+
+(e/defn InputSubmitClear! [& {:keys [maxlength clear]
+                              :or {maxlength 100} :as props}]
   (e/client
     (dom/input (dom/props (assoc props :maxLength maxlength))
       (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
@@ -66,11 +85,11 @@
                                () nil)))]
         (dom/OnAll "keydown" submit!)))))
 
-(e/defn DemoInputSubmit! []  ; chat
+(e/defn DemoInputSubmitClear! []  ; chat
   (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
         edits (e/amb ; in-flight edits
-                (InputSubmit! :placeholder "Send message")
-                (InputSubmit! :placeholder "Send message"))]
+                (InputSubmitClear! :placeholder "Send message")
+                (InputSubmitClear! :placeholder "Send message"))]
     (dom/pre (dom/text (pr-str v)) (dom/props {:style {:margin 0}}))
     (e/for [[t v] edits] ; concurrent edits
       (case (e/server ; remote transaction
@@ -85,6 +104,7 @@
       (dom/dt (dom/text "Input*")) (dom/dd (DemoInput*))
       (dom/dt (dom/text "Input")) (dom/dd (DemoInput))
       (dom/dt (dom/text "Input!")) (dom/dd (DemoInput!))
-      (dom/dt (dom/text "InputSubmit!")) (dom/dd (DemoInputSubmit!)))))
+      ;(dom/dt (dom/text "InputSubmit!")) (dom/dd (DemoInputSubmit!))
+      (dom/dt (dom/text "InputSubmitClear!")) (dom/dd (DemoInputSubmitClear!)))))
 
 (def css ".user-examples-target.InputZoo dt { margin-bottom: 3em; }")

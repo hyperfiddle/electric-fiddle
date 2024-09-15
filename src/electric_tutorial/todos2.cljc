@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.forms :refer [InputSubmit! Checkbox!]]
+            [electric-tutorial.input-zoo :refer [InputSubmitClear! CheckboxSubmit!]]
             [electric-tutorial.todos :refer [!conn]]))
 
 (e/defn Reconcile-records [stable-kf as bs]
@@ -33,7 +33,7 @@
 
 (e/defn TodoCreate []
   (e/client
-    (e/for [[v t] (InputSubmit! :placeholder "Buy milk")]
+    (e/for [[v t] (InputSubmitClear! :placeholder "Buy milk")]
       (let [id (random-uuid)]
         [t
          id
@@ -44,7 +44,7 @@
   (e/client
     (dom/li
       (dom/props {:style {:background-color (when pending "yellow")}})
-      (e/for [[v t] (Checkbox! (case status :active false, :done true)
+      (e/for [[v t] (CheckboxSubmit! (case status :active false, :done true)
                       :label description :id id)]
         [t
          id ; stable id
