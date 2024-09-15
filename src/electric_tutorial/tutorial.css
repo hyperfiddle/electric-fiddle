@@ -9,3 +9,13 @@
 .user-examples-target dd { grid-column: 2; margin-bottom: .5rem; margin-left: 1em; }
 
 .user-examples-target.Todos ul { list-style: none; padding-left: 0; }
+
+.user-examples-target.Chat ul.channel,
+.user-examples-target.ChatMonitor ul.channel {
+    display: flex; flex-direction: column-reverse; /* bottom up */
+    height: 220px; overflow-y: clip; /* pending pushes up server records */
+    padding: 0; /* remove room for bullet in grid layout */
+}
+
+.user-examples-target.ChatMonitor ul.channel li,
+.user-examples-target.Chat ul.channel li { display: grid; }
