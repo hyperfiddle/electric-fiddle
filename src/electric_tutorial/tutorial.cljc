@@ -11,32 +11,39 @@
             [hyperfiddle.electric-svg3 :as svg]
             [hyperfiddle.router3 :as r]
 
+            ; Part 1
             [electric-tutorial.two-clocks :refer [TwoClocks]]
             [electric-tutorial.dir-tree :refer [DirTree]]
-            [electric-tutorial.toggle :refer [Toggle]]
-            [electric-tutorial.system-properties :refer [SystemProperties]]
-            [electric-tutorial.backpressure :refer [Backpressure]]
-            [electric-tutorial.lifecycle :refer [Lifecycle]]
-            [electric-tutorial.forms :refer [Forms]]
-            [electric-tutorial.crud :refer [Crud]]
-            [electric-tutorial.chat :refer [Chat]]
-            [electric-tutorial.input-zoo :refer [InputZoo]]
             [electric-tutorial.webview :refer [Webview]]
-            [electric-tutorial.todos :refer [Todos]]
-            ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
-            [electric-tutorial.svg :refer [SVG]]
+            [electric-tutorial.lifecycle :refer [Lifecycle]]
+            [electric-tutorial.backpressure :refer [Backpressure]]
+            [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.counter :refer [Counter]]
             [electric-tutorial.temperature :refer [TemperatureConverter]]
-            [electric-tutorial.timer :refer [Timer]]
-            [electric-tutorial.crud-7guis :refer [CRUD]]
+            [electric-tutorial.chat :refer [Chat]]
+
+            ; Part 2
+            [electric-tutorial.input-zoo :refer [InputZoo]]
+            [electric-tutorial.forms :refer [Forms]]
+            [electric-tutorial.chat-monitor :refer [ChatMonitor]]
+            [electric-tutorial.crud :refer [Crud]]
+            [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
             [electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
+
+            ; Misc
+
+            ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
+            [electric-tutorial.svg :refer [SVG]]
+            [electric-tutorial.system-properties :refer [SystemProperties]]
+            [electric-tutorial.timer :refer [Timer]]
+            [electric-tutorial.crud-7guis :refer [CRUD]]
             #_[electric-tutorial.explorer :refer [DirectoryExplorer]]
 
             ))
 
 (def tutorials
-  [["Tutorial"
+  [["Basics"
     [`TwoClocks
      `DirTree
      `Webview
@@ -45,32 +52,30 @@
      `Toggle
      `Counter
      `TemperatureConverter
-     `Chat
-     `InputZoo
+     `Chat]]
+   ["CRUD"
+    [`InputZoo
      `Forms
-     `Crud
-     `Todos
-     ; Optimistic Updates
+     `ChatMonitor
+     `Crud `Todos
      `TodoMVC
-     `TodoMVC-composed
-     ; Typeahead
-     ; Datagrid with typeahead
-
-
-     #_`electric-demo.demo-virtual-scroll/VirtualScroll ; virtual scroll Server-streamed virtual pagination over node_modules. Check the DOM!
-     #_`electric-demo.wip.demo-stage-ui4/CrudForm
-     #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
-     #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
-     ]]
+     `TodoMVC-composed]]
+   #_["Datagrid"
+    [#_`Typeahead
+     #_`VirtualScroll
+     #_`Datagrid]]
    ["Demos"
     [#_`DirectoryExplorer
      `SVG
      `SystemProperties
      #_`ReagentInterop
      `Timer
-     `CRUD]]
+     `CRUD
+     #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
+     #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
+     ]]
    #_["HFQL"
-    [`wip.teeshirt-orders/Webview-HFQL]]])
+      [`wip.teeshirt-orders/Webview-HFQL]]])
 
 (def tutorials-index (->> tutorials
                        (mapcat (fn [[_group entries]] entries))
@@ -127,13 +132,16 @@
    `Counter "counter.md"
    `TemperatureConverter "temperature_converter.md"
    `Chat "chat.md"
+
+   ; Part 2
    `InputZoo "input_zoo.md"
    `Forms "forms.md"
-   `Crud "crud.md"
-   `Todos "todos.md"
-   ; Optimistic updates
+   `ChatMonitor "chat_monitor.md"
+   `Todos "todos.md" `Crud "crud.md"
    `TodoMVC "todomvc.md"
    `TodoMVC-composed "todomvc_composed.md"
+
+   ; Part 3
    ; Typeahead
    ; webview dynamoic with typeahead
 
@@ -163,17 +171,22 @@
    `DirTree DirTree
    `Webview Webview
    `Lifecycle Lifecycle
+   `Backpressure Backpressure
    `Toggle Toggle
    `Counter Counter
    `TemperatureConverter TemperatureConverter
-   `Backpressure Backpressure
-   `Forms Forms
-   `Crud Crud
    `Chat Chat
+
+   ; Part 2
    `InputZoo InputZoo
+   `Forms Forms
+   `ChatMonitor ChatMonitor
    `Todos Todos
+   `Crud Crud
    `TodoMVC TodoMVC
    `TodoMVC-composed TodoMVC-composed
+
+   ; Kitchen Sink
    `Timer Timer
    `CRUD CRUD
    `SystemProperties SystemProperties
