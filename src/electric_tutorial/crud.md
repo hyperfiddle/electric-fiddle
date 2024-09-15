@@ -1,6 +1,6 @@
 # Crud
 
-asdf
+Forms + collection + optimistic updates
 
 !fiddle-ns[](electric-tutorial.crud/Crud)
 
