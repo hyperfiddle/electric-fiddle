@@ -3,14 +3,14 @@
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.input-zoo :refer [InputSubmitClear!]]))
 
-#?(:clj (defn send-message! [!msgs msg] (swap! !msgs #(take 10 (cons msg %)))))
-(e/defn Query-todos [!db] (e/server (e/diff-by :db/id (reverse (e/watch !db))))) ; O(n) bad, fixme
+#?(:clj (defn send-message! [!db msg] (swap! !db #(take 10 (cons msg %)))))
+(e/defn Query-chats [!db] (e/server (e/diff-by :db/id (reverse (e/watch !db))))) ; O(n) bad, fixme
 
 #?(:clj (defonce !db (atom (repeat 10 nil))))
 
 (e/defn Chat []
   (dom/ul
-    (e/for [{:keys [msg]} (e/server (Query-todos !db))]
+    (e/for [{:keys [msg]} (e/server (Query-chats !db))]
       (dom/li (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")}})
         (dom/text msg))))
 

@@ -6,7 +6,7 @@
             [missionary.core :as m]
             [electric-tutorial.input-zoo :refer [InputSubmit!]]
             [electric-tutorial.chat-simple :refer
-             [Query-todos #?(:clj !db) #?(:clj send-message!)]]))
+             [Query-chats #?(:clj !db) #?(:clj send-message!)]]))
 
 (e/defn ChatCreate [pending-count]
   (e/amb
@@ -21,7 +21,7 @@
   (e/with-cycle* first [edits (e/amb)]
     (e/amb
       (dom/ul
-        (e/for [x (->> (Query-todos !msgs) (PendingController :db/id edits))]
+        (e/for [x (->> (Query-chats !msgs) (PendingController :db/id edits))]
           (dom/li (dom/props {:style {:visibility (if (some? x) "visible" "hidden")
                                       :background-color (when (::cqrs/pending x) "yellow")}})
             (dom/text (:msg x)))))
