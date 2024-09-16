@@ -68,7 +68,8 @@
    {datascript/datascript     {:mvn/version "1.6.1"}
     reagent/reagent           {:mvn/version "1.2.0"}
     markdown-clj/markdown-clj {:mvn/version "1.11.7"}
-    io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}}}
+    io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}
+    org.clojure/core.match {:mvn/version "1.1.0"}}}
 
   :datomic-browser
   {:extra-deps

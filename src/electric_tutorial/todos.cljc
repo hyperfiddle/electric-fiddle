@@ -1,5 +1,6 @@
 (ns electric-tutorial.todos
-  (:require #?(:clj [datascript.core :as d])
+  (:require [clojure.core.match :refer [match]]
+            #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.input-zoo :refer [InputSubmitClear! CheckboxSubmit!]]))
@@ -24,8 +25,8 @@
 (e/defn TodoCreate []
   (e/client
     (e/for [[t v] (InputSubmitClear! :placeholder "Buy milk")]
-      (let [id (random-uuid)]
-        [t [::create-todo v id]]))))
+      (let [tempid (random-uuid)]
+        [t [::create-todo v tempid]]))))
 
 (e/defn TodoItem [{:keys [db/id task/status task/description]}]
   (e/client
@@ -43,13 +44,11 @@
           (TodoItem m)))
       (dom/p (dom/text (Todo-count db) " items left")))))
 
-#?(:clj (defn cmd->tx [[cmd & args]]
-          (case cmd
-            ::create-todo (let [[desc] args]
-                            [{:task/description desc, :task/status :active}])
-            ::toggle (let [[e status] args]
-                       [{:db/id e, :task/status (if status :done :active)}])
-            nil)))
+#?(:clj (defn cmd->tx [xcmd]
+          (match xcmd
+            [::create-todo desc tempid] [{:task/description desc, :task/status :active}]
+            [::toggle e status] [{:db/id e, :task/status (if status :done :active)}]
+            :else nil)))
 
 #?(:clj (defonce !conn (doto (d/create-conn {}) ; database on server
                          (d/transact! ; test data
