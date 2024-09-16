@@ -212,11 +212,11 @@
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
     (let [[?tutorial] (ffirst ($ RedirectLegacyLinks! r/route))
           ?tutorial   (or ?tutorial `TwoClocks)]
-      (dom/h1 (dom/text "Electric Tutorial"))
+      (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
+        (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
       (binding [hf/pages ($ Fiddles)]
         ($ Nav ?tutorial false)
         (if-some [essay-filename (get essays ?tutorial)]
           ($ Custom-markdown ($ Extensions) (str tutorial-path essay-filename))
           (dom/h1 (dom/text "Tutorial not found: " ?tutorial)))
         #_($ Nav ?tutorial true)))))
-
