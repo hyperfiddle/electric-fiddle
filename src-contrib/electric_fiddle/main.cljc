@@ -16,7 +16,7 @@
             dom/node js/document.body]
     (dom/div ; FIXME wrapper div to circumvent v3 mount-point mounting nodes in reverse order if there are existing foreign DOM children.
       (r/router ($ r/HTML5-History)
-        (dom/pre (dom/text (pr-str r/route)))
+        #_(dom/pre (dom/text (pr-str r/route)))
         (let [route       (or (ffirst r/route) `(Index)) ; route looks like {(f args) nil} or nil
               [f & args]  route]
           (set! (.-title js/document) (str (some-> f name (str " – ")) "Electric Fiddle"))
