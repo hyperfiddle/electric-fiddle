@@ -25,7 +25,7 @@
 
 (e/defn Custom-markdown [extensions essay-filename]
   (e/server
-    (e/for [s (e/diff-by identity (parse-sections (slurp essay-filename)))]
+    (e/for [[_ s] (e/diff-by first (map-indexed vector (parse-sections (slurp essay-filename))))]
       (if (clojure.string/starts-with? s "!")
         (let [[extension & args] (parse-md-directive s)]
           (if-let [F (get extensions extension)]
