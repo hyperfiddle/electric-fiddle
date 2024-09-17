@@ -25,11 +25,12 @@
 
 (e/defn Custom-markdown [extensions essay-filename]
   (e/server
-    (e/for [[_ s] (e/diff-by first (map-indexed vector (parse-sections (slurp essay-filename))))]
-      (if (clojure.string/starts-with? s "!")
-        (let [[extension & args] (parse-md-directive s)]
-          (if-let [F (get extensions extension)]
-            (e/apply F args)
-            (dom/div (dom/text "Unsupported markdown directive: " (pr-str s)))))
-        (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-          (e/client (set! (.-innerHTML dom/node) (e/server (some-> s md-to-html-string)))))))))
+    (let [lines (second (e/diff-by first (e/Offload #(map-indexed vector (parse-sections (slurp essay-filename))))))]
+      (e/for [line lines]
+        (if (clojure.string/starts-with? line "!")
+          (let [[extension & args] (parse-md-directive line)]
+            (if-let [F (get extensions extension)]
+              (e/apply F args)
+              (dom/div (dom/text "Unsupported markdown directive: " (pr-str line)))))
+          (dom/div (dom/props {:class "markdown-body user-examples-readme"})
+            (e/client (set! (.-innerHTML dom/node) (e/server (some-> line md-to-html-string))))))))))
