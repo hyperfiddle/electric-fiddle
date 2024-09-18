@@ -1,7 +1,7 @@
 (ns hello-fiddle.fiddles
-  (:require
-   [hyperfiddle.electric3 :as e :refer [$]]
-   [hyperfiddle.electric-dom3 :as dom]))
+  (:require [hyperfiddle.electric3 :as e :refer [$]]
+            [hyperfiddle.electric-dom3 :as dom]
+            [hello-fiddle.scratch :refer [Scratch]]))
 
 (e/defn Hello []
   (e/client
@@ -9,7 +9,9 @@
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
-(e/defn Fiddles [] {`Hello Hello}) ; FIXME DE - should be simplified to `(def fiddles {`a a})`
+(e/defn Fiddles [] ; FIXME DE - should be simplified to `(def fiddles {`a a})`
+  {`Hello Hello
+   `Scratch Scratch})
 
 ;; Prod entrypoint, called by `prod.clj`
 (e/defn FiddleMain [ring-request]
