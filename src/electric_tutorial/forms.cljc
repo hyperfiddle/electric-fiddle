@@ -4,24 +4,12 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.input-zoo :refer [Input! PendingMonitor]]))
+            [electric-tutorial.input-zoo :refer [Input! Checkbox!]]))
 
 ; commit/discard with staging area
 ; inputs - emit as you type - with a token
 ; stage - monitor edits and accumulate them
 ; button - batch all edits into single token, chained with upstream tokens
-
-(e/defn Checkbox! [checked & {:keys [id label] :as props
-                              :or {id (random-uuid)}}]
-  (e/client
-    (e/amb
-      (dom/div (dom/props {:style {:width "fit-content"}}) ; for yellow background
-        (PendingMonitor ; checkboxes don't have background so style wrapper div
-          (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
-            (let [e (dom/On "change" identity) t (e/Token e)]
-              (when-not (or (dom/Focused?) (some? t)) (set! (.-checked dom/node) checked))
-              (if t [t (-> e .-target .-checked)] (e/amb))))))
-      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
 (e/defn Field* [e a Control]
   (e/amb
