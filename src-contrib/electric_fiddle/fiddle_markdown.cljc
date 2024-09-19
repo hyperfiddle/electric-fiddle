@@ -23,6 +23,9 @@
   (parse-md-directive "!foo[example](b)(c)")
   := ['foo "example" "b" "c"])
 
+(e/defn Markdown [chunk]
+  (e/client (set! (.-innerHTML dom/node) (e/server (some-> chunk md-to-html-string)))))
+
 (e/defn Custom-markdown [extensions essay-filename]
   (e/server
     (let [lines (second (e/diff-by first (e/Offload #(map-indexed vector (parse-sections (slurp essay-filename))))))]
@@ -33,4 +36,4 @@
               (e/apply F args)
               (dom/div (dom/text "Unsupported markdown directive: " (pr-str line)))))
           (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-            (e/client (set! (.-innerHTML dom/node) (e/server (some-> line md-to-html-string))))))))))
+            (Markdown line)))))))
