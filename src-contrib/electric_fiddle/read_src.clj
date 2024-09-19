@@ -28,6 +28,7 @@ Example: (source-fn 'filter)"
             (str text)))))))
 
 (tests
+  #_(read-src `electric-tutorial.input-zoo/Input*) ; works
   (read-src `first)
   := "(def
  ^{:arglists '([coll])

@@ -3,7 +3,7 @@
             #?(:clj [clojure.java.io :as io])
             clojure.string
             contrib.data
-            [electric-fiddle.fiddle :refer [Fiddle-fn Fiddle-ns]]
+            [electric-fiddle.fiddle :refer [Fiddle-fn Fiddle-ns Fn-src]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown]]
             [hyperfiddle :as hf]
             [hyperfiddle.electric3 :as e :refer [$]]
@@ -196,7 +196,8 @@
 
 (e/defn Extensions []
   {'fiddle Fiddle-fn
-   'fiddle-ns Fiddle-ns})
+   'fiddle-ns Fiddle-ns
+   'fn-src Fn-src})
 
 (e/defn RedirectLegacyLinks! [link]
   ;; Keep existing links working.

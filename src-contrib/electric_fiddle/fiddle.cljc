@@ -7,9 +7,19 @@
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src]])
             [electric-fiddle.index :refer [Index]]))
 
+#?(:cljs (defn await-element [node selector]
+           (fn [s f]
+             (let [o (js/MutationObserver.
+                       (fn [ms o]
+                         (try (when-let [x (.querySelector js/document selector)]
+                                #(.disconnect o) (s x)) (catch :default e (f e)))))]
+               (try (.observe o node #js{:subtree true :childList true})
+                 (catch :default e (f e)))))))
+
 (e/defn Fiddle-impl [target ?wrap src]
   #_(dom/pre (dom/text target " " ?wrap " " src))
   (e/client
+    #_(dom/pre (dom/text (pr-str props)))
     (dom/div (dom/props {:class "user-examples"})
       (dom/fieldset
         (dom/props {:class "user-examples-code"})
@@ -35,6 +45,18 @@
   (let [target (symbol target-s)]
     ($ Fiddle-impl target (some-> ?wrap symbol)
       (e/server (read-ns-src target)))))
+
+(e/defn Fn-src [& [target-s loc-selector :as args]]
+  (e/client
+    #_(dom/pre (dom/text (pr-str args)))
+    (let [target (symbol target-s)
+          src (e/server (doto (read-src target) prn))]
+      (binding [dom/node (e/Task (await-element js/document.body loc-selector))]
+        (dom/div (dom/props {:class "user-examples"})
+          (dom/fieldset
+            (dom/props {:class "user-examples-code"})
+            (dom/legend (dom/text "Code"))
+            (CodeMirror {:parent dom/node :readonly true} identity identity src)))))))
 
 (e/defn Fiddle [& [target-s ?wrap :as route]] ; direct fiddle link http://localhost:8080/electric-fiddle.fiddle!Fiddle/dustingetz.y-fib!Y-fib
   (if (nil? (seq route)) ($ Index)
