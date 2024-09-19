@@ -56,7 +56,7 @@
        )
 
      ;; autostart
-     (future (-main)) ; wrapped in future to not block user REPL
+     #_(future (-main)) ; wrapped in future to not block user REPL
      ))
 
 #?(:cljs
