@@ -9,16 +9,16 @@
 (e/defn UserForm [{:keys [db/id user/str1 user/num1 user/bool1]}]
   (dom/dl
     (e/amb ; 3 fields submitting edits concurrently
-      (dom/dt (dom/text str1))
+      (dom/dt (dom/text "str1"))
       (dom/dd (Field id :user/str1
                 (Input! str1)))
 
-      (dom/dt (dom/text (name :user/num1)))
+      (dom/dt (dom/text "num1"))
       (dom/dd (Field id :user/num1
                 (e/for [[t v] (Input! num1 :type "number")]
                   [t (parse-long v)])))
 
-      (dom/dt (dom/text bool1))
+      (dom/dt (dom/text "bool1"))
       (dom/dd (Field id :user/bool1
                 (Checkbox! bool1))))))
 
