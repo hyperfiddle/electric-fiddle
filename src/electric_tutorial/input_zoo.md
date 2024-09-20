@@ -69,6 +69,7 @@ Checkboxes, numerics and text inputs have subtly different semantics
       <div id="zoo_input_bang_demo"></div>
       * 3 states: ok/success, pending, ~~failure~~ (todo).
       * Submits txn requests eagerly (as the user types) but reusing the same token instance, so that a consumer may intercept, buffer and batch the in-flight txns, for example an atomic form with commit/discard control (see **Forms** tutorial).
+      * (The problem with Input is - the cycle is in your database! So the entrypoint is forced into the transact! side effect.)
     </td>
     <td>
       <div id="zoo_input_bang_demo_src"></div>
@@ -77,6 +78,8 @@ Checkboxes, numerics and text inputs have subtly different semantics
     </td>
   </tr>
 </table>
+
+!fn-src[electric-tutorial.forms/UserForm](#zoo_input_bang_demo_src)
 
 !fn-src[electric-tutorial.input-zoo/DemoInput!](#zoo_input_bang_demo_src)
 

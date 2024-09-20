@@ -1,7 +1,10 @@
 (ns electric-tutorial.input-zoo
-  (:require [hyperfiddle.electric3 :as e]
+  (:require #?(:clj [datascript.core :as d])
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-fiddle.fiddle :refer [#?(:cljs await-element)]]))
+            [hyperfiddle.forms0 :as forms :refer [Field Stage]]
+            [electric-fiddle.fiddle :refer [#?(:cljs await-element)]]
+            [electric-tutorial.forms :refer [UserForm cmds->tx #?(:clj !conn)]]))
 
 (e/defn PendingMonitor [edits] ; todo DirtyMonitor
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -47,12 +50,14 @@
       (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
 (e/defn DemoInput []
-  (let [m (e/with-cycle [m {:str1 "hello" :num1 42 :bool1 true}] ; no atom
+  (let [m (e/with-cycle [m {:user/str1 "hello"
+                            :user/num1 42
+                            :user/bool1 true}] ; no atom
             (e/for [_ (e/amb 1 2)]
               (dom/div
-                {:str1 (Input (:str1 m)) ; no token
-                 :num1 (-> (Input (:num1 m) :type "number") parse-long)
-                 :bool1 (Checkbox (:bool1 m))})))]
+                {:user/str1 (Input (:user/str1 m)) ; no token
+                 :user/num1 (-> (Input (:user/num1 m) :type "number") parse-long)
+                 :user/bool1 (Checkbox (:user/bool1 m))})))]
     (dom/code (dom/text (pr-str m))))
 
   #_; equivalent - cycle by atom
@@ -90,25 +95,25 @@
       (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
 (e/defn DemoInput! [] ; async, transactional, entity backed, never backpressure
-  (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
-        edits (e/amb ; in-flight edits
-                (Input! v)
-                (Input! v))]
-    (dom/code (dom/text (pr-str v)))
-    (e/for [[t v] edits] ; concurrent edits
-      (case (e/server ; remote transaction
-              (e/Offload #(do (reset! !v v) ::ok)))
-        ::ok (t)))) ; clear edit on success
-  (dom/br)
-  (let [!v (e/server (atom false)) v (e/server (e/watch !v))
-        edits (e/amb
-                (Checkbox! v)
-                (Checkbox! v))]
-    (dom/code (dom/text (pr-str v)))
-    (e/for [[t v] edits]
-      (case (e/server
-              (e/Offload #(do (reset! !v v) ::ok)))
-        ::ok (t)))))
+  (let [db (e/server (e/watch !conn))
+        edits (e/for [id (e/amb 42 42)] ; two forms submitting edits concurrently
+                (let [m (e/server (d/pull db [:db/id :user/x-bool1 :user/x-str1 :user/x-num1] id))]
+                  (Stage ; concats field edits into batched form edit, atomic commit
+                    (dom/fieldset
+                      (UserForm m)))))]
+    (prn 'edits (e/Count edits))
+    (e/for [[t cmds] edits] ; concurrent batches, one batch per form
+      (prn 'edit t cmds)
+      (let [res (e/server (prn 'cmds cmds)
+                  (let [tx (cmds->tx cmds)] ; secure cmd interpretation
+                    (e/Offload #(try (prn 'tx tx) (Thread/sleep 500)
+                                  #_(assert false "die") ; random failure
+                                  (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
+                                  (catch Exception e [::fail (str e)]))))) ; todo datafy err
+            [status err] res]
+        (cond
+          (= status ::ok) (t)
+          (= status ::fail) (t err))))))
 
 (e/defn InputSubmit! [v & {:keys [maxlength type] :as props
                            :or {maxlength 100 type "text"}}]

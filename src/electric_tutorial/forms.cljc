@@ -4,16 +4,24 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.forms0 :as forms :refer [Field Branch]]
-            [electric-tutorial.input-zoo :refer [Input! Checkbox!]]))
+            [hyperfiddle.forms0 :as forms :refer [Field Stage]]
+            [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]))
 
-(e/defn UserForm [{:keys [db/id user/x-bool1 user/x-str1 user/x-num1]}]
+(e/defn UserForm [{:keys [db/id] :as record}]
   (dom/dl
-    (e/amb
-      (Field id :user/x-str1 (Input! x-str1))
-      (Field id :user/x-num1 (e/for [[t v] (Input! x-num1 :type "number")]
-                               [t (parse-long v)]))
-      (Field id :user/x-bool1 (Checkbox! x-bool1)))))
+    (e/amb ; in-flight field edits
+      (dom/dt (dom/text (name :user/x-str1)))
+      (dom/dd (Field id :user/x-str1
+                (Input! (get record :user/x-str1))))
+
+      (dom/dt (dom/text (name :user/x-num1)))
+      (dom/dd (Field id :user/x-num1
+                (e/for [[t v] (Input! (get record :user/x-num1) :type "number")]
+                  [t (parse-long v)])))
+
+      (dom/dt (dom/text (name :user/x-bool1)))
+      (dom/dd (Field id :user/x-bool1
+                (Checkbox! (get record :user/x-bool1)))))))
 
 (defn cmd->tx [cmd]
   (match (doto cmd #_(prn 'cmd))
@@ -38,8 +46,8 @@
         record (e/server (d/pull db [:db/id :user/x-bool1 :user/x-str1 :user/x-num1] 42))
         edits (dom/div
                 (e/amb
-                  (dom/fieldset (Branch (UserForm record)))
-                  (dom/fieldset (Branch (UserForm record)))))]
+                  (dom/fieldset (Stage (UserForm record)))
+                  (dom/fieldset (Stage (UserForm record)))))]
     (prn 'edits (e/Count edits))
     (e/for [[t cmds] edits] ; one batch per form
       (prn 'edit t cmds)
