@@ -4,25 +4,13 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.forms0 :as forms :refer [Field Stage]]
             [electric-fiddle.fiddle :refer [#?(:cljs await-element)]]
-            [electric-tutorial.forms :refer [UserForm cmds->tx #?(:clj !conn)]]))
-
-(e/defn PendingMonitor [edits] ; todo DirtyMonitor
-  (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
-  edits)
-
-(e/defn Input* [& {:keys [maxlength type] :as props
-                   :or {maxlength 100 type "text"}}]
-  (e/client ; explicit site on all controls for compat with neutral callers
-    (dom/input (dom/props (assoc props :maxLength maxlength :type type))
-      (dom/On "input" #(-> % .-target .-value) "")))) ; no token
-
-(e/defn Checkbox* [& {:keys [id label] :as props
-                      :or {id (random-uuid)}}]
-  (e/client
-    (e/amb
-      (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
-        (dom/On "change" #(-> % .-target .-checked) false))
-      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
+            [electric-tutorial.forms :refer [UserForm cmds->tx #?(:clj !conn)]]
+            [hyperfiddle.input-zoo0 :refer
+             [Input* Checkbox*
+              Input Checkbox
+              Input! Checkbox!
+              InputSubmit! CheckboxSubmit!
+              InputSubmitClear!]]))
 
 (e/defn DemoInput* []
   (let [form (dom/div
@@ -30,24 +18,6 @@
                 :num1 (-> (Input* :type "number") parse-long)
                 :bool1 (Checkbox*)})]
     (dom/code (dom/text (pr-str form)))))
-
-(e/defn Input [v & {:keys [maxlength type] :as props
-                    :or {maxlength 100 type "text"}}]
-  (e/client
-    (e/with-cycle [v (str v)] ; emits signal of current state
-      (dom/input (dom/props (assoc props :maxLength maxlength :type type))
-        (when-not (dom/Focused?) (set! (.-value dom/node) v))
-        (dom/On "input" #(-> % .-target .-value) v))))) ; emit on boot, rebuild on reset
-
-(e/defn Checkbox [checked & {:keys [id label] :as props
-                             :or {id (random-uuid)}}]
-  (e/client
-    (e/amb
-      (e/with-cycle [checked checked]
-        (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
-          (when-not (dom/Focused?) (set! (.-checked dom/node) checked))
-          (dom/On "change" #(-> % .-target .-checked) checked)))
-      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
 (e/defn DemoInput []
   (let [m (e/with-cycle [m {:user/str1 "hello"
@@ -66,33 +36,6 @@
       (->> (Input (:str1 m)) (swap! !m assoc :str1))
       (->> (Input (:num1 m) :type "number") (swap! !m assoc :num1))
       (->> (Checkbox (:bool1 m)) (swap! !m assoc :bool1)))))
-
-(e/defn Input! [v & {:keys [maxlength type] :as props
-                     :or {maxlength 100 type "text"}}]
-  (e/client
-    (dom/input (dom/props (assoc props :maxLength maxlength :type type))
-      (PendingMonitor
-        (letfn [(read [e] (let [k (.-key e)]
-                            (cond
-                              (= "Escape" k)  [nil (set! (.-value dom/node) v)] ; clear token
-                              () [e (-> e .-target .-value (subs 0 maxlength))])))]
-          ; reuse token as value updates - i.e., singular edit not concurrent
-          (let [[e v'] (dom/On "input" read nil) t (e/Token e)]
-            (when-not (or (dom/Focused?) (some? t)) (set! (.-value dom/node) v))
-            (if t [t v'] (e/amb))))))))
-
-(e/defn Checkbox! [checked & {:keys [id label] :as props
-                              :or {id (random-uuid)}}]
-  (e/client
-    (e/amb
-      (dom/div ; for yellow background
-        (dom/props {:style {:display "inline-block" :width "fit-content"}})
-        (PendingMonitor ; checkboxes don't have background so style wrapper div
-          (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
-            (let [e (dom/On "change" identity) t (e/Token e)] ; single txn, no concurrency
-              (when-not (or (dom/Focused?) (some? t)) (set! (.-checked dom/node) checked))
-              (if t [t ((fn [] (-> e .-target .-checked)))] (e/amb))))))
-      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
 (e/defn DemoInput! [] ; async, transactional, entity backed, never backpressure
   (let [db (e/server (e/watch !conn))
@@ -115,30 +58,6 @@
           (= status ::ok) (t)
           (= status ::fail) (t err))))))
 
-(e/defn InputSubmit! [v & {:keys [maxlength type] :as props
-                           :or {maxlength 100 type "text"}}]
-  (e/client
-    (dom/input (dom/props (assoc props :maxLength maxlength :type type))
-      (PendingMonitor
-        (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
-                (submit! [e] (let [k (.-key e)]
-                               (cond
-                                 (= "Enter" k) (read! (.-target e)) ; no clear
-                                 (= "Escape" k) (do (set! (.-value dom/node) "") nil)
-                                 () nil)))]
-          (dom/OnAll "keydown" submit!))))))
-
-(e/defn CheckboxSubmit! [checked & {:keys [id label] :as props
-                                    :or {id (random-uuid)}}]
-  (e/client
-    (e/amb
-      (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
-        (let [edits (dom/OnAll "change" #(-> % .-target .-checked))] ; concurrent tx processing
-          (when-not (or (dom/Focused?) (pos? (e/Count edits)))
-            (set! (.-checked dom/node) checked))
-          edits))
-      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
-
 (e/defn DemoInputSubmit! []
   (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
         edits (e/amb ; in-flight edits
@@ -149,20 +68,6 @@
       (case (e/server ; remote transaction
               (e/Offload #(do (reset! !v v) ::ok)))
         ::ok (t)))))
-
-(e/defn InputSubmitClear! [& {:keys [maxlength type] :as props
-                              :or {maxlength 100 type "text"}}]
-  (e/client
-    (dom/input (dom/props (assoc props :maxLength maxlength :type type))
-      (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
-              (read-clear! [node] (when-some [v (read! node)] (set! (.-value node) "") v))
-              (submit! [e] (let [k (.-key e)]
-                             (cond
-                               (= "Enter" k) (read-clear! (.-target e))
-                               (= "Escape" k) (do (set! (.-value dom/node) "") nil)
-                               () nil)))]
-        (PendingMonitor
-          (dom/OnAll "keydown" submit!))))))
 
 (e/defn DemoInputSubmitClear! []  ; chat
   (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
@@ -207,6 +112,4 @@ dl.InputZoo p { margin: 0 0 .5em; }
 .user-examples-readme [aria-busy='true'] { background-color: yellow; }
 .user-examples-readme input[type=text],
 .user-examples-readme input[type=number] { width: 10ch; }
-
-
 ") ; todo check mobile and responsive

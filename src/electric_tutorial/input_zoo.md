@@ -33,9 +33,9 @@ Checkboxes, numerics and text inputs have subtly different semantics
 
 !fn-src[electric-tutorial.input-zoo/DemoInput*](#zoo_input_star_demo_src)
 
-!fn-src[electric-tutorial.input-zoo/Input*](#zoo_input_star_src)
+!fn-src[hyperfiddle.input-zoo0/Input*](#zoo_input_star_src)
 
-!fn-src[electric-tutorial.input-zoo/Checkbox*](#zoo_checkbox_star_src)
+!fn-src[hyperfiddle.input-zoo0/Checkbox*](#zoo_checkbox_star_src)
 
 <table>
   <tr>
@@ -58,9 +58,9 @@ Checkboxes, numerics and text inputs have subtly different semantics
 
 !fn-src[electric-tutorial.input-zoo/DemoInput](#zoo_input_demo_src)
 
-!fn-src[electric-tutorial.input-zoo/Input](#zoo_input_src)
+!fn-src[hyperfiddle.input-zoo0/Input](#zoo_input_src)
 
-!fn-src[electric-tutorial.input-zoo/Checkbox](#zoo_checkbox_src)
+!fn-src[hyperfiddle.input-zoo0/Checkbox](#zoo_checkbox_src)
 
 <table>
   <tr>
@@ -83,9 +83,9 @@ Checkboxes, numerics and text inputs have subtly different semantics
 
 !fn-src[electric-tutorial.input-zoo/DemoInput!](#zoo_input_bang_demo_src)
 
-!fn-src[electric-tutorial.input-zoo/Input!](#zoo_input_bang_src)
+!fn-src[hyperfiddle.input-zoo0/Input!](#zoo_input_bang_src)
 
-!fn-src[electric-tutorial.input-zoo/Checkbox!](#zoo_checkbox_bang_src)
+!fn-src[hyperfiddle.input-zoo0/Checkbox!](#zoo_checkbox_bang_src)
 
 <table>
   <tr>
@@ -106,7 +106,7 @@ Checkboxes, numerics and text inputs have subtly different semantics
   </tr>
 </table>
 
-!fn-src[electric-tutorial.input-zoo/InputSubmit!](#zoo_input_submit_bang_src)
+!fn-src[hyperfiddle.input-zoo0/InputSubmit!](#zoo_input_submit_bang_src)
 
 !fn-src[electric-tutorial.input-zoo/DemoInputSubmit!](#zoo_input_submit_bang_demo_src)
 
@@ -128,7 +128,7 @@ Checkboxes, numerics and text inputs have subtly different semantics
   </tr>
 </table>
 
-!fn-src[electric-tutorial.input-zoo/InputSubmitClear!](#zoo_input_submit_clear_bang_src)
+!fn-src[hyperfiddle.input-zoo0/InputSubmitClear!](#zoo_input_submit_clear_bang_src)
 
 !fn-src[electric-tutorial.input-zoo/DemoInputSubmitClear!](#zoo_input_submit_clear_bang_demo_src)
 
