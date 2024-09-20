@@ -16,12 +16,7 @@ Checkboxes, numerics and text inputs have subtly different semantics
     <td>
       ### Input* — crude uncontrolled state, rarely useful
       <div id="zoo_input_star_demo"></div>
-      * synchronous, local, always succeeds, always ready, no error states
-      * It's uncontrolled, so there cannot be initial state. (use `Input` instead)
-      * Several tutorials used this impl inline (webview) but only because is 2 LOC.
-      * note the div on L2 and the map on L3 – we're playing with values
-      * note `parse-long` on L8, I like to thread my event processing code because it feels like a callback and lets the view read left to right
-      * Composite widgets (e.g. a typeahead) might inline and customize a simple impl like this.
+
     </td>
     <td>
       <div id="zoo_input_star_demo_src"></div>
@@ -42,11 +37,6 @@ Checkboxes, numerics and text inputs have subtly different semantics
     <td>
       ### Input — simple dataflow circuit (i.e., "controlled")
       <div id="zoo_input_demo"></div>
-      * synchronous, local, always succeeds, always ready, no error states
-      * This is your bread and butter input, good for ephemeral client local state, such as search or filtering – you always want latest, there are never conflicts.
-      * Safe for concurrent writes.
-      * Used in **TemperatureConverter** tutorial.
-      * Pure functional!
     </td>
     <td>
       <div id="zoo_input_demo_src"></div>
@@ -92,11 +82,8 @@ Checkboxes, numerics and text inputs have subtly different semantics
     <td>
       ### InputSubmit!
       <div id="zoo_input_submit_bang_demo"></div>
-      <p>Submit remote CRUD update on enter, no clear (e.g. **TodoMVC**, spreadsheet cells)
-      * inline commit/discard (it can be integrated w/ the controls)
-      * implies that the control disables while committing, you must cancel to edit (it can auto-cancel)
-      * retry and resubmit
-      * means the impl must use dom/on, not dom/on-all - user is done here unless they cancel!
+      <p>
+
       </p>
     </td>
     <td>
@@ -115,10 +102,7 @@ Checkboxes, numerics and text inputs have subtly different semantics
     <td>
       ### InputSubmitClear!
       <div id="zoo_input_submit_clear_bang_demo"></div>
-      <p>Submit remote txn on enter and clear (e.g. **Chat**, **TodoMVC**, i.e. create new entity). Uncontrolled!
-      * implies optimistic collection maintenance
-      * failure is routed to the optimistic input for retry, it is not handled here!
-      * we use dom/On-all because you're editing many entities
+      <p>
       </p>
     </td>
     <td>

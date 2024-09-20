@@ -2,83 +2,8 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.forms0 :as forms :refer [Field Stage]]
             [electric-fiddle.fiddle :refer [#?(:cljs await-element)]]
-            [electric-tutorial.forms :refer [UserForm cmds->tx #?(:clj !conn)]]
-            [hyperfiddle.input-zoo0 :refer
-             [Input* Checkbox*
-              Input Checkbox
-              Input! Checkbox!
-              InputSubmit! CheckboxSubmit!
-              InputSubmitClear!]]))
-
-(e/defn DemoInput* []
-  (let [form (dom/div
-               {:str1 (Input*) ; no token
-                :num1 (-> (Input* :type "number") parse-long)
-                :bool1 (Checkbox*)})]
-    (dom/code (dom/text (pr-str form)))))
-
-(e/defn DemoInput []
-  (let [m (e/with-cycle [m {:user/str1 "hello"
-                            :user/num1 42
-                            :user/bool1 true}] ; no atom
-            (e/for [_ (e/amb 1 2)]
-              (dom/div
-                {:user/str1 (Input (:user/str1 m)) ; no token
-                 :user/num1 (-> (Input (:user/num1 m) :type "number") parse-long)
-                 :user/bool1 (Checkbox (:user/bool1 m))})))]
-    (dom/code (dom/text (pr-str m))))
-
-  #_; equivalent - cycle by atom
-  (let [!m (atom {:str1 "hello" :num1 42 :bool1 true}) m (e/watch !m)]
-    (dom/div
-      (->> (Input (:str1 m)) (swap! !m assoc :str1))
-      (->> (Input (:num1 m) :type "number") (swap! !m assoc :num1))
-      (->> (Checkbox (:bool1 m)) (swap! !m assoc :bool1)))))
-
-(e/defn DemoInput! [] ; async, transactional, entity backed, never backpressure
-  (let [db (e/server (e/watch !conn))
-        edits (e/for [id (e/amb 42 42)] ; two forms submitting edits concurrently
-                (let [m (e/server (d/pull db [:db/id :user/x-bool1 :user/x-str1 :user/x-num1] id))]
-                  (Stage ; concats field edits into batched form edit, atomic commit
-                    (dom/fieldset
-                      (UserForm m)))))]
-    (prn 'edits (e/Count edits))
-    (e/for [[t cmds] edits] ; concurrent batches, one batch per form
-      (prn 'edit t cmds)
-      (let [res (e/server (prn 'cmds cmds)
-                  (let [tx (cmds->tx cmds)] ; secure cmd interpretation
-                    (e/Offload #(try (prn 'tx tx) (Thread/sleep 500)
-                                  #_(assert false "die") ; random failure
-                                  (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
-                                  (catch Exception e [::fail (str e)]))))) ; todo datafy err
-            [status err] res]
-        (cond
-          (= status ::ok) (t)
-          (= status ::fail) (t err))))))
-
-(e/defn DemoInputSubmit! []
-  (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
-        edits (e/amb ; in-flight edits
-                (InputSubmit! v)
-                (InputSubmit! v))]
-    (dom/code (dom/text (pr-str v)))
-    (e/for [[t v] edits] ; concurrent edits
-      (case (e/server ; remote transaction
-              (e/Offload #(do (reset! !v v) ::ok)))
-        ::ok (t)))))
-
-(e/defn DemoInputSubmitClear! []  ; chat
-  (let [!v (e/server (atom "")) v (e/server (e/watch !v)) ; remote state
-        edits (e/amb ; in-flight edits
-                (InputSubmitClear! :placeholder "Send")
-                (InputSubmitClear! :placeholder "Send"))]
-    (dom/code (dom/text (pr-str v)))
-    (e/for [[t v] edits] ; concurrent edits
-      (case (e/server ; remote transaction
-              (e/Offload #(do (reset! !v v) ::ok)))
-        ::ok (t))))) ; clear edit on success
+            [hyperfiddle.input-zoo0 :refer []]))
 
 (declare css)
 
@@ -86,6 +11,7 @@
   (dom/style (dom/text css))
   (dom/p (dom/text "See portals!"))
   (e/for [[Demo selector] (e/amb
+                            #_#_#_#_#_
                             [DemoInput* "#zoo_input_star_demo"]
                             [DemoInput "#zoo_input_demo"]
                             [DemoInput! "#zoo_input_bang_demo"]
