@@ -86,7 +86,7 @@
           (dom/input (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
             (let [e (dom/On "change" identity) t (e/Token e)] ; single txn, no concurrency
               (when-not (or (dom/Focused?) (some? t)) (set! (.-checked dom/node) checked))
-              (if t [t (-> e .-target .-checked)] (e/amb))))))
+              (if t [t ((fn [] (-> e .-target .-checked)))] (e/amb))))))
       (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
 
 (e/defn DemoInput! [] ; async, transactional, entity backed, never backpressure
