@@ -2,7 +2,6 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-fiddle.fiddle :refer [#?(:cljs await-element)]]
             [hyperfiddle.input-zoo0 :refer []]))
 
 (declare css)
@@ -17,7 +16,7 @@
                             [DemoInput! "#zoo_input_bang_demo"]
                             [DemoInputSubmit! "#zoo_input_submit_bang_demo"]
                             [DemoInputSubmitClear! "#zoo_input_submit_clear_bang_demo"])]
-    (binding [dom/node (e/Task (await-element js/document.body selector))]
+    (binding [dom/node (dom/Await-element js/document.body selector)]
       (dom/div ; workaround reverse rendering bug
         (Demo)))))
 
