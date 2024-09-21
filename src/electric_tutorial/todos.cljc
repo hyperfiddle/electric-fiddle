@@ -16,6 +16,7 @@
 
 (e/defn Todo-records [db edits]
   (e/client
+    (prn 'TodoRecords 'edits (e/as-vec (second edits)))
     (PendingController :db/id :task/description edits
       (e/server
         (e/diff-by :db/id
@@ -30,26 +31,29 @@
 
 (e/defn TodoCreate []
   (e/for [[t v] (InputSubmitClear! :placeholder "Buy milk")] ; dom/onall bad
-    (let [tempid (random-uuid) #_(hash t)]
+    (let [tempid t]
       [t [::create-todo v tempid]
        {tempid {:db/id tempid :task/description v :task/status :active}}])))
 
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
-  (dom/li (dom/props {:style {:background-color (when pending "yellow")}}) ; pending at collection level
+  (dom/li #_(dom/props {:style {:background-color (when pending "yellow")}}) ; pending at collection level
     (e/amb
       (e/for [[t v] (CheckboxSubmit! (case status :active false, :done true) #_#_:label description :id id)] ; pending at value level
         [t [::toggle id v] {id (-> m (dissoc ::pending) (assoc :task/status v))}])
-      (e/for [[t v] (InputSubmit! description)]
+      (e/for [[t v] (InputSubmit! description :token pending)]
+        (prn 'InputSubmit v)
         [t [::edit-todo-desc id v] {id (assoc m :task/description v)}]))))
 
 (e/defn TodoList [db edits]
   (dom/div (dom/props {:class "todo-list"})
-    (e/amb
-      (TodoCreate)
-      (dom/ul (dom/props {:class "todo-items"})
-        (e/for [m (Todo-records db edits)]
-          (TodoItem m)))
-      (dom/p (dom/text (Todo-count db edits) " items left")))))
+    (let [todos (Todo-records db edits)]
+      (prn 'todos (e/as-vec todos))
+      (e/amb
+        (TodoCreate)
+        (dom/ul (dom/props {:class "todo-items"})
+          (e/for [m todos]
+            (TodoItem m)))
+        (dom/p (dom/text (e/Count todos) " items left"))))))
 
 #?(:clj (defn cmd->tx [xcmd]
           (match xcmd
@@ -67,12 +71,19 @@
 (e/defn Todos []
   (e/client ; bias for writes because token doesn't transfer
     (let [db (e/server (e/watch !conn))
-          edits (e/with-cycle* first [edits (e/amb)]
-                  (e/Filter some?
-                    (TodoList db edits)))]
+          [ts xcmds :as edits] (e/with-cycle* first [edits (e/amb)]
+                                 (prn 'edits (e/as-vec (second edits)))
+                                 (e/Filter some?
+                                   (TodoList db edits)))]
+      (prn 'service (e/as-vec (second xcmds)))
       (e/for [[t xcmd _ :as edit] edits]
-        (prn xcmd)
-        #_(case (e/server
-                  (when-some [tx (cmd->tx xcmd)] ; secure
-                    (case (e/Offload #(d/transact! !conn tx)) ::ok)))
-            ::ok (t))))))
+        (let [res (e/server (prn 'xcmd xcmd)
+                    (let [tx (cmd->tx xcmd)] ; secure
+                      (e/Offload #(try (prn 'tx tx) (Thread/sleep 1000)
+                                    (assert false "die") ; random failure
+                                    (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
+                                    (catch Exception e [::fail (str e)])))))
+              [status err] res]
+          (cond
+            (= status ::ok) (t)
+            (= status ::fail) (t err)))))))
