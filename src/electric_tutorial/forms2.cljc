@@ -22,13 +22,13 @@
 
 (e/defn Forms2 []
   (let [m (e/with-cycle [m state0] ; pure!
-            (e/for [_ (e/amb 1 2)]
+            (e/for [_ (e/amb 1 2)] ; tricky cycle on e/amb
               (UserForm m)))]
     (dom/code (dom/text (e/server (pr-str m)))))
 
-  #_ ; equivalent - cycle by atom
+  #_ ; equivalent - dataflow recursion via atom
   (let [!m (atom state0) m (e/watch !m)]
-    (e/for [_ (e/amb 1 2)]
-      (reset! !m
+    (reset! !m ; note the product
+      (e/for [_ (e/amb 1 2)]
         (UserForm m)))
     (dom/code (dom/text (pr-str m)))))

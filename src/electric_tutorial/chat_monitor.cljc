@@ -31,7 +31,7 @@
   (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
         present (e/server (Presence! !present username))
         edits (e/with-cycle* first [edits (e/amb)]
-                (ChatApp username present edits))]
+                (ChatApp username present edits))] ; loop in-flight edits for optimistic update
 
     (prn 'edits edits)
     (e/for [[t v] (e/Filter some? edits)]

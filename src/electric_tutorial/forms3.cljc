@@ -43,14 +43,14 @@
                         form-edits (Stage field-edits :debug true)] ; buffered and batched
                     form-edits)))]
     (prn 'edits (e/Count edits))
-    (e/for [[t cmds] edits] ; concurrent batches, one batch per form
+    (e/for [[t cmds] (e/Filter some? edits)] ; concurrent batches, one batch per form
       (prn 'edit t cmds)
       (let [res (e/server (prn 'cmds cmds)
                   (let [tx (cmds->tx cmds)] ; secure cmd interpretation
                     (e/Offload #(try (prn 'tx tx) (Thread/sleep 500)
-                                  #_(assert false "die") ; random failure
+                                  (assert false "die") ; random failure
                                   (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
-                                  (catch Exception e [::fail (str e)]))))) ; todo datafy err
+                                  (catch Exception e [::fail ::rejected])))))
             [status err] res]
         (cond
           (= status ::ok) (t)

@@ -4,7 +4,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.input-zoo :refer [Input! CheckboxSubmit!]]))
+            [hyperfiddle.input-zoo0 :refer [Input! CheckboxSubmit!]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -190,10 +190,11 @@
      `Set-filter Set-filter}))
 
 (e/defn Service [effects edits]
+  #_(binding [effects (merge effects effects')])
   (e/client ; client bias, t doesn't transfer
     (e/for [[t cmd & args] (e/Filter some? edits)]
       (prn 'cmd (name cmd) args)
-      (case (when-some [Effect (get effects cmd)]
+      (case (when-some [Effect (get effects cmd)] ; security - rules engine? `(F ~x) ? prevent auditing of imperative adhoc security
               (let [res (e/Apply Effect args)]
                 (prn 'res res)
                 (case res ::ok ::ok, ::fail ::fail, ::ok)))

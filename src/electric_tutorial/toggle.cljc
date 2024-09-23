@@ -16,6 +16,7 @@
       (dom/dt (dom/text "type")) (dom/dd (dom/text (NumberType x)))))
 
   (dom/button (dom/text "toggle client/server")
-    (when-some [t (e/Token (dom/On "click"))]
+    (when-some [t (e/Token (dom/On "click" identity nil))]
       (dom/props {:disabled true})
-      (t (e/server (swap! !x not))))))
+      (case (e/server (case (swap! !x not) ::ok))
+        ::ok (t)))))

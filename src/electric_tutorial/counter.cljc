@@ -12,18 +12,20 @@
 
 (e/defn Clicker [n F!]
   (e/client
-    (println F!) ; serializable e/fn
+    (println F!) ; serializable e/fn - see console
     (dom/div
       (dom/text "count: " n " ")
       (dom/button (dom/text "inc")
         (e/for [[t e] (dom/OnAll "click")]
           (dom/text " " (F! t)))))))
 
-#?(:clj (defonce !n (atom 0)))
+#?(:clj (defonce !n (atom 0))) ; shared memory global state
 
 (e/defn Counter []
   (e/server
     (let [n (e/watch !n)]
       (Clicker n (e/fn [t]
-                   (t (e/server (case (e/Task (m/sleep 2000)) (swap! !n inc))))
+                   (case (e/server (e/Offload #(do (Thread/sleep 2000)
+                                                 (swap! !n inc) ::ok)))
+                     ::ok (t))
                    (Countdown 10 2000)))))) ; progress indicator

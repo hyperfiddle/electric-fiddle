@@ -28,17 +28,17 @@
                 (dom/fieldset
                   (let [record (e/server (d/pull db [:db/id :user/str1
                                                      :user/bool1 :user/num1] id))]
-                    #_(Stage) ; NO stage at form level
+                    #_(Stage (UserForm record) :debug true) ; NO stage at form level
                     (UserForm record))))]
-    (prn 'edits (e/Count edits) (e/as-vec edits))
-    (e/for [[t cmds] edits]
-      (prn 'edit t cmds)
+    (prn 'edits (e/Count edits) #_(e/as-vec (second edits)))
+    (e/for [[t cmds] (e/Filter some? edits)]
+      (prn 'edit cmds)
       (let [res (e/server (prn 'cmds cmds)
                   (let [tx (cmds->tx cmds)]
                     (e/Offload #(try (prn 'tx tx) (Thread/sleep 500)
-                                  #_(assert false "die") ; random failure
+                                  (assert false "die") ; random failure
                                   (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
-                                  (catch Exception e [::fail (str e)])))))
+                                  (catch Exception e [::fail ::rejected])))))
             [status err] res]
         (cond
           (= status ::ok) (t)

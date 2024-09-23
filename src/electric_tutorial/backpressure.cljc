@@ -6,9 +6,9 @@
   (let [c (e/client (/ (e/SystemTimeMs) 1000))
         s (e/server (double (/ (e/SystemTimeMs) 1000)))]
 
-    (println (int c)) ; check console
-    (println (int s))
+    (prn 'c (int c)) ; check console
+    (prn 's (int s))
 
     (dom/div (dom/text "client time: " c))
     (dom/div (dom/text "server time: " s))
-    (dom/div (dom/text "difference: " (.toPrecision (- s c) 2)))))
+    (dom/div (dom/text "skew: " (.toPrecision (- s c) 2)))))
