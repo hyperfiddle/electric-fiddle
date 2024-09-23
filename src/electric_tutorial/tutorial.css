@@ -11,16 +11,6 @@
 
 .user-examples-target.Todos ul { list-style: none; padding-left: 0; }
 
-.user-examples-target.Chat ul.channel,
-.user-examples-target.ChatMonitor ul.channel {
-    display: flex; flex-direction: column-reverse; /* bottom up */
-    height: 220px; overflow-y: clip; /* pending pushes up server records */
-    padding: 0; /* remove room for bullet in grid layout */
-}
-
-.user-examples-target.ChatMonitor ul.channel li,
-.user-examples-target.Chat ul.channel li { display: grid; }
-
 .user-examples-target.webview table { display: grid; column-gap: 1ch; }
 .user-examples-target.webview tr { display: contents; }
 .user-examples-target.webview.Webview1 table {grid-template-columns: repeat(3, max-content);}
