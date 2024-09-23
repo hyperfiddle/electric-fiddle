@@ -1,6 +1,7 @@
 (ns electric-tutorial.chat
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]))
+            [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.input-zoo0 :refer [InputSubmitCreate!]]))
 
 (e/defn Login [username]
   (dom/div
@@ -29,16 +30,8 @@
                                   :grid-template-columns "max-content auto" :gap "1ch"}})
         (dom/span (dom/strong (dom/text username)) (dom/text " " msg))))))
 
-(e/defn InputSubmit! [& {:keys [maxlength] :or {maxlength 100} :as props}]
-  (e/client
-    (dom/input (dom/props (assoc props :maxLength maxlength))
-      (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
-              (read-clear! [node] (when-some [v (read! node)] (set! (.-value node) "") v))
-              (submit! [e] (when (= "Enter" (.-key e)) (read-clear! (.-target e))))]
-        (dom/OnAll "keydown" submit!)))))
-
 (e/defn SendMessage [username]
-  (let [edits (InputSubmit! :placeholder (if username "Message" "Login to chat")
+  (let [edits (InputSubmitCreate! :placeholder (if username "Message" "Login to chat")
                   :maxlength 100 :disabled (nil? username))]
     (dom/text " " (e/Count edits))
     edits))

@@ -5,7 +5,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [dustingetz.cqrs0 :as cqrs :refer [PendingController]]
             [hyperfiddle.input-zoo0 :refer
-             [InputSubmit! InputSubmitClear! CheckboxSubmit!]]))
+             [InputSubmit! InputSubmitCreate! CheckboxSubmit!]]))
 
 (e/defn Todo-count [db edits]
   (e/server
@@ -30,7 +30,7 @@
                (catch Exception e (prn e)))))))))
 
 (e/defn TodoCreate []
-  (e/for [[t v] (InputSubmitClear! :placeholder "Buy milk")] ; dom/onall bad
+  (e/for [[t v] (InputSubmitCreate! :placeholder "Buy milk")] ; dom/onall bad
     (let [tempid t]
       [t [::create-todo v tempid]
        {tempid {:db/id tempid :task/description v :task/status :active}}])))
