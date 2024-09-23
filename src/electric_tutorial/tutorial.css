@@ -2,6 +2,7 @@
 
 /* Forms, Crud, TodoMVC */
 .user-examples-target [aria-busy="true"] { background-color: yellow; }
+.user-examples-target [aria-invalid="true"] { background-color: pink; }
 
 /* Toggle, TemperatureConverter, TodoMVC */
 .user-examples-target dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
