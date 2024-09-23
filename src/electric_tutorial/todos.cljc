@@ -5,7 +5,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.cqrs0 :as cqrs :refer [PendingController]]
             [hyperfiddle.input-zoo0 :refer
-             [InputSubmit! InputSubmitCreate! CheckboxSubmit!]]))
+             [InputSubmit?! InputSubmitCreate?! CheckboxSubmit?!]]))
 
 (e/defn Todo-records [db edits]
   (e/client
@@ -23,7 +23,7 @@
                (catch Exception e (prn e)))))))))
 
 (e/defn TodoCreate []
-  (e/for [[t v] (InputSubmitCreate! :placeholder "Buy milk")] ; dom/onall bad
+  (e/for [[t v] (InputSubmitCreate?! :placeholder "Buy milk")]
     (let [tempid t]
       [t [::create-todo v tempid]
        {tempid {:db/id tempid :task/description v :task/status :active}}])))
@@ -31,9 +31,9 @@
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
   (dom/li #_(dom/props {:style {:background-color (when pending "yellow")}}) ; pending at collection level
     (e/amb
-      (e/for [[t v] (CheckboxSubmit! (case status :active false, :done true) #_#_:label description :id id)] ; pending at value level
+      (e/for [[t v] (CheckboxSubmit?! (case status :active false, :done true) #_#_:label description :id id)] ; pending at value level
         [t [::toggle id v] {id (-> m (dissoc ::pending) (assoc :task/status v))}])
-      (e/for [[t v] (InputSubmit! description :token pending)]
+      (e/for [[t v] (InputSubmit?! description :token pending)]
         (prn 'InputSubmit v)
         [t [::edit-todo-desc id v] {id (assoc m :task/description v)}]))))
 
@@ -73,7 +73,7 @@
         (let [res (e/server (prn 'xcmd xcmd)
                     (let [tx (cmd->tx xcmd)] ; secure
                       (e/Offload #(try (prn 'tx tx) (Thread/sleep 1000)
-                                    (assert false "die") ; random failure
+                                    #_(assert false "die") ; random failure
                                     (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
                                     (catch Exception e [::fail (str e)])))))
               [status err] res]
