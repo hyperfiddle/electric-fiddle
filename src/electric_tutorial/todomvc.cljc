@@ -1,11 +1,10 @@
 (ns electric-tutorial.todomvc
-  (:require [contrib.str :refer [blank->nil]]
-            [contrib.data :refer [unqualify]]
+  (:require [contrib.data :refer [unqualify]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer
-             [Input! InputSubmitCreate?! CheckboxSubmit?!]]))
+            [hyperfiddle.input-zoo0 :as z :refer
+             [InputSubmit?! InputSubmitCreate?! CheckboxSubmit?! Input!]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -34,7 +33,7 @@
     (dom/a (dom/props {:class (when (= state target) "selected")})
       (dom/text label)
       (e/for [[t _] (dom/On-all "click" (constantly true))]
-        [t `Set-filter target]))))
+        [t [`Set-filter target]]))))
 
 (e/defn TodoStats [db state]
   (let [active (e/server (todo-count db :active))
@@ -55,7 +54,7 @@
           (dom/button (dom/props {:class "clear-completed"})
             (dom/text "Clear completed " done)
             (e/for [[t _] (dom/On-all "click" (constantly true))]
-              [t `Clear-completed])))))))
+              [t [`Clear-completed]])))))))
 
 (e/defn TodoItem [db state id]
   (let [!e (e/server (d/entity db id))
@@ -69,27 +68,19 @@
           (e/amb
             (e/for [[t v] (CheckboxSubmit?! (= :done status) :class "toggle" :id id)]
               (let [status (case v true :done, false :active, nil)]
-                [t `Toggle id status]))
+                [t [`Toggle id status]]))
             (dom/label (dom/text description)
               (e/for [[t _] (dom/On-all "dblclick" (constantly true))]
-                [t `Editing-item id]))))
+                [t [`Editing-item id]]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
-            ; todo InputSubmit! ?
-            (dom/input (dom/props {:class "edit" #_#_:autofocus true})
-              (set! (.-value dom/node) description)
-              (case description (.focus dom/node)) ; don't focus until description is available
-              (PendingMonitor
-                (e/for [[t e] (dom/On-all "keydown" identity)]
-                  (case (.-key e)
-                    "Enter" (when-some [desc (blank->nil (-> e .-target .-value))]
-                              [t `Edit-todo-desc id desc])
-                    "Escape" [t `Cancel-todo-edit-desc]
-                    (e/amb)))))))
-        (dom/button (dom/props {:class "destroy"})
+            (InputSubmit?! description :class "edit" :autofocus true
+              ::z/discard `[Cancel-todo-edit-desc]
+              ::z/commit #(vector `Edit-todo-desc id %))))
+        (dom/button (dom/props {:class "destroy"}) ; todo Button!
           (PendingMonitor
             (e/for [[t _] (dom/On-all "click" (constantly true))]
-              [t `Delete-todo id])))))))
+              [t [`Delete-todo id]])))))))
 
 (e/defn Query-todos [db filter]
   (e/server (e/diff-by identity (sort (query-todos db filter)))))
@@ -104,7 +95,7 @@
           (e/for [[t v] (CheckboxSubmit?! (cond (= all done) true (= all active) false :else nil)
                           :class "toggle-all")]
             (let [status (case v (true nil) :done, false :active)]
-              [t `Toggle-all status])))
+              [t [`Toggle-all status]])))
         (dom/label (dom/props {:for "toggle-all"}) (dom/text "Mark all as complete"))
         (dom/ul (dom/props {:class "todo-list"})
           (e/for [id (Query-todos db (::filter state))]
@@ -114,7 +105,7 @@
   (dom/span (dom/props {:class "input-load-mask"})
     (e/for [[t v] (InputSubmitCreate?! :class "new-todo input-load-mask"
                     :placeholder "What needs to be done?")]
-      [t `Create-todo v])))
+      [t [`Create-todo v]])))
 
 (e/defn TodoMVC-UI [db state]
   (dom/section (dom/props {:class "todoapp"})
@@ -134,7 +125,7 @@
     (dom/dt (dom/text "delay")) (dom/dd (e/amb (e/for [[t v] (Input! (::delay state)
                                                                :type "number" :step 1 :min 0
                                                                :style {:width :min-content})]
-                                                 [t `Set-delay (parse-long v)])
+                                                 [t [`Set-delay (parse-long v)]])
                                           (dom/text " ms")))))
 
 (e/defn Slow-transact [delay !conn tx]
@@ -186,7 +177,7 @@
 (e/defn Service [effects edits]
   #_(binding [effects (merge effects effects')])
   (e/client ; client bias, t doesn't transfer
-    (e/for [[t cmd & args] (e/Filter some? edits)]
+    (e/for [[t [cmd & args]] (e/Filter some? edits)]
       (prn 'cmd (name cmd) args)
       (case (when-some [Effect (get effects cmd)] ; security - rules engine? `(F ~x) ? prevent auditing of imperative adhoc security
               (let [res (e/Apply Effect args)]
