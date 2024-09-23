@@ -14,20 +14,27 @@
             ; Part 1
             [electric-tutorial.two-clocks :refer [TwoClocks]]
             [electric-tutorial.dir-tree :refer [DirTree]]
-            [electric-tutorial.webview :refer [Webview]]
+            [electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.lifecycle :refer [Lifecycle]]
-            [electric-tutorial.backpressure :refer [Backpressure]]
+            [electric-tutorial.webview1 :refer [Webview1]]
+            [electric-tutorial.webview2 :refer [Webview2]]
+            [electric-tutorial.fizzbuzz :refer [FizzBuzz]]
             [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.counter :refer [Counter]]
-            [electric-tutorial.temperature :refer [TemperatureConverter]]
             [electric-tutorial.chat :refer [Chat]]
+            [electric-tutorial.chat-monitor :refer [ChatMonitor]]
+            [electric-tutorial.backpressure :refer [Backpressure]]
 
             ; Part 2
+            [electric-tutorial.forms1 :refer [Forms1]]
+            [electric-tutorial.forms2 :refer [Forms2]]
+            [electric-tutorial.forms3 :refer [Forms3]]
+            [electric-tutorial.forms4 :refer [Forms4]]
+            [electric-tutorial.forms5 :refer [Forms5]]
             [electric-tutorial.input-zoo :refer [InputZoo]]
-            [electric-tutorial.forms :refer [Forms]]
-            [electric-tutorial.chat-monitor :refer [ChatMonitor]]
             [electric-tutorial.crud :refer [Crud]]
             [electric-tutorial.todos :refer [Todos]]
+            [electric-tutorial.todos2 :refer [Todos2]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
             [electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
 
@@ -46,18 +53,25 @@
   [["Basics"
     [`TwoClocks
      `DirTree
-     `Webview
-     `Lifecycle
-     `Backpressure
+     `Temperature
      `Toggle
      `Counter
-     `TemperatureConverter
-     `Chat]]
-   ["CRUD"
-    [`InputZoo
-     `Forms
+     `FizzBuzz
+     `Lifecycle
+     `Webview1
+     `Webview2
+     `Chat
      `ChatMonitor
-     `Crud `Todos
+     `Backpressure]]
+   ["CRUD"
+    [`Forms1
+     `Forms2
+     `Forms3
+     `Forms4
+     `Forms5
+     #_`InputZoo
+     #_`Crud
+     `Todos
      `TodoMVC
      `TodoMVC-composed]]
    #_["Datagrid"
@@ -125,19 +139,27 @@
 (def essays
   {`TwoClocks "two_clocks.md"
    `DirTree "dir_tree.md"
-   `Webview "webview.md" ; concrete
+   `Temperature "temperature.md"
    `Lifecycle "lifecycle.md"
-   `Backpressure "backpressure.md"
+   `Webview1 "webview1.md"
+   `Webview2 "webview2.md"
+   `FizzBuzz "fizzbuzz.md"
    `Toggle "toggle.md"
    `Counter "counter.md"
-   `TemperatureConverter "temperature_converter.md"
    `Chat "chat.md"
+   `ChatMonitor "chat_monitor.md"
+   `Backpressure "backpressure.md"
 
    ; Part 2
+   `Forms1 "forms1.md"
+   `Forms2 "forms2.md"
+   `Forms3 "forms3.md"
+   `Forms4 "forms4.md"
+   `Forms5 "forms5.md"
    `InputZoo "input_zoo.md"
-   `Forms "forms.md"
-   `ChatMonitor "chat_monitor.md"
-   `Todos "todos.md" `Crud "crud.md"
+   `Todos "todos.md"
+   `Todos2 "todos2.md"
+   `Crud "crud.md"
    `TodoMVC "todomvc.md"
    `TodoMVC-composed "todomvc_composed.md"
 
@@ -169,20 +191,28 @@
 (e/defn Fiddles []
   {`TwoClocks TwoClocks
    `DirTree DirTree
-   `Webview Webview
+   `Temperature Temperature
    `Lifecycle Lifecycle
-   `Backpressure Backpressure
+   `Webview1 Webview1
+   `Webview2 Webview2
+   `FizzBuzz FizzBuzz
    `Toggle Toggle
    `Counter Counter
-   `TemperatureConverter TemperatureConverter
    `Chat Chat
+   `ChatMonitor ChatMonitor
+   `Backpressure Backpressure
 
    ; Part 2
-   `InputZoo InputZoo
-   `Forms Forms
-   `ChatMonitor ChatMonitor
+   `Forms1 Forms1
+   `Forms2 Forms2
+   `Forms3 Forms3
+   `Forms4 Forms4
+   `Forms5 Forms5
+   ;`InputZoo InputZoo
+
    `Todos Todos
-   `Crud Crud
+   `Todos2 Todos2
+   ;`Crud Crud
    `TodoMVC TodoMVC
    `TodoMVC-composed TodoMVC-composed
 
