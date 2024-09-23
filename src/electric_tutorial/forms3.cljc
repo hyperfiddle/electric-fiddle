@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.forms0 :as forms :refer [Field Stage]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Field Stage]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]))
 
 (e/defn UserForm [{:keys [db/id user/str1 user/num1 user/bool1]}]
@@ -24,7 +24,7 @@
 
 (defn cmd->tx [cmd]
   (match (doto cmd #_(prn 'cmd))
-    [::forms/update e a v] [{:db/id e a v}] ; wide open crud endpoint (on purpose)
+    [::cqrs/update e a v] [{:db/id e a v}] ; wide open crud endpoint (on purpose)
     :else (prn 'miss cmd)))
 
 (defn cmds->tx [cmd-batch] (into [] (mapcat cmd->tx) cmd-batch))
@@ -57,9 +57,9 @@
           (= status ::fail) (t err)))))) ; feed error back into control for retry affordance
 
 (comment
-  (cmds->tx [[::forms/update 1 :a 1]]) := [{:db/id 1, :a 1}]
-  (cmds->tx [[::forms/update 1 :a 1] [::forms/update 1 :b 2]]) :=
+  (cmds->tx [[::cqrs/update 1 :a 1]]) := [{:db/id 1, :a 1}]
+  (cmds->tx [[::cqrs/update 1 :a 1] [::cqrs/update 1 :b 2]]) :=
             [{:db/id 1, :a 1}        {:db/id 1, :b 2}]
-  (cmds->tx [[::forms/update 1 :a 1] nil]) := [{:db/id 1, :a 1}]
+  (cmds->tx [[::cqrs/update 1 :a 1] nil]) := [{:db/id 1, :a 1}]
   (cmds->tx [nil]) := []
   (cmds->tx nil) := [])

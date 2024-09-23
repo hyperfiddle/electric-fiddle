@@ -1,6 +1,6 @@
 (ns dustingetz.chat2
   (:require [contrib.str :refer [pprint-str]]
-            [dustingetz.cqrs0 :as cqrs :refer [PendingController Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [PendingController]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [missionary.core :as m]
@@ -41,6 +41,14 @@
   edits)
 
 (declare css)
+
+(e/defn Service [effects edits]
+  (e/client ; bias for writes because token doesn't transfer
+    (e/for [[t xcmd _] edits]
+      (case (e/server
+              (when-some [effect (effects xcmd)] ; secure
+                (case (e/Task effect) ::ok)))
+        ::ok (t)))))
 
 (e/defn Chat2 []
   (e/client

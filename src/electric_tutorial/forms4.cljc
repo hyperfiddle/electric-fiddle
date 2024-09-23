@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.forms0 :as forms :refer [Field Stage]]
+            [hyperfiddle.cqrs0 :as forms :refer [Field Stage]]
             [hyperfiddle.input-zoo0 :refer [InputSubmit! CheckboxSubmit!]]
             [electric-tutorial.forms3 :refer [cmds->tx #?(:clj !conn)]]))
 

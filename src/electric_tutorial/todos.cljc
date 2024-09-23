@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [dustingetz.cqrs0 :as cqrs :refer [PendingController]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [PendingController]]
             [hyperfiddle.input-zoo0 :refer
              [InputSubmit! InputSubmitCreate! CheckboxSubmit!]]))
 
