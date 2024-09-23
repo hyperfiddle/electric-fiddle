@@ -11,7 +11,7 @@
 (defn random-writer [!t]
   (m/sp (loop [] (m/? (m/sleep 1000)) (reset! !t (rand-int 40)) (recur))))
 
-(e/defn TemperatureConverter []
+(e/defn Temperature []
   (let [!v (atom 0), v (e/watch !v)]     ; recursive binding via atom
     (e/Task (random-writer !v))          ; concurrent writer
     (prn 'v v)
