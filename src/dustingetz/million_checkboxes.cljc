@@ -69,7 +69,7 @@
 
       (e/amb))
 
-    (e/for [[[i v] t] (dom/OnAll "change"
+    (e/for [[[i v] t] (dom/On-all "change"
                         (fn [e] (let [x (.-target e)]
                                   [(long (.getAttribute x "data-index"))
                                    (.-checked x)])))]

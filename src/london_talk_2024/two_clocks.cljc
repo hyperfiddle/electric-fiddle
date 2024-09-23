@@ -5,8 +5,8 @@
 
 (e/defn TwoClocks []
   (e/client
-    (let [c (e/client (e/SystemTimeMs))
-          s (e/server (e/SystemTimeMs))]
+    (let [c (e/client (e/System-time-ms))
+          s (e/server (e/System-time-ms))]
 
       (dom/div (dom/text "client time: " c))
       (dom/div (dom/text "server time: " s))

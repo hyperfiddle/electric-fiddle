@@ -32,7 +32,7 @@
   (PendingMonitor
     (dom/a (dom/props {:class (when (= state target) "selected")})
       (dom/text label)
-      (e/for [[t _] (dom/OnAll "click" (constantly true))]
+      (e/for [[t _] (dom/On-all "click" (constantly true))]
         [t `Set-filter target]))))
 
 (e/defn TodoStats [db state]
@@ -53,7 +53,7 @@
         (when (pos? done)
           (dom/button (dom/props {:class "clear-completed"})
             (dom/text "Clear completed " done)
-            (e/for [[t _] (dom/OnAll "click" (constantly true))]
+            (e/for [[t _] (dom/On-all "click" (constantly true))]
               [t `Clear-completed])))))))
 
 (e/defn TodoItem [db state id]
@@ -71,7 +71,7 @@
                 (let [status (case v true :done, false :active, nil)]
                   [t `Toggle id status])))
             (dom/label (dom/text description)
-              (e/for [[t _] (dom/OnAll "dblclick" (constantly true))]
+              (e/for [[t _] (dom/On-all "dblclick" (constantly true))]
                 [t `Editing-item id]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
@@ -80,7 +80,7 @@
               (set! (.-value dom/node) description)
               (case description (.focus dom/node)) ; don't focus until description is available
               (PendingMonitor
-                (e/for [[t e] (dom/OnAll "keydown" identity)]
+                (e/for [[t e] (dom/On-all "keydown" identity)]
                   (case (.-key e)
                     "Enter" (when-some [desc (blank->nil (-> e .-target .-value))]
                               [t `Edit-todo-desc id desc])
@@ -88,7 +88,7 @@
                     (e/amb)))))))
         (dom/button (dom/props {:class "destroy"})
           (PendingMonitor
-            (e/for [[t _] (dom/OnAll "click" (constantly true))]
+            (e/for [[t _] (dom/On-all "click" (constantly true))]
               [t `Delete-todo id])))))))
 
 (e/defn Query-todos [db filter]
@@ -116,7 +116,7 @@
     (PendingMonitor
       ; todo InputSubmitClear!
       (dom/input (dom/props {:class "new-todo", :placeholder "What needs to be done?"})
-        (e/for [[t e] (dom/OnAll "keydown" identity)]
+        (e/for [[t e] (dom/On-all "keydown" identity)]
           (e/When (= "Enter" (.-key e))
             (if-some [desc (not-empty (-> e .-target .-value))]
               (do (set! (.-value dom/node) "") [t `Create-todo desc])

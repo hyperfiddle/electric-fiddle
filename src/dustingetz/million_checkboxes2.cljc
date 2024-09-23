@@ -43,7 +43,7 @@
           (.appendChild dom/node node)))
 
       (let [mouse-down? (dom/Mouse-down?)]
-        (e/for [[[i v] t] (dom/OnAll "mouseover"
+        (e/for [[[i v] t] (dom/On-all "mouseover"
                             (fn [e]
                               (when mouse-down?
                                 (let [x (.-target e)]

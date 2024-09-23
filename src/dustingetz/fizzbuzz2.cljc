@@ -35,6 +35,6 @@
   (reset! !buzz 'buzz)
   (swap! !n inc)
   (reset! !n 100)
-  (if (= 0 (int (mod (e/SystemTimeSecs) 2)))
+  (if (= 0 (int (mod (e/System-time-secs) 2)))
     'fizz
     'pop))

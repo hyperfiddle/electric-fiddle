@@ -13,7 +13,7 @@
 (e/defn Timer []
   (let [!goal (atom initial-goal), goal (e/watch !goal), goal-ms (* 1000 goal)
         !start (atom (now)), start (e/watch !start)
-        time (min goal-ms (- (second-precision ($ e/SystemTimeMs)) start))]
+        time (min goal-ms (- (second-precision ($ e/System-time-ms)) start))]
     (dom/div
       (dom/props {:style {:display "grid", :width "20em", :grid-gap "0 1rem", :align-items "center"}})
       (dom/span (dom/text "Elapsed time:"))

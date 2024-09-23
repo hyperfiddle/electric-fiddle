@@ -28,7 +28,7 @@
   ; Custom input control using lower dom interface for Enter handling
   (e/client
     (dom/input (dom/props {:placeholder "Buy milk"})
-      (e/for [[value spend!] (dom/OnAll "keydown" (fn [event]
+      (e/for [[value spend!] (dom/On-all "keydown" (fn [event]
                                                     (let [value (-> event .-target .-value)]
                                                       (when (and (= "Enter" (.-key event)) (not-empty value))
                                                         (set! (.-value dom/node) "")

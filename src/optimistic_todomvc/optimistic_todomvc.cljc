@@ -56,7 +56,7 @@
   (e/client
     (dom/input
       (dom/props {:placeholder "What needs to be done?"})
-      ($ dom/OnAll "keyup" event->entity))))
+      ($ dom/On-all "keyup" event->entity))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FORM & FIELD ABSTRACTION ;;
