@@ -7,13 +7,11 @@
             [dustingetz.painter :refer [Painter]]
             [dustingetz.scroll-abc :refer [Scroll-abc]]
             [dustingetz.scroll-dom :refer [ScrollDemo]]
-            [electric-tutorial.fizzbuzz :refer [FizzBuzzDemo]]
             [dustingetz.fizzbuzz2 :refer [FizzBuzz2Demo]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.electric-tree :refer [TreeDemo]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
-            [dustingetz.chat2 :refer [Chat2]]
             [dustingetz.logic :refer [Logic]]
 
 
@@ -37,10 +35,8 @@
    `Hello Hello
    `Counter Counter
    `Painter Painter
-   `Chat2 Chat2
    `ScrollDemo ScrollDemo
    `Scroll-abc Scroll-abc
-   `FizzBuzzDemo FizzBuzzDemo
    `FizzBuzz2Demo FizzBuzz2Demo
    `FileWatcherDemo FileWatcherDemo
    `TreeDemo TreeDemo

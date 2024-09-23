@@ -31,7 +31,6 @@
             [electric-tutorial.forms3 :refer [Forms3]]
             [electric-tutorial.forms4 :refer [Forms4]]
             [electric-tutorial.forms5 :refer [Forms5]]
-            [electric-tutorial.input-zoo :refer [InputZoo]]
             [electric-tutorial.crud :refer [Crud]]
             [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todos2 :refer [Todos2]]
@@ -69,8 +68,6 @@
      `Forms3
      `Forms4
      `Forms5
-     #_`InputZoo
-     #_`Crud
      `Todos
      `TodoMVC
      `TodoMVC-composed]]
@@ -156,7 +153,6 @@
    `Forms3 "forms3.md"
    `Forms4 "forms4.md"
    `Forms5 "forms5.md"
-   `InputZoo "input_zoo.md"
    `Todos "todos.md"
    `Todos2 "todos2.md"
    `Crud "crud.md"
@@ -208,11 +204,9 @@
    `Forms3 Forms3
    `Forms4 Forms4
    `Forms5 Forms5
-   ;`InputZoo InputZoo
 
    `Todos Todos
    `Todos2 Todos2
-   ;`Crud Crud
    `TodoMVC TodoMVC
    `TodoMVC-composed TodoMVC-composed
 
