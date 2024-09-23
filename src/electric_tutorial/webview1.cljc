@@ -1,4 +1,4 @@
-(ns electric-tutorial.webview
+(ns electric-tutorial.webview1
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
@@ -22,14 +22,16 @@
 (e/defn Teeshirt-orders [db search]
   (e/server (e/diff-by identity (e/Offload #(teeshirt-orders db search)))))
 
-(e/defn Webview []
+(e/defn Webview1 []
+  (dom/props {:class "webview"})
   (e/server
     (let [db (e/watch conn) ; reactive "database value"
           search (dom/input (dom/props {:placeholder "Filter..."})
-                   (dom/on "input" #(-> % .-target .-value) ""))]
+                   (dom/on "input" #(-> % .-target .-value) ""))
+          ids (Teeshirt-orders db search)]
+      (e/client (e/Tap-diffs ids))
       (dom/table
-        (dom/props {:class "hyperfiddle"})
-        (e/for [id (Teeshirt-orders db search)] ; e/for is server-sited
+        (e/for [id ids] ; e/for is server-sited
           (let [!e (d/entity db id)] ; no round trip!
             (dom/tr
               (dom/td (dom/text id))

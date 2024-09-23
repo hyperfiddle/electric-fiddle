@@ -19,3 +19,8 @@
 
 .user-examples-target.ChatMonitor ul.channel li,
 .user-examples-target.Chat ul.channel li { display: grid; }
+
+.user-examples-target.webview table { display: grid; column-gap: 1ch; }
+.user-examples-target.webview tr { display: contents; }
+.user-examples-target.webview.Webview1 table {grid-template-columns: repeat(3, max-content);}
+.user-examples-target.webview.Webview2 table {grid-template-columns: repeat(4, max-content);}
