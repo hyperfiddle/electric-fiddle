@@ -66,6 +66,7 @@
      `Forms4
      `Forms5
      `Todos
+     `Todos2
      `TodoMVC
      `TodoMVC-composed]]
    #_["Datagrid"
