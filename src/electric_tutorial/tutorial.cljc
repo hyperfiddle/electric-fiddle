@@ -31,21 +31,18 @@
             [electric-tutorial.forms3 :refer [Forms3]]
             [electric-tutorial.forms4 :refer [Forms4]]
             [electric-tutorial.forms5 :refer [Forms5]]
-            [electric-tutorial.crud :refer [Crud]]
+            #_[electric-tutorial.crud :refer [Crud]]
             [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todos2 :refer [Todos2]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
             [electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
 
             ; Misc
-
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
             [electric-tutorial.system-properties :refer [SystemProperties]]
             [electric-tutorial.timer :refer [Timer]]
-            [electric-tutorial.crud-7guis :refer [CRUD]]
             #_[electric-tutorial.explorer :refer [DirectoryExplorer]]
-
             ))
 
 (def tutorials
@@ -81,7 +78,6 @@
      `SystemProperties
      #_`ReagentInterop
      `Timer
-     `CRUD
      #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]
@@ -204,15 +200,14 @@
    `Forms3 Forms3
    `Forms4 Forms4
    `Forms5 Forms5
-
    `Todos Todos
    `Todos2 Todos2
+   ;`CRUD CRUD
    `TodoMVC TodoMVC
    `TodoMVC-composed TodoMVC-composed
 
    ; Kitchen Sink
    `Timer Timer
-   `CRUD CRUD
    `SystemProperties SystemProperties
    `SVG SVG
    ;`ReagentInterop ReagentInterop

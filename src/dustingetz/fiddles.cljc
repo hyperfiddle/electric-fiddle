@@ -1,20 +1,16 @@
 (ns dustingetz.fiddles
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle :as hf]
-            [dustingetz.scratch :refer [Scratch]]
-            [dustingetz.hello :refer [Hello]]
-            [electric-tutorial.counter :refer [Counter]]
-            [dustingetz.painter :refer [Painter]]
-            [dustingetz.scroll-abc :refer [Scroll-abc]]
-            [dustingetz.scroll-dom :refer [ScrollDemo]]
-            [dustingetz.fizzbuzz2 :refer [FizzBuzz2Demo]]
+            [dustingetz.essay :refer [Essay]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
-            [dustingetz.electric-tree :refer [TreeDemo]]
+            [dustingetz.scratch :refer [Scratch]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
             [dustingetz.logic :refer [Logic]]
-
-
+            [dustingetz.painter :refer [Painter]]
+            [scratch.dustin.y2024.scroll-abc :refer [Scroll-abc]]
+            [scratch.dustin.y2024.scroll-dom :refer [ScrollDemo]]
+            [scratch.dustin.y2024.electric-tree :refer [TreeDemo]]
             #_[dustingetz.scratch.demo-explorer-hfql :refer [DirectoryExplorer-HFQL]]
             #_[dustingetz.hfql-intro :refer [With-HFQL-Bindings
                                              Teeshirt-orders-1
@@ -24,20 +20,15 @@
                                              Teeshirt-orders-5]]
             #_[dustingetz.y-fib :refer [Y-fib]]
             #_[dustingetz.y-dir :refer [Y-dir]]
-            [dustingetz.essay :refer [Essay]]
-
             #_electric-fiddle.main
             ;#?(:clj models.teeshirt-orders-datomic)
             ))
 
 (e/defn Fiddles []
   {`Scratch Scratch
-   `Hello Hello
-   `Counter Counter
    `Painter Painter
    `ScrollDemo ScrollDemo
    `Scroll-abc Scroll-abc
-   `FizzBuzz2Demo FizzBuzz2Demo
    `FileWatcherDemo FileWatcherDemo
    `TreeDemo TreeDemo
    `MillionCheckboxes MillionCheckboxes
