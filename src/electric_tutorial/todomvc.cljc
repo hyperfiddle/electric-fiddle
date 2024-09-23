@@ -4,7 +4,8 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer [Input! CheckboxSubmit!]]))
+            [hyperfiddle.input-zoo0 :refer
+             [Input! InputSubmitCreate?! CheckboxSubmit?!]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -66,10 +67,9 @@
                             (when (= id (::editing state)) "editing")]})
         (dom/div (dom/props {:class "view"})
           (e/amb
-            (PendingMonitor
-              (e/for [[t v] (CheckboxSubmit! (= :done status) :class "toggle" :id id)]
-                (let [status (case v true :done, false :active, nil)]
-                  [t `Toggle id status])))
+            (e/for [[t v] (CheckboxSubmit?! (= :done status) :class "toggle" :id id)]
+              (let [status (case v true :done, false :active, nil)]
+                [t `Toggle id status]))
             (dom/label (dom/text description)
               (e/for [[t _] (dom/On-all "dblclick" (constantly true))]
                 [t `Editing-item id]))))
@@ -101,11 +101,10 @@
         (let [active (e/server (todo-count db :active))
               all    (e/server (todo-count db :all))
               done   (e/server (todo-count db :done))]
-          (PendingMonitor
-            (e/for [[t v] (CheckboxSubmit! (cond (= all done) true (= all active) false :else nil)
-                            :class "toggle-all")]
-              (let [status (case v (true nil) :done, false :active)]
-                [t `Toggle-all status]))))
+          (e/for [[t v] (CheckboxSubmit?! (cond (= all done) true (= all active) false :else nil)
+                          :class "toggle-all")]
+            (let [status (case v (true nil) :done, false :active)]
+              [t `Toggle-all status])))
         (dom/label (dom/props {:for "toggle-all"}) (dom/text "Mark all as complete"))
         (dom/ul (dom/props {:class "todo-list"})
           (e/for [id (Query-todos db (::filter state))]
@@ -113,14 +112,9 @@
 
 (e/defn CreateTodo []
   (dom/span (dom/props {:class "input-load-mask"})
-    (PendingMonitor
-      ; todo InputSubmitClear!
-      (dom/input (dom/props {:class "new-todo", :placeholder "What needs to be done?"})
-        (e/for [[t e] (dom/On-all "keydown" identity)]
-          (e/When (= "Enter" (.-key e))
-            (if-some [desc (not-empty (-> e .-target .-value))]
-              (do (set! (.-value dom/node) "") [t `Create-todo desc])
-              (e/amb))))))))
+    (e/for [[t v] (InputSubmitCreate?! :class "new-todo input-load-mask"
+                    :placeholder "What needs to be done?")]
+      [t `Create-todo v])))
 
 (e/defn TodoMVC-UI [db state]
   (dom/section (dom/props {:class "todoapp"})

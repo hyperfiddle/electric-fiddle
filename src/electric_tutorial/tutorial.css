@@ -1,7 +1,7 @@
 .user-examples-code { max-width: 80ch; }
 
-/* Forms, Crud, TodoMVC */
-.user-examples-target [aria-busy="true"] { background-color: yellow; }
+/* Forms, Crud, TodoMVC(!important) */
+.user-examples-target [aria-busy="true"] { background-color: yellow !important; }
 .user-examples-target [aria-invalid="true"] { background-color: pink; }
 
 /* Toggle, TemperatureConverter, TodoMVC */
