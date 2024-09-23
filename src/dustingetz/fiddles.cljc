@@ -7,7 +7,7 @@
             [dustingetz.painter :refer [Painter]]
             [dustingetz.scroll-abc :refer [Scroll-abc]]
             [dustingetz.scroll-dom :refer [ScrollDemo]]
-            [dustingetz.fizzbuzz :refer [FizzBuzzDemo]]
+            [electric-tutorial.fizzbuzz :refer [FizzBuzzDemo]]
             [dustingetz.fizzbuzz2 :refer [FizzBuzz2Demo]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.electric-tree :refer [TreeDemo]]
