@@ -7,13 +7,6 @@
             [hyperfiddle.input-zoo0 :refer
              [InputSubmit! InputSubmitCreate! CheckboxSubmit!]]))
 
-(e/defn Todo-count [db edits]
-  (e/server
-    (e/Offload
-      #(let [xs (d/q '[:find [?e ...] :in $ ?status
-                       :where [?e :task/status ?status]]
-                  db :active)] (count xs)))))
-
 (e/defn Todo-records [db edits]
   (e/client
     (prn 'TodoRecords 'edits (e/as-vec (second edits)))
