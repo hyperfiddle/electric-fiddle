@@ -1,4 +1,4 @@
-(ns electric-tutorial.todos
+(ns electric-tutorial.todos2
   (:require [clojure.core.match :refer [match]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
@@ -68,7 +68,7 @@
                             {:task/description "buy milk" :task/status :active}
                             {:task/description "call mom" :task/status :active}]))))
 
-(e/defn Todos []
+(e/defn Todos2 []
   (e/client ; bias for writes because token doesn't transfer
     (let [db (e/server (e/watch !conn))
           [ts xcmds :as edits] (e/with-cycle* first [edits (e/amb)]
