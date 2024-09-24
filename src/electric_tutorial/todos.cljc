@@ -75,7 +75,7 @@
                       (e/Offload #(try (prn 'tx tx) (Thread/sleep 1000)
                                     #_(assert false "die") ; random failure
                                     (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
-                                    (catch Exception e [::fail (str e)])))))
+                                    (catch Throwable e [::fail (str e)])))))
               [status err] res]
           (cond
             (= status ::ok) (t)
