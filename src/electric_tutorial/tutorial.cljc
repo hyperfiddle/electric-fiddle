@@ -26,10 +26,12 @@
             [electric-tutorial.backpressure :refer [Backpressure]]
 
             ; Part 2
-            [electric-tutorial.forms1 :refer [Forms1]]
-            [electric-tutorial.forms2 :refer [Forms2]]
-            [electric-tutorial.forms3 :refer [Forms3]]
-            [electric-tutorial.forms4 :refer [Forms4]]
+            [electric-tutorial.forms1-uncontrolled :refer [Forms1-uncontrolled]]
+            [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
+            [electric-tutorial.forms3-crud :refer [Forms3-crud]]
+            [electric-tutorial.forms4-autosave :refer [Forms4-autosave]]
+            [electric-tutorial.forms5-inline-submit :refer [Forms5-inline-submit]]
+            [electric-tutorial.forms6-inline-submit-builtin :refer [Forms6-inline-submit-builtin]]
             [electric-tutorial.forms5 :refer [Forms5]]
             #_[electric-tutorial.crud :refer [Crud]]
             [electric-tutorial.todos :refer [Todos]]
@@ -60,13 +62,16 @@
      `ChatMonitor
      `Backpressure]]
    ["CRUD"
-    [`Forms1
-     `Forms2
-     `Forms3
-     `Forms4
-     `Forms5
-     `Todos
-     `Todos2
+    [`Forms1-uncontrolled
+     `Forms2-controlled
+     `Forms3-crud
+     `Forms4-autosave
+     `Forms5-inline-submit
+     `Forms6-inline-submit-builtin
+     `Forms5 ; create new
+     ; dubius,
+     `Todos ; dubius-create-new
+     `Todos2 ; inline-submit-builtin w/ create new
      `TodoMVC
      `TodoMVC-composed]]
    #_["Datagrid"
@@ -145,10 +150,12 @@
    `Backpressure "backpressure.md"
 
    ; Part 2
-   `Forms1 "forms1.md"
-   `Forms2 "forms2.md"
-   `Forms3 "forms3.md"
-   `Forms4 "forms4.md"
+   `Forms1-uncontrolled "forms1.md"
+   `Forms2-controlled "forms2.md"
+   `Forms3-crud "forms3.md"
+   `Forms4-autosave "forms4_autosave.md"
+   `Forms5-inline-submit "forms5_inline_submit.md"
+   `Forms6-inline-submit-builtin "forms6_inline_submit_builtin.md"
    `Forms5 "forms5.md"
    `Todos "todos.md"
    `Todos2 "todos2.md"
@@ -196,10 +203,12 @@
    `Backpressure Backpressure
 
    ; Part 2
-   `Forms1 Forms1
-   `Forms2 Forms2
-   `Forms3 Forms3
-   `Forms4 Forms4
+   `Forms1-uncontrolled Forms1-uncontrolled
+   `Forms2-controlled Forms2-controlled
+   `Forms3-crud Forms3-crud
+   `Forms4-autosave Forms4-autosave
+   `Forms5-inline-submit Forms5-inline-submit
+   `Forms6-inline-submit-builtin Forms6-inline-submit-builtin
    `Forms5 Forms5
    `Todos Todos
    `Todos2 Todos2

@@ -4,7 +4,7 @@ inline remote txn
 
 Submit remote CRUD update on enter, no clear (e.g. **TodoMVC**, spreadsheet cells)
 
-!fiddle-ns[](electric-tutorial.forms4/Forms4)
+!fiddle-ns[](electric-tutorial.forms6-inline-submit-builtin/Forms6-inline-submit-builtin)
 
 * inline commit/discard (it can be integrated w/ the controls)
 * implies that the control disables while committing, you must cancel to edit (it can auto-cancel)

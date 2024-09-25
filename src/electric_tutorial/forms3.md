@@ -1,7 +1,10 @@
-# Input! — Async remote transaction (RPC) with eager submit
+# Input! (with Stage) — transactional forms (RPC)
 
 
-!fiddle-ns[](electric-tutorial.forms3/Forms3)
+— Async remote transaction (RPC) with eager submit
+
+
+!fiddle-ns[](electric-tutorial.forms3-crud/Forms3-crud)
 
 * 3 states: ok/success, pending, ~~failure~~ (todo).
 * Submits txn requests eagerly (as the user types) but reusing the same token instance, so that a consumer may intercept, buffer and batch the in-flight txns, for example an atomic form with commit/discard control (see **Forms** tutorial).

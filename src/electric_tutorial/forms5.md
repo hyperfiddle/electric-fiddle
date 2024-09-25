@@ -1,4 +1,4 @@
-# InputSubmitClear! —
+# InputSubmitCreate! —
 
 Submit remote txn on enter and clear (e.g. **Chat**, **TodoMVC**, i.e. create new entity). Uncontrolled!
 

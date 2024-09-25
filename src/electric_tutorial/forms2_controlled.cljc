@@ -1,4 +1,4 @@
-(ns electric-tutorial.forms2
+(ns electric-tutorial.forms2-controlled
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.input-zoo0 :refer [Input Checkbox]]))
@@ -20,9 +20,10 @@
        (e/amb (dom/dt (dom/text "bool1"))
          (dom/dd (Checkbox bool1)))})))
 
-(e/defn Forms2 []
+(e/defn Forms2-controlled []
   (let [m (e/with-cycle [m state0] ; pure!
-            (e/for [_ (e/amb 1 2)] ; tricky cycle on e/amb
+            (e/amb ; tricky cycle on e/amb
+              (UserForm m)
               (UserForm m)))]
     (dom/code (dom/text (e/server (pr-str m)))))
 

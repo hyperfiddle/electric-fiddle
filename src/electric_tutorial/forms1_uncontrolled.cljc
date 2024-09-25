@@ -1,4 +1,4 @@
-(ns electric-tutorial.forms1
+(ns electric-tutorial.forms1-uncontrolled
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.input-zoo0 :refer [Input* Checkbox*]]))
@@ -18,6 +18,6 @@
        (e/amb (dom/dt (dom/text "bool1"))
          (dom/dd (Checkbox*)))})))
 
-(e/defn Forms1 []
+(e/defn Forms1-uncontrolled []
   (let [form (UserForm)]
     (dom/code (dom/text (pr-str form)))))

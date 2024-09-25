@@ -2,7 +2,7 @@
 
 
 
-!fiddle-ns[](electric-tutorial.forms2/Forms2)
+!fiddle-ns[](electric-tutorial.forms2-controlled/Forms2-controlled)
 
 * synchronous, local, always succeeds, always ready, no error states
 * This is your bread and butter input, good for ephemeral client local state, such as search or filtering – you always want latest, there are never conflicts.

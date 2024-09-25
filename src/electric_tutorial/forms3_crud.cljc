@@ -1,4 +1,4 @@
-(ns electric-tutorial.forms3
+(ns electric-tutorial.forms3-crud
   (:require [clojure.core.match :refer [match]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
@@ -33,7 +33,7 @@
                          (d/transact! [{:db/id 42 :user/str1 "one"
                                         :user/num1 1 :user/bool1 true}]))))
 
-(e/defn Forms3 [] ; async, transactional, entity backed, never backpressure
+(e/defn Forms3-crud [] ; async, transactional, entity backed, never backpressure
   (let [db (e/server (e/watch !conn))
         edits (e/for [id (e/amb 42 42)] ; two forms submitting edits concurrently
                 (dom/fieldset

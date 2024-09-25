@@ -2,7 +2,7 @@
 
 Controlled and uncontrolled inputs.
 
-!fiddle-ns[](electric-tutorial.forms1/Forms1)
+!fiddle-ns[](electric-tutorial.forms1-uncontrolled/Forms1-uncontrolled)
 
 * synchronous, local, always succeeds, always ready, no error states
 * It's uncontrolled, so there cannot be initial state. (use `Input` instead)
