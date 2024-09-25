@@ -29,7 +29,7 @@
             [electric-tutorial.forms1-uncontrolled :refer [Forms1-uncontrolled]]
             [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
             [electric-tutorial.forms3-crud :refer [Forms3-crud]]
-            [electric-tutorial.forms4-autosave :refer [Forms4-autosave]]
+            [electric-tutorial.forms4-autosubmit :refer [Forms4-autosubmit]]
             [electric-tutorial.forms5-inline-submit :refer [Forms5-inline-submit]]
             [electric-tutorial.forms6-inline-submit-builtin :refer [Forms6-inline-submit-builtin]]
             [electric-tutorial.forms5 :refer [Forms5]]
@@ -65,7 +65,7 @@
     [`Forms1-uncontrolled
      `Forms2-controlled
      `Forms3-crud
-     `Forms4-autosave
+     `Forms4-autosubmit
      `Forms5-inline-submit
      `Forms6-inline-submit-builtin
      `Forms5 ; create new
@@ -200,7 +200,7 @@
    `Forms1-uncontrolled Forms1-uncontrolled
    `Forms2-controlled Forms2-controlled
    `Forms3-crud Forms3-crud
-   `Forms4-autosave Forms4-autosave
+   `Forms4-autosubmit Forms4-autosubmit
    `Forms5-inline-submit Forms5-inline-submit
    `Forms6-inline-submit-builtin Forms6-inline-submit-builtin
    `Forms5 Forms5
