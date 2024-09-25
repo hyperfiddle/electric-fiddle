@@ -8,8 +8,8 @@
 (e/defn Forms4-autosubmit []
   (let [db (e/server (e/watch !conn))
         edits (e/amb
-                (UserForm db 42)
-                (UserForm db 42))]
+                (UserForm db 42) #_(Stage :debug true) ; no stage
+                (UserForm db 42) #_(Stage :debug true))]
     (prn (e/Count edits) 'edits)
     (e/for [[t cmds] edits]
       (prn 'edit cmds)

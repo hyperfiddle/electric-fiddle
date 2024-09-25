@@ -25,11 +25,13 @@
             (e/amb ; tricky cycle on e/amb
               (UserForm m)
               (UserForm m)))]
-    (dom/code (dom/text (e/server (pr-str m)))))
+    (dom/code (dom/text (e/server (pr-str m))))))
 
-  #_ ; equivalent - dataflow recursion via atom
+; equivalent - dataflow recursion via atom
+(e/defn Forms2-controlled' []
   (let [!m (atom state0) m (e/watch !m)]
-    (reset! !m ; note the product
-      (e/for [_ (e/amb 1 2)]
+    (reset! !m ; product
+      (e/amb
+        (UserForm m)
         (UserForm m)))
     (dom/code (dom/text (pr-str m)))))
