@@ -47,21 +47,23 @@
                          (d/transact! [{:db/id 42 :user/str1 "one"
                                         :user/num1 1 :user/bool1 true}]))))
 
+(e/defn Service [edits]
+  (prn (e/Count edits) 'edits)
+  (e/for [[t cmds] edits]
+    (let [res (e/server (prn 'cmds cmds)
+                (let [tx (cmds->tx cmds)] ; secure cmd interpretation
+                  (e/Offload #(try (prn 'tx tx) (Thread/sleep 500)
+                                (assert false "die") ; random failure
+                                (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
+                                (catch Throwable e [::fail ::rejected])))))
+          [status err] res]
+      (cond
+        (= status ::ok) (t)
+        (= status ::fail) (t err))))) ; feed error back into control for retry affordance
+
 (e/defn Forms3-crud [] ; async, transactional, entity backed, never backpressure
   (let [db (e/server (e/watch !conn))
-        edits (e/amb
+        edits (e/amb ; concurrent form submits, one per form
                 (Stage (UserForm db 42) :debug true) ; buffer and batch edits into an atomic form
                 (Stage (UserForm db 42) :debug true))]
-    (prn (e/Count edits) 'edits)
-    (e/for [[t cmds] edits] ; concurrent submits, one per form
-      (prn 'edit cmds)
-      (let [res (e/server (prn 'cmds cmds)
-                  (let [tx (cmds->tx cmds)] ; secure cmd interpretation
-                    (e/Offload #(try (prn 'tx tx) (Thread/sleep 500)
-                                  (assert false "die") ; random failure
-                                  (d/transact! !conn tx) (doto [::ok] (prn 'tx-success))
-                                  (catch Throwable e [::fail ::rejected])))))
-            [status err] res]
-        (cond
-          (= status ::ok) (t)
-          (= status ::fail) (t err)))))) ; feed error back into control for retry affordance
+    (Service edits)))
