@@ -150,12 +150,6 @@
    `Backpressure "backpressure.md"
 
    ; Part 2
-   `Forms1-uncontrolled "forms1.md"
-   `Forms2-controlled "forms2.md"
-   `Forms3-crud "forms3.md"
-   `Forms4-autosave "forms4_autosave.md"
-   `Forms5-inline-submit "forms5_inline_submit.md"
-   `Forms6-inline-submit-builtin "forms6_inline_submit_builtin.md"
    `Forms5 "forms5.md"
    `Todos "todos.md"
    `Todos2 "todos2.md"
@@ -246,7 +240,7 @@
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
       (binding [hf/pages ($ Fiddles)]
         ($ Nav ?tutorial false)
-        (if-some [essay-filename (get essays ?tutorial)]
+        (if-some [essay-filename (get essays ?tutorial (str (name ?tutorial) ".md"))]
           ($ Custom-markdown ($ Extensions) (str tutorial-path essay-filename))
           (dom/h1 (dom/text "Tutorial not found: " ?tutorial)))
         #_($ Nav ?tutorial true)))))
