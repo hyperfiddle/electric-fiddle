@@ -27,7 +27,7 @@
             (some? Wrap) ($ Wrap Target)
             () ($ Target)))))))
 
-(e/defn Fiddle-fn [& [alt-text target-s ?wrap :as args]]
+(e/defn Fiddle-fn [& [alt-text target-s ?wrap :as args]] ; todo hide code
   (let [target (symbol target-s)]
     ($ Fiddle-impl target (some-> ?wrap symbol)
       (e/server (read-src target)))))
@@ -55,6 +55,8 @@
     ($ Fiddle-ns "" target-s ?wrap)))
 
 (e/defn Fiddle-markdown-extensions []
-  {'fiddle Fiddle-fn
-   'fiddle-ns Fiddle-ns
+  {'fiddle Fiddle-fn ; compat
+   'fiddle-ns Fiddle-ns ; compat
+   'ns Fiddle-ns
+   'fn Fiddle-fn
    'fn-src Fn-src})
