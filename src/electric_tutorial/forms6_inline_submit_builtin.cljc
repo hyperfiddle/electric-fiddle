@@ -3,7 +3,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.cqrs0 :as forms :refer [Field]]
-            [hyperfiddle.input-zoo0 :refer [CheckboxSubmit!]]
+            [hyperfiddle.input-zoo0 :refer [CheckboxSubmit! Button!]]
             [electric-tutorial.forms3-crud :refer [Service #?(:clj !conn)]]))
 
 ;; TODO adapted from input-zoo0/InputSubmit!
@@ -82,6 +82,57 @@
                           ([err] (u err))) ; keep uncommited field, present retry
                         v])))))))
 
+(e/defn UserFriendlyCheckboxSubmit!
+  [checked & {:keys [id label #_token] :as props
+              :or {id (random-uuid)}}]
+  ; checkbox - cannot discard, submit on toggle interaction.
+  ; failure will discard and highlight red
+  ; todo attach to in-flight submit
+  (e/client
+    (e/amb
+      (let [[e t err input-node]
+            (dom/input
+              (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
+              (let [e (dom/On "change" identity) [t err] (e/RetryToken e)] ; single txn, no concurrency
+                [e t err dom/node]))
+            editing? (dom/Focused? input-node)
+            waiting? (some? t)
+            error? (some? err)
+            dirty? (or editing? waiting? error?)]
+        (when-not dirty? (set! (.-checked input-node) checked))
+        (when error? (dom/props input-node {:aria-invalid true}))
+        (when waiting? (dom/props input-node {:aria-busy true}))
+        (let [[t v] (if waiting? [t ((fn [] (-> e .-target .-checked)))] (e/amb))
+              [us _ :as btns]
+              #_(e/amb ; todo wire to input esc/enter
+                (Button! ::commit :label "commit" :disabled (not (e/Some? t))) ; todo progress
+                (Button! ::discard :label "discard" :disabled (not (e/Some? t))))
+              (let [e (e/Filter some?
+                          (e/amb (dom/On "change" #(when (and #_can-commit? true #_(= "Enter" (.-key %))) %) nil) ; could be merged into one event handler
+                                 (dom/On "keyup" #(when (and #_can-commit? true (= "Escape" (.-key %))) %) nil))) ; supports cancellation because Escape will overwrite Enter's `e`
+                      [t' err] (e/RetryToken e)
+                      command (case (.-type e)
+                                "change" ::commit
+                                "keyup"  ::discard
+                                nil)]
+                  (prn 'Action! command t' err)
+                  (when err
+                    (dom/props input-node {:aria-invalid true})
+                    (set! (.-checked input-node) checked))
+                  (if t'
+                    (do (when (= ::discard command) (e/on-unmount #(.blur input-node))) ; blur input to reset value *after* token is consumed. Otherwise would trigger blur event while ::discard is in flight.
+                        [t' command])
+                    (e/amb)))]
+          (e/for [[u cmd] btns]
+            (case cmd
+              ::discard (case ((fn [] (us) (t))) ; clear any in-flight commit yet outstanding
+                          (e/amb)) ; clear edits, controlled form will reset
+              ::commit [(fn token
+                          ([] (u) (t)) ; success, burn both commit token and field token
+                          ([err] (u err))) ; keep uncommited field, present retry
+                        v]))))
+      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
+
 (e/defn UserForm [db id]
   (dom/fieldset
     (let [{:keys [user/str1 user/num1 user/bool1]}
@@ -99,7 +150,7 @@
 
           (dom/dt (dom/text "bool1"))
           (dom/dd (Field id :user/bool1
-                    (CheckboxSubmit! bool1)))))))) ; bundled commit/discard
+                    (UserFriendlyCheckboxSubmit! bool1)))))))) ; bundled commit/discard
 
 (e/defn Forms6-inline-submit-builtin []
   (let [db (e/server (e/watch !conn))

@@ -2,8 +2,16 @@
 
 /* Forms, Crud, TodoMVC(!important) */
 .user-examples-target [aria-busy="true"] { background-color: yellow !important; }
+.user-examples-target input[type="checkbox"][aria-busy="true"] {
+    /* Can't color or background-color native checkboxes
+       border and outline are tricky to get right without messing up keyboard nav */
+    box-shadow: 0 0 0.2rem 0.2rem yellow; /* simulate a border */
+    outline: none;
+}
+
 .user-examples-target [aria-invalid="true"] { background-color: pink; }
 .user-examples-target input[aria-invalid="true"] { outline: 3px pink solid; }
+.user-examples-target input[type="checkbox"][aria-invalid="true"]:focus { outline: 4px pink solid; }
 
 /* Toggle, TemperatureConverter, TodoMVC */
 .user-examples-target dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
