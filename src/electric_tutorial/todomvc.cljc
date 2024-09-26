@@ -151,16 +151,16 @@
   (e/server (->> (query-todos db (if (= :done status) :active :done))
               (mapv (fn [id] {:db/id id, :task/status status})) Transact!)))
 
-(e/defn Cancel-todo-edit-desc [] (e/client (swap! !state assoc ::editing nil)))
+(e/defn Cancel-todo-edit-desc [] (e/client (swap! !state assoc ::editing nil) ::ok))
 (e/defn Delete-todo [id] (e/server (Transact! [[:db/retractEntity id]])))
 (e/defn Create-todo [desc] (e/server (Transact! [{:task/description desc, :task/status :active}])))
-(e/defn Editing-item [id] (e/client (swap! !state assoc ::editing id)))
+(e/defn Editing-item [id] (e/client (swap! !state assoc ::editing id) ::ok))
 (e/defn Edit-todo-desc [id desc]
   (e/client (case (e/server (Transact! [{:db/id id, :task/description desc}]))
-              (swap! !state assoc ::editing nil))))
+              (do (swap! !state assoc ::editing nil) ::ok))))
 
-(e/defn Set-delay [v] (e/client (swap! !state assoc ::delay v)))
-(e/defn Set-filter [target] (e/client (swap! !state assoc ::filter target)))
+(e/defn Set-delay [v] (e/client (swap! !state assoc ::delay v) ::ok))
+(e/defn Set-filter [target] (e/client (swap! !state assoc ::filter target) ::ok))
 
 (e/defn Effects []
   (e/client
@@ -182,7 +182,7 @@
       (prn 'cmd (name cmd) args)
       (case (when-some [Effect (get effects cmd)] ; security - rules engine? `(F ~x) ? prevent auditing of imperative adhoc security
               (let [res (e/Apply Effect args)]
-                (prn 'res res)
+                (prn 'res cmd res)
                 (case res ::ok ::ok, ::fail ::fail, ::ok)))
         ::fail nil ; idea: (t err) to prompt for retry
         ::ok (t)))))
