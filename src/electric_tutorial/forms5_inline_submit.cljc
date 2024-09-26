@@ -2,10 +2,9 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Field Stage]]
+            [hyperfiddle.cqrs0 :refer [Field Stage Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
-            [electric-tutorial.forms3-crud :refer
-             [Service #?(:clj !conn)]]))
+            [electric-tutorial.forms3-crud :refer [#?(:clj !conn) #?(:clj expand-tx-effects)]]))
 
 (e/defn UserForm [db id]
   (dom/fieldset
@@ -30,8 +29,8 @@
                       (Checkbox! bool1)))))))))
 
 (e/defn Forms5-inline-submit []
-  (let [db (e/server (e/watch !conn))
-        edits (e/amb
-                (UserForm db 42) #_(Stage :debug true)
-                (UserForm db 42) #_(Stage :debug true))]
-    (Service edits)))
+  (let [db (e/server (e/watch !conn))]
+    (Service (e/server (identity expand-tx-effects))
+      (e/amb
+        (UserForm db 42) #_(Stage :debug true)
+        (UserForm db 42) #_(Stage :debug true)))))

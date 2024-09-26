@@ -2,9 +2,9 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as forms :refer [Stage Field]]
-            [hyperfiddle.input-zoo0 :refer [Input! Checkbox! Button!]]
-            [electric-tutorial.forms3-crud :refer [Service #?(:clj !conn)]]))
+            [hyperfiddle.cqrs0 :as forms :refer [Stage Field Service]]
+            [hyperfiddle.input-zoo0 :refer [Checkbox! Input! Button!]]
+            [electric-tutorial.forms3-crud :refer [#?(:clj expand-tx-effects) #?(:clj !conn)]]))
 
 #?(:cljs
    (defn blur-active-form-input! [form]
@@ -85,8 +85,8 @@
                       (Checkbox! bool1))))))))) ; bundled commit/discard
 
 (e/defn Forms6-inline-submit-builtin []
-  (let [db (e/server (e/watch !conn))
-        edits (e/amb
-                (UserForm db 42) #_(Stage :debug true) ; NO stage at form level
-                #_(UserForm db 42) #_(Stage :debug true))]
-    (Service edits)))
+  (let [db (e/server (e/watch !conn))]
+    (Service (e/server (identity expand-tx-effects))
+      (e/amb
+        (UserForm db 42) #_(Stage :debug true) ; NO stage at form level
+        (UserForm db 42) #_(Stage :debug true)))))
