@@ -41,7 +41,7 @@
   (e/client
     #_(dom/pre (dom/text (pr-str args)))
     (let [target (symbol target-s)
-          src (e/server (doto (read-src target) prn))]
+          src (e/server (read-src target))]
       (binding [dom/node (if-some [s (not-empty loc-selector)]
                            (dom/Await-element s) dom/node)]
         (dom/div (dom/props {:class "user-examples"})
