@@ -3,8 +3,10 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
+            [electric-tutorial.forms6-inline-submit-builtin :refer [Form]]
             [hyperfiddle.input-zoo0 :as z :refer
-             [InputSubmit?! InputSubmitCreate?! CheckboxSubmit?! Input!]]))
+             [Input! Checkbox! Button!
+              InputSubmitCreate?!]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -66,7 +68,7 @@
                             (when (= id (::editing state)) "editing")]})
         (dom/div (dom/props {:class "view"})
           (e/amb
-            (e/for [[t v] (CheckboxSubmit?! (= :done status) :class "toggle" :id id)]
+            (e/for [[t v] (Checkbox! (= :done status) :class "toggle" :id id)]
               (let [status (case v true :done, false :active, nil)]
                 [t [`Toggle id status]]))
             (dom/label (dom/text description)
@@ -74,9 +76,10 @@
                 [t [`Editing-item id]]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
-            (InputSubmit?! description :class "edit" :autofocus true
-              ::z/discard `[Cancel-todo-edit-desc]
-              ::z/commit #(vector `Edit-todo-desc id %))))
+            (doto (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)] [t [v]]) ; simulate Field
+                    ::z/discard `[Cancel-todo-edit-desc]
+                    ::z/commit (fn [[%]] [`Edit-todo-desc id %]))
+              (prn 'form))))
         (dom/button (dom/props {:class "destroy"}) ; todo Button!
           (PendingMonitor
             (e/for [[t _] (dom/On-all "click" (constantly true))]
@@ -92,7 +95,7 @@
         (let [active (e/server (todo-count db :active))
               all    (e/server (todo-count db :all))
               done   (e/server (todo-count db :done))]
-          (e/for [[t v] (CheckboxSubmit?! (cond (= all done) true (= all active) false :else nil)
+          (e/for [[t v] (Checkbox! (cond (= all done) true (= all active) false :else nil)
                           :class "toggle-all")]
             (let [status (case v (true nil) :done, false :active)]
               [t [`Toggle-all status]])))
