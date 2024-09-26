@@ -53,3 +53,8 @@
 (e/defn Fiddle [& [target-s ?wrap :as route]] ; direct fiddle link http://localhost:8080/electric-fiddle.fiddle!Fiddle/dustingetz.y-fib!Y-fib
   (if (nil? (seq route)) ($ Index)
     ($ Fiddle-ns "" target-s ?wrap)))
+
+(e/defn Fiddle-markdown-extensions []
+  {'fiddle Fiddle-fn
+   'fiddle-ns Fiddle-ns
+   'fn-src Fn-src})

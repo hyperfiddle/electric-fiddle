@@ -3,7 +3,7 @@
             #?(:clj [clojure.java.io :as io])
             clojure.string
             contrib.data
-            [electric-fiddle.fiddle :refer [Fiddle-fn Fiddle-ns Fn-src]]
+            [electric-fiddle.fiddle :refer [Fiddle-markdown-extensions]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown]]
             [hyperfiddle :as hf]
             [hyperfiddle.electric3 :as e :refer [$]]
@@ -216,11 +216,6 @@
    ;`ReagentInterop ReagentInterop
    })
 
-(e/defn Extensions []
-  {'fiddle Fiddle-fn
-   'fiddle-ns Fiddle-ns
-   'fn-src Fn-src})
-
 (e/defn RedirectLegacyLinks! [link]
   ;; Keep existing links working.
   ;; Demos used to be identified by their fully qualified name - e.g. `hello-fiddle.fiddles/Hello
@@ -240,6 +235,6 @@
       (binding [hf/pages ($ Fiddles)]
         ($ Nav ?tutorial false)
         (if-some [essay-filename (get essays ?tutorial (str (name ?tutorial) ".md"))]
-          ($ Custom-markdown ($ Extensions) (str tutorial-path essay-filename))
+          ($ Custom-markdown ($ Fiddle-markdown-extensions) (str tutorial-path essay-filename))
           (dom/h1 (dom/text "Tutorial not found: " ?tutorial)))
         #_($ Nav ?tutorial true)))))
