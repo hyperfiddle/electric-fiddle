@@ -3,6 +3,7 @@
 /* Forms, Crud, TodoMVC(!important) */
 .user-examples-target [aria-busy="true"] { background-color: yellow !important; }
 .user-examples-target [aria-invalid="true"] { background-color: pink; }
+.user-examples-target input[aria-invalid="true"] { outline: 3px pink solid; }
 
 /* Toggle, TemperatureConverter, TodoMVC */
 .user-examples-target dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
