@@ -74,11 +74,12 @@
      `Todos2 ; inline-submit-builtin w/ create new
      `TodoMVC
      `TodoMVC-composed]]
-   #_["Datagrid"
+   ["Datagrids"
     [#_`Typeahead
      #_`VirtualScroll
      #_`Datagrid]]
-   ["Demos"
+   ["HFQL" [#_`wip.teeshirt-orders/Webview-HFQL]]
+   ["Misc"
     [#_`DirectoryExplorer
      `SVG
      `SystemProperties
@@ -86,9 +87,7 @@
      `Timer
      #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
-     ]]
-   #_["HFQL"
-      [`wip.teeshirt-orders/Webview-HFQL]]])
+     ]]])
 
 (def tutorials-index (->> tutorials
                        (mapcat (fn [[_group entries]] entries))
