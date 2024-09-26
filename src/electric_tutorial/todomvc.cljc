@@ -7,10 +7,6 @@
             [hyperfiddle.input-zoo0 :refer
              [Input! Checkbox! InputSubmitCreate?! Button!]]))
 
-(e/defn PendingMonitor [edits]
-  (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
-  edits)
-
 #?(:clj
    (defn query-todos [db filter]
      {:pre [filter]}
@@ -30,11 +26,8 @@
        (or 0)))) ; datascript can return nil wtf
 
 (e/defn Filter-control [state target label]
-  (PendingMonitor
-    (dom/a (dom/props {:class (when (= state target) "selected")})
-      (dom/text label)
-      (e/for [[t _] (dom/On-all "click" (constantly true))]
-        [t [`Set-filter target]]))))
+  (Button! [`Set-filter target] :label label
+    :class (str "anchor-button " (when (= state target) "selected"))))
 
 (e/defn TodoStats [db state]
   (let [active (e/server (todo-count db :active))
@@ -78,10 +71,7 @@
             (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)] [t [v]]) ; simulate Field
               :discard `[Cancel-todo-edit-desc]
               :commit (fn [[%]] [`Edit-todo-desc id %]))))
-        (dom/button (dom/props {:class "destroy"}) ; todo Button!
-          (PendingMonitor
-            (e/for [[t _] (dom/On-all "click" (constantly true))]
-              [t [`Delete-todo id]])))))))
+        (Button! [`Delete-todo id] :class "destroy")))))
 
 (e/defn Query-todos [db filter]
   (e/server (e/diff-by identity (sort (query-todos db filter)))))

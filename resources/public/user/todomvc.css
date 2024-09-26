@@ -337,13 +337,14 @@
 	display: inline;
 }
 
-.hyperfiddle .todomvc .filters li a {
+.hyperfiddle .todomvc .filters li button {
 	color: #83756f;
 	margin: 2px;
 	text-decoration: none;
+	cursor: pointer; /* present like anchor */
 }
 
-.hyperfiddle .todomvc .filters li a.selected {
+.hyperfiddle .todomvc .filters li button.selected {
 	font-weight: bold;
 }
 
