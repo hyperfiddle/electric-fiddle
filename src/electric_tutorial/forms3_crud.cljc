@@ -1,63 +1,56 @@
 (ns electric-tutorial.forms3-crud
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Field Form Service]]
-            [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
-            [hyperfiddle.rcf :refer [tests]]))
-
-(e/defn UserForm [db id]
-  (dom/fieldset
-    (let [{:keys [user/str1 user/num1 user/bool1]}
-          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
-      (dom/dl
-        (e/amb ; 3 fields submitting edits concurrently
-          (dom/dt (dom/text "str1"))
-          (dom/dd (Field id :user/str1
-                    (Input! str1)))
-
-          (dom/dt (dom/text "num1"))
-          (dom/dd (Field id :user/num1
-                    (e/for [[t v] (Input! num1 :type "number")]
-                      [t (parse-long v)])))
-
-          (dom/dt (dom/text "bool1"))
-          (dom/dd (Field id :user/bool1
-                    (Checkbox! bool1))))))))
+            #_[hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.rcf :refer [tests]]
+            [hyperfiddle.cqrs0 :as cqrs]
+            [electric-tutorial.forms3a-form :refer [Forms3a-form]]
+            [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]]
+            [electric-tutorial.forms3c-autosubmit :refer [Forms3c-autosubmit]]))
 
 #?(:clj (defonce !conn (doto (d/create-conn {})
                          (d/transact! [{:db/id 42 :user/str1 "one"
                                         :user/num1 1 :user/bool1 true}]))))
 
-#?(:clj (defn slow-transact! [tx]
-          (prn 'tx tx) (Thread/sleep 500) (assert false "die")
-          (d/transact! !conn tx)))
+#?(:clj (defn slow-transact! [tx] (prn 'tx tx)
+          (Thread/sleep 500) (assert false "die") (d/transact! !conn tx)))
 
-(defn expand-tx-effects
-  "expand atomic form paylod `cmd-batch` into a batch of ideally one effect,
-but maybe there are non-atomic sibling effects to i.e. send emails"
-  [cmd-batch]
-  (->> (group-by first cmd-batch)
+(e/defn Forms3-crud []
+  (Forms3a-form)
+  (Forms3b-inline-submit)
+  (Forms3c-autosubmit))
+
+
+
+
+(defn expand-tx-effects [form]
+  (->> (group-by first form)
     (mapcat (fn [[cmd all-cmd-instances]]
               (letfn [(inline-edit->tx [[_ e a v]] [{:db/id e a v}])] ; wide open crud endpoint (on purpose)
                 (case cmd
                   ::cqrs/update ; merge all the crud stuff into 1 tx
                   (let [tx (into [] (mapcat inline-edit->tx) all-cmd-instances)]
                     [[#?(:clj slow-transact! :cljs nil) tx]]) ; transparent effect type for tests (closures are opaque)
-                  nil nil))))))
+                  nil nil ; flatten out
+                  [[cmd all-cmd-instances]]))))))
 
-(tests
-  (expand-tx-effects [[::cqrs/update 1 :a 1] [::cqrs/update 1 :b 2]])
-  := [[#?(:clj slow-transact! :cljs nil) [{:db/id 1, :a 1} {:db/id 1, :b 2}]]]
-  (expand-tx-effects [[::yo :mom]]) :throws #?(:clj IllegalArgumentException :cljs :default)
-  (expand-tx-effects [[::cqrs/update 1 :a 1] nil]) := [[#?(:clj slow-transact! :cljs nil) [{:db/id 1, :a 1}]]]
-  (expand-tx-effects [nil]) := []
-  (expand-tx-effects nil) := [])
+#?(:clj
+   (tests
+     "translate UI form submits into secure effects"
+     (expand-tx-effects [[::cqrs/update 42 :user/num1 9] ; a form is a list of commands
+                         [::cqrs/update 42 :user/bool1 false]
+                         [::send-email "alice@example.com" "hi"]])
+     := [[slow-transact! ; secure effect
+          [{:db/id 42, :user/num1 9} ; fields are batched
+           {:db/id 42, :user/bool1 false}]]
+         [::send-email [[:send-email "alice@example.com" "hi"]]]] ; unrecognized pass through
 
-(e/defn Forms3-crud [] ; async, transactional, entity backed, never backpressure
-  (let [db (e/server (e/watch !conn))
-        txns (e/amb ; concurrent form submits, one per form
-               (Form (UserForm db 42) :debug true) ; buffer and batch edits into an atomic form
-               (Form (UserForm db 42) :debug true))]
-    (Service (e/server (identity expand-tx-effects))
-      txns)))
+     ;(expand-tx-effects [[::yo :mom]]) :throws #?(:clj IllegalArgumentException :cljs :default)
+     (expand-tx-effects [[::yo :mom]]) := [::yo [[::yo :mom]]] ; pass through unrecognized commands
+     (expand-tx-effects [[::cqrs/update 1 :a 1] nil]) := [[slow-transact! [{:db/id 1, :a 1}]]]
+     (expand-tx-effects [nil]) := []
+     (expand-tx-effects nil) := []))
+
+; deal with circular refs due to tutorial structure
+#?(:clj (alter-var-root #'electric-tutorial.forms3a-form/!conn (constantly !conn)))
+#?(:clj (alter-var-root #'electric-tutorial.forms3a-form/expand-tx-effects (constantly expand-tx-effects)))

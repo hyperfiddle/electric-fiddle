@@ -1,12 +1,40 @@
 # Transactional CRUD forms (i.e., RPC)
 
-* For internal database tools and business process applications, i.e. **CRUD apps**, this is what you want! (In fact, these are the "Hyperfiddle" controls)
+* This is a 3-in-1. All three form arrangements here use the exact same `Input!` controls.
+* First, play around and familiarize yourself with the three forms. Then, we will explain.
+
+!ns[](electric-tutorial.forms3-crud/Forms3-crud)
+
+Whats happening (broadly)
+* 3 forms configured slightly differently
+* all attached to one database
+* forms are transactional - with commit/discard buttons
+* yellow and red states for busy and failed
+* busy transactions can be cancelled. Try quickly cancelling an inflight txn before it succeeds
+* failed transactions can be retried
+* uncommitted state is never lost
+
+
+
+
+## 1. Simple CRUD form with transactional submit
+
+* For internal database tools and business process applications, i.e. **CRUD apps**, this is what you want!
+
+!ns[](electric-tutorial.forms3a-form/Forms3a-form)
+
+## 2. Individual CRUD *fields* with transactional submit
+
+!ns[](electric-tutorial.forms3b-inline-submit/Forms3b-inline-submit)
+
+## 3. Individual CRUD *fields* that autosubmit (i.e., autosave)
+
+!ns[](electric-tutorial.forms3c-autosubmit/Forms3c-autosubmit)
+
+
 * `Input!` adds dirty and failure states needed for server transactions that can fail.
 * They're designed to be composed into forms with the `Stage!` pattern, which batches N fields into 1 form with atomic submit.
 
-**These are not final implementations! Expect breaking changes. (2024 September)**
-
-!fiddle-ns[](electric-tutorial.forms3-crud/Forms3-crud)
 
 What's happening
 * two forms, now database backed, bound to the same entity

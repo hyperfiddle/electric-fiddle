@@ -29,8 +29,9 @@
             [electric-tutorial.forms1-uncontrolled :refer [Forms1-uncontrolled]]
             [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
             [electric-tutorial.forms3-crud :refer [Forms3-crud]]
-            [electric-tutorial.forms4-autosubmit :refer [Forms4-autosubmit]]
-            [electric-tutorial.forms5-inline-submit :refer [Forms5-inline-submit]]
+            [electric-tutorial.forms3a-form :refer [Forms3a-form]]
+            [electric-tutorial.forms3c-autosubmit :refer [Forms3c-autosubmit]] ; via Forms3-crud
+            [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; via Forms3-crud
             [electric-tutorial.forms6-inline-submit-builtin :refer [Forms6-inline-submit-builtin]]
             [electric-tutorial.forms5 :refer [Forms5]]
             #_[electric-tutorial.crud :refer [Crud]]
@@ -65,8 +66,6 @@
     [`Forms1-uncontrolled
      `Forms2-controlled
      `Forms3-crud
-     `Forms4-autosubmit
-     `Forms5-inline-submit
      `Forms6-inline-submit-builtin
      `Forms5 ; create new
      ; dubius,
@@ -199,8 +198,9 @@
    `Forms1-uncontrolled Forms1-uncontrolled
    `Forms2-controlled Forms2-controlled
    `Forms3-crud Forms3-crud
-   `Forms4-autosubmit Forms4-autosubmit
-   `Forms5-inline-submit Forms5-inline-submit
+   `Forms3a-form Forms3a-form
+   `Forms3b-inline-submit Forms3b-inline-submit
+   `Forms3c-autosubmit Forms3c-autosubmit
    `Forms6-inline-submit-builtin Forms6-inline-submit-builtin
    `Forms5 Forms5
    `Todos Todos
