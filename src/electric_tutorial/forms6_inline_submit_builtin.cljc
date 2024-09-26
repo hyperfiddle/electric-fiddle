@@ -82,8 +82,8 @@
                           ([err] (u err))) ; keep uncommited field, present retry
                         v])))))))
 
-(e/defn UserFriendlyCheckboxSubmit!
-  [checked & {:keys [id label #_token] :as props
+#_(e/defn UserFriendlyCheckboxSubmit!
+  [checked & {:keys [id label #_token debug] :as props
               :or {id (random-uuid)}}]
   ; checkbox - cannot discard, submit on toggle interaction.
   ; failure will discard and highlight red
@@ -93,36 +93,83 @@
       (let [[e t err input-node]
             (dom/input
               (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
-              (let [e (dom/On "change" identity) [t err] (e/RetryToken e)] ; single txn, no concurrency
+              (let [e (dom/On "change" #(do (.log js/console 1 %) %) nil) [t err] (e/RetryToken e)] ; single txn, no concurrency
                 [e t err dom/node]))
             editing? (dom/Focused? input-node)
             waiting? (some? t)
             error? (some? err)
             dirty? (or editing? waiting? error?)]
         (when-not dirty? (set! (.-checked input-node) checked))
-        (when error? (dom/props input-node {:aria-invalid true}))
         (when waiting? (dom/props input-node {:aria-busy true}))
+        (when error? (dom/props input-node {:aria-invalid true}))
         (let [[t v] (if waiting? [t ((fn [] (-> e .-target .-checked)))] (e/amb))
               [us _ :as btns]
-              #_(e/amb ; todo wire to input esc/enter
-                (Button! ::commit :label "commit" :disabled (not (e/Some? t))) ; todo progress
-                (Button! ::discard :label "discard" :disabled (not (e/Some? t))))
-              (let [e (e/Filter some?
-                          (e/amb (dom/On "change" #(when (and #_can-commit? true #_(= "Enter" (.-key %))) %) nil) ; could be merged into one event handler
-                                 (dom/On "keyup" #(when (and #_can-commit? true (= "Escape" (.-key %))) %) nil))) ; supports cancellation because Escape will overwrite Enter's `e`
+              (if debug
+                (e/amb
+                  (Button! ::commit :label "commit" :disabled (not (e/Some? t))) ; todo progress
+                  (Button! ::discard :label "discard" :disabled (not (e/Some? t))))
+                (let [e (e/Filter some?
+                          (e/amb e ; reuse change event
+                                 (dom/On "keyup" #(when (= "Escape" (.-key %)) %) nil))) ; supports cancellation because Escape will overwrite Enter's `e`
                       [t' err] (e/RetryToken e)
                       command (case (.-type e)
                                 "change" ::commit
                                 "keyup"  ::discard
                                 nil)]
-                  (prn 'Action! command t' err)
+                  (.log js/console 'Action! command t' err (hash e) e)
                   (when err
                     (dom/props input-node {:aria-invalid true})
-                    (set! (.-checked input-node) checked))
-                  (if t'
-                    (do (when (= ::discard command) (e/on-unmount #(.blur input-node))) ; blur input to reset value *after* token is consumed. Otherwise would trigger blur event while ::discard is in flight.
-                        [t' command])
-                    (e/amb)))]
+                    (set! (.-checked input-node) checked)) ; provide retry affordance
+                  (if t' [t' command] (e/amb))))]
+          (e/for [[u cmd] btns]
+            (case cmd
+              ::discard (case ((fn [] (us) (t))) ; clear any in-flight commit yet outstanding
+                          (e/amb)) ; clear edits, controlled form will reset
+              ::commit [(fn token
+                          ([] (u) (t)) ; success, burn both commit token and field token
+                          ([err] (u err))) ; keep uncommited field, present retry
+                        v]))))
+      (e/When label (dom/label (dom/props {:for id}) (dom/text label))))))
+
+(e/defn UserFriendlyCheckboxSubmit!
+  [checked & {:keys [id label #_token debug] :as props
+              :or {id (random-uuid)}}]
+  ; checkbox - cannot discard, submit on toggle interaction.
+  ; failure will discard and highlight red
+  ; todo attach to in-flight submit
+  (e/client
+    (e/amb
+      (let [[e t err input-node]
+            (dom/input
+              (dom/props {:type "checkbox", :id id}) (dom/props (dissoc props :id :label))
+              (let [e (dom/On "change" #(do (.log js/console 1 %) %) nil) [t err] (e/RetryToken e)] ; single txn, no concurrency
+                [e t err dom/node]))
+            editing? (dom/Focused? input-node)
+            waiting? (some? t)
+            error? (some? err)
+            #_#_dirty? (or editing? waiting? error?)]
+        (when-not #_dirty? false ((fn [_] (when-not waiting? (set! (.-checked input-node) checked))) err))
+        (when waiting? (dom/props input-node {:aria-busy true}))
+        (when error? (dom/props input-node {:aria-invalid true}))
+        (let [[t v] (if waiting? [t ((fn [] (-> e .-target .-checked)))] (e/amb))
+              [us _ :as btns]
+              (if debug
+                (e/amb
+                  (Button! ::commit :label "commit" :disabled (not (e/Some? t))) ; todo progress
+                  (Button! ::discard :label "discard" :disabled (not (e/Some? t))))
+                (let [e (e/Filter some? ; FIXME cancel state sticks after Escape is pressed
+                          (e/amb e    ; reuse change event
+                                 (dom/On "keyup" #(when (= "Escape" (.-key %)) %) nil))) ; supports cancellation because Escape will overwrite Enter's `e`
+                      [t' err] (e/RetryToken e)
+                      command (case (.-type e)
+                                "change" ::commit
+                                "keyup"  ::discard
+                                nil)]
+                  (.log js/console 'Action! editing? command t' err)
+                  (when err
+                    (dom/props input-node {:aria-invalid true})
+                    (set! (.-checked input-node) checked)) ; provide retry affordance
+                  (if t' [t' command] (e/amb))))]
           (e/for [[u cmd] btns]
             (case cmd
               ::discard (case ((fn [] (us) (t))) ; clear any in-flight commit yet outstanding
@@ -150,7 +197,7 @@
 
           (dom/dt (dom/text "bool1"))
           (dom/dd (Field id :user/bool1
-                    (UserFriendlyCheckboxSubmit! bool1)))))))) ; bundled commit/discard
+                    (UserFriendlyCheckboxSubmit! bool1 :debug false)))))))) ; bundled commit/discard
 
 (e/defn Forms6-inline-submit-builtin []
   (let [db (e/server (e/watch !conn))
