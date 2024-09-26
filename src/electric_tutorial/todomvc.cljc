@@ -3,10 +3,9 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [electric-tutorial.forms6-inline-submit-builtin :refer [Form]]
-            [hyperfiddle.input-zoo0 :as z :refer
-             [Input! Checkbox! Button!
-              InputSubmitCreate?!]]))
+            [hyperfiddle.cqrs0 :refer [Form]]
+            [hyperfiddle.input-zoo0 :refer
+             [Input! Checkbox! InputSubmitCreate?! Button!]]))
 
 (e/defn PendingMonitor [edits]
   (when (pos? (e/Count edits)) (dom/props {:aria-busy true}))
@@ -76,10 +75,9 @@
                 [t [`Editing-item id]]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
-            (doto (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)] [t [v]]) ; simulate Field
-                    ::z/discard `[Cancel-todo-edit-desc]
-                    ::z/commit (fn [[%]] [`Edit-todo-desc id %]))
-              (prn 'form))))
+            (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)] [t [v]]) ; simulate Field
+              :discard `[Cancel-todo-edit-desc]
+              :commit (fn [[%]] [`Edit-todo-desc id %]))))
         (dom/button (dom/props {:class "destroy"}) ; todo Button!
           (PendingMonitor
             (e/for [[t _] (dom/On-all "click" (constantly true))]

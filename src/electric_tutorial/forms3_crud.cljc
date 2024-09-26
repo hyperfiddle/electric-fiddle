@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Field Stage Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Field Form Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
             [hyperfiddle.rcf :refer [tests]]))
 
@@ -57,7 +57,7 @@ but maybe there are non-atomic sibling effects to i.e. send emails"
 (e/defn Forms3-crud [] ; async, transactional, entity backed, never backpressure
   (let [db (e/server (e/watch !conn))
         txns (e/amb ; concurrent form submits, one per form
-               (Stage (UserForm db 42) :debug true) ; buffer and batch edits into an atomic form
-               (Stage (UserForm db 42) :debug true))]
+               (Form (UserForm db 42) :debug true) ; buffer and batch edits into an atomic form
+               (Form (UserForm db 42) :debug true))]
     (Service (e/server (identity expand-tx-effects))
       txns)))

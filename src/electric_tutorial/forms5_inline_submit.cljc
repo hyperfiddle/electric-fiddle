@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :refer [Field Stage Service]]
+            [hyperfiddle.cqrs0 :refer [Field Form Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
             [electric-tutorial.forms3-crud :refer [#?(:clj !conn) #?(:clj expand-tx-effects)]]))
 
@@ -13,18 +13,18 @@
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
-          (dom/dd (Stage ; field stage
+          (dom/dd (Form ; field stage
                     (Field id :user/str1
                       (Input! str1))))
 
           (dom/dt (dom/text "num1"))
-          (dom/dd (Stage ; field stage
+          (dom/dd (Form ; field stage
                     (Field id :user/num1
                       (e/for [[t v] (Input! num1 :type "number")]
                         [t (parse-long v)]))))
 
           (dom/dt (dom/text "bool1"))
-          (dom/dd (Stage ; field stage
+          (dom/dd (Form ; field stage
                     (Field id :user/bool1
                       (Checkbox! bool1)))))))))
 
