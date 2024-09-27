@@ -15,16 +15,16 @@ Example: (source-fn 'filter)"
     (when-let [filepath (:file (meta v))]
       (when-let [strm (.getResourceAsStream (RT/baseLoader) filepath)]
         (with-open [rdr (LineNumberReader. (InputStreamReader. strm))]
-          (dotimes [_ (dec (:line (meta v)))] (.readLine rdr))
+          (dotimes [_ (dec (:line (meta v)))] (.readLine rdr)) ; only start line is known
           (let [text (StringBuilder.)
                 pbr (proxy [PushbackReader] [rdr]
                       (read [] (let [i (proxy-super read)]
-                                 (.append text (char i))
+                                 (.append text (char i)) ; accumulate
                                  i)))
-                read-opts (if (.endsWith ^String filepath "cljc") {:read-cond :allow} {})]
+                read-opts (if (.endsWith ^String filepath "cljc") {:read-cond :allow} {})] ; todo - find flag to read unresolved aliases?
             (if (= :unknown *read-eval*)
               (throw (IllegalStateException. "Unable to read source while *read-eval* is :unknown."))
-              (read read-opts (PushbackReader. pbr)))
+              (read read-opts (PushbackReader. pbr))) ; read until form closes to infer end of fn src
             (str text)))))))
 
 (tests
