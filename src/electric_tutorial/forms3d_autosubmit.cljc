@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Field Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form Field Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
             [electric-tutorial.forms3a-form :refer
              [#?(:clj !conn) #?(:clj expand-tx-effects)]]))
@@ -14,17 +14,23 @@
       (dom/dl
         (e/amb ; 3 fields submitting edits concurrently
           (dom/dt (dom/text "str1"))
-          (dom/dd (Field id :user/str1
-                    (Input! str1)))
+          (dom/dd (Form
+                    (Field id :user/str1
+                      (Input! str1))
+                    :auto-submit true :show-buttons false))
 
           (dom/dt (dom/text "num1"))
-          (dom/dd (Field id :user/num1
-                    (e/for [[t v] (Input! num1 :type "number")]
-                      [t (parse-long v)])))
+          (dom/dd (Form
+                    (Field id :user/num1
+                      (e/for [[t v] (Input! num1 :type "number")]
+                        [t (parse-long v)]))
+                    :auto-submit true :show-buttons false))
 
           (dom/dt (dom/text "bool1"))
-          (dom/dd (Field id :user/bool1
-                    (Checkbox! bool1))))))))
+          (dom/dd (Form
+                    (Field id :user/bool1
+                      (Checkbox! bool1))
+                    :auto-submit true :show-buttons false)))))))
 
 (e/defn Forms3d-autosubmit []
   (let [db (e/server (e/watch !conn))
