@@ -1,35 +1,69 @@
 # Transactional CRUD forms (i.e., RPC)
 
 * This is a 3-in-1. All three form arrangements here use the exact same `Input!` controls.
-* First, play around and familiarize yourself with the three forms. Then, we will explain.
+* We're going to explain the `Form` pattern first, then the `Input!` controls.
+* First, play around and familiarize yourself with the three forms.
 
 !ns[](electric-tutorial.forms3-crud/Forms3-crud)
 
 Whats happening (broadly)
 * 3 forms configured slightly differently
-* all attached to one database
+* all attached to one database (they are *controlled* forms)
 * forms are transactional - with commit/discard buttons
 * yellow and red states for busy and failed
 * busy transactions can be cancelled. Try quickly cancelling an inflight txn before it succeeds
 * failed transactions can be retried
 * uncommitted state is never lost
 
+You can ignore `expand-tx-effects` for now, we'll come back to that.
 
+Ok, now we will take a microscope to each of these forms.
 
+## 1. Explicit CRUD form with transactional submit
 
-## 1. Simple CRUD form with transactional submit
-
-* For internal database tools and business process applications, i.e. **CRUD apps**, this is what you want!
+* Use cases: CRUD apps!, i.e., internal tools which mostly just do transactions to a database. More complex business process applications as well, but only sometimes, not always.
+* NOT for: consumer apps and TodoMVC – they do NOT have explicit form controls!
 
 !ns[](electric-tutorial.forms3a-form/Forms3a-form)
 
-## 2. Individual CRUD *fields* with transactional submit
+What's happening
+
+How it works
+* `Form` on L13 is accumulating the field edit state
+* `Field` – explain command structure
+* `Input!` - explain edit type and the yellow/red states
+* `Service`
+* `expand-tx-effects`
+
+!fn-src[hyperfiddle.cqrs0/Service]()
+
+
+!fn-src[electric-tutorial.forms3-crud/expand-tx-effects]()
+
+## 2. Explicit CRUD *fields* with transactional submit – demo only
+
+* Use cases: TodoMVC item editor (well kinda, we need better UX first - stay tuned)
+* This is provided for demonstration, to document the semantics of the use case, before we work on UX.
 
 !ns[](electric-tutorial.forms3b-inline-submit/Forms3b-inline-submit)
 
+What's happening
+
+How it works
+* Each field gets its own `Form`! `(Form (Field id :user/str1 (Input! str1)))`
+* pretty cool right? Just put the form where it makes sense for the submit granularity you desire. (By the way, it composes, so you can layer them!)
+
 ## 3. Individual CRUD *fields* that autosubmit (i.e., autosave)
 
+* Use cases: consumer apps, TodoMVC toggle (but not TodoMVC item editor)
+
 !ns[](electric-tutorial.forms3c-autosubmit/Forms3c-autosubmit)
+
+What's happening
+
+How it works
+* Just omit the `Form` entirely, and you get auto-submit! Which makes sense, right?
+* You can think of a `Form` as a buffer. It is buffering the field state so that you can accumulate multiple field edits to stage a single form submit. Commit and discard manage the lifecycle of the buffer.
 
 
 * `Input!` adds dirty and failure states needed for server transactions that can fail.
@@ -37,7 +71,6 @@ Whats happening (broadly)
 
 
 What's happening
-* two forms, now database backed, bound to the same entity
 * dirty state - field is yellow, edit request in flight - field level
 * commit/discard buttons at form level
   - busy state - commit is disabled, edit request in flight - form level
