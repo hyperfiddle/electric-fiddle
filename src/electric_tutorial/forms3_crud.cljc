@@ -28,7 +28,7 @@
     (mapcat (fn [[cmd all-cmd-instances]]
               (letfn [(inline-edit->tx [[_ e a v]] [{:db/id e a v}])] ; wide open crud endpoint (on purpose)
                 (case cmd
-                  ::cqrs/update ; merge all the crud stuff into 1 tx
+                  :hyperfiddle.cqrs0/update ; merge all the crud stuff into 1 tx
                   (let [tx (into [] (mapcat inline-edit->tx) all-cmd-instances)]
                     [[#?(:clj slow-transact! :cljs nil) tx]]) ; transparent effect type for tests (closures are opaque)
                   nil nil ; flatten out
