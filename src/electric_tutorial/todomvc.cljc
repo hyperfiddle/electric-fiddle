@@ -5,7 +5,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.cqrs0 :refer [Form]]
             [hyperfiddle.input-zoo0 :refer
-             [Input! Checkbox! InputSubmitCreate?! Button!]]))
+             [Input! Checkbox! InputSubmitCreate! Button!]]))
 
 #?(:clj
    (defn query-todos [db filter]
@@ -99,7 +99,7 @@
 
 (e/defn CreateTodo []
   (dom/span (dom/props {:class "input-load-mask"})
-    (e/for [[t v] (InputSubmitCreate?! :class "new-todo input-load-mask"
+    (e/for [[t v] (InputSubmitCreate! :class "new-todo input-load-mask"
                     :placeholder "What needs to be done?")]
       [t [`Create-todo v]])))
 
