@@ -36,7 +36,6 @@
             [electric-tutorial.forms5 :refer [Forms5]]
             #_[electric-tutorial.crud :refer [Crud]]
             [electric-tutorial.todos :refer [Todos]]
-            [electric-tutorial.todos2 :refer [Todos2]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
             [electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
 
@@ -69,7 +68,6 @@
      `Forms5 ; create new
      ; dubius,
      `Todos ; dubius-create-new
-     `Todos2 ; inline-submit-builtin w/ create new
      `TodoMVC
      `TodoMVC-composed]]
    ["Datagrids"
@@ -149,7 +147,6 @@
    ; Part 2
    `Forms5 "forms5.md"
    `Todos "todos.md"
-   `Todos2 "todos2.md"
    `Crud "crud.md"
    `TodoMVC "todomvc.md"
    `TodoMVC-composed "todomvc_composed.md"
@@ -203,7 +200,6 @@
      `Forms3d-autosubmit Forms3d-autosubmit
    `Forms5 Forms5
    `Todos Todos
-   `Todos2 Todos2
    ;`CRUD CRUD
    `TodoMVC TodoMVC
    `TodoMVC-composed TodoMVC-composed
