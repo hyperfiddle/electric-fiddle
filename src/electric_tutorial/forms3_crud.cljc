@@ -13,9 +13,6 @@
                          (d/transact! [{:db/id 42 :user/str1 "one"
                                         :user/num1 1 :user/bool1 true}]))))
 
-#?(:clj (defn slow-transact! [tx] (prn 'tx tx)
-          (Thread/sleep 500) (assert false "die") (d/transact! !conn tx)))
-
 (e/defn Forms3-crud []
   (Forms3a-form)
   (Forms3b-inline-submit)
@@ -32,7 +29,7 @@
                 (case cmd
                   :hyperfiddle.cqrs0/update ; merge all the crud stuff into 1 tx
                   (let [tx (into [] (mapcat inline-edit->tx) all-cmd-instances)]
-                    [[#?(:clj slow-transact! :cljs nil) tx]]) ; transparent effect type for tests (closures are opaque)
+                    [[#?(:clj d/transact! :cljs nil) tx]]) ; transparent effect type for tests (closures are opaque)
                   nil nil ; flatten out
                   [[cmd all-cmd-instances]]))))))
 
@@ -42,14 +39,14 @@
      (expand-tx-effects [[::cqrs/update 42 :user/num1 9] ; a form is a list of commands
                          [::cqrs/update 42 :user/bool1 false]
                          [::send-email "alice@example.com" "hi"]])
-     := [[slow-transact! ; secure effect
+     := [[d/transact! ; secure effect
           [{:db/id 42, :user/num1 9} ; fields are batched
            {:db/id 42, :user/bool1 false}]]
          [::send-email [[:send-email "alice@example.com" "hi"]]]] ; unrecognized pass through
 
      ;(expand-tx-effects [[::yo :mom]]) :throws #?(:clj IllegalArgumentException :cljs :default)
      (expand-tx-effects [[::yo :mom]]) := [::yo [[::yo :mom]]] ; pass through unrecognized commands
-     (expand-tx-effects [[::cqrs/update 1 :a 1] nil]) := [[slow-transact! [{:db/id 1, :a 1}]]]
+     (expand-tx-effects [[::cqrs/update 1 :a 1] nil]) := [[d/transact! [{:db/id 1, :a 1}]]]
      (expand-tx-effects [nil]) := []
      (expand-tx-effects nil) := []))
 
