@@ -53,11 +53,16 @@ How it works
 * Each field gets its own `Form`! `(Form (Field id :user/str1 (Input! str1)))`
 * pretty cool right? Just put the form where it makes sense for the submit granularity you desire. (By the way, it composes, so you can layer them!)
 
-## 3. Individual CRUD *fields* that autosubmit (i.e., autosave)
+## 3. ???
+
+x !ns[](electric-tutorial.forms3c/Forms3c)
+
+
+## 4. Individual CRUD *fields* that autosubmit (i.e., autosave)
 
 * Use cases: consumer apps, TodoMVC toggle (but not TodoMVC item editor)
 
-!ns[](electric-tutorial.forms3c-autosubmit/Forms3c-autosubmit)
+!ns[](electric-tutorial.forms3d-autosubmit/Forms3d-autosubmit)
 
 What's happening
 

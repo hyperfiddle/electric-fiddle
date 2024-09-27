@@ -6,7 +6,8 @@
             [hyperfiddle.cqrs0 :as cqrs]
             [electric-tutorial.forms3a-form :refer [Forms3a-form]]
             [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]]
-            [electric-tutorial.forms3c-autosubmit :refer [Forms3c-autosubmit]]))
+            [electric-tutorial.forms3c-inline-submit-builtin :refer [Forms3c-inline-submit-builtin]]
+            [electric-tutorial.forms3d-autosubmit :refer [Forms3d-autosubmit]]))
 
 #?(:clj (defonce !conn (doto (d/create-conn {})
                          (d/transact! [{:db/id 42 :user/str1 "one"
@@ -18,7 +19,8 @@
 (e/defn Forms3-crud []
   (Forms3a-form)
   (Forms3b-inline-submit)
-  (Forms3c-autosubmit))
+  (Forms3c-inline-submit-builtin)
+  (Forms3d-autosubmit))
 
 
 

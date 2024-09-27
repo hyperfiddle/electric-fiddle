@@ -8,7 +8,7 @@
              [#?(:clj !conn) #?(:clj expand-tx-effects)]]))
 
 (e/defn UserForm [db id]
-  (dom/fieldset (dom/legend (dom/text "transactional fields"))
+  (dom/fieldset (dom/legend (dom/text "transactional fields with inline submit"))
     (let [{:keys [user/str1 user/num1 user/bool1]}
           (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
       (dom/dl

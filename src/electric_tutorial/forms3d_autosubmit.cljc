@@ -1,4 +1,4 @@
-(ns electric-tutorial.forms3c-autosubmit
+(ns electric-tutorial.forms3d-autosubmit
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -26,7 +26,7 @@
           (dom/dd (Field id :user/bool1
                     (Checkbox! bool1))))))))
 
-(e/defn Forms3c-autosubmit []
+(e/defn Forms3d-autosubmit []
   (let [db (e/server (e/watch !conn))
         txns (UserForm db 42)]
     (Service (e/server (identity expand-tx-effects)) txns)))
