@@ -55,8 +55,8 @@
             [::edit-todo-desc id desc] [{:db/id id :task/description desc}]
             :else nil)))
 
-#?(:clj (def !conn (doto (d/create-conn {}) ; database on server
-                         (d/transact! ; test data
+#?(:clj (def !conn (doto (d/create-conn {})
+                         (d/transact!
                            [{:task/description "feed baby" :task/status :active}
                             {:task/description "buy milk" :task/status :active}
                             {:task/description "call mom" :task/status :active}]))))

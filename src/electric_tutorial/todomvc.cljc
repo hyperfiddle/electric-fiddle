@@ -186,7 +186,11 @@
           (t ::rejected))))))
 
 (def state0 {::filter :all, ::editing nil, ::delay 500})
-#?(:clj (defonce !conn (d/create-conn {})))
+#?(:clj (def !conn (doto (d/create-conn {})
+                     (d/transact!
+                       [{:task/description "feed baby" :task/status :active}
+                        {:task/description "buy milk" :task/status :active}
+                        {:task/description "call mom" :task/status :active}]))))
 
 (e/defn TodoMVC []
   (e/client
