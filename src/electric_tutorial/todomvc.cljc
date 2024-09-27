@@ -60,17 +60,20 @@
                             (when (= id (::editing state)) "editing")]})
         (dom/div (dom/props {:class "view"})
           (e/amb
-            (e/for [[t v] (Checkbox! (= :done status) :class "toggle" :id id)]
-              (let [status (case v true :done, false :active, nil)]
-                [t [`Toggle id status]]))
+            (Form
+              (e/for [[t v] (Checkbox! (= :done status) :class "toggle")]
+                (let [status (case v true :done, false :active, nil)]
+                  [t #_[] [`Toggle id status]]))
+              :show-buttons false :auto-submit true)
             (dom/label (dom/text description)
               (e/for [[t _] (dom/On-all "dblclick" (constantly true))]
                 [t [`Editing-item id]]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
-            (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)] [t [v]]) ; simulate Field
+            (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)]
+                    [t [`Edit-todo-desc id v]])
               :discard `[Cancel-todo-edit-desc]
-              :commit (fn [[%]] [`Edit-todo-desc id %]))))
+              :show-buttons false)))
         (Button! [`Delete-todo id] :class "destroy")))))
 
 (e/defn Query-todos [db filter]
@@ -83,10 +86,12 @@
         (let [active (e/server (todo-count db :active))
               all    (e/server (todo-count db :all))
               done   (e/server (todo-count db :done))]
-          (e/for [[t v] (Checkbox! (cond (= all done) true (= all active) false :else nil)
-                          :class "toggle-all")]
-            (let [status (case v (true nil) :done, false :active)]
-              [t [`Toggle-all status]])))
+          (Form
+            (e/for [[t v] (Checkbox! (cond (= all done) true (= all active) false :else nil)
+                            :class "toggle-all")]
+              (let [status (case v (true nil) :done, false :active)]
+                [t [`Toggle-all status]]))
+            :auto-submit true :show-buttons false))
         (dom/label (dom/props {:for "toggle-all"}) (dom/text "Mark all as complete"))
         (dom/ul (dom/props {:class "todo-list"})
           (e/for [id (Query-todos db (::filter state))]
@@ -116,13 +121,14 @@
     (dom/dt (dom/text "delay")) (dom/dd (e/amb (e/for [[t v] (Input! (::delay state)
                                                                :type "number" :step 1 :min 0
                                                                :style {:width :min-content})]
+                                                 ; no form needed because there's no dirty/retry state
                                                  [t [`Set-delay (parse-long v)]])
                                           (dom/text " ms")))))
 
 (e/defn Slow-transact [delay !conn tx]
-  (e/server (e/Offload #(try (Thread/sleep delay) (d/transact! !conn tx) ::ok
+  (e/server (e/Offload #(try (Thread/sleep delay) (assert false "die") (d/transact! !conn tx) ::ok
                           (catch InterruptedException _) ; never seen
-                          (catch Exception _ ::fail)))))
+                          (catch Throwable _ ::fail)))))
 
 (def Transact! nil)
 (def db nil)
@@ -174,10 +180,10 @@
               (let [res (e/Apply Effect args)]
                 (prn 'res cmd res)
                 (case res ::ok ::ok, ::fail ::fail, ::ok)))
-        ::fail nil ; idea: (t err) to prompt for retry
+        ::fail (t ::rejected)
         ::ok (t)))))
 
-(def state0 {::filter :all, ::editing nil, ::delay 0})
+(def state0 {::filter :all, ::editing nil, ::delay 500})
 #?(:clj (defonce !conn (d/create-conn {})))
 
 (e/defn TodoMVC []
