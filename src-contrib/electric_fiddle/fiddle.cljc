@@ -4,7 +4,7 @@
             [hyperfiddle :as hf]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
-            #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src]])
+            #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src-safe!]])
             [electric-fiddle.index :refer [Index]]))
 
 (e/defn Fiddle-impl [target ?wrap src]
@@ -30,7 +30,7 @@
 (e/defn Fiddle-fn [& [alt-text target-s ?wrap :as args]] ; todo hide code
   (let [target (symbol target-s)]
     ($ Fiddle-impl target (some-> ?wrap symbol)
-      (e/server (read-src target)))))
+      (e/server (read-src-safe! target)))))
 
 (e/defn Fiddle-ns [& [alt-text target-s ?wrap :as args]]
   (let [target (symbol target-s)]
@@ -41,7 +41,7 @@
   (e/client
     #_(dom/pre (dom/text (pr-str args)))
     (let [target (symbol target-s)
-          src (e/server (read-src target))]
+          src (e/server (read-src-safe! target))]
       (binding [dom/node (if-some [s (not-empty loc-selector)]
                            (dom/Await-element s) dom/node)]
         (dom/div (dom/props {:class "user-examples"})
