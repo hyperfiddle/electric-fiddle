@@ -2,34 +2,37 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Field Form Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]))
 
 #?(:clj (def !conn))
-#?(:clj (def expand-tx-effects))
 
 (e/defn UserForm [db id]
   (dom/fieldset (dom/legend (dom/text "transactional form"))
-    (Form ; buffer and batch edits into an atomic form
-      (let [{:keys [user/str1 user/num1 user/bool1]}
-            (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
+    (let [{:keys [user/str1 user/num1 user/bool1]}
+          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
+      (Form ; buffer and batch edits into an atomic form
         (dom/dl
-          (e/amb ; 3 fields submitting edits concurrently
-            (dom/dt (dom/text "str1"))
-            (dom/dd (Field id :user/str1
-                      (Input! str1)))
+          (e/amb ; concurrent field edits (which get us field dirty state).
+            ; if we used e.g. a vector/map aggregator like before, we'd need
+            ; circuit controls and therefore lose field dirty state.
+            (dom/dt (dom/text "str1")) (dom/dd (Input! str1 :parse #(hash-map :a %))) ; gross identity per edit
+            (dom/dt (dom/text "num1")) (dom/dd (Input! num1 :type "number" :parse #(hash-map :b (parse-long %))))
+            (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! bool1 :parse #(hash-map :c %)))))
+        :commit (fn [dirtys]
+                  (let [{:keys [a b c]
+                         :or {a str1 b num1 c bool1}} (apply merge dirtys)]
+                    [[`UserFormSubmit id a b c] {}]))
+        :debug true))))
 
-            (dom/dt (dom/text "num1"))
-            (dom/dd (Field id :user/num1
-                      (e/for [[t v] (Input! num1 :type "number")]
-                        [t (parse-long v)])))
-
-            (dom/dt (dom/text "bool1"))
-            (dom/dd (Field id :user/bool1
-                      (Checkbox! bool1))))))
-      :debug true)))
+(e/defn UserFormSubmit [id str1 num1 bool1]
+  #_(e/server (prn 'UserFormSubmit id str1 num1 bool1))
+  (e/server ; secure command interpretation, validate command here
+    (let [tx [{:db/id id :user/str1 str1 :user/num1 num1 :user/bool1 bool1}]]
+      (e/Offload #(try (d/transact! !conn tx) (doto ::cqrs/ok (prn 'UserFormSubmit))
+                    (catch Exception e (doto ::fail (prn 'UserFormSubmit e))))))))
 
 (e/defn Forms3a-form []
-  (let [db (e/server (e/watch !conn))
-        txns (UserForm db 42)]
-    (Service (e/server (identity expand-tx-effects)) txns)))
+  (let [db (e/server (e/watch !conn))]
+    (Service {`UserFormSubmit UserFormSubmit}
+      (UserForm db 42))))

@@ -2,10 +2,9 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :refer [Field Form Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
-            [electric-tutorial.forms3a-form :refer
-             [#?(:clj !conn) #?(:clj expand-tx-effects)]]))
+            [electric-tutorial.forms3a-form :refer  [#?(:clj !conn)]]))
 
 (e/defn UserForm [db id]
   (dom/fieldset (dom/legend (dom/text "transactional fields with inline submit"))
@@ -14,22 +13,41 @@
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
-          (dom/dd (Form
-                    (Field id :user/str1
-                      (Input! str1))))
+          (dom/dd (Form (Input! str1 :parse #(hash-map 0 %))
+                    :commit (fn [dirties]
+                              (let [{v 0} (apply merge dirties)]
+                                [[`Str1FormSubmit id v] {}]))))
 
           (dom/dt (dom/text "num1"))
-          (dom/dd (Form
-                    (Field id :user/num1
-                      (e/for [[t v] (Input! num1 :type "number")]
-                        [t (parse-long v)]))))
+          (dom/dd (Form (Input! num1 :type "number" :parse #(hash-map 0 (parse-long %)))
+                    :commit (fn [dirties]
+                              (let [{v 0} (apply merge dirties)]
+                                [[`Num1FormSubmit id v] {}]))))
 
           (dom/dt (dom/text "bool1"))
-          (dom/dd (Form
-                    (Field id :user/bool1
-                      (Checkbox! bool1)))))))))
+          (dom/dd (Form (Checkbox! bool1 :parse #(hash-map 0 %))
+                    :commit (fn [dirties]
+                              (let [{v 0} (apply merge dirties)]
+                                [[`Bool1FormSubmit id v] {}])))))))))
+
+(e/defn Str1FormSubmit [id v]
+  (e/server
+    (let [tx [{:db/id id :user/str1 v}]]
+      (e/Offload #(try (d/transact! !conn tx) ::cqrs/ok (catch Exception e (doto ::fail (prn 'Str1FormSubmit e))))))))
+
+(e/defn Num1FormSubmit [id v]
+  (e/server
+    (let [tx [{:db/id id :user/num1 v}]]
+      (e/Offload #(try (d/transact! !conn tx) ::cqrs/ok (catch Exception e (doto ::fail (prn 'Num1FormSubmit e))))))))
+
+(e/defn Bool1FormSubmit [id v]
+  (e/server
+    (let [tx [{:db/id id :user/bool1 v}]]
+      (e/Offload #(try (d/transact! !conn tx) ::cqrs/ok (catch Exception e (doto ::fail (prn 'Bool1FormSubmit e))))))))
 
 (e/defn Forms3b-inline-submit []
-  (let [db (e/server (e/watch !conn))
-        txns (UserForm db 42)]
-    (Service (e/server (identity expand-tx-effects)) txns)))
+  (let [db (e/server (e/watch !conn))]
+    (Service {`Str1FormSubmit Str1FormSubmit
+              `Num1FormSubmit Num1FormSubmit
+              `Bool1FormSubmit Bool1FormSubmit}
+      (UserForm db 42))))

@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :refer [Form]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service]]
             [hyperfiddle.input-zoo0 :refer
              [Input! Checkbox! InputSubmitCreate! Button!]]))
 
@@ -60,56 +60,62 @@
                             (when (= id (::editing state)) "editing")]})
         (dom/div (dom/props {:class "view"})
           (e/amb
-            (Form
-              (e/for [[t v] (Checkbox! (= :done status) :class "toggle")]
-                (let [status (case v true :done, false :active, nil)]
-                  [t [`Toggle id status] {}]))
+            (Form (Checkbox! (= :done status) :class "toggle" :parse #(hash-map 0 %))
+              :commit (fn [dirties]
+                        (let [{v 0} (apply merge dirties)
+                              status (case v true :done, false :active, nil)]
+                          [[`Toggle id status] {}]))
               :show-buttons false :auto-submit true)
             (dom/label (dom/text description)
               (e/for [[t _] (dom/On-all "dblclick" (constantly true))]
+                (prn 'click!)
                 [t [`Editing-item id] {}]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
-            (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)]
-                    [t [`Edit-todo-desc id v] {}])
-              :discard `[[Cancel-todo-edit-desc] {}]
+            (Form (Input! description :class "edit" :autofocus true :parse #(hash-map 0 %))
+              :commit (fn [dirties]
+                        (let [{v 0} (apply merge dirties)]
+                          [[`Edit-todo-desc id v] {}]))
+              :discard `[[Cancel-todo-edit-desc] {}] ; does guess need the dirties?
               :show-buttons false)))
         (Button! [`Delete-todo id] :class "destroy"))))) ; missing prediction
 
-(e/defn Query-todos [db filter]
+(e/defn Query-todos [db filter edits]
   (e/server (e/diff-by identity (sort (query-todos db filter)))))
 
-(e/defn TodoList [db state]
+(e/defn TodoList [db state edits]
   (dom/div
     (dom/section (dom/props {:class "main"})
       (e/amb
         (let [active (e/server (todo-count db :active))
               all    (e/server (todo-count db :all))
               done   (e/server (todo-count db :done))]
-          (Form
-            (e/for [[t v] (Checkbox! (cond (= all done) true (= all active) false :else nil)
-                            :class "toggle-all")]
-              (let [status (case v (true nil) :done, false :active)]
-                [t [`Toggle-all status] {}]))
+          (Form (Checkbox! (cond (= all done) true (= all active) false :else nil)
+                  :class "toggle-all" :parse #(hash-map 0 %))
+            :commit (fn [dirties]
+                      (let [{v 0} (apply merge dirties)
+                            status (case v (true nil) :done, false :active)]
+                        [[`Toggle-all status] {}]))
             :auto-submit true :show-buttons false))
         (dom/label (dom/props {:for "toggle-all"}) (dom/text "Mark all as complete"))
         (dom/ul (dom/props {:class "todo-list"})
-          (e/for [id (Query-todos db (::filter state))]
+          (e/for [id (Query-todos db (::filter state) edits)]
             (TodoItem db state id)))))))
 
 (e/defn CreateTodo []
   (dom/span (dom/props {:class "input-load-mask"})
+    #_(Form :show-buttons false) ; todo?
     (e/for [[t v] (InputSubmitCreate! :class "new-todo input-load-mask"
                     :placeholder "What needs to be done?")]
       [t [`Create-todo v] {}])))
 
-(e/defn TodoMVC-UI [db state]
+(e/defn TodoMVC-UI [db state edits]
   (dom/section (dom/props {:class "todoapp"})
     (e/amb
       (dom/header (dom/props {:class "header"})
         (CreateTodo))
       (e/When (e/server (pos? (todo-count db :all)))
-        (TodoList db state))
+        (TodoList db state edits))
       (dom/footer (dom/props {:class "footer"})
         (TodoStats db state)))))
 
@@ -118,19 +124,18 @@
     (dom/dt (dom/text "count :all")) (dom/dd (dom/text (pr-str (e/server (todo-count db :all)))))
     (dom/dt (dom/text "query :all")) (dom/dd (dom/text (pr-str (e/server (query-todos db :all)))))
     (dom/dt (dom/text "state")) (dom/dd (dom/text (pr-str (update-keys state unqualify))))
-    (dom/dt (dom/text "delay")) (dom/dd (e/amb (e/for [[t v] (Input! (::delay state)
-                                                               :type "number" :step 1 :min 0
-                                                               :style {:width :min-content})]
-                                                 ; no form needed because there's no dirty/retry state
-                                                 [t [`Set-delay (parse-long v)]])
+    (dom/dt (dom/text "delay")) (dom/dd (e/amb (Input! (::delay state)
+                                                 :parse (fn [v] [`Set-delay (parse-long v)]) ; can bypass form bc no dirty|retry state
+                                                 :type "number" :step 1 :min 0
+                                                 :style {:width :min-content})
                                           (dom/text " ms")))))
 
-(e/defn Slow-transact [delay !conn tx]
-  (e/server (e/Offload #(try (Thread/sleep delay) #_(assert false "die") (d/transact! !conn tx) ::ok
-                          (catch InterruptedException _) ; never seen
-                          (catch Throwable e (doto ::fail (prn e)))))))
+(e/defn Transact! [!conn delay tx]
+  (e/server (prn 'Transact! delay tx)
+    (e/Offload #(try (Thread/sleep delay)
+                  (d/transact! !conn tx) (doto ::cqrs/ok prn)
+                  (catch Throwable e (doto ::fail (prn e)))))))
 
-(def Transact! nil)
 (def db nil)
 (def !state nil)
 (def state nil)
@@ -140,25 +145,23 @@
               (mapv (fn [id] [:db/retractEntity id])) Transact!)))
 
 (e/defn Toggle [id status]
-  (e/client (case (e/server (Transact! [{:db/id id, :task/status status}]))
-              ::ok (do (swap! !state assoc ::editing nil) ::ok)
-              ::fail)))
+  (e/server (Transact! [{:db/id id, :task/status status}])))
 
 (e/defn Toggle-all [status]
   (e/server (Transact! (->> (query-todos db (if (= :done status) :active :done))
                          (mapv (fn [id] {:db/id id, :task/status status}))))))
 
-(e/defn Cancel-todo-edit-desc [] (e/client (swap! !state assoc ::editing nil) ::ok))
+(e/defn Cancel-todo-edit-desc [] (e/client (swap! !state assoc ::editing nil) ::cqrs/ok))
 (e/defn Delete-todo [id] (e/server (Transact! [[:db/retractEntity id]])))
 (e/defn Create-todo [desc] (e/server (Transact! [{:task/description desc, :task/status :active}])))
-(e/defn Editing-item [id] (e/client (swap! !state assoc ::editing id) ::ok))
+(e/defn Editing-item [id] (e/client (swap! !state assoc ::editing id) ::cqrs/ok))
 (e/defn Edit-todo-desc [id desc]
   (e/client (case (e/server (Transact! [{:db/id id, :task/description desc}]))
-              ::ok (do (swap! !state assoc ::editing nil) ::ok)
+              ::cqrs/ok (do (swap! !state assoc ::editing nil) ::cqrs/ok)
               ::fail)))
 
-(e/defn Set-delay [v] (e/client (swap! !state assoc ::delay v) ::ok))
-(e/defn Set-filter [target] (e/client (swap! !state assoc ::filter target) ::ok))
+(e/defn Set-delay [v] (e/client (swap! !state assoc ::delay v) ::cqrs/ok))
+(e/defn Set-filter [target] (e/client (swap! !state assoc ::filter target) ::cqrs/ok))
 
 (e/defn Effects []
   (e/client
@@ -172,18 +175,6 @@
      `Create-todo Create-todo
      `Set-delay Set-delay
      `Set-filter Set-filter}))
-
-(e/defn Service [effects txs]
-  #_(binding [effects (merge effects effects')])
-  (e/client
-    (prn (e/Count txs) 'txs)
-    (e/for [[t [cmd & args]] (e/Filter some? txs)] ; cmds
-      (prn 'cmd (name cmd) args)
-      (let [res (when-some [Effect (get effects cmd)] ; security - rules engine? `(F ~x) ? prevent auditing of imperative adhoc security
-                  (e/Apply Effect args))]
-        (case res
-          ::ok (t)
-          (t ::rejected))))))
 
 (def state0 {::filter :all, ::editing nil, ::delay 500})
 #?(:clj (def !conn (doto (d/create-conn {})
@@ -199,10 +190,12 @@
     (binding [!state (atom state0)]
       (binding [state (e/watch !state)]
         (binding [db (e/server (e/watch !conn))
-                  Transact! (e/server (e/Partial Slow-transact (e/client (::delay state)) !conn))]
+                  Transact! (e/server (e/Partial Transact! !conn (e/client (::delay state))))]
           (Service (Effects)
             (e/amb
-              (TodoMVC-UI db state)
+              (e/with-cycle* first [edits (e/amb)]
+                (e/Filter some?
+                  (TodoMVC-UI db state edits)))
               (Diagnostics db state))))))
 
     (dom/footer (dom/props {:class "info"})
