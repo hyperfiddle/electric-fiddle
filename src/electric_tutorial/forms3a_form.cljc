@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service PendingController]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service PendingController]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]))
 
 #?(:clj (def !conn))
@@ -16,7 +16,7 @@
 (e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "transactional form"))
     (let [{:keys [user/str1 user/num1 user/bool1] :as m} (Query-record db id edits)]
-      (Form ; buffer and batch edits into an atomic form
+      (Form! ; buffer and batch edits into an atomic form
         (dom/dl
           (e/amb ; concurrent field edits (which get us field dirty state).
             ; if we used e.g. a vector/map aggregator like before, we'd need

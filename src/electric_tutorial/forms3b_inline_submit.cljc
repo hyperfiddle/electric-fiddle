@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
             [electric-tutorial.forms3a-form :refer [Query-record #?(:clj !conn)]]))
 
@@ -12,17 +12,17 @@
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
-          (dom/dd (Form (Input! :user/str1 str1)
+          (dom/dd (Form! (Input! :user/str1 str1)
                     :commit (fn [{v :user/str1}]
                               [[`Str1FormSubmit id v] {id {:user/str1 v}}])))
 
           (dom/dt (dom/text "num1"))
-          (dom/dd (Form (Input! :user/num1 num1 :type "number" :parse parse-long)
+          (dom/dd (Form! (Input! :user/num1 num1 :type "number" :parse parse-long)
                     :commit (fn [{v :user/num1}]
                               [[`Num1FormSubmit id v] {id {:user/num1 v}}])))
 
           (dom/dt (dom/text "bool1"))
-          (dom/dd (Form (Checkbox! :user/bool1 bool1)
+          (dom/dd (Form! (Checkbox! :user/bool1 bool1)
                     :commit (fn [{v :user/bool1}]
                               [[`Bool1FormSubmit id v] {id {:user/bool1 v}}]))))))))
 

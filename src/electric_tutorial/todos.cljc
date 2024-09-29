@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service PendingController]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service PendingController]]
             [hyperfiddle.input-zoo0 :refer
              [Input! Checkbox! InputSubmitCreate!]]))
 
@@ -30,12 +30,12 @@
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
   (dom/li #_(dom/props {:style {:background-color (when pending "yellow")}}) ; pending at collection level
     (e/amb
-      (Form (Checkbox! :task/status (= :done status))
+      (Form! (Checkbox! :task/status (= :done status))
         :commit (fn [{v :task/status}]
                   [[`Toggle id (if v :done :active)]
                    {id (-> m (dissoc ::pending) (assoc :task/status v))}])
         :show-buttons false :auto-submit true)
-      (Form (Input! :task/description description :token pending)
+      (Form! (Input! :task/description description :token pending)
         :commit (fn [{v :task/description}]
                   [[`Edit-todo-desc id v] {id (assoc m :task/description v)}])
         :show-buttons false))))
