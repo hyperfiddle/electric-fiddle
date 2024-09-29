@@ -15,18 +15,18 @@
 
 (e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "transactional form"))
-    (let [{:keys [user/str1 user/num1 user/bool1]} (Query-record db id edits)]
+    (let [{:keys [user/str1 user/num1 user/bool1] :as m} (Query-record db id edits)]
       (Form ; buffer and batch edits into an atomic form
         (dom/dl
           (e/amb ; concurrent field edits (which get us field dirty state).
             ; if we used e.g. a vector/map aggregator like before, we'd need
             ; circuit controls and therefore lose field dirty state.
-            (dom/dt (dom/text "str1")) (dom/dd (Input! str1 :parse #(hash-map :a %))) ; gross identity per edit
-            (dom/dt (dom/text "num1")) (dom/dd (Input! num1 :type "number" :parse #(hash-map :b (parse-long %))))
-            (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! bool1 :parse #(hash-map :c %)))))
-        :commit (fn [dirty-vs guess]
-                  (let [{:keys [a b c] :or {a str1 b num1 c bool1}} (apply merge dirty-vs)]
-                    [[`UserFormSubmit id a b c] guess]))
+            (dom/dt (dom/text "str1")) (dom/dd (Input! :user/str1 str1))
+            (dom/dt (dom/text "num1")) (dom/dd (Input! :user/num1 num1 :type "number" :parse parse-long))
+            (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! :user/bool1 bool1))))
+        :commit (fn [dirty-form]
+                  (let [{:keys [user/str1 user/num1 user/bool1] :as m} (merge m dirty-form)]
+                    [[`UserFormSubmit id str1 num1 bool1] {id m}]))
         :debug true))))
 
 (e/defn UserFormSubmit [id str1 num1 bool1]

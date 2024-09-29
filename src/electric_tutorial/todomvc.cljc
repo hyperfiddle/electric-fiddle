@@ -5,7 +5,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.cqrs0 :as cqrs :refer [Form Service]]
             [hyperfiddle.input-zoo0 :refer
-             [Input! Checkbox! InputSubmitCreate! Button!]]))
+             [Input! Input Checkbox! InputSubmitCreate! Button!]]))
 
 #?(:clj
    (defn query-todos [db filter]
@@ -60,11 +60,11 @@
                             (when (= id (::editing state)) "editing")]})
         (dom/div (dom/props {:class "view"})
           (e/amb
-            (Form (Checkbox! (= :done status) :class "toggle" :parse #(hash-map 0 %))
-              :commit (fn [dirties]
-                        (let [{v 0} (apply merge dirties)
-                              status (case v true :done, false :active, nil)]
-                          [[`Toggle id status] {}]))
+            (Form (Checkbox! :task/status (= :done status) :class "toggle")
+              :commit (fn [{v :task/status}]
+                        (let [status (case v true :done, false :active, nil)]
+                          [[`Toggle id status] {id {:task/status status
+                                                    :task/description description}}]))
               :show-buttons false :auto-submit true)
             (dom/label (dom/text description)
               (e/for [[t _] (dom/On-all "dblclick" (constantly true))]
@@ -72,11 +72,9 @@
                 [t [`Editing-item id] {}]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
-            (Form (Input! description :class "edit" :autofocus true :parse #(hash-map 0 %))
-              :commit (fn [dirties]
-                        (let [{v 0} (apply merge dirties)]
-                          [[`Edit-todo-desc id v] {}]))
-              :discard `[[Cancel-todo-edit-desc] {}] ; does guess need the dirties?
+            (Form (Input! :task/description description :class "edit" :autofocus true)
+              :commit (fn [{v :task/description}] [[`Edit-todo-desc id v] {id {:task/description v}}])
+              :discard `[[Cancel-todo-edit-desc] {id {}}] ; todo guess :retractEntity
               :show-buttons false)))
         (Button! [`Delete-todo id] :class "destroy"))))) ; missing prediction
 
@@ -89,13 +87,12 @@
       (e/amb
         (let [active (e/server (todo-count db :active))
               all    (e/server (todo-count db :all))
-              done   (e/server (todo-count db :done))]
-          (Form (Checkbox! (cond (= all done) true (= all active) false :else nil)
-                  :class "toggle-all" :parse #(hash-map 0 %))
-            :commit (fn [dirties]
-                      (let [{v 0} (apply merge dirties)
-                            status (case v (true nil) :done, false :active)]
-                        [[`Toggle-all status] {}]))
+              done   (e/server (todo-count db :done))
+              toggle-all (cond (= all done) true (= all active) false :else nil)]
+          (Form (Checkbox! ::toggle-all toggle-all :class "toggle-all")
+            :commit (fn [{v ::toggle-all}]
+                      (let [status (case v (true nil) :done, false :active)]
+                        [[`Toggle-all status] nil])) ; no prediction, no entity id, not database state
             :auto-submit true :show-buttons false))
         (dom/label (dom/props {:for "toggle-all"}) (dom/text "Mark all as complete"))
         (dom/ul (dom/props {:class "todo-list"})
@@ -107,7 +104,7 @@
     #_(Form :show-buttons false) ; todo?
     (e/for [[t v] (InputSubmitCreate! :class "new-todo input-load-mask"
                     :placeholder "What needs to be done?")]
-      [t [`Create-todo v] {}])))
+      [t [`Create-todo v] {t {:task/description v, :task/status :active}}])))
 
 (e/defn TodoMVC-UI [db state edits]
   (dom/section (dom/props {:class "todoapp"})
@@ -124,10 +121,12 @@
     (dom/dt (dom/text "count :all")) (dom/dd (dom/text (pr-str (e/server (todo-count db :all)))))
     (dom/dt (dom/text "query :all")) (dom/dd (dom/text (pr-str (e/server (query-todos db :all)))))
     (dom/dt (dom/text "state")) (dom/dd (dom/text (pr-str (update-keys state unqualify))))
-    (dom/dt (dom/text "delay")) (dom/dd (e/amb (Input! (::delay state)
-                                                 :parse (fn [v] [`Set-delay (parse-long v)]) ; can bypass form bc no dirty|retry state
-                                                 :type "number" :step 1 :min 0
-                                                 :style {:width :min-content})
+    (dom/dt (dom/text "delay")) (dom/dd (e/amb (Form ; dumb wrapper, Input! must be wrapped now to unpack field kvs
+                                                 (Input! ::delay (::delay state)
+                                                   :type "number" :step 1 :min 0 :parse parse-long
+                                                   :style {:width :min-content})
+                                                 :commit (fn [{v ::delay}] [[`Set-delay v] nil])
+                                                 :auto-submit true :show-buttons false)
                                           (dom/text " ms")))))
 
 (e/defn Transact! [!conn delay tx]

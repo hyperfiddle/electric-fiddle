@@ -30,16 +30,14 @@
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
   (dom/li #_(dom/props {:style {:background-color (when pending "yellow")}}) ; pending at collection level
     (e/amb
-      (Form (Checkbox! (= :done status) :parse #(hash-map 0 %))
-        :commit (fn [dirties]
-                  (let [{v 0} (apply merge dirties)]
-                    [[`Toggle id (if v :done :active)]
-                     {id (-> m (dissoc ::pending) (assoc :task/status v))}]))
+      (Form (Checkbox! :task/status (= :done status))
+        :commit (fn [{v :task/status}]
+                  [[`Toggle id (if v :done :active)]
+                   {id (-> m (dissoc ::pending) (assoc :task/status v))}])
         :show-buttons false :auto-submit true)
-      (Form (Input! description :token pending :parse #(hash-map 0 %))
-        :commit (fn [dirties]
-                  (let [{v 0} (apply merge dirties)]
-                    [[`Edit-todo-desc id v] {id (assoc m :task/description v)}]))
+      (Form (Input! :task/description description :token pending)
+        :commit (fn [{v :task/description}]
+                  [[`Edit-todo-desc id v] {id (assoc m :task/description v)}])
         :show-buttons false))))
 
 (e/defn TodoList [db edits]

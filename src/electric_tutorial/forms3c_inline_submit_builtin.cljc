@@ -14,24 +14,21 @@
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
-          (dom/dd (Form (Input! str1 :parse #(hash-map 0 %))
-                    :commit (fn [dirtys]
-                              (let [{v 0} (apply merge dirtys)]
-                                [[`Str1FormSubmit id v] {}]))
+          (dom/dd (Form (Input! :user/str1 str1)
+                    :commit (fn [{v :user/str1}]
+                              [[`Str1FormSubmit id v] {id {:user/str1 v}}])
                     :show-buttons false))
 
           (dom/dt (dom/text "num1"))
-          (dom/dd (Form (Input! num1 :type "number" :parse #(hash-map 0 (parse-long %)))
-                    :commit (fn [dirtys]
-                              (let [{v 0} (apply merge dirtys)]
-                                [[`Num1FormSubmit id v] {}]))
+          (dom/dd (Form (Input! :user/num1 num1 :type "number" :parse parse-long)
+                    :commit (fn [{v :user/num1}]
+                              [[`Num1FormSubmit id v] {id {:user/num1 v}}])
                     :show-buttons false))
 
           (dom/dt (dom/text "bool1"))
-          (dom/dd (Form (Checkbox! bool1 :parse #(hash-map 0 %))
-                    :commit (fn [dirtys]
-                              (let [{v 0} (apply merge dirtys)]
-                                [[`Bool1FormSubmit id v] {}]))
+          (dom/dd (Form (Checkbox! :user/bool1 bool1)
+                    :commit (fn [{v :user/bool1}]
+                              [[`Bool1FormSubmit id v] {id {:user/bool1 v}}])
                     :show-buttons false)))))))
 
 (e/defn Forms3c-inline-submit-builtin []
