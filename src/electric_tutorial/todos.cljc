@@ -59,19 +59,17 @@
 ;;             [::edit-todo-desc id desc] [{:db/id id :task/description desc}]
 ;;             :else nil)))
 
-(defn expand-tx-effects [form]
+(defn expand-tx-effects [!conn form]
   (->> (group-by first form) ; TodoMVC does not have any batch forms, no need to group - todo
-    (mapcat (fn [[cmd xs]]
+    (mapcat (fn [[cmd xargs]]
               (letfn [(create-todo [[_ desc tempid]] [{:task/description desc, :task/status :active}])
                       (toggle [[_ e status]] [{:db/id e, :task/status status}])
-                      (edit-todo-desc [[id desc]] [{:db/id id :task/description desc}])]
+                      (edit-todo-desc [[_ id desc]] [{:db/id id :task/description desc}])]
                 (let [f (get {::create-todo create-todo
                               ::toggle toggle
                               ::edit-todo-desc edit-todo-desc} cmd)
-                      tx (into [] (mapcat f) xs)]
-                  [[#?(:clj d/transact! :cljs nil) tx]])
-                nil nil ; flatten out
-                [[cmd xs]])))))
+                      tx (into [] (mapcat f) xargs)]
+                  [[#?(:clj (partial d/transact! !conn) :cljs nil) tx]]))))))
 
 #?(:clj (def !conn (doto (d/create-conn {})
                      (d/transact!
@@ -81,7 +79,7 @@
 
 (e/defn Todos []
   (let [db (e/server (e/watch !conn))]
-    (Service (e/server (identity expand-tx-effects))
+    (Service (e/server (identity (partial expand-tx-effects !conn)))
       (e/with-cycle* first [edits (e/amb)]
         (e/Filter some?
           (TodoList db edits))))))

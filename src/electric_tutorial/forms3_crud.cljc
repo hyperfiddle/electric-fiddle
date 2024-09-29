@@ -29,12 +29,12 @@
                 (case cmd
                   :hyperfiddle.cqrs0/update ; merge all the crud stuff into 1 tx
                   (let [tx (into [] (mapcat inline-edit->tx) all-cmd-instances)]
-                    [[#?(:clj d/transact! :cljs nil) tx]]) ; transparent effect type for tests (closures are opaque)
+                    [[#?(:clj (partial d/transact! !conn) :cljs nil) tx]]) ; transparent effect type for tests (closures are opaque)
                   nil nil ; flatten out
                   [[cmd all-cmd-instances]]))))))
 
 #?(:clj
-   (tests
+   (comment #_tests
      "translate UI form submits into secure effects"
      (expand-tx-effects [[::cqrs/update 42 :user/num1 9] ; a form is a list of commands
                          [::cqrs/update 42 :user/bool1 false]

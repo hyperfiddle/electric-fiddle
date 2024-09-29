@@ -48,7 +48,7 @@
           (dom/button (dom/props {:class "clear-completed"})
             (dom/text "Clear completed " done)
             (e/for [[t _] (dom/On-all "click" (constantly true))]
-              [t [`Clear-completed]])))))))
+              [t [`Clear-completed] {}])))))))
 
 (e/defn TodoItem [db state id]
   (let [!e (e/server (d/entity db id))
@@ -63,18 +63,18 @@
             (Form
               (e/for [[t v] (Checkbox! (= :done status) :class "toggle")]
                 (let [status (case v true :done, false :active, nil)]
-                  [t #_[] [`Toggle id status]]))
+                  [t [`Toggle id status] {}]))
               :show-buttons false :auto-submit true)
             (dom/label (dom/text description)
               (e/for [[t _] (dom/On-all "dblclick" (constantly true))]
-                [t [`Editing-item id]]))))
+                [t [`Editing-item id] {}]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
             (Form (e/for [[t v] (Input! description :class "edit" :autofocus true)]
-                    [t [`Edit-todo-desc id v]])
-              :discard `[Cancel-todo-edit-desc]
+                    [t [`Edit-todo-desc id v] {}])
+              :discard `[[Cancel-todo-edit-desc] {}]
               :show-buttons false)))
-        (Button! [`Delete-todo id] :class "destroy")))))
+        (Button! [`Delete-todo id] :class "destroy"))))) ; missing prediction
 
 (e/defn Query-todos [db filter]
   (e/server (e/diff-by identity (sort (query-todos db filter)))))
@@ -90,7 +90,7 @@
             (e/for [[t v] (Checkbox! (cond (= all done) true (= all active) false :else nil)
                             :class "toggle-all")]
               (let [status (case v (true nil) :done, false :active)]
-                [t [`Toggle-all status]]))
+                [t [`Toggle-all status] {}]))
             :auto-submit true :show-buttons false))
         (dom/label (dom/props {:for "toggle-all"}) (dom/text "Mark all as complete"))
         (dom/ul (dom/props {:class "todo-list"})
@@ -101,7 +101,7 @@
   (dom/span (dom/props {:class "input-load-mask"})
     (e/for [[t v] (InputSubmitCreate! :class "new-todo input-load-mask"
                     :placeholder "What needs to be done?")]
-      [t [`Create-todo v]])))
+      [t [`Create-todo v] {}])))
 
 (e/defn TodoMVC-UI [db state]
   (dom/section (dom/props {:class "todoapp"})
@@ -126,9 +126,9 @@
                                           (dom/text " ms")))))
 
 (e/defn Slow-transact [delay !conn tx]
-  (e/server (e/Offload #(try (Thread/sleep delay) (assert false "die") (d/transact! !conn tx) ::ok
+  (e/server (e/Offload #(try (Thread/sleep delay) #_(assert false "die") (d/transact! !conn tx) ::ok
                           (catch InterruptedException _) ; never seen
-                          (catch Throwable _ ::fail)))))
+                          (catch Throwable e (doto ::fail (prn e)))))))
 
 (def Transact! nil)
 (def db nil)
@@ -141,7 +141,7 @@
 
 (e/defn Toggle [id status]
   (e/client (case (e/server (Transact! [{:db/id id, :task/status status}]))
-              ::ok (swap! !state assoc ::editing nil)
+              ::ok (do (swap! !state assoc ::editing nil) ::ok)
               ::fail)))
 
 (e/defn Toggle-all [status]
