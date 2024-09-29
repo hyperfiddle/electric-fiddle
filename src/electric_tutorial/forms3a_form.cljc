@@ -19,10 +19,9 @@
             (dom/dt (dom/text "str1")) (dom/dd (Input! str1 :parse #(hash-map :a %))) ; gross identity per edit
             (dom/dt (dom/text "num1")) (dom/dd (Input! num1 :type "number" :parse #(hash-map :b (parse-long %))))
             (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! bool1 :parse #(hash-map :c %)))))
-        :commit (fn [dirtys]
-                  (let [{:keys [a b c]
-                         :or {a str1 b num1 c bool1}} (apply merge dirtys)]
-                    [[`UserFormSubmit id a b c] {}]))
+        :commit (fn [dirty-vs guess]
+                  (let [{:keys [a b c] :or {a str1 b num1 c bool1}} (apply merge dirty-vs)]
+                    [[`UserFormSubmit id a b c] guess]))
         :debug true))))
 
 (e/defn UserFormSubmit [id str1 num1 bool1]
