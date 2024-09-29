@@ -13,3 +13,6 @@
 [submodule "heroicons-electric"]
 	path = vendor/heroicons-electric
 	url = https://github.com/hyperfiddle/heroicons-electric
+[submodule "vendor/hyperfiddle"]
+	path = vendor/hyperfiddle
+	url = git@github.com:hyperfiddle/hyperfiddle.git
