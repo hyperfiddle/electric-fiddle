@@ -190,8 +190,9 @@
     (binding [!state (atom state0)]
       (binding [state (e/watch !state)]
         (binding [db (e/server (e/watch !conn))
-                  Transact! (e/server (e/Partial Transact! !conn (e/client (::delay state))))]
-          (Service (Effects)
+                  Transact! (e/server (e/Partial Transact! !conn (e/client (::delay state))))
+                  cqrs/*effects* (Effects)]
+          (Service
             (e/amb
               (e/with-cycle* first [edits (e/amb)]
                 (e/Filter some?

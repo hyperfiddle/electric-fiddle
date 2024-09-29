@@ -2,15 +2,20 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form Service PendingController]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]))
 
 #?(:clj (def !conn))
 
-(e/defn UserForm [db id]
+(e/defn Query-record [db id edits]
+  (e/client
+    #_(PendingController1 nil nil edits)
+    #_(Service edits) ; rebind transact to with, db must escape
+    (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id)))))
+
+(e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "transactional form"))
-    (let [{:keys [user/str1 user/num1 user/bool1]}
-          (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id)))]
+    (let [{:keys [user/str1 user/num1 user/bool1]} (Query-record db id edits)]
       (Form ; buffer and batch edits into an atomic form
         (dom/dl
           (e/amb ; concurrent field edits (which get us field dirty state).
@@ -32,6 +37,8 @@
                     (catch Exception e (doto ::fail (prn 'UserFormSubmit e))))))))
 
 (e/defn Forms3a-form []
-  (let [db (e/server (e/watch !conn))]
-    (Service {`UserFormSubmit UserFormSubmit}
-      (UserForm db 42))))
+  (binding [cqrs/*effects* {`UserFormSubmit UserFormSubmit}]
+    (let [db (e/server (e/watch !conn))]
+      (Service
+        (e/with-cycle* first [edits (e/amb)]
+          (UserForm db 42 edits))))))

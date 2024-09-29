@@ -83,10 +83,11 @@
 
 (e/defn Todos []
   (e/client
-    (let [db (e/server (e/watch !conn))]
-      (Service {`Create-todo Create-todo
-                `Edit-todo-desc Edit-todo-desc
-                `Toggle Toggle}
-        (e/with-cycle* first [edits (e/amb)]
-          (e/Filter some?
-            (TodoList db edits)))))))
+    (binding [cqrs/*effects* {`Create-todo Create-todo
+                              `Edit-todo-desc Edit-todo-desc
+                              `Toggle Toggle}]
+      (let [db (e/server (e/watch !conn))]
+        (Service
+          (e/with-cycle* first [edits (e/amb)]
+            (e/Filter some?
+              (TodoList db edits))))))))

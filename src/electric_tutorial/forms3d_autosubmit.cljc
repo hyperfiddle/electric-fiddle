@@ -1,17 +1,15 @@
 (ns electric-tutorial.forms3d-autosubmit
-  (:require #?(:clj [datascript.core :as d])
-            [hyperfiddle.electric3 :as e]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.cqrs0 :as cqrs :refer [Form Service]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]
-            [electric-tutorial.forms3a-form :refer [#?(:clj !conn)]]
+            [electric-tutorial.forms3a-form :refer [Query-record #?(:clj !conn)]]
             [electric-tutorial.forms3b-inline-submit :refer
              [Str1FormSubmit Num1FormSubmit Bool1FormSubmit]]))
 
-(e/defn UserForm [db id]
+(e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "transactional fields with autosubmit"))
-    (let [{:keys [user/str1 user/num1 user/bool1]}
-          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
+    (let [{:keys [user/str1 user/num1 user/bool1]} (Query-record db id edits)]
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
@@ -36,8 +34,10 @@
                     :auto-submit true :show-buttons false)))))))
 
 (e/defn Forms3d-autosubmit []
-  (let [db (e/server (e/watch !conn))]
-    (Service {`Str1FormSubmit Str1FormSubmit
-              `Num1FormSubmit Num1FormSubmit
-              `Bool1FormSubmit Bool1FormSubmit}
-      (UserForm db 42))))
+  (binding [cqrs/*effects* {`Str1FormSubmit Str1FormSubmit
+                            `Num1FormSubmit Num1FormSubmit
+                            `Bool1FormSubmit Bool1FormSubmit}]
+    (let [db (e/server (e/watch !conn))]
+      (Service
+        (e/with-cycle* first [edits (e/amb)]
+          (UserForm db 42 edits))))))
