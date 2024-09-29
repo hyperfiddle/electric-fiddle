@@ -59,24 +59,26 @@
                         {:task/description "buy milk" :task/status :active}
                         {:task/description "call mom" :task/status :active}]))))
 
+#?(:clj (defn slow-transact! [!conn tx] (Thread/sleep 1000) (d/transact! !conn tx)))
+
 (e/defn Create-todo [tempid desc]
   (e/server
     (let [tx [{:task/description desc, :task/status :active}]]
-      (e/Offload #(try (d/transact! !conn tx) (doto ::cqrs/ok (prn `Create-todo))
+      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Create-todo))
                     (catch Exception e (doto ::fail (prn e))))))))
 
 (e/defn Edit-todo-desc [id desc]
   (e/server
     (let [tx [{:db/id id :task/description desc}]]
       (prn 'EditTodoDesc tx)
-      (e/Offload #(try (d/transact! !conn tx) (doto ::cqrs/ok (prn `Edit-todo-desc))
+      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Edit-todo-desc))
                     (catch Exception e (doto ::fail (prn e))))))))
 
 (e/defn Toggle [id status]
   ;; (prn 'Toggle id status) (e/server (prn 'Toggle id status))
   (e/server
     (let [tx [{:db/id id, :task/status status}]]
-      (e/Offload #(try (d/transact! !conn tx) (doto ::cqrs/ok (prn `Toggle))
+      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Toggle))
                     (catch Exception e (doto ::fail (prn e))))))))
 
 (e/defn Todos []
