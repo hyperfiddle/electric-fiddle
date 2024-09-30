@@ -49,8 +49,9 @@
 
 (def tutorials
   [["Basics"
-    [`TwoClocks
-     `DirTree
+    [`TwoClocks ; hello world
+     `SystemProperties ; simple query/view topology
+     `DirTree ; complex topology
      `Temperature
      `Toggle
      `Counter
@@ -78,7 +79,7 @@
    ["Misc"
     [#_`DirectoryExplorer
      `SVG
-     `SystemProperties
+
      #_`ReagentInterop
      `Timer
      #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
@@ -130,6 +131,7 @@
 
 (e/defn Fiddles []
   {`TwoClocks TwoClocks
+   `SystemProperties SystemProperties
    `DirTree DirTree
    `Temperature Temperature
    `Lifecycle Lifecycle
@@ -158,7 +160,7 @@
 
    ; Kitchen Sink
    `Timer Timer
-   `SystemProperties SystemProperties
+
    `SVG SVG
    ;`ReagentInterop ReagentInterop
    })

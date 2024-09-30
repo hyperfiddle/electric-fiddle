@@ -1,6 +1,8 @@
 # System Properties
 
-A larger example of a HTML table backed by a server-side query. Type into the input and see the query update live.
+* A larger example of a HTML table backed by a server-side query.
+* Type into the input and see the query update live.
+* Goal here is to understand client/server data flow in a simple query/view topology.
 
 !fiddle-ns[](electric-tutorial.system-properties/SystemProperties)
 
