@@ -47,7 +47,7 @@
         (dom/div (dom/props {:class "user-examples"})
           (dom/fieldset
             (dom/props {:class "user-examples-code"})
-            (dom/legend (dom/text "Code"))
+            (dom/legend (dom/text (namespace target)))
             (CodeMirror {:parent dom/node :readonly true} identity identity src)))))))
 
 (e/defn Fiddle [& [target-s ?wrap :as route]] ; direct fiddle link http://localhost:8080/electric-fiddle.fiddle!Fiddle/dustingetz.y-fib!Y-fib
