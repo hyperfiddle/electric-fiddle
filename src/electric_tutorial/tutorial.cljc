@@ -128,54 +128,6 @@
             (dom/props {:class "user-examples-nav-next"})
             (dom/text (str (title next) " >"))))))))
 
-(def tutorial-path "src/electric_tutorial/")
-
-(def essays
-  {`TwoClocks "two_clocks.md"
-   `DirTree "dir_tree.md"
-   `Temperature "temperature.md"
-   `Lifecycle "lifecycle.md"
-   `Webview1 "webview1.md"
-   `Webview2 "webview2.md"
-   `FizzBuzz "fizzbuzz.md"
-   `Toggle "toggle.md"
-   `Counter "counter.md"
-   `Chat "chat.md"
-   `ChatMonitor "chat_monitor.md"
-   `Backpressure "backpressure.md"
-
-   ; Part 2
-   `Forms5 "forms5.md"
-   `Todos "todos.md"
-   `Crud "crud.md"
-   `TodoMVC "todomvc.md"
-   `TodoMVC-composed "todomvc_composed.md"
-
-   ; Part 3
-   ; Typeahead
-   ; webview dynamoic with typeahead
-
-
-   ; idioms
-   ; file-watcher
-   ; nested-documents
-
-   ;; demos
-   `Timer "timer.md"
-   `CRUD "crud-7guis.md"
-   ; webview-scroll
-   ; waveform
-   ; painter
-   ; directory explorer
-   `SVG "svg.md"
-   ; color picker
-   ; fizzbuzz
-
-   ;; unused
-   ;`ReagentInterop ""
-   ;`SystemProperties "system_properties.md"
-   })
-
 (e/defn Fiddles []
   {`TwoClocks TwoClocks
    `DirTree DirTree
@@ -220,6 +172,14 @@
         nil)
     link))
 
+(defn namespace-name [qualified-symbol]
+  (some-> qualified-symbol namespace
+    (clojure.string/split #"\.") last
+    (clojure.string/replace "-" "_")))
+(comment (namespace-name `Forms3a-form) := "forms3a_form")
+
+(def tutorial-path "src/electric_tutorial/")
+
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
@@ -229,7 +189,7 @@
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
       (binding [hf/pages ($ Fiddles)]
         ($ Nav ?tutorial false)
-        (if-some [essay-filename (get essays ?tutorial (str (name ?tutorial) ".md"))]
+        (if-some [essay-filename (str (namespace-name ?tutorial) ".md")]
           ($ Custom-markdown ($ Fiddle-markdown-extensions) (str tutorial-path essay-filename))
           (dom/h1 (dom/text "Tutorial not found: " ?tutorial)))
         #_($ Nav ?tutorial true)))))
