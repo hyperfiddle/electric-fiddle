@@ -8,17 +8,17 @@
 (defn c->f [c] (+ (* c (/ 9 5)) 32))
 (defn f->c [f] (* (- f 32) (/ 5 9)))
 
-(defn random-writer [!t]
-  (m/sp (loop [] (m/? (m/sleep 1000)) (reset! !t (rand-int 40)) (recur))))
+(def random-writer (m/ap (m/amb 0 (loop [] (m/? (m/sleep 1000))
+                                    (m/amb (rand-int 40) (recur))))))
 
 (e/defn Temperature []
-  (let [!v (atom 0), v (e/watch !v)]     ; recursive binding via atom
-    (e/Task (random-writer !v))          ; concurrent writer
-    (prn 'v v)
+  (let [!v (atom 0) v (e/watch !v)]
+    (prn 'v v) ; see console
+    (reset! !v (e/input random-writer)) ; concurrent writer
     (dom/dl
       (dom/dt (dom/text "Celsius"))
       (dom/dd (some->> (Input (round v) :type "number")
-                not-empty parse-long (reset! !v))) ; loop v
+                not-empty parse-long (reset! !v))) ; cycle
       (dom/dt (dom/text "Fahrenheit"))
       (dom/dd (some->> (Input (round (c->f v)) :type "number")
-                not-empty parse-long f->c long (reset! !v)))))) ; loop v
+                not-empty parse-long f->c long (reset! !v)))))) ; cycle
