@@ -1,6 +1,7 @@
 # Two Clocks
 
-The easiest way to understand Electric is **streaming lexical scope**. Here, the server clock is streamed to the client.
+* The easiest way to understand Electric is **streaming lexical scope**.
+* Here, the server clock is streamed to the client.
 
 !fiddle-ns[](electric-tutorial.two-clocks/TwoClocks)
 
@@ -11,7 +12,13 @@ What's happening
 * When a clock updates, the **reactive** view incrementally recomputes to stay consistent, keeping the DOM in sync with the clocks. Both the frontend and backend parts of the function are reactive.
 * The expression is **multi-tier** (i.e, full-stack): it has frontend parts and backend parts, which are developed together in a single programming language and compilation unit. See [Multitier programming (wikipedia)](https://en.wikipedia.org/wiki/Multitier_programming)
 * The Electric compiler infers the backend/frontend boundary and transparently generates the full-stack app (concurrent client and server processes that coordinate).
-* Network "data sync" is automatic and invisible.
+
+**Network "data sync"† is automatic and invisible.**
+
+* † I do not like the framing "data sync" because it implies *synchronization*, i.e. the reconciliation of two separate mutable stores which have conflicting views as to what is true. This is not how Electric works!
+* Electric uses a split authority model: the client and server programs have full individual authority over the result of their respective computations, and they broadcast to each other the outcomes of any control flow that the other site needs to know.
+* As such, there can never be a conflict. The client is the actual authority over the state of the client, and the server is the actual authority as to the state of the server.
+* Any lagged messages (e.g., that may be downstream of a stale state) are simply discarded as no longer relevant, and when the lagged site catches up, any stale resource allocations are cancelled and reclaimed.
 
 Syntax
 

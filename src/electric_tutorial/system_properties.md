@@ -2,7 +2,7 @@
 
 * A larger example of a HTML table backed by a server-side query.
 * Type into the input and see the query update live.
-* Goal here is to understand client/server data flow in a simple query/view topology.
+* Goal here is to understand basic client/server data flow in a simple query/view topology.
 
 !fiddle-ns[](electric-tutorial.system-properties/SystemProperties)
 
@@ -14,18 +14,25 @@ What's happening
 * There's a reactive for loop to render the table.
 * The view code deeply nests client and server calls, arbitrarily, even through loops.
 
-Novel forms
+Ordinary Clojure/Script functions work
+* `clojure.core/defn` works as it does in Clojure/Script, it's still a normal blocking function and is opaque to Electric. Electric does not mess with the `clojure.core/defn` macro.
+* **query can be any function**: return collections, SQL resultsets, whatever
 
-* `ui/input`: a text input control with "batteries included" loading/syncing state.
+direct query/view composition
+* `jvm-system-properties`, a server function, composes directly with the frontend DOM table.
+* Thus unifying your code into one paradigm, promoting readability, and making it easier to craft complex interactions between client and server components, maintain and refactor them.
+
+e/for, e/diff-by
+
+* The table rows are renderered by a for loop. Reactive loops are efficient and recompute branches only precisely when needed.
 * `e/for-by`: a reactive map operator, stabilized to bind each child branch state (e.g. DOM element) to an entity in the collection by id (provided by userland fn - similar to [React.js key](https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js/43892905#43892905)).
 
-Key ideas
+Simple free text input
+* todo
+* cycle by side effect
 
-* **ordinary Clojure/Script functions**: `clojure.core/defn` works as it does in Clojure/Script, it's still a normal blocking function and is opaque to Electric. Electric does not mess with the `clojure.core/defn` macro.
-* **query can be any function**: return collections, SQL resultsets, whatever
-* **direct query/view composition**: `jvm-system-properties`, a server function, composes directly with the frontend DOM table. Thus unifying your code into one paradigm, promoting readability, and making it easier to craft complex interactions between client and server components, maintain and refactor them.
-* **reactive-for**: The table rows are renderered by a for loop. Reactive loops are efficient and recompute branches only precisely when needed.
-* **network transfer can be reasoned about clearly**: values are only transferred between sites when and if they are used. The `system-props` collection is never actually accessed from a client region and therefore never escapes the server.
+
+
 
 Reactive for details
 
@@ -39,8 +46,9 @@ Reactive for details
   * As you widen the filter, rows are computed as they come back. That's because they were unmounted and discarded!
   * Quiz: Try setting an inline style "background-color: red" on element "java.class.path". When is the style retained? When is the style lost? Why?
 
-Reasoning about network transfer
+Network transfer can be reasoned about clearly
 
+* values are only transferred between sites when and if they are used. The `system-props` collection is never actually accessed from a client region and therefore never escapes the server.
 * Look at which remote scope values are closed over and accessed.
 * Only remote access is transferred. Mere *availability* in scope does not transfer.
 * In the `e/for-by`, `k` and `v` exist in a server scope, and yet are accessed from a client scope.
@@ -58,3 +66,7 @@ Network transparent composition is not the heavy, leaky abstraction you might th
 * With Electric, you can refactor across the frontend/backend boundary, all in one place, without caring about any plumbing.
   * Refactoring is an algebraic activity with local reasoning, just as it should be.
   * Functional programming without the BS
+
+FAQ: "how electric blurs the lines between client and server"
+* I don't like this wording, in our opinion the boundary in v3 is very clear
+* In fact, Electric v3 allows the programmer to draw much more intricate boundaries than ever before, Electric is a surgical tool offering tremendous precision - it is not "blurry"
