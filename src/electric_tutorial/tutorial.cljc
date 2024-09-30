@@ -191,7 +191,6 @@
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
       (binding [hf/pages ($ Fiddles)]
         ($ Nav ?tutorial false)
-        (if-some [essay-filename (str (namespace-name ?tutorial) ".md")]
-          ($ Custom-markdown ($ Fiddle-markdown-extensions) (str tutorial-path essay-filename))
-          (dom/h1 (dom/text "Tutorial not found: " ?tutorial)))
+        (let [essay-filename (str tutorial-path (namespace-name ?tutorial) ".md")]
+          (Custom-markdown (Fiddle-markdown-extensions) essay-filename))
         #_($ Nav ?tutorial true)))))

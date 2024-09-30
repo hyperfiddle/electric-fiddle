@@ -28,6 +28,7 @@
 
 (e/defn Custom-markdown [extensions essay-filename]
   (e/server
+    ; todo not-found
     (let [lines (second (e/diff-by first (e/Offload #(map-indexed vector (parse-sections (slurp essay-filename))))))]
       (e/for [line lines]
         (if (clojure.string/starts-with? line "!")
@@ -36,4 +37,5 @@
               (e/apply F args)
               (dom/div (dom/text "Unsupported markdown directive: " (pr-str line)))))
           (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-            (Markdown line)))))))
+            (Markdown line))))
+      #_(dom/h1 (dom/text "Tutorial not found: " essay-filename)))))
