@@ -5,12 +5,13 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service PendingController]]
             [hyperfiddle.input-zoo0 :refer
-             [Input! Checkbox! InputSubmitCreate!]]))
+             [Input! Checkbox! Button!]]))
 
-(e/defn Todo-records [db edits] ; todo field awareness
+(e/defn Todo-records [db forms] ; todo field awareness
   (e/client
-    (prn 'Todo-records 'edits (e/as-vec (second edits)))
-    (PendingController :db/id :task/description edits
+    (prn 'Todo-records 'forms (e/as-vec (second forms)))
+    (PendingController :db/id :task/description forms ; rebind transact to with, db must escape
+      #_(e/fn [db])
       (e/server
         (e/diff-by :db/id
           (e/Offload ; good reason to not require offload to have # ?
@@ -23,29 +24,47 @@
                (catch Exception e (prn e)))))))))
 
 (e/defn TodoCreate []
-  #_(Form :show-buttons false) ; todo?
-  (e/for [[t v] (InputSubmitCreate! :placeholder "Buy milk") #_(Input! "")]
-    [t [`Create-todo t v] {t {:db/id t :task/description v :task/status :active}}]))
+  (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
+    :genesis true ; immediately consume form, ready for next submit
+    :commit (fn [{v ::create} tempid]
+              [[`Create-todo tempid v] {tempid {:db/id tempid :task/description v :task/status :done}}])
+    :show-buttons true))
 
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
-  (dom/li #_(dom/props {:style {:background-color (when pending "yellow")}}) ; pending at collection level
-    (e/amb
-      (Form! (Checkbox! :task/status (= :done status))
-        :commit (fn [{v :task/status}]
-                  [[`Toggle id (if v :done :active)]
-                   {id (-> m (dissoc ::pending) (assoc :task/status v))}])
-        :show-buttons false :auto-submit true)
-      (Form! (Input! :task/description description :token pending)
-        :commit (fn [{v :task/description}]
-                  [[`Edit-todo-desc id v] {id (assoc m :task/description v)}])
-        :show-buttons false))))
+  (dom/li
+    (Form!
+      (e/amb
+        (Form! (Checkbox! :task/status (= :done status) :token pending)
+          :name ::toggle
+          :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
+                                          {id (-> m (dissoc ::pending) (assoc :task/status v))}])
+          :show-buttons false :auto-submit true)
+        (Form! (Input! :task/description description :token pending)
+          :name ::edit-desc
+          :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
+                                               {id (assoc m :task/description v)}])
+          :show-buttons false)
+        (Form! (Button! ::_ :class "destroy" :disabled (some? pending))
+          :name ::destroy :auto-submit true :show-buttons false
+          :commit (fn [{_ ::destroy}] [[`Delete-todo id] {id ::cqrs/retract}]))
+        (Form! (e/watch pending) :name ::create :auto-submit true :show-buttons true))
+      :auto-submit false :show-buttons true
+      :commit (fn [{:keys [::toggle ::edit-desc ::create ::destroy]} dirty-form-guess]
+                [[`Batch toggle edit-desc create destroy] dirty-form-guess]
+                #_(let [[_ id status] toggle
+                        [_ id v] create
+                        [_ id v'] edit-desc
+                        [_ id] destroy]
+                    (cond
+                      (and create destroy) nil #_[nil dirty-form-guess]
+                      (and create edit) [[`Create-todo (or v' v)] dirty-form-guess]))))))
 
-(e/defn TodoList [db edits]
+(e/defn TodoList [db forms]
   (dom/div (dom/props {:class "todo-list"})
-    (let [todos (Todo-records db edits)]
+    (let [forms' (TodoCreate) ; transfer responsibility to pending item form
+          todos (Todo-records db (e/amb forms forms'))]
       (prn 'todos (e/as-vec todos))
       (e/amb
-        (TodoCreate)
         (dom/ul (dom/props {:class "todo-items"})
           (e/for [m todos]
             (TodoItem m)))
@@ -79,13 +98,18 @@
       (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Toggle))
                     (catch Exception e (doto ::fail (prn e))))))))
 
+(e/defn Batch [& forms]
+  (prn 'Batch forms)
+  #_(doseq [form forms] (Service form)))
+
 (e/defn Todos []
   (e/client
     (binding [cqrs/*effects* {`Create-todo Create-todo
                               `Edit-todo-desc Edit-todo-desc
-                              `Toggle Toggle}]
+                              `Toggle Toggle
+                              `Batch Batch}]
       (let [db (e/server (e/watch !conn))]
         (Service
-          (e/with-cycle* first [edits (e/amb)]
+          (e/with-cycle* first [forms (e/amb)]
             (e/Filter some?
-              (TodoList db edits))))))))
+              (TodoList db forms))))))))
