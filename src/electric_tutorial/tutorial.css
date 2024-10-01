@@ -13,7 +13,10 @@
 .user-examples-target input[aria-invalid="true"] { outline: 3px pink solid; }
 .user-examples-target input[type="checkbox"][aria-invalid="true"]:focus { outline: 4px pink solid; }
 
-.user-examples-target form{ /* padding: 0.2rem; */ /* so we can see background-color */}
+.user-examples-target form {
+    display: contents; /* we're nesting them */
+    /* padding: 0.2rem; */ /* so we can see background-color */
+}
 
 /* Toggle, TemperatureConverter, TodoMVC */
 .user-examples-target dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
