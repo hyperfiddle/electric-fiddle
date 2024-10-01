@@ -26,31 +26,47 @@
 (e/defn TodoCreate []
   (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
     :genesis true ; immediately consume form, ready for next submit
-    :commit (fn [{v ::create} tempid]
-              [[`Create-todo tempid v] {tempid {:db/id tempid :task/description v :task/status :done}}])
-    :show-buttons true))
+    :commit (fn [{v ::create :as dirty-form} tempid]
+              (prn 'TodoCreate-commit dirty-form)
+              [[`Create-todo tempid v] {tempid {:db/id tempid :task/description v :task/status :active}}])
+    :show-buttons true :debug true))
 
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
   (dom/li
     (Form!
       (e/amb
-        (Form! (Checkbox! :task/status (= :done status) :token pending)
+        (Form! (Checkbox! :task/status (= :done status))
           :name ::toggle
           :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
                                           {id (-> m (dissoc ::pending) (assoc :task/status v))}])
           :show-buttons false :auto-submit true)
-        (Form! (Input! :task/description description :token pending)
+        (Form! (Input! :task/description description)
           :name ::edit-desc
           :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
                                                {id (assoc m :task/description v)}])
           :show-buttons false)
-        (Form! (Button! ::_ :class "destroy" :disabled (some? pending))
+        (Form! (Button! ::_ :label "X" :class "destroy" :disabled (some? pending))
           :name ::destroy :auto-submit true :show-buttons false
           :commit (fn [{_ ::destroy}] [[`Delete-todo id] {id ::cqrs/retract}]))
-        (Form! (e/watch pending) :name ::create :auto-submit true :show-buttons true))
-      :auto-submit false :show-buttons true
-      :commit (fn [{:keys [::toggle ::edit-desc ::create ::destroy]} dirty-form-guess]
-                [[`Batch toggle edit-desc create destroy] dirty-form-guess]
+
+        (if pending
+          (let [[q cmd guess] (doto pending (prn 'pending))
+                t #_[t err] (doto (e/watch q) (prn 'q))
+                edit [t {::create '_}]]
+          ; local Form will proxy t, dirtying the outer Form
+          ; local discard will (t) to clear q
+          ; local commit will dirty outer form, note we auto-submit
+          ; outer commit will (t)
+          ; where err? well, (t err) sends err here, but local form proxied it,
+          ; so (local-ct err) sends err back to this form.
+          ; Outer form double proxies, so in fact err will go to outer.
+          ; Inner form never sees err, it stays busy until ::ok. Is that what we want?
+            (Form! edit :name ::create :auto-submit true :show-buttons true
+              :commit (fn [{v ::create}]
+                        (doto [cmd guess] (prn 'commit)))))))
+      :auto-submit false :show-buttons true :debug true
+      :commit (fn [{:keys [::toggle ::edit-desc ::create ::destroy]}]
+                (doto [[`Batch toggle edit-desc create destroy] {}] (prn 'Form-outer))
                 #_(let [[_ id status] toggle
                         [_ id v] create
                         [_ id v'] edit-desc
