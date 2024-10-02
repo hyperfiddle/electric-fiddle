@@ -63,7 +63,8 @@
           ; Inner form never sees err, it stays busy until ::ok. Is that what we want?
             (Form! edit :name ::create :auto-submit true :show-buttons true
               :commit (fn [{v ::create}]
-                        (doto [cmd guess] (prn 'commit)))))))
+                        (doto [cmd guess] (prn 'commit)))))
+          (e/amb)))
       :auto-submit false :show-buttons true :debug true
       :commit (fn [{:keys [::toggle ::edit-desc ::create ::destroy]}]
                 (doto [[`Batch toggle edit-desc create destroy] {}] (prn 'Form-outer))
