@@ -50,11 +50,11 @@
           :commit (fn [{_ ::destroy}] [[`Delete-todo id] {id ::cqrs/retract}]))
 
         (if-let [[t xcmd guess] pending]
-          [t {::create xcmd} guess] ; illegal, pending is generic?
+          [t {::pending xcmd} guess]
           (e/amb)))
       :auto-submit false :show-buttons true :debug true
-      :commit (fn [{:keys [::toggle ::edit-desc ::create ::destroy]}]
-                (doto [[`Batch toggle edit-desc create destroy] {}] (prn 'Form-outer))
+      :commit (fn [{:keys [::toggle ::edit-desc ::destroy ::pending]}]
+                (doto [[`Batch toggle edit-desc destroy pending] {}] (prn 'Form-outer))
                 #_(let [[_ id status] toggle
                         [_ id v] create
                         [_ id v'] edit-desc
