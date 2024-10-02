@@ -49,10 +49,11 @@
           :name ::destroy :auto-submit true :show-buttons false
           :commit (fn [{_ ::destroy}] [[`Delete-todo id] {id ::cqrs/retract}]))
 
+        #_(if pending pending (e/amb))
         (if pending
           (let [[q cmd guess] (doto pending (prn 'pending))
                 t #_[t err] (doto (e/watch q) (prn 'q))
-                edit [t {::create '_}]]
+                #_#_edit [t {::create '_}]]
           ; local Form will proxy t, dirtying the outer Form
           ; local discard will (t) to clear q
           ; local commit will dirty outer form, note we auto-submit
@@ -61,9 +62,9 @@
           ; so (local-ct err) sends err back to this form.
           ; Outer form double proxies, so in fact err will go to outer.
           ; Inner form never sees err, it stays busy until ::ok. Is that what we want?
-            (Form! edit :name ::create :auto-submit true :show-buttons true
-              :commit (fn [{v ::create}]
-                        (doto [cmd guess] (prn 'commit)))))
+            #_(Form! edit :name ::create :auto-submit true :show-buttons true
+                :commit (fn [{v ::create}] [cmd guess]))
+            [t cmd guess])
           (e/amb)))
       :auto-submit false :show-buttons true :debug true
       :commit (fn [{:keys [::toggle ::edit-desc ::create ::destroy]}]
