@@ -35,7 +35,7 @@
   (dom/li
     (Form!
       (e/amb
-        (Form! (Checkbox! :task/status (= :done status))
+        (Form! (Checkbox! :task/status (= :done status)) ; FIXME clicking commit button on top of autocommit generates broken doubled tx
           :name ::toggle
           :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
                                           {id (-> m (dissoc ::pending) (assoc :task/status v))}])
