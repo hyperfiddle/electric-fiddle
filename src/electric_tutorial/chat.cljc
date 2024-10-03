@@ -1,7 +1,6 @@
 (ns electric-tutorial.chat
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer [InputSubmitCreate!]]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Login [username]
   (dom/div
@@ -30,9 +29,25 @@
                                   :grid-template-columns "max-content auto" :gap "1ch"}})
         (dom/span (dom/strong (dom/text username)) (dom/text " " msg))))))
 
+(e/defn InputSubmitCreate?! ; ?! marks this as an anti-pattern, more rigorous controls upcoming
+  [& {:keys [maxlength type parse] :as props
+      :or {maxlength 100 type "text" parse identity}}]
+  (e/client
+    (dom/input (dom/props (-> props (dissoc :parse) (assoc :maxLength maxlength :type type)))
+      (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
+              (read-clear! [node] (when-some [v (read! node)] (set! (.-value node) "") v))
+              (submit! [e] (let [k (.-key e)]
+                             (cond
+                               (= "Enter" k) (parse (read-clear! (.-target e)))
+                               (= "Escape" k) (do (set! (.-value dom/node) "") nil)
+                               () nil)))]
+        (let [edits (dom/On-all "keydown" submit!)] ; concurrent pending submits
+          (dom/props {:aria-busy (pos? (e/Count edits))})
+          edits)))))
+
 (e/defn SendMessage [username]
-  (let [edits (InputSubmitCreate! :placeholder (if username "Message" "Login to chat")
-                  :maxlength 100 :disabled (nil? username))]
+  (let [edits (InputSubmitCreate?! :placeholder (if username "Message" "Login to chat")
+                :maxlength 100 :disabled (nil? username))]
     (dom/text " " (e/Count edits))
     edits))
 
@@ -54,12 +69,17 @@
     (dom/hr)
     (Channel msgs)
     (let [edits (SendMessage username)]
-      (dom/props {:style {:background-color (when (pos? (e/Count edits)) "yellow")}})
+      (prn 'edits (e/as-vec edits))
       (e/for [[t msg] edits]
-        (case (e/server
-                (let [record (->msg-record username msg)] ; secure
-                  (e/Offload #(do (send-message! record) ::ok))))
-          ::ok (t))))
+        (let [res (e/server
+                    (let [record (->msg-record username msg)] ; secure
+                      (e/Offload #(try (send-message! record) ::ok
+                                    (catch Exception e (doto ::rejected (prn e)))))))]
+          (prn 'res res)
+          (case res
+            ::ok (t) ; sentinel success value
+            ::rejected nil ; todo, need more rigorous pattern for failure handling
+            ))))
     (Login username)))
 
 (def css "
@@ -70,4 +90,7 @@
     display: flex; flex-direction: column-reverse; /* bottom up */
     height: 220px; overflow-y: clip; /* pending pushes up server records */
     padding: 0; /* remove room for bullet in grid layout */
+
 }")
+
+; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
