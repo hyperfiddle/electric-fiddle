@@ -23,6 +23,10 @@
                  (sort-by :task/description))
                (catch Exception e (prn e)))))))))
 
+; if there is a button type submit in the form, and you press enter in an input, the form will submit
+; checkboxes don't do that (don't have enter behavior - toggle with space, enter is noop), therefore you need
+; auto-submit true on the form if you want inputs to auto-submit.
+
 (e/defn TodoCreate []
   (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
     :genesis true ; immediately consume form, ready for next submit
