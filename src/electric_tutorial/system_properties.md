@@ -55,6 +55,11 @@ Network transfer can be reasoned about clearly
 * Electric tracks this and sends a stream of individual `k` and `v` updates over network.
 * The collection value `system-props` is not accessed from client scope, so Electric will not move it. Values are only moved if they are accessed.
 
+FAQ: "It seems scary that Electric blurs the lines between client and server?"
+* I reject "blurs the line", in our opinion the boundary is *precise and clear*
+* In fact, Electric v3 allows the programmer to draw much more intricate boundaries than ever before
+* Electric is a surgical tool offering *tremendous precision* - it is not "blurry"
+
 Network transparent composition is not the heavy, leaky abstraction you might think it is
 
 * The DAG representation of the program makes this simple to do
@@ -63,10 +68,4 @@ Network transparent composition is not the heavy, leaky abstraction you might th
   * Functions are an abstract mathematical object
   * Javascript already generalizes from function -> async function (`async/await`) -> generator function (`fn*/yield`)
   * Electric generalizes further: stream function -> reactive function -> distributed function
-* With Electric, you can refactor across the frontend/backend boundary, all in one place, without caring about any plumbing.
-  * Refactoring is an algebraic activity with local reasoning, just as it should be.
-  * Functional programming without the BS
-
-FAQ: "how electric blurs the lines between client and server"
-* I don't like this wording, in our opinion the boundary in v3 is very clear
-* In fact, Electric v3 allows the programmer to draw much more intricate boundaries than ever before, Electric is a surgical tool offering tremendous precision - it is not "blurry"
+* With Electric, you can refactor across the frontend/backend boundary, all in one place, without caring about any plumbing. Refactoring is an algebraic activity with local reasoning, just as it should be.
