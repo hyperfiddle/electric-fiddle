@@ -14,7 +14,7 @@
             ; Part 1
             [electric-tutorial.two-clocks :refer [TwoClocks]]
             [electric-tutorial.dir-tree :refer [DirTree]]
-            [electric-tutorial.temperature :refer [Temperature]]
+
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.webview1 :refer [Webview1]]
             [electric-tutorial.webview2 :refer [Webview2]]
@@ -26,14 +26,12 @@
             [electric-tutorial.backpressure :refer [Backpressure]]
 
             ; Part 2
-            [electric-tutorial.forms1-uncontrolled :refer [Forms1-uncontrolled]]
+            [electric-tutorial.temperature :refer [Temperature]]
+            [electric-tutorial.temperature2 :refer [Temperature2]]
             [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
             [electric-tutorial.forms3-crud :refer [Forms3-crud]]
             [electric-tutorial.forms3a-form :refer [Forms3a-form]] ; via Forms3-crud
             [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; via Forms3-crud
-            [electric-tutorial.forms3c-inline-submit-builtin :refer [Forms3c-inline-submit-builtin]] ; via Forms3-crud
-            [electric-tutorial.forms3d-autosubmit :refer [Forms3d-autosubmit]] ; via Forms3-crud
-            [electric-tutorial.forms5 :refer [Forms5]]
             #_[electric-tutorial.crud :refer [Crud]]
             [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
@@ -52,23 +50,22 @@
     [`TwoClocks ; hello world
      `SystemProperties ; simple query/view topology
      `DirTree ; complex topology
-     `Temperature
-     `Toggle
-     `Counter
-     `FizzBuzz
-     `Lifecycle
-     `Webview1
-     `Webview2
-     `Chat
-     `ChatMonitor
+     `Toggle ; token and service, multiplayer
+     `Counter ; on-all, progress, serializable lambda
+     `FizzBuzz ; differential
+     `Lifecycle ; components
+     `Webview1 ; diffs, IO encapsulation
+     `Webview2 ; abstraction, lambda demo
+     `Chat ; cookie, pending, security. InputSubmitCreate!
      `Backpressure]]
-   ["CRUD"
-    [`Forms1-uncontrolled
-     `Forms2-controlled
-     `Forms3-crud
-     `Forms5 ; create new
-     ; dubius,
-     `Todos ; dubius-create-new
+   ["Forms"
+    [`Temperature ; local form, cycle by side effect
+     `Temperature2 ; with-cycle - for ChatMonitor - and e/amb
+     `Forms2-controlled ; local form, slightly trickier usage of e/amb
+     `Forms3a-form ; transactional form
+     `Forms3b-inline-submit ; transactional fields
+     `ChatMonitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service
+     `Todos ; create-new, optimistic updates, service
      `TodoMVC
      `TodoMVC-composed]]
    ["Datagrids"
@@ -133,7 +130,6 @@
   {`TwoClocks TwoClocks
    `SystemProperties SystemProperties
    `DirTree DirTree
-   `Temperature Temperature
    `Lifecycle Lifecycle
    `Webview1 Webview1
    `Webview2 Webview2
@@ -145,16 +141,12 @@
    `Backpressure Backpressure
 
    ; Part 2
-   `Forms1-uncontrolled Forms1-uncontrolled
-   `Forms2-controlled Forms2-controlled
-   `Forms3-crud Forms3-crud
-     `Forms3a-form Forms3a-form
-     `Forms3b-inline-submit Forms3b-inline-submit
-     `Forms3c-inline-submit-builtin Forms3c-inline-submit-builtin
-     `Forms3d-autosubmit Forms3d-autosubmit
-   `Forms5 Forms5
+   `Temperature Temperature
+   `Temperature2 Temperature2
+   `Forms2-controlled Forms2-controlled ; obselete
+   `Forms3a-form Forms3a-form
+   `Forms3b-inline-submit Forms3b-inline-submit
    `Todos Todos
-   ;`CRUD CRUD
    `TodoMVC TodoMVC
    `TodoMVC-composed TodoMVC-composed
 
@@ -182,11 +174,16 @@
 
 (def tutorial-path "src/electric_tutorial/")
 
+(e/defn Consulting-banner []
+  (dom/p (dom/text "Hire us! ")
+    (dom/a (dom/text "Consutling page here") (dom/props {:href ""}))))
+
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
     (let [[?tutorial] (ffirst ($ RedirectLegacyLinks! r/route))
           ?tutorial   (or ?tutorial `TwoClocks)]
+      (Consulting-banner)
       (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
       (binding [hf/pages ($ Fiddles)]
