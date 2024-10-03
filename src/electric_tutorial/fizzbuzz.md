@@ -29,3 +29,6 @@ Application code is the same as you're used to
 * x
 
 Best place to learn more is [Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8). This is a good talk, I spent 3 weeks preparing it, please watch it! The next few tutorials will be a bit sparse because they are covered by the talk.
+
+* products
+* auto-mapping
