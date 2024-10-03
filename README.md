@@ -1,4 +1,4 @@
-# Electric Fiddle
+# Electric Fiddle (Electric v2)
 
 We publish all our demos here in one place. This is how we fiddle around with our many demos at work.
 
