@@ -33,23 +33,37 @@
 
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
   (dom/li
-    (e/amb
-      (Form! (Checkbox! :task/status (= :done status)) ; FIXME clicking commit button on top of autocommit generates broken doubled tx
-        :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
-                                        {id (-> m (dissoc ::cqrs/pending) (assoc :task/status v))}])
-        :show-buttons false :auto-submit true)
-      (Form! (Input! :task/description description)
-        :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
-                                             {id (-> m (dissoc ::cqrs/pending) (assoc :task/description v))}])
-        :show-buttons false)
-      (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
-        :auto-submit true :show-buttons false
-        :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))
+    (Form!
+      (e/amb
+        (Form! (Checkbox! :task/status (= :done status)) ; FIXME clicking commit button on top of autocommit generates broken doubled tx
+          :name ::toggle
+          :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
+                                          {id (-> m (dissoc ::pending) (assoc :task/status v))}])
+          :show-buttons false :auto-submit true)
+        (Form! (Input! :task/description description)
+          :name ::edit-desc
+          :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
+                                               {id (assoc m :task/description v)}])
+          :show-buttons false)
+        (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
+          :auto-submit true :show-buttons false
+          :name ::destroy
+          :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))
 
-      pending
-      #_(if-let [[t xcmd guess] pending]
-        [t {::pending xcmd} guess]
-        (e/amb)))))
+        (if-let [[t xcmd guess] pending]
+          [t {::pending xcmd} guess]
+          (e/amb)))
+      :auto-submit false :show-buttons true :debug true
+      :commit (fn [{:keys [::toggle ::edit-desc ::destroy ::pending]}]
+                (doto [[`Batch toggle edit-desc destroy pending] {}] (prn 'Form-outer))
+                #_[(doto destroy (prn 'commit-batch)) {}]
+                #_(let [[_ id status] toggle
+                        [_ id v] create
+                        [_ id v'] edit-desc
+                        [_ id] destroy]
+                    (cond
+                      (and create destroy) nil #_[nil dirty-form-guess]
+                      (and create edit) [[`Create-todo (or v' v)] dirty-form-guess]))))))
 
 (e/defn TodoList [db forms]
   (dom/div (dom/props {:class "todo-list"})
