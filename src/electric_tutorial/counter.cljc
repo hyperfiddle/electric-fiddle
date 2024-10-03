@@ -1,8 +1,7 @@
 (ns electric-tutorial.counter
   (:require [clojure.math :refer [floor-div]]
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [missionary.core :as m]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Countdown [from-n-inclusive dur-ms]
   (+ (inc from-n-inclusive) ; end on 1
@@ -27,5 +26,6 @@
       (Clicker n (e/fn [t]
                    (case (e/server (e/Offload #(do (Thread/sleep 2000)
                                                  (swap! !n inc) ::ok)))
+                     ::fail nil ; todo
                      ::ok (t))
                    (Countdown 10 2000)))))) ; progress indicator
