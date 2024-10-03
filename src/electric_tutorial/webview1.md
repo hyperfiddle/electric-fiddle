@@ -6,6 +6,9 @@ A database backed webview with reactive updates.
 
 What's happening
 * The webview is subscribed to the database, which updates with each transaction.
+* filtering (happens on server side)
+* differential collection updates - differential wire traffic
+* see diffs in console
 
 Callback-free input
 
@@ -14,8 +17,6 @@ Concurrent let
 Differential dataflow
 * Watch the talk
 * streaming diffs, e/as-vec, Tap-diffs, e/amb, products ...
-
-Typeahead - we will explain this later, pulling this forward for the cool demo
 
 Novel forms
 * `e/watch` on datascript connection
@@ -33,3 +34,5 @@ Key ideas
 See the London Clojurians 2024 talk about this subject.
 
 Why entity API?
+* because the collection is differential - we prefer to pay for queries at item granularity. If a single element is added to the collection, we don't want to redo the whole query - just load the incremental record.
+* Matters a lot more in the virtual scroll case
