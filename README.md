@@ -4,13 +4,13 @@ We publish all our demos here in one place. This is how we fiddle around with ou
 
 This repo is structured to allow multiple "fiddles" (little apps) to run simultaneously on the same merged local dev classpath, with some common dev infrastructure (e.g. routing and example databases). Prod classpaths are isolated, so that each fiddle can be deployed individually and separately.
 
+This is all done in a rather tiny amount of LOC, so we feel it is reasonable to expect you to understand it:
+
 * **local dev**: the [dev entrypoint](src-dev/dev.cljc) uses a [clever reader trick](src-dev/fiddles.cljc) to drive Clojure/Script namespace `:require` directives from a config file, [`electric-fiddle.edn`](electric-fiddle.edn).
 
 * **prod**: the [prod entrypoint](src-prod/prod.cljc) runs only one fiddle at a time, with an isolated classpath. Prod has a mandatory [build](src-build/build.clj), which bakes the Electric application client program. At compile time, both the electric user application version number (derived from git) and the fiddle entrypoint namespace are known statically, and built into both the client assets and also the server asset `resources/electric-manifest.edn`. At runtime, the prod entrypoint uses the reader trick to lookup the name of the entrypoint to run.
 
-This is all done in a rather tiny amount of LOC, so we feel it is reasonable to expect you to understand it.
-
-For a minimalist starter example, see https://github.com/hyperfiddle/electric-starter-app which is able to hardcode the electric user application entrypoint functions and thereby eliminate some of this dynamism.
+For a minimalist starter example, see https://github.com/hyperfiddle/electric-starter-app which is able to eliminate most of this dynamism by hardcoding the user application entrypoint and classpath.
 
 ## Quick Start
 
