@@ -36,15 +36,15 @@
     (e/amb
       (Form! (Checkbox! :task/status (= :done status)) ; FIXME clicking commit button on top of autocommit generates broken doubled tx
         :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
-                                        {id (-> m (dissoc ::pending) (assoc :task/status v))}])
+                                        {id (-> m (dissoc ::cqrs/pending) (assoc :task/status v))}])
         :show-buttons false :auto-submit true)
       (Form! (Input! :task/description description)
         :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
-                                             {id (assoc m :task/description v)}])
+                                             {id (-> m (dissoc ::cqrs/pending) (assoc :task/description v))}])
         :show-buttons false)
-      (Form! (Button! ::_ :label "X" :class "destroy" :disabled (some? pending))
+      (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
         :auto-submit true :show-buttons false
-        :commit (fn [{_ ::destroy}] [[`Delete-todo id] {id ::cqrs/retract}]))
+        :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))
 
       pending
       #_(if-let [[t xcmd guess] pending]
@@ -90,6 +90,12 @@
       (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Toggle))
                     (catch Exception e (doto ::fail (prn e))))))))
 
+(e/defn Delete-todo [id] ; FIXME retractEntity works but todo item stays on screen, who is retaining it?
+  (e/server
+    (let [tx [[:db/retractEntity id]]]
+      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Delete))
+                       (catch Exception e (doto ::fail (prn e))))))))
+
 (e/defn Batch [& forms]
   (prn 'Batch forms)
   #_(doseq [form forms] (Service form)))
@@ -99,6 +105,7 @@
     (binding [cqrs/*effects* {`Create-todo Create-todo
                               `Edit-todo-desc Edit-todo-desc
                               `Toggle Toggle
+                              `Delete-todo Delete-todo
                               `Batch Batch}]
       (let [db (e/server (e/watch !conn))]
         (Service
