@@ -29,7 +29,11 @@
                                   :grid-template-columns "max-content auto" :gap "1ch"}})
         (dom/span (dom/strong (dom/text username)) (dom/text " " msg))))))
 
-(e/defn InputSubmitCreate?! ; ?! marks this as an anti-pattern, more rigorous controls upcoming
+(e/defn InputSubmitCreate?!
+  "transactional chat input with busy state. Supports rapid submit, sending
+concurrent in-flight submits to the server which race. ?! marks this control
+as an anti-pattern because it has no error handling: rejected edits are silently
+lost. Fixing this requires form semantics, see upcoming tutorial."
   [& {:keys [maxlength type parse] :as props
       :or {maxlength 100 type "text" parse identity}}]
   (e/client
@@ -44,12 +48,6 @@
         (let [edits (dom/On-all "keydown" submit!)] ; concurrent pending submits
           (dom/props {:aria-busy (pos? (e/Count edits))})
           edits)))))
-
-(e/defn SendMessage [username]
-  (let [edits (InputSubmitCreate?! :placeholder (if username "Message" "Login to chat")
-                :maxlength 100 :disabled (nil? username))]
-    (dom/text " " (e/Count edits))
-    edits))
 
 #?(:clj (defonce !db (atom (repeat 10 nil)))) ; multiplayer
 (e/defn Query-chats [] (e/server (e/diff-by :db/id (e/watch !db))))
@@ -68,17 +66,19 @@
     (Present present)
     (dom/hr)
     (Channel msgs)
-    (let [edits (SendMessage username)]
+    (let [edits (InputSubmitCreate?! :disabled (nil? username)
+                  :placeholder (if username "Message" "Login to chat"))]
+      (dom/text " " (e/Count edits))
       (prn 'edits (e/as-vec edits))
       (e/for [[t msg] edits]
         (let [res (e/server
                     (let [record (->msg-record username msg)] ; secure
                       (e/Offload #(try (send-message! record) ::ok
-                                    (catch Exception e (doto ::rejected (prn e)))))))]
+                                    (catch Exception e (doto ::fail (prn e)))))))]
           (prn 'res res)
           (case res
             ::ok (t) ; sentinel success value
-            ::rejected nil ; todo, need more rigorous pattern for failure handling
+            ::rejected nil ; leave dirty without prompting retry. better pattern forthcoming
             ))))
     (Login username)))
 

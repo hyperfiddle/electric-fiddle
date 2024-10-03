@@ -2,8 +2,8 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.chat :refer
-             [Login Presence! Present Query-chats SendMessage ->msg-record css
-              #?(:clj send-message!) #?(:clj !present)]]))
+             [Login Presence! Present Query-chats ->msg-record css
+              InputSubmitCreate?! #?(:clj send-message!) #?(:clj !present)]]))
 
 (e/defn Query-chats-optimistic [username edits]
   (prn 'edits (e/as-vec edits))
@@ -35,7 +35,8 @@
     (Present present)
     (dom/hr (e/amb)) ; silence nil
     (Channel (Query-chats-optimistic username edits))
-    (SendMessage username)
+    (InputSubmitCreate?! :disabled (nil? username)
+      :placeholder (if username "Message" "Login to chat"))
     (Login username)))
 
 (e/defn ChatMonitor []
@@ -44,11 +45,13 @@
         present (e/server (Presence! !present username))
         edits (e/with-cycle* first [edits (e/amb)] ; loop in-flight edits
                 (ChatApp username present edits))]
-
-    (prn 'edits edits)
+    (prn 'edits (e/as-vec edits))
     (e/for [[t msg] (e/Filter some? edits)]
-      (case (e/server
-              (let [record (->msg-record username msg)] ; secure
-                (e/Offload #(do (Thread/sleep 500) ; artificial latency
-                              (send-message! record) ::ok))))
-        ::ok (t)))))
+      (let [res (e/server
+                  (let [record (->msg-record username msg)] ; secure
+                    (e/Offload #(try (Thread/sleep 500) ; artificial latency
+                                  (send-message! record) ::ok
+                                  (catch Exception e (doto ::rejected (prn e)))))))]
+        (case res
+          ::ok (t)
+          ::fail nil)))))
