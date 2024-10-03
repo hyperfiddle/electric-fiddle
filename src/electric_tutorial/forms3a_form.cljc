@@ -7,20 +7,17 @@
 
 #?(:clj (def !conn))
 
-(e/defn Query-record [db id edits]
+(e/defn Query-record [db id forms]
   (e/client
-    #_(PendingController1 nil nil edits)
-    #_(Service edits) ; rebind transact to with, db must escape
+    #_(PendingController1 nil nil forms)
     (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id)))))
 
-(e/defn UserForm [db id edits]
+(e/defn UserForm [db id forms]
   (dom/fieldset (dom/legend (dom/text "transactional form"))
-    (let [{:keys [user/str1 user/num1 user/bool1] :as m} (Query-record db id edits)]
+    (let [{:keys [user/str1 user/num1 user/bool1] :as m} (Query-record db id forms)]
       (Form! ; buffer and batch edits into an atomic form
         (dom/dl
-          (e/amb ; concurrent field edits (which get us field dirty state).
-            ; if we used e.g. a vector/map aggregator like before, we'd need
-            ; circuit controls and therefore lose field dirty state.
+          (e/amb
             (dom/dt (dom/text "str1")) (dom/dd (Input! :user/str1 str1))
             (dom/dt (dom/text "num1")) (dom/dd (Input! :user/num1 num1 :type "number" :parse parse-long))
             (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! :user/bool1 bool1))))
@@ -40,5 +37,5 @@
   (binding [cqrs/*effects* {`UserFormSubmit UserFormSubmit}]
     (let [db (e/server (e/watch !conn))]
       (Service
-        (e/with-cycle* first [edits (e/amb)]
-          (UserForm db 42 edits))))))
+        (e/with-cycle* first [forms (e/amb)]
+          (UserForm db 42 forms))))))

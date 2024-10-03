@@ -1,17 +1,5 @@
 # Forms6-inline-submit with proper "spreadsheet" UX
 
-`InputSubmit!` & `InputSubmitCreate!` - the holy grail, but hard to implement - wip.
-
-inline remote txn with auto submit, like in most "apps" (not "forms")
-
-Use cases
-* CRUD SPreadsheet
-* Apps - TodoMVC - spam toggling should cancel in flight and auto submit, and there is an enter interaction on both the edit and the create-new
-
-Submit remote CRUD update on enter, no clear (e.g. **TodoMVC**, spreadsheet cells)
-
-!fiddle-ns[](electric-tutorial.forms6-inline-submit-builtin/Forms6-inline-submit-builtin)
-
 What's happening
 
 * including create-new with retry (the hard case)
@@ -23,20 +11,6 @@ What's happening
 * inflight cancellation
 * layered stages ?
 
-Why / what for
-
-* Spreadsheet - inline commit/discard
-* TodoMVC - inline commit/discard with failure and retry (with optimistic updates)
-* Tutorial usage: <a href="">Chat</a>, <a href="">ChatMonitor</a>, <a href="">Todos</a>, <a href="">TodoMVC</a>
-
-How it works
-* buffered is how you fix this
-  - buffer is achieved by proxy tokens on commit/discard.
-  - the proxy retains the original token in memory until you commit it, that's the buffer.
-
-
-
-
 # Scratch
 
 * inline commit/discard (it can be integrated w/ the controls)
@@ -44,6 +18,8 @@ How it works
 * retry and resubmit
 * means the impl must use dom/on, not dom/on-all - user is done here unless they cancel!
 
-!fn-src[hyperfiddle.input-zoo0/InputSubmit!]()
 
-!fn-src[hyperfiddle.input-zoo0/CheckboxSubmit!]()
+Semantics
+* CHeckbox is the edge case - it auto submits with each transition, because there are no possible invalid transition states
+* Numeric - hold down arrow to scroll through nuimbers (or IOS slot machine UI lets you spin throughj selections). THis is transitory dirty state. You do NOT want to smash the database with hundreds of txns as you scroll through these states! Therefore, the buttons on the numeric do NOT have auto-submit semantics. You must press enter to submit (or discard) if this state is transacting into a database! (If this is a pure functional data flow circuit, this does not apply!)
+* Free text - like number, has transitory states, so must submit/discard to database. If it was pure functional (no database transaction), this does not apply.q
