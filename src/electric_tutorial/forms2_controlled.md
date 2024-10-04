@@ -35,7 +35,26 @@ Why / what for
 * Techncially, you can use `e/server` to round trip form state through network, but you should not do this because a network timeout, partition or server failure will violate the assumptions of the pattern.
 * Even in a conflict-free (i.e. CRDT) persistence strategy, the user wants to know if their data entry has been saved. PKM tools that lose data due to backend bugs is one clear example that no remote state is error free and virtually no data layer can guarantee success.
 
-What if I want "uncontrolled" inputs?
+How it works
+* `(e/amb (UserForm m) (UserForm m))` is used to render the form twice and collect their inputs in superposition
+
+!fn-src[electric-tutorial.forms2-controlled/Forms2-controlled]()
+
+* each form returns its state as a map, so the `e/amb` returns the superposition of the two form states.
+* When one of the states change, we feed it into the cycle, which loops it into both forms (i.e., the other form).
+
+Here is the equivalent imperative implementation, which is revealing:
+
+!fn-src[electric-tutorial.forms2-controlled/Forms2-controlled']()
+
+* `(reset! !m (e/amb a b))` implies *auto-mapping*: the `reset!` will run when *either* form changes!
+* so if you change `a`, you'll get `(reset! !m a)`, which then loops `a` into `b` ...
+* `b` will "close the circuit" by returning the same value ...
+* at which point `(reset! !m b)` will *work skip* because `(= a b)`! THe computation has reached a fixed point and the loop halts.
+* I suppose you could write this with `e/for` if you want:
+  * `(e/for [m (e/amb a b)] (reset! !m m))`
+
+FAQ: What if I want "uncontrolled" inputs?
 
 * This control can express uncontrolled forms by not looping the input, i.e. `(Input "")`.
   * The control will initialize to `""`, but as the control state evolves, the `""` will never change (i.e. never updates again) and therefore can never override the internal state per reactive propagations emantics.
