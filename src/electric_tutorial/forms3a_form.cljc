@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service PendingController]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok PendingController]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox!]]))
 
 #?(:clj (def !conn))
@@ -26,12 +26,16 @@
                     [[`UserFormSubmit id str1 num1 bool1] {id m}]))
         :debug true))))
 
+#?(:clj (defn transact-unreliable [!conn tx & {:keys [die] :or {die false}}]
+          (cond
+            (true? die) (throw (ex-info "die" {}))
+            () (d/transact! !conn tx))))
+
 (e/defn UserFormSubmit [id str1 num1 bool1]
   #_(e/server (prn 'UserFormSubmit id str1 num1 bool1))
   (e/server ; secure command interpretation, validate command here
     (let [tx [{:db/id id :user/str1 str1 :user/num1 num1 :user/bool1 bool1}]]
-      (e/Offload #(try (d/transact! !conn tx) (doto ::cqrs/ok (prn 'UserFormSubmit))
-                    (catch Exception e (doto ::fail (prn 'UserFormSubmit e))))))))
+      (e/Offload #(try-ok (transact-unreliable !conn tx))))))
 
 (e/defn Forms3a-form []
   (binding [cqrs/*effects* {`UserFormSubmit UserFormSubmit}]

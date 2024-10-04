@@ -2,15 +2,16 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox! Checkbox]]
-            [electric-tutorial.forms3a-form :refer [Query-record #?(:clj !conn)]]))
+            [electric-tutorial.forms3a-form :refer
+             [Query-record #?(:clj !conn) #?(:clj transact-unreliable)]]))
 
 (e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "transactional fields with inline submit, esc/enter"))
     (let [debug (Checkbox true :label "debug")
-          auto-submit (Checkbox false :label "auto-submit")
           show-buttons (Checkbox false :label "show-buttons")
+          auto-submit (Checkbox false :label "auto-submit")
           {:keys [user/str1 user/num1 user/bool1]} (Query-record db id edits)]
       (dom/dl
         (e/amb
@@ -41,17 +42,17 @@
 (e/defn Str1FormSubmit [id v]
   (e/server
     (let [tx [{:db/id id :user/str1 v}]]
-      (e/Offload #(try (d/transact! !conn tx) ::cqrs/ok (catch Exception e (doto ::fail (prn 'Str1FormSubmit e))))))))
+      (e/Offload #(try-ok (transact-unreliable !conn tx))))))
 
 (e/defn Num1FormSubmit [id v]
   (e/server
     (let [tx [{:db/id id :user/num1 v}]]
-      (e/Offload #(try (d/transact! !conn tx) ::cqrs/ok (catch Exception e (doto ::fail (prn 'Num1FormSubmit e))))))))
+      (e/Offload #(try-ok (transact-unreliable !conn tx))))))
 
 (e/defn Bool1FormSubmit [id v]
   (e/server
     (let [tx [{:db/id id :user/bool1 v}]]
-      (e/Offload #(try (d/transact! !conn tx) ::cqrs/ok (catch Exception e (doto ::fail (prn 'Bool1FormSubmit e))))))))
+      (e/Offload #(try-ok (transact-unreliable !conn tx))))))
 
 (e/defn Forms3b-inline-submit []
   (binding [cqrs/*effects* {`Str1FormSubmit Str1FormSubmit
