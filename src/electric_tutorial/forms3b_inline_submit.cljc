@@ -55,7 +55,7 @@
       (e/Offload #(try-ok (transact-unreliable !conn tx))))))
 
 (e/defn Forms3b-inline-submit []
-  (binding [cqrs/*effects* {`Str1FormSubmit Str1FormSubmit
+  (binding [cqrs/effects* {`Str1FormSubmit Str1FormSubmit
                             `Num1FormSubmit Num1FormSubmit
                             `Bool1FormSubmit Bool1FormSubmit}]
     (let [db (e/server (e/watch !conn))]

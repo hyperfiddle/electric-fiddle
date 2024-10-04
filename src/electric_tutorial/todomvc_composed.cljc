@@ -21,7 +21,7 @@
       (binding [state (e/watch !state)]
         (binding [db (e/server (e/watch !conn))
                   Transact! (e/server (e/Partial Transact! !conn (e/client (::todomvc/delay state))))
-                  cqrs/*effects* (Effects)]
+                  cqrs/effects* (Effects)]
           (Service
             (e/with-cycle* first [edits (e/amb)]
               (e/Filter some?

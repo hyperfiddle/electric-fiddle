@@ -38,7 +38,7 @@
       (e/Offload #(try-ok (transact-unreliable !conn tx))))))
 
 (e/defn Forms3a-form []
-  (binding [cqrs/*effects* {`UserFormSubmit UserFormSubmit}]
+  (binding [cqrs/effects* {`UserFormSubmit UserFormSubmit}]
     (let [db (e/server (e/watch !conn))]
       (Service
         (e/with-cycle* first [forms (e/amb)]

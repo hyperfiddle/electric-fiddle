@@ -123,7 +123,7 @@
 
 (e/defn Todos []
   (e/client
-    (binding [cqrs/*effects* {`Create-todo Create-todo
+    (binding [cqrs/effects* {`Create-todo Create-todo
                               `Edit-todo-desc Edit-todo-desc
                               `Toggle Toggle
                               `Delete-todo Delete-todo
