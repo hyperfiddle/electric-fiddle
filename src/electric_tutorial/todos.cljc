@@ -27,7 +27,7 @@
 ; checkboxes don't do that (don't have enter behavior - toggle with space, enter is noop), therefore you need
 ; auto-submit true on the form if you want inputs to auto-submit.
 
-(def debug* true)
+(def debug* false)
 (def show-buttons* true)
 
 (e/defn TodoCreate []
@@ -128,8 +128,8 @@
                               `Toggle Toggle
                               `Delete-todo Delete-todo
                               `Batch Batch}
-              debug* (Checkbox true :label "debug")
-              show-buttons* (Checkbox false :label "show-buttons")]
+              debug* (Checkbox debug* :label "debug")
+              show-buttons* (Checkbox show-buttons* :label "show-buttons")]
       (let [db (e/server (e/watch !conn))]
         (Service
           (e/with-cycle* first [forms (e/amb)]
