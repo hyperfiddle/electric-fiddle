@@ -65,7 +65,8 @@
 
   :electric-tutorial
   {:extra-deps
-   {com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
+   {com.hyperfiddle/electric    {:local/root "vendor/electric"} ; for fly.io docker build - temporary
+    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
     datascript/datascript     {:mvn/version "1.6.1"}
     reagent/reagent           {:mvn/version "1.2.0"}
     markdown-clj/markdown-clj {:mvn/version "1.11.7"}

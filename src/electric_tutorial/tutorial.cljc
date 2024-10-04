@@ -17,7 +17,7 @@
 
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.webview1 :refer [Webview1]]
-            [electric-tutorial.webview2 :refer [Webview2]]
+            ;; [electric-tutorial.webview2 :refer [Webview2]] ; can't be deployed to fly, depends on london talk 2024's typeahead
             [electric-tutorial.fizzbuzz :refer [FizzBuzz]]
             [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.counter :refer [Counter]]
@@ -55,7 +55,7 @@
      `FizzBuzz ; differential
      `Lifecycle ; components
      `Webview1 ; diffs, IO encapsulation
-     `Webview2 ; abstraction, lambda demo
+     ;; `Webview2 ; abstraction, lambda demo
      `Chat ; cookie, pending, security. InputSubmitCreate!
      `Backpressure]]
    ["Forms"
@@ -132,7 +132,7 @@
    `DirTree DirTree
    `Lifecycle Lifecycle
    `Webview1 Webview1
-   `Webview2 Webview2
+   ;; `Webview2 Webview2
    `FizzBuzz FizzBuzz
    `Toggle Toggle
    `Counter Counter
