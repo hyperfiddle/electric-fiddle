@@ -5,7 +5,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service PendingController]]
             [hyperfiddle.input-zoo0 :refer
-             [Input! Checkbox! Button!]]))
+             [Input! Checkbox! Checkbox Button!]]))
 
 (e/defn Todo-records [db forms] ; todo field awareness
   (e/client
@@ -27,13 +27,16 @@
 ; checkboxes don't do that (don't have enter behavior - toggle with space, enter is noop), therefore you need
 ; auto-submit true on the form if you want inputs to auto-submit.
 
+(def debug* true)
+(def show-buttons* true)
+
 (e/defn TodoCreate []
   (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
     :genesis true ; immediately consume form, ready for next submit
     :commit (fn [{v ::create :as dirty-form} tempid]
               (prn 'TodoCreate-commit dirty-form)
               [[`Create-todo tempid v] {tempid {:db/id tempid :task/description v :task/status :active}}])
-    :show-buttons true :debug true))
+    :show-buttons show-buttons* :debug debug*))
 
 (e/defn TodoItem [{:keys [db/id task/status task/description ::cqrs/pending] :as m}]
   (dom/li
@@ -43,21 +46,21 @@
           :name ::toggle
           :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
                                           {id (-> m (dissoc ::pending) (assoc :task/status v))}])
-          :show-buttons false :auto-submit true)
+          :show-buttons show-buttons* :auto-submit true)
         (Form! (Input! :task/description description)
           :name ::edit-desc
           :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
                                                {id (assoc m :task/description v)}])
-          :show-buttons false)
+          :show-buttons show-buttons*)
         (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
-          :auto-submit true :show-buttons false
+          :auto-submit true :show-buttons show-buttons*
           :name ::destroy
           :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))
 
         (if-let [[t xcmd guess] pending]
           [t {::pending xcmd} guess]
           (e/amb)))
-      :auto-submit false :show-buttons true :debug true
+      :auto-submit false :show-buttons show-buttons* :debug debug*
       :commit (fn [{:keys [::toggle ::edit-desc ::destroy ::pending]}]
                 (doto [[`Batch toggle edit-desc destroy pending] {}] (prn 'Form-outer))
                 #_[(doto destroy (prn 'commit-batch)) {}]
@@ -124,7 +127,9 @@
                               `Edit-todo-desc Edit-todo-desc
                               `Toggle Toggle
                               `Delete-todo Delete-todo
-                              `Batch Batch}]
+                              `Batch Batch}
+              debug* (Checkbox true :label "debug")
+              show-buttons* (Checkbox false :label "show-buttons")]
       (let [db (e/server (e/watch !conn))]
         (Service
           (e/with-cycle* first [forms (e/amb)]
