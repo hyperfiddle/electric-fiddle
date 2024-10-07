@@ -104,7 +104,7 @@
                                       (when-not prev "user-examples-nav-start")
                                       (when-not next "user-examples-nav-end")]})
         (when prev
-          (r/link [(list (::id prev))]
+          (r/link [(::id prev)]
             (dom/props {:class "user-examples-nav-prev"})
             (dom/text (str "< " (title prev)))))
         (dom/div (dom/props {:class "user-examples-select"})
@@ -120,9 +120,9 @@
                       (dom/text (str (inc (::order m)) ". " (title m))))))))
             (when-some [^js e ($ dom/On "change")]
               (when-some [done! ($ e/Token e)]
-                (done! ($ r/Navigate! [(list (clojure.edn/read-string (.. e -target -value)))]))))))
+                (done! ($ r/Navigate! [(clojure.edn/read-string (.. e -target -value))]))))))
         (when next
-          (r/link [(list (::id next))]
+          (r/link [(::id next)]
             (dom/props {:class "user-examples-nav-next"})
             (dom/text (str (title next) " >"))))))))
 
@@ -157,15 +157,6 @@
    ;`ReagentInterop ReagentInterop
    })
 
-(e/defn RedirectLegacyLinks! [link]
-  ;; Keep existing links working.
-  ;; Demos used to be identified by their fully qualified name - e.g. `hello-fiddle.fiddles/Hello
-  ;; They are now represented by an s-expression - e.g. `(Color h s l)
-  (if (and (map? link) (ident? (ffirst link)))
-    (do ($ r/Navigate! [(list (ffirst link))])
-        nil)
-    link))
-
 (defn namespace-name [qualified-symbol]
   (some-> qualified-symbol namespace
     (clojure.string/split #"\.") last
@@ -181,8 +172,7 @@
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
-    (let [[?tutorial] (ffirst ($ RedirectLegacyLinks! r/route))
-          ?tutorial   (or ?tutorial `TwoClocks)]
+    (let [?tutorial (or r/route `TwoClocks)]
       (Consulting-banner)
       (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))

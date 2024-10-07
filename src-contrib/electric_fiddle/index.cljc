@@ -10,5 +10,5 @@
     ;; (dom/pre (dom/text (pr-str r/route)))
     (e/cursor [[k _] (e/diff-by key (sort-by key hf/pages))]
       (dom/div
-        (r/link [(list k)] (dom/text (name k)))
+        (r/link [k] (dom/text (name k)))
         (dom/text " " k)))))
