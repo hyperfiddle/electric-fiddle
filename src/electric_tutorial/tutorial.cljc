@@ -172,7 +172,7 @@
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
-    (let [?tutorial (or r/route `TwoClocks)]
+    (let [[?tutorial] (if (seq? r/route) r/route [(or r/route `TwoClocks)])] ; prod vs dev - can we unify this?
       (Consulting-banner)
       (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
