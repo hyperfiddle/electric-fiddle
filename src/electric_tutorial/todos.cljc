@@ -7,21 +7,22 @@
             [hyperfiddle.input-zoo0 :refer
              [Input! Checkbox! Checkbox Button!]]))
 
-(e/defn Todo-records [db forms] ; todo field awareness
+(defn stable-kf [tempids-rev {:keys [:db/id]}] (tempids-rev id id))
+
+(e/defn Todo-records [db tempids forms] ; todo field awareness
   (e/client
-    (prn 'Todo-records 'forms (e/as-vec (second forms)))
-    (PendingController :db/id :task/description forms ; rebind transact to with, db must escape
-      #_(e/fn [db])
-      (e/server
-        (e/diff-by :db/id
-          (e/Offload ; good reason to not require offload to have # ?
-            #(try
-               (->> (d/q '[:find [(pull ?e [:db/id
-                                            :task/status
-                                            :task/description]) ...]
-                           :where [?e :task/status]] db)
-                 (sort-by :task/description))
-               (catch Exception e (prn e)))))))))
+    (let [tempids-rev (clojure.set/map-invert tempids)]
+      (PendingController (partial stable-kf tempids-rev) :task/description forms ; rebind transact to with, db must escape
+        (e/server
+          (e/diff-by :db/id
+            (e/Offload ; good reason to not require offload to have # ?
+              #(try
+                 (->> (d/q '[:find [(pull ?e [:db/id
+                                              :task/status
+                                              :task/description]) ...]
+                             :where [?e :task/status]] db)
+                   (sort-by :task/description))
+                 (catch Exception e (prn e))))))))))
 
 ; if there is a button type submit in the form, and you press enter in an input, the form will submit
 ; checkboxes don't do that (don't have enter behavior - toggle with space, enter is noop), therefore you need
@@ -73,11 +74,10 @@
                       (and create destroy) nil #_[nil dirty-form-guess]
                       (and create edit) [[`Create-todo (or v' v)] dirty-form-guess]))))))
 
-(e/defn TodoList [db forms]
+(e/defn TodoList [db tempids forms]
   (dom/div (dom/props {:class "todo-list"})
     (let [forms' (TodoCreate) ; transfer responsibility to pending item form
-          todos (Todo-records db (e/amb forms forms'))]
-      (prn 'todos (e/as-vec todos))
+          todos (Todo-records db tempids (e/amb forms forms'))]
       (e/amb
         (dom/ul (dom/props {:class "todo-items"})
           (e/for [m todos]
@@ -93,30 +93,33 @@
 #?(:clj (defn slow-transact! [!conn tx] (Thread/sleep 1000) (d/transact! !conn tx)))
 
 (e/defn Create-todo [tempid desc]
-  (e/server
-    (let [tx [{:task/description desc, :task/status :active}]]
-      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Create-todo))
-                    (catch Exception e (doto ::fail (prn e))))))))
+  (let [serializable-tempid (str (hash tempid))
+        [status tempids]
+        (e/server
+          (let [tx [{:task/description desc, :task/status :active :db/id serializable-tempid}]]
+            (e/Offload #(try (doto [::cqrs/ok (:tempids (slow-transact! !conn tx))] (prn `Create-todo))
+                             (catch Exception e (doto ::fail (prn e)))))))]
+    [status (clojure.set/rename-keys tempids {serializable-tempid tempid})]))
 
 (e/defn Edit-todo-desc [id desc]
   (e/server
     (let [tx [{:db/id id :task/description desc}]]
       (prn 'EditTodoDesc tx)
-      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Edit-todo-desc))
-                    (catch Exception e (doto ::fail (prn e))))))))
+      (e/Offload #(try (slow-transact! !conn tx) (doto [::cqrs/ok] (prn `Edit-todo-desc))
+                    (catch Exception e (doto [::fail] (prn e))))))))
 
 (e/defn Toggle [id status]
   ;; (prn 'Toggle id status) (e/server (prn 'Toggle id status))
   (e/server
     (let [tx [{:db/id id, :task/status status}]]
-      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Toggle))
-                    (catch Exception e (doto ::fail (prn e))))))))
+      (e/Offload #(try (slow-transact! !conn tx) (doto [::cqrs/ok] (prn `Toggle))
+                    (catch Exception e (doto [::fail] (prn e))))))))
 
 (e/defn Delete-todo [id] ; FIXME retractEntity works but todo item stays on screen, who is retaining it?
   (e/server
     (let [tx [[:db/retractEntity id]]]
-      (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Delete))
-                       (catch Exception e (doto ::fail (prn e))))))))
+      (e/Offload #(try (slow-transact! !conn tx) (doto [::cqrs/ok] (prn `Delete))
+                    (catch Exception e (doto [::fail] (prn e))))))))
 
 ;; WIP - working but questionable and has duplicate code with cqrs/Service
 ;; Can we avoid batching entirely?
@@ -146,8 +149,26 @@
                               `Batch Batch}
               debug* (Checkbox debug* :label "debug")
               show-buttons* (Checkbox show-buttons* :label "show-buttons")]
+
+      ;; on create-new submit, in order:
+      ;; 1. transact! is called
+      ;; 2. submit token is spent
+      ;;   3. create-new's OnAll branch unmounts, and so the parent Form!, and so the PendingController optimistic branch
+      ;;   4. PendingController *should* retract the pending edit on unmount, but this crashes the app today.
+      ;; 5. either looped tempids or (e/watch !conn) propagates first
+      ;; 6. PendingController sees new query result and new tempids
+      ;;   - PendingController reconciles new entity with existing (!) branch
+      ;;     - PendingController reverts tempdis and has a stable-kf
+      ;; Problems:
+      ;; - PendingController retracts the edit on token burn, before the authoritative entity is queried
+      ;;   - the todo row is unmounted before the query reruns.
+      ;; - as of today, PendingController crashes the app (infinite loop) on edit retraction
+      ;;   - if we don't retract the pending edit, TodoList loops and we get end up with two created entries instead of one.
       (let [db (e/server (e/watch !conn))]
-        (Service
-          (e/with-cycle* first [forms (e/amb)]
-            (e/Filter some?
-              (TodoList db forms))))))))
+        (e/with-cycle [tempids {}] ; accumulate all tempids over txs - unbound memory usage
+          (let [[_status new-tempids]
+                (Service
+                  (e/with-cycle* first [forms (e/amb)]
+                    (e/Filter some?
+                      (TodoList db tempids forms))))]
+            (merge tempids new-tempids)))))))
