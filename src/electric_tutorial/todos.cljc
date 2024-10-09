@@ -51,7 +51,8 @@
           :name ::edit-desc
           :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
                                                {id (assoc m :task/description v)}])
-          :show-buttons show-buttons*)
+          :show-buttons show-buttons*
+          :debug debug*)
         (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
           :auto-submit true :show-buttons show-buttons*
           :name ::destroy
@@ -60,9 +61,9 @@
         (if-let [[t xcmd guess] pending]
           [t {::pending xcmd} guess]
           (e/amb)))
-      :auto-submit false :show-buttons show-buttons* :debug debug*
+      :auto-submit true :show-buttons show-buttons* :debug debug*
       :commit (fn [{:keys [::toggle ::edit-desc ::destroy ::pending]}]
-                (doto [[`Batch toggle edit-desc destroy pending] {}] (prn 'Form-outer))
+                (doto [(filter some? [`Batch toggle edit-desc destroy pending]) {}] (prn 'Form-outer))
                 #_[(doto destroy (prn 'commit-batch)) {}]
                 #_(let [[_ id status] toggle
                         [_ id v] create
@@ -117,9 +118,24 @@
       (e/Offload #(try (slow-transact! !conn tx) (doto ::cqrs/ok (prn `Delete))
                        (catch Exception e (doto ::fail (prn e))))))))
 
+;; WIP - working but questionable and has duplicate code with cqrs/Service
+;; Can we avoid batching entirely?
+;; same pattern as m/join
 (e/defn Batch [& forms]
   (prn 'Batch forms)
-  #_(doseq [form forms] (Service form)))
+  (let [results (e/as-vec (e/for [form (e/diff-by {} forms)] ; diff by effect position, not great
+                            (e/When form
+                              (let [[effect & args] form
+                                    Effect (cqrs/effects* effect (e/fn default [& args] (doto ::effect-not-found (prn effect))))
+                                    res #_[t form guess db] (e/Apply Effect args)] ; effect handlers span client and server
+                                res))))]
+    (if (= (count results) (count forms)) ; poor man's m/join
+      (let [tempids (reduce merge (map second results))]
+        (cond
+          (every? nil? results) nil
+          (every? (comp #{::cqrs/ok} first) results) [::cqrs/ok tempids]
+          () (first (filter some? results))))
+      (e/amb))))
 
 (e/defn Todos []
   (e/client
