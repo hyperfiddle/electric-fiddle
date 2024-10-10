@@ -64,8 +64,8 @@ Electric is a reactivity compiler
 * Electric has a DAG-based reactive evaluation model for fine-grained reactivity. Unlike React.js, Electric reactivity is granular to the expression level, not the function level.
 * Electric uses macros to compile actual Clojure syntax into a DAG, using an actual Clojure/Script analyzer inside `e/defn`.
 * After performing macroexpansion, Electric essentially **reinterprets** Clojure syntax forms under reactive semantics.
-* **Electric is not rewriting your code or tampering with your macroexpansion**, it is *reinterpreting* your actual code under new reactive evaluation rules which, in the case of referentially transparent programs, will produce the same output result for the same inputs as the original Clojure evaluation rules (with different runtime time/space tradeoff).
-* Under this new interpretation, Electric compiles your program down into very different Clojure/Script target code – a Missionary program composed of many thousands of pure functional Missionary operators.
+* **Electric is not rewriting your code or tampering with your macroexpansion**, it is *reinterpreting your actual code* under new reactive evaluation rules which, in the case of referentially transparent (RT) expressions, will produce the same output result for the same inputs as the original Clojure evaluation rules (with different runtime time/space tradeoff).
+* Under this new interpretation, Electric compiles your program down into very different Clojure/Script target code – a RT Missionary program/expression composed of many thousands of pure functional Missionary operators.
 
 There is an isomorphism between programs and DAGs
 

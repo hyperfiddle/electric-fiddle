@@ -25,14 +25,14 @@ direct query/view composition
 e/for, e/diff-by
 
 * The table rows are renderered by a for loop. Reactive loops are efficient and recompute branches only precisely when needed.
-* `e/for-by`: a reactive map operator, stabilized to bind each child branch state (e.g. DOM element) to an entity in the collection by id (provided by userland fn - similar to [React.js key](https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js/43892905#43892905)).
+* `e/for`: a reactive map operator that works on electric v3's "reactive collections" (kinda, we will sharpen this later).
+* `(e/diff-by key system-props)` constructs a "reactive collection" from a regular Clojure collection. `key` (analogous to similar to [React.js key](https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js/43892905#43892905)) is a function that identifies a collection element so that even as query results change over time, elements with the same identity will be reconciled and reuse the same location in the reactive collection, which here is mirrored to the DOM.
+* Note, the pattern `(e/for [[k v] (e/server (e/diff-by key system-props))] ...)` implies collection diffs on the wire! When the query result changes, only the *differences* are moved, not the *entire collection*.
 
 Simple free text input
-* todo
-* cycle by side effect
-
-
-
+* callback free: `(dom/On "input" #(-> % .-target .-value) ""))` returns the current value of the input as a reactive value (i.e., a *signal* from the FRP perspective). `""` is the initial state of the signal.
+* the clojure lambda is an extractor function which needs to be written in Clojure not Electric because of the DOM's OOP semantics. If you wrote it like `(-> (dom/On "input" identity "") .-target .-value)`, because the `.-target` reference is the same with each event, `(.-value target)` will work skip.
+* cycle by side effect - we're using an atom to loop the input value higher in lexical scope. Super common idiom, more on this later.
 
 Reactive for details
 

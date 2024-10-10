@@ -11,6 +11,8 @@ What's happening
 * L27 `(e/Tap-diffs xs)` is printing diffs to the console as `xs` updates
 * The computation is differential - diffs propogating through each expression
 
+`; force lazy let statements otherwise sampled conditionally!`
+
 Diffs!
 
 * `{:degree 12, :permutation {}, :grow 1, :shrink 0, :change {11 "fizz"}, :freeze #{}}`

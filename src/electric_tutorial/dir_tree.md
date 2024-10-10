@@ -48,7 +48,7 @@ dynamic siting
 * I don't think the difference matters here in this demo, other than it enables the following sugar:
 
 electric-dom macros auto-site their contents (syntax sugar)
-* FAQ: L12 `dom/li` is in server scope. Shouldn't that be wrapped in e/client? A: In v3, the dom macros will automatically insert an `e/client` around the underlying dom mutations. In v2 this was not automatic.
+* FAQ: L12 `dom/li` is in server scope. Shouldn't that be wrapped in e/client? A: In v3, the dom macros will automatically insert an `e/client` around the underlying dom mutations in the macroexpansion. In v2 this was not automatic, you had to explicitly site your dom expressions.
 * Here is the implementation of dom element construction:
 
 !fn-src[hyperfiddle.electric-dom3/With-element]()
@@ -60,6 +60,8 @@ electric-dom macros auto-site their contents (syntax sugar)
 So, what's the final network topology here?
 
 * Explained in depth in [Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8)
-* Todo explain in writing:
-  * FAQ: Is it slow? I am concerned about round trips?
-  * FAQ: Why flicker? Why does it load in stratas? (Implementation flaw, todo fix) Can that be fixed? (Yes, our impl is still naive)
+
+FAQ: I see some lag, why does it lag in "stratas"? Do I need to be concerned about round trips?
+* This is an implementation flaw. Yes, our impl is still naive.
+* The network runtime does not yet flatten certain kinds of request waterfalls, or rather more accurately it can accidentally introduce a request waterfall, which I think is what's happening here – either the recursion or the e/for. Electric's model captures statically the information we need to flatten statically known round trips, basically we have `;todo static lookahead` throughout the network runtime. Soon!
+* If you need to optimize this we can show you how.

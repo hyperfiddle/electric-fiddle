@@ -10,7 +10,6 @@
 
 (declare css)
 (e/defn FizzBuzz []
-  (dom/style (dom/text css))
   (e/client
     (let [fizz (Input "fizz")
           buzz (Input "buzz")
@@ -27,5 +26,3 @@
       (e/Tap-diffs xs) ; see console
       (e/for [x xs]
         (dom/div (dom/text x))))))
-
-(def css ".user-examples-target.FizzBuzz input:invalid { background-color: red; }")
