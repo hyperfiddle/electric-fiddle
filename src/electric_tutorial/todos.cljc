@@ -129,7 +129,7 @@
   (let [results (e/as-vec (e/for [form (e/diff-by {} forms)] ; diff by effect position, not great
                             (e/When form
                               (let [[effect & args] form
-                                    Effect (cqrs/effects* effect (e/fn default [& args] (doto ::effect-not-found (prn effect))))
+                                    Effect (cqrs/effects* effect (e/fn default [& args] (doto [::effect-not-found] (prn effect))))
                                     res #_[t form guess db] (e/Apply Effect args)] ; effect handlers span client and server
                                 res))))]
     (if (= (count results) (count forms)) ; poor man's m/join
