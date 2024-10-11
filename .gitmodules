@@ -12,7 +12,7 @@
 	url = git@gitlab.com:hyperfiddle/scratch.git
 [submodule "heroicons-electric"]
 	path = vendor/heroicons-electric
-	url = git@gitlab.com/hyperfiddle/heroicons-electric.git
+	url = git@gitlab.com:hyperfiddle/heroicons-electric.git
 [submodule "vendor/hyperfiddle"]
 	path = vendor/hyperfiddle
 	url = git@gitlab.com:hyperfiddle/hyperfiddle.git
