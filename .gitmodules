@@ -1,18 +1,18 @@
 [submodule "vendor/hfql"]
 	path = vendor/hfql
-	url = git@github.com:hyperfiddle/hfql.git
+	url = git@gitlab.com:hyperfiddle/hfql.git
 [submodule "vendor/electric"]
 	path = vendor/electric
-	url = git@github.com:hyperfiddle/electric.git
+	url = git@gitlab.com:hyperfiddle/electric.git
 [submodule "vendor/rcf"]
 	path = vendor/rcf
-	url = git@github.com:hyperfiddle/rcf.git
+	url = git@gitlab.com:hyperfiddle/rcf.git
 [submodule "src/scratch"]
 	path = src/scratch
-	url = git@github.com:hyperfiddle/scratch.git
+	url = git@gitlab.com:hyperfiddle/scratch.git
 [submodule "heroicons-electric"]
 	path = vendor/heroicons-electric
-	url = https://github.com/hyperfiddle/heroicons-electric
+	url = git@gitlab.com/hyperfiddle/heroicons-electric.git
 [submodule "vendor/hyperfiddle"]
 	path = vendor/hyperfiddle
-	url = git@github.com:hyperfiddle/hyperfiddle.git
+	url = git@gitlab.com:hyperfiddle/hyperfiddle.git
