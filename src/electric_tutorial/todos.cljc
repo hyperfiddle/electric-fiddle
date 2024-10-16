@@ -41,6 +41,7 @@
 
 (def debug* false)
 (def show-buttons* false)
+(def latency* true)
 
 (e/defn TodoCreate []
   (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
@@ -107,13 +108,15 @@
   (swap! !tx-report (fn [{:keys [tempids] :as tx-report}]
                       (merge tx-report (update new-tx-report :tempids (fn [old-tempids] (merge old-tempids tempids)))))))
 
-#?(:clj (defn slow-transact! [!conn tx] (Thread/sleep 1000) (d/transact! !conn tx)))
+#?(:clj (defn slow-transact! [!conn tx & {:keys [latency]}]
+          (when latency (Thread/sleep 1000)) (d/transact! !conn tx)))
 
 (e/defn Create-todo [tempid desc]
   (let [serializable-tempid (str (hash tempid))]
     (e/server
       (let [tx [{:task/description desc, :task/status :active :db/id serializable-tempid}]]
-        (e/Offload #(try (accumulate-tx-reports! !tx-report (slow-transact! !conn tx))
+        (e/Offload #(try (accumulate-tx-reports! !tx-report
+                           (slow-transact! !conn tx :latency latency*))
                          (doto ::cqrs/ok (prn `Create-todo))
                          (catch Exception e (doto ::fail (prn e)))))))))
 
@@ -121,20 +124,25 @@
   (e/server
     (let [tx [{:db/id id :task/description desc}]]
       (prn 'EditTodoDesc tx)
-      (e/Offload #(try (accumulate-tx-reports! !tx-report (slow-transact! !conn tx)) (doto ::cqrs/ok (prn `Edit-todo-desc))
+      (e/Offload #(try (accumulate-tx-reports! !tx-report
+                         (slow-transact! !conn tx :latency latency*))
+                    (doto ::cqrs/ok (prn `Edit-todo-desc))
                     (catch Exception e (doto ::fail (prn e))))))))
 
 (e/defn Toggle [id status]
-  ;; (prn 'Toggle id status) (e/server (prn 'Toggle id status))
   (e/server
     (let [tx [{:db/id id, :task/status status}]]
-      (e/Offload #(try (accumulate-tx-reports! !tx-report (slow-transact! !conn tx)) (doto ::cqrs/ok (prn `Toggle))
+      (e/Offload #(try (accumulate-tx-reports! !tx-report
+                         (slow-transact! !conn tx :latency latency*))
+                    (doto ::cqrs/ok (prn `Toggle))
                     (catch Exception e (doto ::fail (prn e))))))))
 
 (e/defn Delete-todo [id] ; FIXME retractEntity works but todo item stays on screen, who is retaining it?
   (e/server
     (let [tx [[:db/retractEntity id]]]
-      (e/Offload #(try (accumulate-tx-reports! !tx-report (slow-transact! !conn tx)) (doto ::cqrs/ok (prn `Delete))
+      (e/Offload #(try (accumulate-tx-reports! !tx-report
+                         (slow-transact! !conn tx :latency latency*))
+                    (doto ::cqrs/ok (prn `Delete))
                     (catch Exception e (doto ::fail (prn e))))))))
 
 ;; WIP - working but questionable and has duplicate code with cqrs/Service
@@ -158,13 +166,15 @@
 (e/defn Todos []
   (e/client
     (binding [cqrs/effects* {`Create-todo Create-todo
-                              `Edit-todo-desc Edit-todo-desc
-                              `Toggle Toggle
-                              `Delete-todo Delete-todo
-                              `Batch Batch}
+                             `Edit-todo-desc Edit-todo-desc
+                             `Toggle Toggle
+                             `Delete-todo Delete-todo
+                             `Batch Batch}
               debug* (Checkbox debug* :label "debug")
               show-buttons* (Checkbox show-buttons* :label "show-buttons")
+              latency* (Checkbox latency* :label "artifical latency")
               !tx-report (e/server (atom {:db-after @!conn}))]
+      latency*
 
       ;; on create-new submit, in order:
       ;; 1. transact! is called

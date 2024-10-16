@@ -175,7 +175,7 @@
      `Set-delay Set-delay
      `Set-filter Set-filter}))
 
-(def state0 {::filter :all, ::editing nil, ::delay 500})
+(def state0 {::filter :all, ::editing nil, ::delay 0 #_500})
 #?(:clj (def !conn (doto (d/create-conn {})
                      (d/transact!
                        [{:task/description "feed baby" :task/status :active}
