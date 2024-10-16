@@ -12,6 +12,14 @@ What's happening
 * <https://github.com/hyperfiddle/electric-starter-app>
 * Submit remote txn on enter and clear (e.g. **Chat**, **TodoMVC**, i.e. create new entity). Uncontrolled!
 
+Create new form - auto-submit false, genesis true
+  input
+Item form - auto-submit true, this has the retry state
+  Item status form - auto-submit true
+    checkbox
+  Item desc form - auto-submit false
+    input
+
 Novel forms
 * `ui/checkbox`
 * `binding` – reactive dynamic scope; today all Electric defs are dynamic.

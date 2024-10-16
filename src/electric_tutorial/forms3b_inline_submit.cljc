@@ -10,7 +10,7 @@
 (e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "transactional fields with inline submit, esc/enter"))
     (let [debug (Checkbox false :label "debug")
-          show-buttons (Checkbox true :label "show-buttons")
+          show-buttons (or (Checkbox false :label "show-buttons") ::cqrs/smart)
           auto-submit (Checkbox false :label "auto-submit")
           {:keys [user/str1 user/num1 user/bool1]} (Query-record db id edits)]
       (dom/dl
