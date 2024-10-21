@@ -5,8 +5,15 @@
             [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok PendingController]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox! Checkbox]]))
 
+#?(:clj (defn transact-unreliable [!conn tx
+                                   & {:keys [slow fail]
+                                      :or {slow false fail false}}]
+          (when (true? slow) (Thread/sleep 1000))
+          (when (true? fail) (throw (ex-info "artificial failure" {})))
+          (d/transact! !conn tx)))
+
 #?(:clj (def !conn))
-(def debug* false)
+(def debug* true)
 (def slow* true)
 (def fail* false)
 
@@ -16,7 +23,7 @@
     (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id)))))
 
 (e/defn UserForm [db id forms]
-  (dom/fieldset (dom/legend (dom/text "transactional form"))
+  (dom/fieldset (dom/legend (dom/text "UserForm"))
     (let [{:keys [user/str1 user/num1 user/bool1] :as m} (Query-record db id forms)]
       (Form! ; buffer and batch edits into an atomic form
         (dom/dl
@@ -26,18 +33,11 @@
             (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! :user/bool1 bool1))))
         :commit (fn [dirty-form]
                   (let [{:keys [user/str1 user/num1 user/bool1] :as m} (merge m dirty-form)]
-                    [[`UserFormSubmit id str1 num1 bool1] {id m}]))
+                    [[`UserFormSubmit id str1 num1 bool1] ; command
+                     {id m}])) ; prediction
         :debug debug*))))
 
-#?(:clj (defn transact-unreliable [!conn tx
-                                   & {:keys [slow fail]
-                                      :or {slow false fail false}}]
-          (when (true? slow) (Thread/sleep 1000))
-          (when (true? fail) (throw (ex-info "artificial failure" {})))
-          (d/transact! !conn tx)))
-
 (e/defn UserFormSubmit [id str1 num1 bool1]
-  #_(e/server (prn 'UserFormSubmit id str1 num1 bool1))
   (e/server ; secure command interpretation, validate command here
     (let [tx [{:db/id id :user/str1 str1 :user/num1 num1 :user/bool1 bool1}]]
       (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))

@@ -14,14 +14,15 @@
 (def auto-submit* false)
 
 (e/defn UserForm [db id edits]
-  (dom/fieldset (dom/legend (dom/text "transactional fields with inline submit, esc/enter"))
+  (dom/fieldset (dom/legend (dom/text "UserForm"))
     (let [{:keys [user/str1 user/num1 user/bool1]} (Query-record db id edits)]
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
           (dom/dd (Form! (Input! :user/str1 str1)
                     :commit (fn [{v :user/str1}]
-                              [[`Str1FormSubmit id v] {id {:user/str1 v}}])
+                              [[`Str1FormSubmit id v] ; command
+                               {id {:user/str1 v}}]) ; prediction
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
@@ -29,7 +30,8 @@
           (dom/dt (dom/text "num1"))
           (dom/dd (Form! (Input! :user/num1 num1 :type "number" :parse parse-long)
                     :commit (fn [{v :user/num1}]
-                              [[`Num1FormSubmit id v] {id {:user/num1 v}}])
+                              [[`Num1FormSubmit id v]
+                               {id {:user/num1 v}}])
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
@@ -37,7 +39,8 @@
           (dom/dt (dom/text "bool1"))
           (dom/dd (Form! (Checkbox! :user/bool1 bool1)
                     :commit (fn [{v :user/bool1}]
-                              [[`Bool1FormSubmit id v] {id {:user/bool1 v}}])
+                              [[`Bool1FormSubmit id v]
+                               {id {:user/bool1 v}}])
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*)))))))
