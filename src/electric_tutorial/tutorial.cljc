@@ -29,9 +29,9 @@
             [electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.temperature2 :refer [Temperature2]]
             [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
-            #_[electric-tutorial.forms3-crud :refer [Forms3-crud]]
-            [electric-tutorial.forms3a-form :refer [Forms3a-form]] ; via Forms3-crud
-            [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; via Forms3-crud
+            electric-tutorial.forms3-crud ; inject conn for Forms
+            [electric-tutorial.forms3a-form :refer [Forms3a-form]]
+            [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]]
             [electric-tutorial.chat-monitor :refer [ChatMonitor]]
             [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
@@ -60,12 +60,12 @@
      ]]
    ["Forms"
     [`Temperature ; local form, cycle by side effect
+     `Forms2-controlled ; local form, no e/amb
      `Temperature2 ; with-cycle - for ChatMonitor - and e/amb
-     `Forms2-controlled ; local form, slightly trickier usage of e/amb
      `Forms3a-form ; transactional form
      `Forms3b-inline-submit ; transactional fields
      `ChatMonitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service
-     #_`Todos ; create-new, optimistic updates, service
+     `Todos ; create-new, optimistic updates, service
      `TodoMVC
      `TodoMVC-composed]]
    ["Datagrids"

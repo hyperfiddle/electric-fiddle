@@ -1,8 +1,7 @@
-# Cycle by side effect — Temperature Converter
+# Local input — Temperature Converter
 
-* introduce controlled inputs
-* introduce *binding recursion*, i.e. two controlled inputs with a mutual dependency
-* Goal: begin to understand dataflow cycles as a pure functional encoding of state
+* `Input` is your bread and butter input, good for ephemeral client local state
+* introduce cycle-by-side effect, and begin to understand dataflow cycles as a pure functional encoding of state
 
 !fiddle-ns[](electric-tutorial.temperature/Temperature)
 
@@ -26,7 +25,8 @@ Concurrent writer process
 * Electric's continuous time semantics (signal not stream) require that the foreign flow have an initial value, here `0`.
 * note that `m/ap` is a value, it does not run until it is joined.
 
-Recursive bindings
+Recursive bindings, i.e. two controlled inputs with a mutual dependency
+
 * We use an `atom` to loop input field state changes back to the top to feed into the other input.
 * there's an `atom` and a `watch`. Recall that if you change the atom, the watch will fire.
 * Interact with the upper input. The input returns its updated state.

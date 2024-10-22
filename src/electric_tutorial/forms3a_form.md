@@ -21,7 +21,7 @@ What's happening
 
 Why / what for
 
-* Use cases: CRUD apps, business applications, internal tools — i.e., transactional database applications. Not just CRUD but also [CQRS](https://en.wikipedia.org/wiki/Command_Query_Responsibility_Segregation) (which is mostly what we actually mean when we say "CRUD" - not just inline record edits, but complex commands and queries with business rules)
+* Use cases: CRUD apps, business applications, internal tools — i.e., transactional database applications. Not just CRUD but also [CQRS](https://en.wikipedia.org/wiki/Command_Query_Responsibility_Segregation) (very loosely - basically when we say "CRUD" we actually mean not just inline record edits like Airtable or Google Sheets, but nontrivial **commands** and **queries** with interesting business rules)
 * NOT for: TodoMVC, consumer apps – these do not have explicit form controls! (Or do they?)
 * Which is Github's UI, or Jira? They're both! Sometimes, there's a form with dirty state and a submit button. However, many interactions submit server commands directly without the ceremony of a full form. Name the tradeoff: what is gained or lost by the presence or absence of a form?
 
@@ -101,27 +101,14 @@ attempting the transaction.
 * form submissions rise to the root - they are concurrent
 * `t` used to release state, or `(t err)` to feed the error into the commit button so it enters retry state
   * ::ok -> `(t)`, release staged form as it is safe now, which releases the fields as well
-  * assert false -> retry, `(t err)`, releases commit interaction but retains staged form as it is in retry state
+  * anything else -> `(t err)` to prompt for retry, releases commit interaction but retains staged form as it is in retry state
 
 !fn-src[hyperfiddle.cqrs0/Service]()
 
 Future work
   * What if the form buffer was moved to the server, so that if you refresh the page, your state is not lost?
 
-# Scratch
-
-
-* dirty state - field is yellow, edit request in flight - field level
-* commit/discard buttons at form level
-  - busy state - commit is disabled, edit request in flight - form level
-  - cancellation - when busy, we can cancel the in-flight form edit
-  - error state - at form level
-
-
-
-
-
-  Glossary
+ Glossary
 
 * **Intent** refers to what the user wants to accomplish - their goal or desired action. It's about the user's purpose or motivation when interacting with an interface.
 * **Affordance** refers to the perceived possibilities for action that an object or interface element provides. It's about how the design communicates what actions can be taken.

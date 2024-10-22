@@ -1,9 +1,8 @@
-# Todos Simple
+# Todos Simple (WIP)
 
-* minimal todo list. it's multiplayer, try two tabs
-* create-new
-* optimistic updates
-* retry on all states
+* Point of this demo is to demonstrate optimistic create-new with failure handling (retry) on all possible states. If you don't care about failure handling, then there is a much better implementation possible (without nesting a form).
+* Unfortunately, we didn't finish implementing the failure states yet (as of October 20 2024).
+* I think it otherwise works
 
 !fiddle-ns[](electric-tutorial.todos/Todos)
 
@@ -20,9 +19,6 @@ Item form - auto-submit true, this has the retry state
   Item desc form - auto-submit false
     input
 
-Novel forms
-* `ui/checkbox`
-* `binding` – reactive dynamic scope; today all Electric defs are dynamic.
 
 Key ideas
 * dependency injection
@@ -32,9 +28,7 @@ Key ideas
 * query diffing
 
 
-
 # Scratch
 
 * implies optimistic collection maintenance
 * failure is routed to the optimistic input for retry, it is not handled here!
-* we use dom/On-all because you're editing many entities

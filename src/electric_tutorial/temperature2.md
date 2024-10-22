@@ -1,14 +1,14 @@
-# e/with-cycle — Temperature Converter
+# e/amb — Temperature Converter
 
-* Same as previous demo with the atom factored out (i.e., pure functional style)
-* introduce `e/with-cycle` as a pure functional encoding of state
+* Same as previous Temperature Converter demo, but in the pure functional style
 * introduce `e/amb` as a way to efficiently gather state from concurrent processes
+* `e/amb` is really important in UI, we use it *everywhere*, so read this a few times and ask questions
 
 !fiddle-ns[](electric-tutorial.temperature2/Temperature2)
 
 What's happening
-* We've removed the atom, and particularly the `reset!` from all three places
-* "Events" (control state changes) flow upwards towards the app root as values
+* We've removed the atom, and particularly the `reset!` from all three places. **Now there is only one `reset!`**
+* Instead of `reset!`, "events" (kinda) flow upwards towards the app root as *values*
 * `e/amb` is being used inside dom containers (e.g. `dl`) to gather concurrent states from concurrent input controls (i.e., **concurrent processes!**)
 
 `e/amb` – a key primitive for building UI with Electric
@@ -60,24 +60,9 @@ FAQ: Why is `e/amb` built into the language?
 * Therefore, the Electric v3 computational structure promotes diff flows to a central construct, requiring us to essentially build the differential collection type (e/amb) directly into the language evaluation model, effectively vectorizing the language.
 * This is discussed in [Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8).
 
-`e/with-cycle`
-
-* this reifies the `(reset! !x (f (e/watch !x)))` idiom into a "pure functional" loop operator, reminiscent of Clojure's `loop/recur`.
-* In Haskell see [RecursiveDo](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html) for recursive bindings in certain monadic computations, such as continuous time dataflow computations.
-
-!fn-src[hyperfiddle.electric3/with-cycle]()
-
-* we could subsitute a pure implementation of with-cycle – for example, possibly using function recursion to implement the loop (we would need something akin to tail recursion to ensure we reuse the same reactive "frame" each iteraction, which the atom implementation correctly does out of the box, which is why we do it.)
-* Lesson: dataflow cycles are isomorphic to state; this is a pure functional pattern actually! Remember, the reactive engine's implementation is imperative for performance, that does not mean the language operators are impure! Electric's core operators are pure! This operator is pure!
-
 Differential `e/amb` (this is important)
 
-* Note that `(reset! !m (e/amb form1 form2))` is a differential product. What's happening? Why does it work?
+* Note that `(reset! !m (e/amb a b))` is a differential product. What's happening? Why does it work?
 * Recall that e/amb superposition is *reactive* and *differential* – that means, only *changes* propagate.
-* When the top form state changes, the e/amb will collect the values (or from the differential perspective – the *changes*), and propagate that new value to the `e/with-cycle`.
-* `(e/with-cycle [m state0] (e/amb (UserForm m) (UserForm m)))` will loop that top form's updated state back into *both* forms. The top form receives it's *own* changed state, which is the same as the current state so it reaches a fixed point and halts.
-* The bottom form receives the changed state, which is NOT the same as the current state, so it absorbs the new state, and then closes the circuit by emitting the new state, which propagates into the `e/with-cycle`, which is now a fixed point so the computation halts.
-* This is a pure functional pattern!
-
-* with-cycle will loop until the input reaches a fixed point, i.e. `m == (UserForm m)` — the value passed into the form is the same as the value it returns.
-* Of course, this is a multiplexed form with e/amb, so ...
+* `reset!` will auto-map across the table, and the auto-mapping happens elementwise on *changes*
+* if `a` and `b` are equationally bound to the same state (i.e. the same electrical circuit), when one changes, the other follows, you'll get a second `reset!` but the second `reset!` will work-skip, the computation reaches a fixed point and halts.

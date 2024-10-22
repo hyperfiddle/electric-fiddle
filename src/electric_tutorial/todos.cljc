@@ -163,8 +163,8 @@
                              `Batch Batch}
               debug* (Checkbox debug* :label "debug")
               slow* (Checkbox slow* :label "latency")
-              fail* (Checkbox slow* :label "failure")
-              show-buttons* (Checkbox show-buttons* :label "show-buttons")
+              fail* (Checkbox fail* :label "failure" :disabled true)
+              show-buttons* (Checkbox show-buttons* :label "show-buttons" :disabled true)
               !tx-report (e/server (atom {:db-after @!conn}))]
       debug* slow* fail* show-buttons*
 
