@@ -67,7 +67,7 @@
      `Forms3a-form ; transactional form
      `Forms3b-inline-submit ; transactional fields
      `ChatMonitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service
-     `Todos ; create-new, optimistic updates, service
+     #_`Todos ; create-new, optimistic updates, service
      `TodoMVC
      `TodoMVC-composed]]
    ["Datagrids"
