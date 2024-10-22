@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+body.hyperfiddle {
+    font-family: 'Open Sans', Arial, Verdana, sans-serif;
+    background-color: rgb(248 250 252);
+}

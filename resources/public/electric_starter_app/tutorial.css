@@ -1,0 +1,22 @@
+/* Forms, Crud, TodoMVC(!important) */
+[aria-busy="true"] { background-color: yellow !important; }
+input[type="checkbox"][aria-busy="true"] {
+    /* Can't color or background-color native checkboxes
+       border and outline are tricky to get right without messing up keyboard nav */
+    box-shadow: 0 0 0.2rem 0.2rem yellow; /* simulate a border */
+    outline: none;
+}
+
+[aria-invalid="true"] { background-color: pink; }
+input[aria-invalid="true"] { outline: 3px pink solid; }
+input[type="checkbox"][aria-invalid="true"]:focus { outline: 4px pink solid; }
+
+form {
+    display: contents; /* we're nesting them */
+    /* padding: 0.2rem; */ /* so we can see background-color */
+}
+
+/* Toggle, TemperatureConverter, TodoMVC */
+dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
+dt { grid-column: 1; font-weight: 700; }
+dd { grid-column: 2; margin-bottom: .5rem; margin-left: 1em; }
