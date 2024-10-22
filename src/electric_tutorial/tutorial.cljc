@@ -13,26 +13,26 @@
 
             ; Part 1
             [electric-tutorial.two-clocks :refer [TwoClocks]]
+            [electric-tutorial.system-properties :refer [SystemProperties]]
             [electric-tutorial.dir-tree :refer [DirTree]]
-
-            [electric-tutorial.lifecycle :refer [Lifecycle]]
-            [electric-tutorial.webview1 :refer [Webview1]]
-            ;; [electric-tutorial.webview2 :refer [Webview2]] ; can't be deployed to fly, depends on london talk 2024's typeahead
             [electric-tutorial.fizzbuzz :refer [FizzBuzz]]
+            [electric-tutorial.webview1 :refer [Webview1]]
+            [electric-tutorial.webview2 :refer [Webview2]]
+            [electric-tutorial.lifecycle :refer [Lifecycle]]
+            [electric-tutorial.backpressure :refer [Backpressure]]
+
             [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.counter :refer [Counter]]
             [electric-tutorial.chat :refer [Chat]]
-            [electric-tutorial.chat-monitor :refer [ChatMonitor]]
-            [electric-tutorial.backpressure :refer [Backpressure]]
 
             ; Part 2
             [electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.temperature2 :refer [Temperature2]]
             [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
-            [electric-tutorial.forms3-crud :refer [Forms3-crud]]
+            #_[electric-tutorial.forms3-crud :refer [Forms3-crud]]
             [electric-tutorial.forms3a-form :refer [Forms3a-form]] ; via Forms3-crud
             [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; via Forms3-crud
-            #_[electric-tutorial.crud :refer [Crud]]
+            [electric-tutorial.chat-monitor :refer [ChatMonitor]]
             [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
             [electric-tutorial.todomvc-composed :refer [TodoMVC-composed]]
@@ -40,10 +40,8 @@
             ; Misc
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
-            [electric-tutorial.system-properties :refer [SystemProperties]]
             [electric-tutorial.timer :refer [Timer]]
-            #_[electric-tutorial.explorer :refer [DirectoryExplorer]]
-            ))
+            #_[electric-tutorial.explorer :refer [DirectoryExplorer]]))
 
 (def tutorials
   [["Basics"
@@ -51,9 +49,9 @@
      `SystemProperties ; simple query/view topology
      `DirTree ; complex topology
      `FizzBuzz ; differential
-     `Lifecycle ; components
      `Webview1 ; diffs, IO encapsulation
-     ;; `Webview2 ; abstraction, lambda demo
+     #_`Webview2 ; abstraction, lambda demo
+     `Lifecycle ; components
      `Backpressure]]
    ["Events"
     [`Toggle ; token and service, multiplayer

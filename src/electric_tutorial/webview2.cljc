@@ -4,7 +4,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [london-talk-2024.typeahead :refer [Typeahead]]))
+            [electric-tutorial.typeahead :refer [Typeahead]]))
 
 (e/defn Genders [db search]
   (e/server (e/diff-by identity (e/Offload #(genders db search)))))

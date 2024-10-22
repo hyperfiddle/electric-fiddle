@@ -9,9 +9,9 @@
 What's happening
 
 * There's a HTML table on the frontend, backed by a backend "query" `jvm-system-properties`
-* The backend query is an ordinary Clojure function that only exists on the server.
+* The backend query is an ordinary Clojure function that only exists on the server, which works because this is an ordinary `.cljc` file.
 * Typing into the frontend input causes the backend query to rerun and update the table.
-* There's a reactive for loop to render the table.
+* There's a reactive for loop to render the table - `e/for`
 * The view code deeply nests client and server calls, arbitrarily, even through loops.
 
 Ordinary Clojure/Script functions work
@@ -34,6 +34,7 @@ Simple free text input
 * the clojure lambda is an extractor function which needs to be written in Clojure not Electric because of the DOM's OOP semantics. If you wrote it like `(-> (dom/On "input" identity "") .-target .-value)`, because the `.-target` reference is the same with each event, `(.-value target)` will work skip.
 * cycle by side effect - we're using an atom to loop the input value higher in lexical scope. Super common idiom, more on this later.
 * **Note we're cycling values directly – there are no callbacks!**
+* `e/watch`: derives a reactive flow from a Clojure atom by watching for changes using the `clojure.core/add-watch` subscription API.
 
 Reactive for details
 
