@@ -9,16 +9,10 @@ What's happening
 
 * Two clocks, one on the client, one on the server, we compute the skew.
 * The server clock streams to the client over websocket.
+* The expression is **multi-tier** (i.e., full-stack) – it has frontend parts and backend parts.
+* The Electric compiler infers the backend/frontend boundary and generates the full-stack app (concurrent client and server processes that coordinate).
+* **Network "data sync"† is automatic and invisible.** (†I do not like the framing "data sync" because it implies *synchronization*, i.e. the reconciliation of two separate mutable stores which have conflicting views as to what is true. This is not how Electric works! More on that later.)
 * When a clock updates, the **reactive** view incrementally recomputes to stay consistent, keeping the DOM in sync with the clocks. Both the frontend and backend parts of the function are reactive.
-* The expression is **multi-tier** (i.e, full-stack): it has frontend parts and backend parts, which are developed together in a single programming language and compilation unit. See [Multitier programming (wikipedia)](https://en.wikipedia.org/wiki/Multitier_programming)
-* The Electric compiler infers the backend/frontend boundary and transparently generates the full-stack app (concurrent client and server processes that coordinate).
-
-**Network "data sync"† is automatic and invisible.**
-
-* † I do not like the framing "data sync" because it implies *synchronization*, i.e. the reconciliation of two separate mutable stores which have conflicting views as to what is true. This is not how Electric works!
-* Electric uses a split authority model: the client and server programs have full individual authority over the result of their respective computations, and they broadcast to each other the outcomes of any control flow that the other site needs to know.
-* As such, there can never be a conflict. The client is the actual authority over the state of the client, and the server is the actual authority as to the state of the server.
-* Any lagged messages (e.g., that may be downstream of a stale state) are simply discarded as no longer relevant, and when the lagged site catches up, any stale resource allocations are cancelled and reclaimed.
 
 Syntax
 
@@ -35,14 +29,12 @@ Network transparency
 * This is not RPC (request/response), that would be too slow. The server streams `s` without being asked, because it knows the client depends on it. If the client had to request each server clock tick, the timer would pause visibly between each request, which would be too slow.
 * **Everything is already async, so adding a 10ms websocket delay does not add impedance**, complexity or code weight! This is the central insight of Electric. For a 10min video explainer, see [UIs are streaming DAGs (2022)](https://hyperfiddle.notion.site/UIs-are-streaming-DAGs-e181461681a8452bb9c7a9f10f507991). It's important that you get comfortable with this idea, so please watch the talk!
 
-Clojure/Script compatibility
+Reactive DOM
 
-* `(- c s)` is a ClojureScript function call (i.e. `-` is ClojureScript's minus).
-* Electric is **"99%" Clojure/Script compatible** (i.e., to a reasonable extent - including syntax, defmacro, collections & datatypes, destructuring, host interop, most of clojure.core, etc).
-* To achieve this, Electric implements an actual Clojure/Script analyzer and implements all ordinary Clojure special forms.
-* That means, most any valid Clojure or ClojureScript expression, when pasted into an Electric body, will evaluate to the same result, and produce the same side effects (though not necessarily in the same statement order).
-* Therefore, many pre-existing Clojure/Script macros unaware of Electric will work (e.g. `core.match` works), to the extent that their macroexpansion is referentially transparent (i.e. does not rely on runtime mutation or host concurrency, thread stuff including `future` and `push-thread-bindings`, etc).
-* **It's just Clojure!**
+* DOM rendering happens on client, there is no server side rendering. **DOM rendering is effectful**, through point mutations, like `dom/text` here. In v3, the dom macros understand (at runtime) their relative location in your program's runtime DAG and use that knowledge to mount and update themselves in the appropriate place in the DOM. So when `c` updates, `(dom/text "client time: " c)` will issue a point write to the DOM at this expression's corresponding place in the DOM.
+* **DOM rendering is free**: there is no React.js, no virtual dom, no reconciler, no DOM diffing. Electric is already fully reactive at the programming language level so there is no need. electric-dom is straightforward machinery to translate Electric change streams into dom mutations.
+* If you do need to interop with React.js ecosystem components, it's just javascript, feel free to do so, a React bridge is about 30 lines of code.
+* FAQ: **Can you use Electric from ClojureScript only** without a server and websocket (e.g. as a React.js replacement)? Yes, as of v3 this is officially supported!
 
 Electric function call convention
 
@@ -52,12 +44,14 @@ Electric function call convention
 * The Electric compiler, as of v3 makes this convention mandatory. In Electric v3, a capitalized function name (first letter) denotes an Electric call and not a Clojure call. This is an experiment, if it blows up too many pre-existing Clojure macros maybe we revert to v2 syntax `(F.)` or UIX syntax `($ F)`. The compiler maintains a whitelist regex of edge cases, such as gensym's `G__1`.
 * FAQ: Why do we need syntax to call Electric fns, Electric has an analyzer, why not just use metadata on the var? A: Because lambdas. Electric expressions can call both Electric lambdas and ordinary Clojure lambdas, e.g. `(dom/On "input" #(-> % .-target .-value) "")`. Electric is a compiler and needs to know the call convention at compile time. Vars are available at compile time, but lambda values are only known at runtime. However, Electric could use var metadata to disambiguate the static call case, which would further reduce collision surface area (todo implement).
 
-Reactive DOM
+Clojure/Script compatibility
 
-* DOM rendering happens on client, there is no server side rendering. **DOM rendering is effectful**, through point mutations, like `dom/text` here. In v3, the dom macros understand (at runtime) their relative location in your program's runtime DAG and use that knowledge to mount and update themselves in the appropriate place in the DOM. So when `c` updates, `(dom/text "client time: " c)` will issue a point write to the DOM at this expression's corresponding place in the DOM.
-* **DOM rendering is free**: there is no React.js, no virtual dom, no reconciler, no DOM diffing. Electric is already fully reactive at the programming language level so there is no need. electric-dom is straightforward machinery to translate Electric change streams into dom mutations.
-* If you do need to interop with React.js ecosystem components, it's just javascript, feel free to do so, a React bridge is about 30 lines of code.
-* FAQ: **Can you use Electric from ClojureScript only** without a server and websocket (e.g. as a React.js replacement)? Yes, as of v3 this is officially supported!
+* `(- c s)` is a ClojureScript function call (i.e. `-` is ClojureScript's minus).
+* Electric is **"99%" Clojure/Script compatible** (i.e., to a reasonable extent - including syntax, defmacro, collections & datatypes, destructuring, host interop, most of clojure.core, etc).
+* To achieve this, Electric implements an actual Clojure/Script analyzer and implements all ordinary Clojure special forms.
+* That means, most any valid Clojure or ClojureScript expression, when pasted into an Electric body, will evaluate to the same result, and produce the same side effects (though not necessarily in the same statement order).
+* Therefore, many pre-existing Clojure/Script macros unaware of Electric will work (e.g. `core.match` works), to the extent that their macroexpansion is referentially transparent (i.e. does not rely on runtime mutation or host concurrency, thread stuff including `future` and `push-thread-bindings`, etc).
+* **It's just Clojure!**
 
 Electric is a reactivity compiler
 
@@ -69,8 +63,8 @@ Electric is a reactivity compiler
 
 There is an isomorphism between programs and DAGs
 
-* you already knew this, if you think about it – see [call graph (wikipedia)](https://en.wikipedia.org/wiki/Call_graph)
-* The DAG is an abstract representation of a program
+* you already knew this, if you think about it – for exmaple, [call graph (wikipedia)](https://en.wikipedia.org/wiki/Call_graph)
+* The Electric DAG is an abstract representation of your program
 * The DAG contains everything there is to know about the **flow of data ("dataflow")** through the Electric program's **control flow** structures
 * Electric uses this DAG to drive reactivity, so we sometimes call the DAG a "reactivity graph".
 * But in theory, this DAG is abstract and there could be evaluated (interpreted or compiled) in many ways.

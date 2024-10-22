@@ -1,6 +1,6 @@
 # Buttons and events — Toggle
 
-This demo toggles between client and server with a button, to introduce basic event handling idioms, in particular for remote side effects (RPC).
+This demo toggles between client and server with a button, to introduce basic event handling idioms, in particular for remote side effects (server RPC).
 
 !fiddle-ns[](electric-tutorial.toggle/Toggle)
 

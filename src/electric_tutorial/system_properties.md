@@ -26,22 +26,22 @@ e/for, e/diff-by
 
 * The table rows are renderered by a for loop. Reactive loops are efficient and recompute branches only precisely when needed.
 * `e/for`: a reactive map operator that works on electric v3's "reactive collections" (kinda, we will sharpen this later).
-* `(e/diff-by key system-props)` constructs a "reactive collection" from a regular Clojure collection. `key` (analogous to similar to [React.js key](https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js/43892905#43892905)) is a function that identifies a collection element so that even as query results change over time, elements with the same identity will be reconciled and reuse the same location in the reactive collection, which here is mirrored to the DOM.
+* `(e/diff-by key system-props)` constructs a "reactive collection" from a regular Clojure collection. `key` (c.f. [React.js key](https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js/43892905#43892905)) is a function that identifies a stable entity in a collection as it evolves over time as the query results update. Collection elements with the same identity will be reconciled and reuse the same location in the reactive collection, which here is mirrored to the DOM.
 * Note, the pattern `(e/for [[k v] (e/server (e/diff-by key system-props))] ...)` implies collection diffs on the wire! When the query result changes, only the *differences* are moved, not the *entire collection*.
 
 Simple free text input
-* callback free: `(dom/On "input" #(-> % .-target .-value) ""))` returns the current value of the input as a reactive value (i.e., a *signal* from the FRP perspective). `""` is the initial state of the signal.
+* **callback free**: `(dom/On "input" #(-> % .-target .-value) ""))` returns the current value of the input as a reactive value (i.e., a *signal* from the FRP perspective). `""` is the initial state of the signal.
 * the clojure lambda is an extractor function which needs to be written in Clojure not Electric because of the DOM's OOP semantics. If you wrote it like `(-> (dom/On "input" identity "") .-target .-value)`, because the `.-target` reference is the same with each event, `(.-value target)` will work skip.
 * cycle by side effect - we're using an atom to loop the input value higher in lexical scope. Super common idiom, more on this later.
+* **Note we're cycling values directly – there are no callbacks!**
 
 Reactive for details
 
 * `e/for-by` ensures that each table row is bound to a logical element of the collection, and only touched when a row dependency changes.
-* Notice there is a `println` inside the for loop. This is so you can see the efficient rendering in the browser console.
-* Open the browser console now and confirm for yourself:
+* Notice there is a `println` inside the for loop. This is so you can verify in the browser console that it only runs when its arguments change. Open the browser console now and confirm for yourself:
   * On initial render, each row is rendered once
   * Slowly input "java.class.path"
-  * As you narrow the filter, no rows are recomputed. (The existing dom is reused, so there is nothing to recompute because neither `k` nor `v` have changed for that row.)
+  * As you narrow the filter, no rows are recomputed. (The existing dom is reused, so there is nothing to recompute because, for those rows, neither `k` nor `v` have changed.)
   * Slowly backspace, one char at a time
   * As you widen the filter, rows are computed as they come back. That's because they were unmounted and discarded!
   * Quiz: Try setting an inline style "background-color: red" on element "java.class.path". When is the style retained? When is the style lost? Why?
@@ -58,7 +58,7 @@ Network transfer can be reasoned about clearly
 FAQ: "It seems scary that Electric blurs the lines between client and server?"
 * I reject "blurs the line", in our opinion the boundary is *precise and clear*
 * In fact, Electric v3 allows the programmer to draw much more intricate boundaries than ever before
-* Electric is a surgical tool offering *tremendous precision* - it is not "blurry"
+* **Electric is a surgical tool offering *tremendous precision* in how we specify network state distribution - it is not "blurry"**
 
 Network transparent composition is not the heavy, leaky abstraction you might think it is
 

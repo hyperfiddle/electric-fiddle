@@ -50,14 +50,16 @@
     [`TwoClocks ; hello world
      `SystemProperties ; simple query/view topology
      `DirTree ; complex topology
-     `Toggle ; token and service, multiplayer
-     `Counter ; on-all, progress, serializable lambda
      `FizzBuzz ; differential
      `Lifecycle ; components
      `Webview1 ; diffs, IO encapsulation
      ;; `Webview2 ; abstraction, lambda demo
-     `Chat ; cookie, pending, security. InputSubmitCreate!
      `Backpressure]]
+   ["Events"
+    [`Toggle ; token and service, multiplayer
+     `Counter ; on-all, progress, serializable lambda
+     `Chat ; cookie, pending, security. InputSubmitCreate!
+     ]]
    ["Forms"
     [`Temperature ; local form, cycle by side effect
      `Temperature2 ; with-cycle - for ChatMonitor - and e/amb
