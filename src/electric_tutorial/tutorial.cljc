@@ -50,7 +50,7 @@
      `DirTree ; complex topology
      `FizzBuzz ; differential
      `Webview1 ; diffs, IO encapsulation
-     `Webview2 ; abstraction, lambda demo
+     #_`Webview2 ; abstraction, lambda demo
      `Lifecycle ; components
      `Backpressure]]
    ["Events"
