@@ -167,7 +167,7 @@
 
 (e/defn Consulting-banner []
   (dom/p (dom/text "Managers of growth stage businesses, hire us! ")
-    (dom/a (dom/text "Consutling brochure here") (dom/props {:href "https://gist.github.com/dustingetz/c40cde24a393a686e26bce73391cd20f"}))))
+    (dom/a (dom/text "Consulting brochure here") (dom/props {:href "https://gist.github.com/dustingetz/c40cde24a393a686e26bce73391cd20f"}))))
 
 (e/defn Tutorial []
   (e/client
