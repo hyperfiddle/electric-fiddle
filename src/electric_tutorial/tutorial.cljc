@@ -50,7 +50,7 @@
      `DirTree ; complex topology
      `FizzBuzz ; differential
      `Webview1 ; diffs, IO encapsulation
-     #_`Webview2 ; abstraction, lambda demo
+     `Webview2 ; abstraction, lambda demo
      `Lifecycle ; components
      `Backpressure]]
    ["Events"
@@ -132,7 +132,7 @@
    `DirTree DirTree
    `Lifecycle Lifecycle
    `Webview1 Webview1
-   ;; `Webview2 Webview2
+   `Webview2 Webview2
    `FizzBuzz FizzBuzz
    `Toggle Toggle
    `Counter Counter

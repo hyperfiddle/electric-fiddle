@@ -33,10 +33,10 @@
           shirt-size (-> !e :order/shirt-size :db/ident)]
       {:db/id            (e/fn [] (dom/text id))
        :order/email      (e/fn [] (dom/text email))
-       :order/gender     (e/fn [] (Typeahead gender
+       :order/gender     (e/fn [] (Typeahead gender ; fixme site resolution regression
                                     (e/fn Options [search] (Genders db search))
                                     (e/fn OptionLabel [x] (pr-str x))))
-       :order/shirt-size (e/fn [] (Typeahead shirt-size
+       :order/shirt-size (e/fn [] (Typeahead shirt-size ; regression
                                     (e/fn Options [search] (Shirt-sizes db gender search))
                                     (e/fn OptionLabel [x] (pr-str x))))})))
 
@@ -48,13 +48,15 @@
   (e/server
     (let [db (e/watch conn)
           colspec (e/client (e/diff-by identity (e/watch !colspec)))
-          search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
+          search (e/client (dom/input (dom/props {:disabled true :placeholder "disabled due to regression, fixme"})
+                             (dom/On "input" #(-> % .-target .-value) "")))]
       (GenericTable
         colspec
         (e/Partial Teeshirt-orders db search (e/client (e/watch !sort-key)))
         (e/Partial Row db)))))
 
 (comment
+  ; todo align grid css to number of columns
   (reset! !colspec [:db/id])
   (swap! !colspec conj :order/email)
   (swap! !colspec conj :order/gender)
