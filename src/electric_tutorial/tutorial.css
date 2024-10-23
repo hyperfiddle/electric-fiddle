@@ -1,4 +1,6 @@
-.user-examples-code { max-width: 80ch; }
+@media (min-width: 981px){
+    .user-examples-code { max-width: 80ch; }
+}
 
 /* Forms, Crud, TodoMVC(!important) */
 .user-examples-target [aria-busy="true"] { background-color: yellow !important; }
