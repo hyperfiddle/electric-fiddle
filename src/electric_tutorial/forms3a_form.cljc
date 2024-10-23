@@ -5,17 +5,17 @@
             [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok PendingController]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox! Checkbox]]))
 
+#?(:clj (def !conn))
+(def debug* true)
+(def slow* true)
+(def fail* false)
+
 #?(:clj (defn transact-unreliable [!conn tx
                                    & {:keys [slow fail]
                                       :or {slow false fail false}}]
           (when (true? slow) (Thread/sleep 1000))
           (when (true? fail) (throw (ex-info "artificial failure" {})))
           (d/transact! !conn tx)))
-
-#?(:clj (def !conn))
-(def debug* true)
-(def slow* true)
-(def fail* false)
 
 (e/defn Query-record [db id forms]
   (e/client

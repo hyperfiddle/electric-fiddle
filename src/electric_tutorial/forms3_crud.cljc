@@ -1,5 +1,6 @@
 (ns electric-tutorial.forms3-crud
-  (:require #?(:clj [datascript.core :as d])))
+  (:require #?(:clj [datascript.core :as d])
+            #?(:clj [electric-tutorial.forms3a-form])))
 
 #?(:clj (defonce !conn (doto (d/create-conn {})
                          (d/transact! [{:db/id 42 :user/str1 "one"
