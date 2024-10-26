@@ -17,9 +17,10 @@ What's happening
 
 Performance note: there is some lag here! Why does it load in "stratas"? Do we need to be concerned about round trips?
 * Yes, this is a request waterfall and it is an implementation flaw. Yes, it will be fixed.
-* The Electric DAG captures statically the information needed to latten statically known round trips
-* But we haven't implemented this yet, basically we have `;todo static lookahead` throughout the network runtime. Soon! Our experience running v2 in production is that it was plenty fast in real apps. But, performance is important to us, and we will likely work on this next!
-* If you need to optimize this we can show you how. Probably use `tree-seq` to flatten the tree in Clojure, which is what we did in this [Electric v2 tree view](https://electric-demo.fly.dev/(user.demo-explorer!%44irectory%45xplorer)) which is pretty good!
+* The Electric DAG captures statically the information needed to batch and essentially pre-send the information that the client is going to ask for.
+* But we haven't implemented this yet, basically we have `;todo static lookahead` throughout the network runtime. Soon!
+* Our experience running v2 in production is that it was plenty fast in real apps. But, performance is important to us, and we will likely work on this next!
+* If you need to optimize this we can show you how. Probably use `tree-seq` to flatten the tree in Clojure, which is what we did in this <a href="https://electric-demo.fly.dev/(user.demo-explorer!%44irectory%45xplorer)">Electric v2 tree view</a>, which is pretty good! (The flicker in that demo is fixed in v3)
 
 Client/server transfer - the basics
 
