@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [london-talk-2024.typeahead :refer [Typeahead]]
+            [electric-tutorial.typeahead :refer [Typeahead]]
             [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
 
 (e/defn GenericTable [Query Row]
@@ -22,8 +22,12 @@
       (e/client
         (dom/td (dom/text id))
         (dom/td (dom/text email))
-        (dom/td (Typeahead gender (e/fn [search] (Genders db search))))
-        (dom/td (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search))))))))
+        (dom/td (Typeahead gender
+                  (e/fn Options [search] (Genders db search))
+                  (e/fn OptionLabel [x] (pr-str x))))
+        (dom/td (Typeahead shirt-size
+                  (e/fn Options [search] (Shirt-sizes db gender search))
+                  (e/fn OptionLabel [x] (pr-str x))))))))
 
 (e/defn WebviewGeneric []
   (e/server

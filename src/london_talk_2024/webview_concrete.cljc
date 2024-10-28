@@ -3,7 +3,7 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [london-talk-2024.typeahead :refer [Typeahead]]))
+            [electric-tutorial.typeahead :refer [Typeahead]]))
 
 (e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
 
