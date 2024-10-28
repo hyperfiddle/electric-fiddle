@@ -20,7 +20,7 @@
         indexed-page (window n (map-indexed vector xs) offset limit)]
     [n (e/diff-by second indexed-page)]))
 
-(e/defn Teeshirt-orders [db search sort-key offset limit]
+(e/defn Teeshirt-orders [db search & {:keys [sort-key offset limit]}]
   (e/server (Window (partial teeshirt-orders db search sort-key) offset limit)))
 
 (defn clamp [n left right] (min (max n left) right))
@@ -58,7 +58,7 @@
       (dom/table
         #_(dom/props ; uncomment for quantized scroll
             (e/client {:style {:position "fixed" :transform (str "translate(0," (- (* offset row-height)) "px)")}}))
-        (let [[record-count indexed-page] (Query offset limit)] ; neutral
+        (let [[record-count indexed-page] (Query :offset offset :limit limit)] ; neutral
           (e/client (reset! !record-count record-count))
           (e/client (Tap-diffs indexed-page))
           (e/for [[i x] indexed-page]
@@ -80,7 +80,7 @@
           search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
       (TableScrollFixedCounted
         colspec
-        (e/Partial Teeshirt-orders db "" (e/client (e/watch !sort-key)))
+        (e/Partial Teeshirt-orders db "" :sort-key (e/client (e/watch !sort-key)))
         (e/Partial Row db)))))
 
 (comment

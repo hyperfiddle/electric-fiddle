@@ -42,7 +42,7 @@
           search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
       (GenericTable
         colspec
-        (e/Partial Teeshirt-orders db search (e/client (e/watch !sort-key)))
+        (e/Partial Teeshirt-orders db search :sort-key (e/client (e/watch !sort-key)))
         (e/Partial Row db)))))
 
 (comment

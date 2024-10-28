@@ -13,7 +13,7 @@
 (e/defn Shirt-sizes [db gender search]
   (e/server (e/diff-by identity (e/Offload #(shirt-sizes db gender search)))))
 
-(e/defn Teeshirt-orders [db search & [sort-key]]
+(e/defn Teeshirt-orders [db search & {:keys [sort-key]}]
   (e/server (e/diff-by identity (e/Offload #(teeshirt-orders db search sort-key))))) ; e.g. [9 10 11]
 
 (e/defn WebviewConcrete []
