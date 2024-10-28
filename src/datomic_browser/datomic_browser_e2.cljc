@@ -1,4 +1,4 @@
-(ns datomic-browser.datomic-browser
+(ns datomic-browser.datomic-browser-e2
   (:require clojure.edn
             contrib.ednish
             [contrib.str :refer [any-matches?]]
