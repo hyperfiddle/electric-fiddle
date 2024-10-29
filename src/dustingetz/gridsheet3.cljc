@@ -1,16 +1,21 @@
 (ns dustingetz.gridsheet3
   "todo deprecate, use HFQL grid. Used by datomic-browser and folder-explorer"
-  #?(:cljs (:require-macros contrib.gridsheet))
+  #?(:cljs (:require-macros dustingetz.gridsheet3))
   (:require clojure.math
             [contrib.assert :refer [check]]
             [contrib.data :refer [auto-props round-floor]]
-            [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]
-            [hyperfiddle.electric-ui4 :as ui]
-            [hyperfiddle.router :as r] ; todo remove
+            [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.input-zoo0 :refer [Input]]
+            [hyperfiddle.router3 :as r] ; todo remove
+            #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])
             #?(:cljs goog.object)))
 
+; ui/scroll-state<
+
 (e/defn GridSheet [xs props]
+  ; e/server
+  #_(dom/h1 (dom/text (count (seq xs))))
   (let [props (auto-props props
                 {::row-height 24
                  ::page-size 20})
@@ -19,11 +24,11 @@
                 ::grid-template-columns
                 ::row-height ; px, same unit as scrollTop
                 ::page-size #_"tight"]} props
-        Format (or Format (e/fn [m a] (e/client (dom/text (pr-str (a m))))))
+        Format (or Format (e/fn [m a] (dom/text #_(e/client) (pr-str (a m)))))
         client-height (* (inc (check number? page-size)) (check number? row-height))
         rows (seq xs)
         row-count (count rows)]
-    (assert columns "gridsheet: ::columns prop is required")
+    #_(check columns) ; "gridsheet: ::columns prop is required"
     (e/client
       (dom/div (dom/props {:role "grid"
                            :class (e/server (::dom/class props))
@@ -33,7 +38,7 @@
                                      :grid-template-columns (or (e/server (::grid-template-columns props))
                                                               (->> (repeat (e/server (count columns)) "1fr")
                                                                 (interpose " ") (apply str)))})})
-        (let [[scroll-top scroll-height client-height'] (new (ui/scroll-state< dom/node))
+        (let [[scroll-top] (e/input (scroll-state dom/node))
               max-height (* row-count row-height)
               padding-bottom (js/Math.max (- max-height client-height) 0)
 
@@ -45,13 +50,15 @@
               ; batch pagination to improve latency
               ; (does reducing network even help or just making loads happen offscreen?)
               ; clamp start to the nearest page
-              start-row-page-aligned (round-floor start-row page-size)]
+              start-row-page-aligned (round-floor start-row page-size)
+
+              [col1 & col-tail] columns, col-tail (e/diff-by identity col-tail)]
           #_(println [:scrollTop scroll-top :scrollHeight scroll-height :clientHeight client-height
                       :padding-bottom padding-bottom
                       :start-row start-row :start-row-page-aligned start-row-page-aligned
                       :take page-size :max-height max-height])
 
-          (e/for [k columns]
+          (e/for [k (e/diff-by identity columns)]
             (dom/div (dom/props {:role "columnheader"
                                  :style {:position "sticky" #_"fixed" :top (str 0 "px")
                                          :background-color "rgb(248 250 252)" :box-shadow "0 1px gray"}})
@@ -64,7 +71,7 @@
           (e/server
             (when (seq rows) (check vector? (first rows)))
             (let [xs (vec (->> rows (drop start-row) (take page-size)))]
-              (e/for [i (range page-size)]
+              (e/for [i (e/diff-by identity (range page-size))]
                 (let [[depth m] (get xs i [0 ::empty])]
                   (e/client
                     (dom/div (dom/props {:role "group" :style {:display "contents"
@@ -73,22 +80,22 @@
                                            :style {:padding-left (-> depth (* 15) (str "px"))
                                                    :position "sticky" :top (str (* row-height (inc i)) "px")
                                                    :height (str row-height "px")}})
-                        (e/server (case m ::empty nil (Format. m (first columns))))) ; for effect
-                      (e/for [a (rest columns)]
+                        (e/server (case m ::empty nil (Format m col1)))) ; for effect
+                      (e/for [a col-tail]
                         (dom/div (dom/props {:role "gridcell"
                                              :style {:position "sticky" :top (str (* row-height (inc i)) "px")
                                                      :height (str row-height "px")}})
-                          (e/server (case m ::empty nil (Format. m a))))))))))) ; for effect
+                          (e/server (case m ::empty nil (Format m a))))))))))) ; for effect
           (dom/div (dom/props {:style {:padding-bottom (str padding-bottom "px")}})))) ; scrollbar
       (dom/div (dom/text (pr-str {:count row-count}))))))
 
 (e/defn Explorer [query-fn props]
   (e/client
-    (let [search (ffirst (::search r/route))]
-      (ui/input search (e/fn V! [v] (r/ReplaceState!. [(if (seq v)
-                                                         (assoc r/route ::search v)
-                                                         (dissoc r/route ::search))]))
-        (dom/props {:placeholder "Search" :type "search"}))
+    (let [#_#_search (ffirst (::search r/route))
+          search (Input "" :type "search" :placeholder "Search")]
+      #_(r/ReplaceState! [(if (seq search)
+                            (assoc r/route ::search search)
+                            (dissoc r/route ::search))])
       (dom/hr)
       (e/server
-        (GridSheet. (query-fn search) props)))))
+        (GridSheet (query-fn search) props)))))
