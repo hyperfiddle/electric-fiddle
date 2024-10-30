@@ -52,7 +52,7 @@
          (server)       ; httpkit
          )
 
-       (rcf/enable!)
+       #_(rcf/enable!)
        )
 
      ;; autostart
