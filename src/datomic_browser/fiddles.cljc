@@ -5,20 +5,19 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
-            [datomic-browser.domain :refer [conn db schema]] ; :(
-            [datomic-browser.datomic-browser :refer]
+            [datomic-browser.datomic-browser :refer [conn db schema]]
             #_models.mbrainz
             #?(:clj [models.teeshirt-orders-datomic :as model])))
 
 (e/defn DatomicBrowser []
   (e/server
-    (let [[conn db] (model/init-datomic)]
+    (let [[conn db] (model/init-datomic)
+          schema (check (e/input (e/Task (dx/schema! db))))]
       (binding [conn (check conn)
-                db (check db)]
-        (binding [schema (check (new (dx/schema> db)))]
-          (e/client
-            ; index-route (or (seq args) [::summary])
-            (datomic-browser.datomic-browser/DatomicBrowser.)))))))
+                db (check db)
+                schema (check schema)]
+        ; index-route (or (seq args) [::summary])
+        (datomic-browser.datomic-browser/DatomicBrowser)))))
 
 (e/defn Fiddles []
   {`DatomicBrowser DatomicBrowser})

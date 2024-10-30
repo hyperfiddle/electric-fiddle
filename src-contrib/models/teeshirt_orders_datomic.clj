@@ -4,8 +4,10 @@
             [clojure.spec.alpha :as s]
             contrib.str
             [datomic.api :as d]
-            [hyperfiddle.api :as hf]
+            #_[hyperfiddle.api :as hf] ; legacy domain injection
             [hyperfiddle.rcf :refer [tests]]))
+
+(def ... `...)
 
 (def -schema ; better to query it
   [{:db/ident :order/email :db/valueType :db.type/string :db/cardinality :db.cardinality/one :db/unique :db.unique/identity}
@@ -54,11 +56,11 @@
               :where
               [_ :order/gender ?e]
               [?e :db/ident ?ident]]
-         hf/*$*)
+         ... #_hf/*$*)
     sort (into [])))
 
 (tests
-  (binding [hf/*$* *$*]
+  (binding [... #_hf/*$* *$*]
     (genders)) := [:order/female :order/male])
 
 (s/fdef shirt-sizes :args (s/cat :gender keyword?
@@ -78,7 +80,7 @@
              [?g :db/ident ?gender]
              [?e :db/ident ?ident]  ; remove
              [(contrib.str/includes-str? ?ident ?needle)]]
-        hf/*$*
+        ... #_hf/*$*
         gender (or needle ""))
       (d/q '[:in $ ?needle
              :find [?e ...]
@@ -86,11 +88,11 @@
              [?e :order/type :order/shirt-size]
              [?e :db/ident ?ident]
              [(contrib.str/includes-str? ?ident ?needle)]]
-        hf/*$*
+        ... #_hf/*$*
         (or needle "")))))
 
 (tests
-  (binding [hf/*$* *$*]
+  (binding [... #_hf/*$* *$*]
     (shirt-sizes :order/female #_2 "") := [:order/womens-large :order/womens-medium :order/womens-small]
     (shirt-sizes :order/female #_2 "med") := [:order/womens-medium]))
 
@@ -98,10 +100,10 @@
   (sort (d/q '[:find [?e ...] :in $ ?needle :where
                [?e :order/email ?email]
                [(clojure.string/includes? ?email ?needle)]]
-          hf/*$* (or needle ""))))
+          ... #_hf/*$* (or needle ""))))
 
 (tests
-  (binding [hf/*$* *$*]
+  (binding [... #_hf/*$* *$*]
     (orders "") := [17592186045428 17592186045429 17592186045430]
     (orders "example") := [17592186045428 17592186045429 17592186045430]
     (orders "b") := [17592186045429]))
@@ -116,12 +118,12 @@
 (defn order [needle] (first (orders needle)))
 
 (tests
-  (binding [hf/*$* *$*]
+  (binding [... #_hf/*$* *$*]
     (order "") := 17592186045428
     (order "bob") := 17592186045429))
 
 (s/fdef one-order :args (s/cat :sub any?) :ret any?)
-(defn one-order [sub] (hf/*nav!* hf/*$* sub :db/id))
+(defn one-order [sub] (... #_hf/*nav!* ... #_hf/*$* sub :db/id))
 
 
 (defn nav! [db e a] (let [v (get (d/entity db e) a)]

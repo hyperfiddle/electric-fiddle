@@ -104,7 +104,7 @@
                                       (when-not prev "user-examples-nav-start")
                                       (when-not next "user-examples-nav-end")]})
         (when prev
-          (r/link [(::id prev)]
+          (r/link ['. (::id prev)]
             (dom/props {:class "user-examples-nav-prev"})
             (dom/text (str "< " (title prev)))))
         (dom/div (dom/props {:class "user-examples-select"})
@@ -122,7 +122,7 @@
               (when-some [done! ($ e/Token e)]
                 (done! ($ r/Navigate! [(clojure.edn/read-string (.. e -target -value))]))))))
         (when next
-          (r/link [(::id next)]
+          (r/link ['. (::id next)]
             (dom/props {:class "user-examples-nav-next"})
             (dom/text (str (title next) " >"))))))))
 
@@ -172,7 +172,8 @@
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
-    (let [[?tutorial] (if (seq? r/route) r/route [(or r/route `TwoClocks)])] ; prod vs dev - can we unify this?
+    (let [[?tutorial] (or (seq r/route) [`TwoClocks]) #_(if (seq? r/route) r/route [(or r/route `TwoClocks)])] ; prod vs dev - can we unify this?
+      (dom/pre (dom/text ?tutorial " " (namespace-name ?tutorial) " " (pr-str r/route)))
       (Consulting-banner)
       (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))

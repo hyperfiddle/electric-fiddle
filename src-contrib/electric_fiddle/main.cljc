@@ -17,10 +17,10 @@
     (dom/div ; FIXME wrapper div to circumvent v3 mount-point mounting nodes in reverse order if there are existing foreign DOM children.
       (r/router ($ r/HTML5-History)
         #_(dom/pre (dom/text (pr-str r/route)))
-        (let [[f] (or (seq r/route) `(Index))]
+        (let [[f & _] (or (seq r/route) `(Index))]
           (set! (.-title js/document) (str (some-> f name (str " – ")) "Electric Fiddle"))
           (case f
             `Index ($ Index)
-            (r/focus [1]
+            (r/pop
               (binding [hf/Entrypoint Entrypoint] ; allow for recursive navigation
                 (hf/Entrypoint f)))))))))
