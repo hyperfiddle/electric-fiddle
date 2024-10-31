@@ -104,7 +104,7 @@
                                       (when-not prev "user-examples-nav-start")
                                       (when-not next "user-examples-nav-end")]})
         (when prev
-          (r/link ['. (::id prev)]
+          (r/link ['. [(::id prev)]] ; why nested?
             (dom/props {:class "user-examples-nav-prev"})
             (dom/text (str "< " (title prev)))))
         (dom/div (dom/props {:class "user-examples-select"})
@@ -120,9 +120,9 @@
                       (dom/text (str (inc (::order m)) ". " (title m))))))))
             (when-some [^js e ($ dom/On "change")]
               (when-some [done! ($ e/Token e)]
-                (done! ($ r/Navigate! [(clojure.edn/read-string (.. e -target -value))]))))))
+                (done! ($ r/Navigate! ['. [(clojure.edn/read-string (.. e -target -value))]]))))))
         (when next
-          (r/link ['. (::id next)]
+          (r/link ['. [(::id next)]] ; why nested?
             (dom/props {:class "user-examples-nav-next"})
             (dom/text (str (title next) " >"))))))))
 
@@ -172,13 +172,14 @@
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
-    (let [[?tutorial] (or (seq r/route) [`TwoClocks]) #_(if (seq? r/route) r/route [(or r/route `TwoClocks)])] ; prod vs dev - can we unify this?
-      (dom/pre (dom/text ?tutorial " " (namespace-name ?tutorial) " " (pr-str r/route)))
+    (let [route (or (seq r/route) [`TwoClocks]) #_(if (seq? r/route) r/route [(or r/route `TwoClocks)]) ; prod vs dev - can we unify this?
+          [?tutorial & _] route]
+      #_(dom/pre (dom/text ?tutorial " " (namespace-name ?tutorial) " " (pr-str route))) ; debug
       (Consulting-banner)
       (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
         (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
-      (binding [hf/pages ($ Fiddles)]
-        ($ Nav ?tutorial false)
+      (binding [hf/pages (Fiddles)]
+        (Nav ?tutorial false)
         (let [essay-filename (str tutorial-path (namespace-name ?tutorial) ".md")]
           (Custom-markdown (Fiddle-markdown-extensions) essay-filename))
-        #_($ Nav ?tutorial true)))))
+        #_(Nav ?tutorial true)))))
