@@ -25,6 +25,15 @@
             [electric-tutorial.counter :refer [Counter]]
             [electric-tutorial.chat :refer [Chat]]
 
+            [electric-tutorial.forms-from-scratch :refer
+             [FormsFromScratch DemoInputNaive
+              DemoInputCircuit DemoInputCircuit2 DemoInputCircuit3
+              DemoInputCircuit4 DemoInputCircuit5 DemoInputCircuit6
+              DemoUserForm
+              DemoToken DemoInputServer]]
+            [electric-tutorial.forms-from-scratch-form :refer
+             [DemoFormServer1]]
+
             ; Part 2
             [electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.temperature2 :refer [Temperature2]]
@@ -59,7 +68,8 @@
      `Chat ; cookie, pending, security. InputSubmitCreate!
      ]]
    ["Forms"
-    [`Temperature ; local form, cycle by side effect
+    [`FormsFromScratch
+     `Temperature ; local form, cycle by side effect
      `Forms2-controlled ; local form, no e/amb
      `Temperature2 ; with-cycle - for ChatMonitor - and e/amb
      `Forms3a-form ; transactional form
@@ -139,6 +149,21 @@
    `Chat Chat
    `ChatMonitor ChatMonitor
    `Backpressure Backpressure
+
+   ; Interlude
+   ;`FormsFromScratch FormsFromScratch
+   `DemoInputNaive DemoInputNaive
+   `DemoInputCircuit DemoInputCircuit
+   `DemoInputCircuit2 DemoInputCircuit2
+   `DemoInputCircuit3 DemoInputCircuit3
+   `DemoInputCircuit4 DemoInputCircuit4
+   `DemoInputCircuit5 DemoInputCircuit5
+   `DemoInputCircuit6 DemoInputCircuit6
+   `DemoUserForm DemoUserForm
+
+   `DemoToken DemoToken
+   `DemoInputServer DemoInputServer
+   `DemoFormServer1 DemoFormServer1
 
    ; Part 2
    `Temperature Temperature
