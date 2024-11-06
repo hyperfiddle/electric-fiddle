@@ -94,8 +94,9 @@
     #_(dom/pre (dom/text (pr-str (r/Route-at ['.]))))
     #_(r/focus [:search])
     (let [search (or r/route "")
-          [t {search' ::search}] (Input! ::search search :type "search" :placeholder "Search")]
+          [t {search' ::search}] (Input! ::search search :type "search" :placeholder "Search")
+          search (if (e/Some? search') search' search)]
       (when (e/Some? t) (case (r/ReplaceState! ['. search']) (t)))
       (dom/hr)
       (e/server
-        (GridSheet (query-fn (if (e/Some? search') search' search)) props)))))
+        (GridSheet (e/Offload #(query-fn search)) props)))))

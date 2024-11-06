@@ -1,6 +1,6 @@
 (ns datomic-browser.datomic-browser
   (:require [contrib.assert :refer [check]]
-            [contrib.data :refer [treelister]]
+            [contrib.data :refer [unqualify treelister]]
             [contrib.str :refer [any-matches?]]
             #?(:clj [contrib.datomic-contrib :as dx])
             #?(:clj [contrib.datomic-m :as d])
@@ -23,7 +23,7 @@
           xs (->> (dx/attributes> db cols) (m/reductions conj []) (m/relieve {}) e/input)]
       (r/focus [0]
         (Explorer
-          (e/Offload #(treelister (sort-by :db/ident xs) (fn [_]) any-matches?))
+          (treelister (sort-by :db/ident xs) (fn [_]) any-matches?)
           {::gridsheet/page-size 15
            ::gridsheet/row-height 24
            ::gridsheet/columns cols
@@ -47,25 +47,156 @@
                  (m/reductions conj []) (m/relieve {}) e/input)]
         (r/focus [1]
           (Explorer
-            (e/Offload #(treelister xs (fn [_]) any-matches?))
+            (treelister xs (fn [_]) any-matches?)
             {::gridsheet/page-size 20
              ::gridsheet/row-height 24
              ::gridsheet/columns [:e :a :v :tx]
              ::gridsheet/grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
              ::gridsheet/Format
-             (e/fn [[e _ v tx op :as x] k]
+             (e/fn [x k]
                (e/client
-                 (case k
-                   :e (r/link ['.. '.. [:entity e]] (dom/text e))
-                   :a (dom/text (pr-str a)) #_(let [aa (e/Task (dx/ident! db aa))] aa)
-                   :v (some-> v str dom/text) ; todo when a is ref, render link
-                   :tx (r/link ['.. '.. [:tx tx]] (dom/text tx)))))}))))))
+                 (let [[e _ v tx op] x] ; destructure on client to workaround glitch
+                   (case k
+                     :e (r/link ['.. '.. [:entity e]] (dom/text e))
+                     :a (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa)
+                     :v (some-> v str dom/text) ; todo when a is ref, render link
+                     :tx (r/link ['.. '.. [:tx tx]] (dom/text tx))))))}))))))
 
-(e/defn TxDetail [])
-(e/defn EntityDetail [])
-(e/defn EntityHistory [])
-(e/defn DbStats [])
-(e/defn RecentTx [])
+(e/defn TxDetail []
+  (let [[e _] r/route]
+    (dom/h1 (dom/text "Tx detail: " e))
+    (e/server
+      (let [xs (->> (d/tx-range> conn {:start e, :end (inc e)}) ; global
+                 (m/eduction (map :data) cat) (m/reductions conj []) (m/relieve {}) e/input)]
+        (r/focus [1]
+          (Explorer
+            (treelister xs (fn [_]) any-matches?)
+            {::gridsheet/page-size 20
+             ::gridsheet/row-height 24
+             ::gridsheet/columns [:e :a :v :tx]
+             ::gridsheet/grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
+             ::gridsheet/Format
+             (e/fn [x a]
+               (e/client
+                 (let [[e aa v tx op] x] ; workaround glitch
+                   (case a
+                     :e (let [e (e/server (e/Task (dx/ident! db e)))] (r/link ['.. '.. [:entity e]] (dom/text e)))
+                     :a (let [aa (e/server (e/Task (dx/ident! db aa)))] (r/link ['.. '.. [:attribute aa]] (dom/text aa)))
+                     :v (dom/text (pr-str v))                ; when a is ref, render link
+                     (dom/text (str tx))))))}))))))
+
+(e/defn Format-entity [[k v :as row] col]
+  (e/server
+    (check schema)
+    (case col
+      ::k (cond
+            (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
+            (contains? schema k) (e/client (r/link ['.. '.. [:attribute k]] (dom/text k)))
+            () (dom/text (str k))) ; str is needed for Long db/id, why?
+      ::v (if-not (coll? v)           ; don't render card :many intermediate row
+            (let [[valueType cardinality]
+                  ((juxt (comp unqualify dx/identify :db/valueType)
+                     (comp unqualify dx/identify :db/cardinality)) (k schema))]
+              (cond
+                ;; link two levels up because Format-entity is under EntityDetail's scope
+                (= :db/id k) (e/client (r/link ['.. '.. [:entity v]] (dom/text v)))
+                (= :ref valueType) (e/client (r/link ['.. '.. [:entity v]] (dom/text v)))
+                () (dom/text (pr-str v))))))))
+
+(e/defn EntityDetail []
+  (let [[e _] r/route]
+    (dom/h1 (dom/text "Entity detail: " e))
+    (e/server ; TODO inject sort
+      (let [xs (e/Task (d/pull db {:eid e :selector ['*] :compare compare}))
+            q (treelister xs (partial dx/entity-tree-entry-children schema) any-matches?)]
+        (r/focus [1]
+          (Explorer q
+            {::gridsheet/page-size 15
+             ::gridsheet/row-height 24
+             ::gridsheet/columns [::k ::v]
+             ::gridsheet/grid-template-columns "15em auto"
+             ::gridsheet/Format Format-entity}))))))
+
+(comment
+  (def schema (m/? (dx/schema! models.mbrainz/*datomic-db*)))
+  (def xs (m/? (d/pull models.mbrainz/*datomic-db* {:eid 17592186058296 :selector ['*] :compare compare})))
+  ((treelister xs (partial dx/entity-tree-entry-children schema) any-matches?) "")
+  )
+
+(e/defn Format-history-row [[e aa v tx op :as row] a]
+  (when row          ; when this view unmounts, somehow this fires as nil
+    (case a
+      ::op (e/client (dom/text (name (case op true :db/add false :db/retract))))
+                 ;; link two levels up because we are under EntityHistory's scope
+      ::e (e/client (r/link ['.. '.. [:entity e]] (dom/text e)))
+      ::a (if (some? aa)
+            (let [ident (:db/ident (e/Task (d/pull db {:eid aa :selector [:db/ident]})))]
+              (dom/text (pr-str ident))))
+      ::v (some-> v pr-str dom/text)
+      ::tx (e/client (r/link ['.. '.. [:tx tx]] (dom/text tx)))
+      ::tx-instant (let [x (:db/txInstant (e/Task (d/pull db {:eid tx :selector [:db/txInstant]})))]
+                     (dom/text (e/client (pr-str x))))
+      (dom/text (str v)))))
+
+(e/defn EntityHistory []
+  (let [[e _] r/route]
+    (dom/h1 (dom/text "Entity history: " e))
+    (e/server
+      ; accumulate what we've seen so far, for pagination. Gets a running count. Bad?
+      (let [xs (->> (dx/entity-history-datoms> db e) (m/reductions conj []) (m/relieve {}) e/input) ; track a running count as well?
+            q (treelister xs (fn [_]) any-matches?)]
+        (r/focus [1]
+          (Explorer q
+            {::gridsheet/page-size 20
+             ::gridsheet/row-height 24
+             ::gridsheet/columns [::e ::a ::op ::v ::tx-instant ::tx]
+             ::gridsheet/grid-template-columns "10em 10em 3em auto auto 9em"
+             ::gridsheet/Format Format-history-row}))))))
+
+(e/defn DbStats []
+  (dom/h1 (dom/text "Db stats"))
+  (e/server
+    (let [xs (e/Task (d/db-stats db))
+          q (treelister xs (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil)) any-matches?)]
+      (r/focus [0]
+        (Explorer q
+          {::gridsheet/page-size 20
+           ::gridsheet/row-height 24
+           ::gridsheet/columns [::k ::v]
+           ::gridsheet/grid-template-columns "20em auto"
+           ::gridsheet/Format
+           (e/fn [[k v :as row] col]
+             (e/client
+               (case col
+                 ::k (dom/text (pr-str k))
+                 ::v (cond
+                       (= k :attrs) nil                ; print children instead
+                       () (dom/text (pr-str v))))))})))))
+
+(comment
+  {:datoms 800958,
+   :attrs
+   {:release/script {:count 11435},
+    :label/type {:count 870}
+    ... ...}})
+
+(e/defn RecentTx []
+  (dom/h1 (dom/text "Recent Txs"))
+  (e/server
+    (let [xs (->> (d/datoms> db {:index :aevt, :components [:db/txInstant]})
+               (m/reductions conj ()) (m/relieve {}) e/input)
+          q (treelister xs (fn [_]) any-matches?)]
+      (r/focus [0]
+        (Explorer q
+          {::gridsheet/page-size 30
+           ::gridsheet/row-height 24
+           ::gridsheet/columns [:db/id :db/txInstant]
+           ::gridsheet/grid-template-columns "10em auto"
+           ::gridsheet/Format
+           (e/fn [[e _ v tx op :as record] a]
+             (case a
+               :db/id (e/client (r/link ['.. [::tx tx]] (dom/text tx)))
+               :db/txInstant (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v)))))})))))
 
 (e/defn DatomicBrowser []
   (e/client
@@ -83,6 +214,6 @@
               :attributes (Attributes)
               :attribute (AttributeDetail)
               :tx (TxDetail)
-              :entity (e/amb (EntityDetail) (EntityHistory))
+              :entity (e/amb (EntityDetail) (EntityHistory)) ; todo untangle router inputs
               :db-stats (DbStats)
               :recent-tx (RecentTx))))))))

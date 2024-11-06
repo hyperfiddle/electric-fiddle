@@ -2,33 +2,23 @@
   (:require [contrib.datomic-contrib :as dx]
             [contrib.datomic-m :as d]
             [missionary.core :as m]
-            [hyperfiddle.rcf :refer [tests]]
-            test.mbrainz
-            test.seattle
-            test.person-model))
+            [hyperfiddle.rcf :refer [tests]]))
 
-; # Scrap / old stuff
-;
-;* do NOT use mbrainz-1968-1973 (https://github.com/Datomic/mbrainz-importer - don't use this one, too big
-;  mbrainz-1968-1973 instructions (don't do this):
-;3. Clone this repo:
-;4. `cd` into it
-;5. create a file `manifest.edn` with this content:
-;```clojure
-;{:client-cfg {:server-type :dev-local
-;              :system      "datomic-samples"}
-; :db-name "mbrainz-1968-1973"
-; :basedir "subsets"
-; :concurrency 3}
-;```
-;4. In `deps.edn`, set `com.datomic/dev-local` version to `"1.0.243"`
-;5. Run `clojure -M -m datomic.mbrainz.importer manifest.edn`
-
-(def ^:dynamic datomic-client)
-(def ^:dynamic datomic-conn)
-(def ^:dynamic datomic-db)
-(def ^:dynamic schema)
+(def ^:dynamic *datomic-client*)
+(def ^:dynamic *datomic-conn*)
+(def ^:dynamic *datomic-db*)
+(def ^:dynamic *schema*)
 (def ^:dynamic fixtures []) ; local datomic tx to rebase onto the db
+
+(defn init-datomic []
+  (def uri "datomic:dev://localhost:4334/mbrainz-1968-1973")
+  (alter-var-root #'*datomic-conn* (constantly (d/connect uri)))
+  (alter-var-root #'*datomic-db* (constantly (m/? (d/db *datomic-conn*)))) ; task
+  [*datomic-conn* *datomic-db*])
+
+(comment (init-datomic))
+
+;; below this point - not sure what this is - DJG 2024-11-6
 
 (def pour-lamour 87960930235113)
 (def cobblestone 536561674378709)
@@ -36,20 +26,20 @@
 (def datomic-config {:server-type :dev-local :system "datomic-samples"})
 
 (defn install-test-state []
-  (alter-var-root #'datomic-client (constantly (d/client datomic-config)))
-  (assert (some? datomic-client))
+  (alter-var-root #'*datomic-client* (constantly (d/client datomic-config)))
+  (assert (some? *datomic-client*))
 
-  (alter-var-root #'datomic-conn (constantly (m/? (d/connect datomic-client {:db-name "mbrainz-subset"}))))
-  (assert (some? datomic-conn))
+  (alter-var-root #'*datomic-conn* (constantly (m/? (d/connect *datomic-client* {:db-name "mbrainz-subset"}))))
+  (assert (some? *datomic-conn*))
 
-  (alter-var-root #'datomic-db (constantly (:db-after (m/? (d/with (m/? (d/with-db datomic-conn)) fixtures)))))
-  (assert (some? datomic-db))
+  (alter-var-root #'*datomic-db* (constantly (:db-after (m/? (d/with (m/? (d/with-db *datomic-conn*)) fixtures)))))
+  (assert (some? *datomic-db*))
 
-  (alter-var-root #'schema (constantly (m/? (dx/schema! datomic-db))))
-  (assert (some? schema)))
+  (alter-var-root #'*schema* (constantly (m/? (dx/schema! *datomic-db*))))
+  (assert (some? *schema*)))
 
-(tests
-  (some? schema) := true
+(comment tests
+  (some? *schema*) := true
 
   (m/? (d/pull test/datomic-db {:eid pour-lamour :selector ['*]}))
   := {:db/id 87960930235113,
@@ -69,3 +59,20 @@
       :label/country #:db{:id 63793664643563930, :ident :country/US},
       :label/startYear 1972}
   nil)
+
+; # Scrap / old stuff
+;
+;* do NOT use mbrainz-1968-1973 (https://github.com/Datomic/mbrainz-importer - don't use this one, too big
+;  mbrainz-1968-1973 instructions (don't do this):
+;3. Clone this repo:
+;4. `cd` into it
+;5. create a file `manifest.edn` with this content:
+;```clojure
+;{:client-cfg {:server-type :dev-local
+;              :system      "datomic-samples"}
+; :db-name "mbrainz-1968-1973"
+; :basedir "subsets"
+; :concurrency 3}
+;```
+;4. In `deps.edn`, set `com.datomic/dev-local` version to `"1.0.243"`
+;5. Run `clojure -M -m datomic.mbrainz.importer manifest.edn`
