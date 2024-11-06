@@ -172,14 +172,15 @@
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
-    (let [route (or (seq r/route) [`TwoClocks]) #_(if (seq? r/route) r/route [(or r/route `TwoClocks)]) ; prod vs dev - can we unify this?
-          [?tutorial & _] route]
-      #_(dom/pre (dom/text ?tutorial " " (namespace-name ?tutorial) " " (pr-str route))) ; debug
-      (Consulting-banner)
-      (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
-        (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
-      (binding [hf/pages (Fiddles)]
-        (Nav ?tutorial false)
-        (let [essay-filename (str tutorial-path (namespace-name ?tutorial) ".md")]
-          (Custom-markdown (Fiddle-markdown-extensions) essay-filename))
-        #_(Nav ?tutorial true)))))
+    (let [[?tutorial & _] r/route]
+      (if-not ?tutorial (r/ReplaceState! ['. [`TwoClocks]])
+        (do
+          #_(dom/pre (dom/text ?tutorial " " (namespace-name ?tutorial) " " (pr-str route))) ; debug
+          (Consulting-banner)
+          (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
+            (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
+          (binding [hf/pages (Fiddles)]
+            (Nav ?tutorial false)
+            (let [essay-filename (str tutorial-path (namespace-name ?tutorial) ".md")]
+              (Custom-markdown (Fiddle-markdown-extensions) essay-filename))
+            #_(Nav ?tutorial true)))))))

@@ -6,7 +6,7 @@
             [contrib.data :refer [auto-props round-floor]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer [Input]]
+            [hyperfiddle.input-zoo0 :refer [Input Input!]]
             [hyperfiddle.router3 :as r] ; todo remove
             #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])
             #?(:cljs goog.object)))
@@ -91,11 +91,11 @@
 
 (e/defn Explorer [query-fn props]
   (e/client
-    (let [#_#_search (ffirst (::search r/route))
-          search (Input "" :type "search" :placeholder "Search")]
-      #_(r/ReplaceState! [(if (seq search)
-                            (assoc r/route ::search search)
-                            (dissoc r/route ::search))])
+    #_(dom/pre (dom/text (pr-str (r/Route-at ['.]))))
+    #_(r/focus [:search])
+    (let [search (or r/route "")
+          [t {search' ::search}] (Input! ::search search :type "search" :placeholder "Search")]
+      (when (e/Some? t) (case (r/ReplaceState! ['. search']) (t)))
       (dom/hr)
       (e/server
-        (GridSheet (query-fn search) props)))))
+        (GridSheet (query-fn (if (e/Some? search') search' search)) props)))))
