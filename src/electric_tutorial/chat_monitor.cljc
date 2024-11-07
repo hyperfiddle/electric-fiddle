@@ -1,6 +1,8 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]))
+            [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.cqrs0 :refer [Form!]]
+            [hyperfiddle.input-zoo0 :refer [Input!]]))
 
 (e/defn Login [username]
   (dom/div
@@ -35,15 +37,13 @@
   (prn 'edits (e/as-vec edits))
   ; Hack in optimistic updates; we'll formalize a better pattern in Todos tutorial
   (let [server-xs (e/server (Query-chats)) ; reuse server query (differential!)
-        client-xs (e/for [[t msg] edits] ; cheap optimistic updates
-                       (-> (->msg-record username msg t) ; local prediction
-                         (assoc ::pending true)))]
-    (prn 'pending (e/as-vec client-xs))
-    ; todo reconcile records by id for count consistency
+        client-xs (e/for [[t cmd local-index] edits] ; cheap optimistic updates
+                    (let [m (get local-index t)] ; token as tempid convention
+                      (assoc m ::pending true)))]
+    ; todo reconcile records by id for count consistency and fix flicker
     (e/amb client-xs server-xs))) ; e/amb is differential concat here
 
 (e/defn Channel [msgs]
-  (prn 'msgs (e/as-vec msgs))
   (dom/ul (dom/props {:class "channel"})
     ; Our very naive optimistic update impl here means the query can return more
     ; than 10 elements, so we use a css fixed height with overflow-y:clip so we
@@ -56,34 +56,29 @@
         (dom/span (dom/props {:style {:text-align "right"}})
           (dom/text (if pending "pending" "ok")))))))
 
-(e/defn InputSubmitCreate?!
-  "transactional chat input with busy state. Supports rapid submit, sending
-concurrent in-flight submits to the server which race. ?! marks this control
-as an anti-pattern because it has no error handling: rejected edits are silently
-lost. Fixing this requires form semantics, see upcoming tutorial."
-  [& {:keys [maxlength type parse] :as props
-      :or {maxlength 100 type "text" parse identity}}]
-  (e/client
-    (dom/input (dom/props (-> props (dissoc :parse) (assoc :maxLength maxlength :type type)))
-      (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
-              (read-clear! [node] (when-some [v (read! node)] (set! (.-value node) "") v))
-              (submit! [e] (let [k (.-key e)]
-                             (cond
-                               (= "Enter" k) (parse (read-clear! (.-target e)))
-                               (= "Escape" k) (do (set! (.-value dom/node) "") nil)
-                               () nil)))]
-        (let [edits (dom/On-all "keydown" submit!)] ; concurrent pending submits
-          (dom/props {:aria-busy (pos? (e/Count edits))})
-          edits)))))
+(e/defn SendMessageInput [username]
+  (Form! (Input! ::msg "" :disabled (nil? username)
+           :placeholder (if username "Send message" "Login to chat"))
+    :show-buttons false ; enter to submit
+    :genesis true ; immediately consume form, ready for next submit
+    :commit (fn [{msg ::msg} tempid] (prn 'TodoCreate-commit msg)
+              [[`Create-todo username msg]
+               {tempid (->msg-record username msg tempid)}])))
 
 (e/defn ChatApp [username present edits]
   (e/amb
     (Present present)
     (dom/hr (e/amb)) ; silence nil
     (Channel (Query-chats-optimistic username edits))
-    (InputSubmitCreate?! :disabled (nil? username)
-      :placeholder (if username "Message" "Login to chat"))
+    (SendMessageInput username)
     (Login username)))
+
+(e/defn Create-todo [username msg]
+  (e/server ; secure, validate command here
+    (let [record (->msg-record username msg)] ; secure
+      (e/Offload #(try (Thread/sleep 500) ; artificial latency
+                    (send-message! record) ::ok
+                    (catch Exception e (doto ::rejected (prn e))))))))
 
 (declare css)
 (e/defn ChatMonitor []
@@ -93,16 +88,16 @@ lost. Fixing this requires form semantics, see upcoming tutorial."
         edits (e/with-cycle* first [edits (e/amb)] ; loop in-flight edits
                 (ChatApp username present edits))]
     (prn 'edits (e/as-vec edits))
-    (e/for [[t msg] (e/Filter some? edits)]
+    (e/for [[t [cmd & args] guess] (e/Filter some? edits)]
       (let [res (e/server
-                  (let [record (->msg-record username msg)] ; secure
-                    (e/Offload #(try (Thread/sleep 500) ; artificial latency
-                                  (send-message! record) ::ok
-                                  (catch Exception e (doto ::rejected (prn e)))))))]
+                  (case cmd
+                    `Create-todo (e/apply Create-todo args)
+                    (prn ::unmatched-cmd)))]
         (case res
           ::ok (t)
-          ::fail nil)))))
+          ::fail nil))))) ; for retry, we're not done yet - todo finish demo
 
+; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
 (def css "
 .user-examples-target.ChatMonitor ul.channel li,
 .user-examples-target.Chat ul.channel li { display: grid; }
@@ -110,7 +105,4 @@ lost. Fixing this requires form semantics, see upcoming tutorial."
 .user-examples-target.ChatMonitor ul.channel {
     display: flex; flex-direction: column-reverse; /* bottom up */
     height: 220px; overflow-y: clip; /* pending pushes up server records */
-    padding: 0; /* remove room for bullet in grid layout */
-
-}")
-; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
+    padding: 0; /* remove room for bullet in grid layout */ }")
