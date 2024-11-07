@@ -25,14 +25,14 @@
             [electric-tutorial.counter :refer [Counter]]
             [electric-tutorial.chat :refer [Chat]]
 
-            [electric-tutorial.forms-from-scratch :refer
-             [FormsFromScratch DemoInputNaive
-              DemoInputCircuit DemoInputCircuit2 DemoInputCircuit3
+            [electric-tutorial.inputs-local :refer
+             [InputCicruit DemoInputNaive
+              DemoInputCircuit-uncontrolled DemoInputCircuit-controlled DemoInputCircuit-amb DemoInputCircuit-cycle
               DemoInputCircuit4 DemoInputCircuit5 DemoInputCircuit6
-              DemoUserForm
-              DemoToken DemoInputServer]]
-            [electric-tutorial.forms-from-scratch-form :refer
-             [DemoFormServer1]]
+              DemoFormSync DemoFormSync-cycle]]
+            [electric-tutorial.token-explainer :refer [TokenExplainer]]
+            [electric-tutorial.form-explainer :refer [FormExplainer]]
+            [electric-tutorial.forms-from-scratch-form :refer [DemoFormServer1]]
 
             ; Part 2
             [electric-tutorial.temperature :refer [Temperature]]
@@ -49,7 +49,7 @@
             ; Misc
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
-            [electric-tutorial.timer :refer [Timer]]
+            #_[electric-tutorial.timer :refer [Timer]]
             #_[electric-tutorial.explorer :refer [DirectoryExplorer]]))
 
 (def tutorials
@@ -59,36 +59,38 @@
      `DirTree ; complex topology
      `FizzBuzz ; differential
      `Webview1 ; diffs, IO encapsulation
-     #_`Webview2 ; abstraction, lambda demo
+     `Webview2 ; abstraction, lambda demo
      `Lifecycle ; components
      `Backpressure]]
-   ["Events"
-    [`Toggle ; token and service, multiplayer
-     `Counter ; on-all, progress, serializable lambda
-     `Chat ; cookie, pending, security. InputSubmitCreate!
-     ]]
    ["Forms"
-    [`FormsFromScratch
-     `Temperature ; local form, cycle by side effect
-     `Forms2-controlled ; local form, no e/amb
-     `Temperature2 ; with-cycle - for ChatMonitor - and e/amb
-     `Forms3a-form ; transactional form
-     `Forms3b-inline-submit ; transactional fields
-     `ChatMonitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service
+    [`InputCicruit ; supersedes TemperatureConverter or embeds
+     `TokenExplainer ; supersedes Toggle, introduce token and service
+     `FormExplainer ; Transactional forms
+     ; Inline forms, keyboard
+
+     `ChatMonitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
      `Todos ; create-new, optimistic updates, service
      `TodoMVC
-     `TodoMVC-composed]]
+     `TodoMVC-composed
+
+;`Temperature ; local form, cycle by side effect
+     ;`Forms2-controlled ; local form, no e/amb
+     ;`Temperature2 ; with-cycle - for ChatMonitor - and e/amb
+     ;`Forms3a-form ; transactional form
+     ;`Forms3b-inline-submit ; transactional fields
+     ]]
    ["Datagrids"
     [#_`Typeahead
      #_`VirtualScroll
      #_`Datagrid]]
    ["HFQL" [#_`wip.teeshirt-orders/Webview-HFQL]]
    ["Misc"
-    [#_`DirectoryExplorer
+    [`Counter ; on-all, progress, serializable lambda. Oddball demo, todo improve
+     #_`DirectoryExplorer
      `SVG
 
      #_`ReagentInterop
-     `Timer
+     #_`Timer
      #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]])
@@ -152,17 +154,20 @@
 
    ; Interlude
    ;`FormsFromScratch FormsFromScratch
+   `InputCicruit InputCicruit
    `DemoInputNaive DemoInputNaive
-   `DemoInputCircuit DemoInputCircuit
-   `DemoInputCircuit2 DemoInputCircuit2
-   `DemoInputCircuit3 DemoInputCircuit3
+   `DemoInputCircuit-uncontrolled DemoInputCircuit-uncontrolled
+   `DemoInputCircuit-controlled DemoInputCircuit-controlled
+   `DemoInputCircuit-amb DemoInputCircuit-amb
+   `DemoInputCircuit-cycle DemoInputCircuit-cycle
    `DemoInputCircuit4 DemoInputCircuit4
    `DemoInputCircuit5 DemoInputCircuit5
    `DemoInputCircuit6 DemoInputCircuit6
-   `DemoUserForm DemoUserForm
+   `DemoFormSync DemoFormSync
+   `DemoFormSync-cycle DemoFormSync-cycle
 
-   `DemoToken DemoToken
-   `DemoInputServer DemoInputServer
+   `TokenExplainer TokenExplainer
+   `FormExplainer FormExplainer
    `DemoFormServer1 DemoFormServer1
 
    ; Part 2
@@ -176,8 +181,7 @@
    `TodoMVC-composed TodoMVC-composed
 
    ; Kitchen Sink
-   `Timer Timer
-
+   ;`Timer Timer
    `SVG SVG
    ;`ReagentInterop ReagentInterop
    })

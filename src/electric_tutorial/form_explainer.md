@@ -1,14 +1,15 @@
-# Forms from scratch
+# `Form!` and `Input!` — transactional server forms
 
-* Everything you need to know about forms in one page.
-* Prerequisite knowledge needed:
-  - basics of v3 language semantics
-  - no differential dataflow understanding assumed
+* server commands
+* latency and failure affordances
+* dirty states
 * Plan: We're going to build up to this form which has quite a lot going on.
+* prerequisite - RetryToken
 
-!fiddle-ns[](electric-tutorial.forms-from-scratch-form/DemoFormServer1)
+!target[electric-tutorial.forms-from-scratch-form/DemoFormServer1]()
 
 What's happening
+
 * transactional/RPC form post, with commit/discard buttons
 * controlled state bound to database record
 * dirty fields turn yellow, discard to reset
@@ -19,72 +20,11 @@ What's happening
 * uncommitted state is never lost
 * uncommitted state is *staged*, you can continue to arrange it until you submit
 
-How it works
-* Before we discuss forms, we first need to understand Inputs.
-* Electric provides two input patterns – **synchronous circuit inputs** and **async transactional inputs**, which satisfy two different use cases.
-
-# Synchronous inputs
-
-* Ephemeral local state
-* Very simple
-* No error states, no latency
-
-### naive low-level DOM input – uncontrolled state
-
-!fn[](electric-tutorial.forms-from-scratch/DemoInputNaive)
-
-* dom/on - derive a state (latest value, or signal from the FRP perspective) from a sequence of events
-* recall that dom elements return their last child via implicit do
-
-### synchronous `Input` - uncontrolled state
-
-!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit-uncontrolled)
-
-### synchronous `Input` – controlled state
-
-!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit-controlled)
-
-* Observe two `reset!` effects
-* Can we unify them? Hold my beer ...
-
-### e/amb - concurrent values in superposition
-
-!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit-amb)
-
-* tables - do is not sufficient
-* auto-mapping
-
-### synchronous forms
-
-!fn[](electric-tutorial.forms-from-scratch/DemoFormSync)
-
-* Why are they ordered? I think we're getting lucky with the reader (todo explain)
-* It's just an educational demo, vector them if you want
-* One problem here is the clojure data structure (map, vector etc) will destroy fine grained reactivity at element level, propagating form change batches from that point rather than individual field changes even when only one field changes. We're about to do better.
-
-# Async transactional inputs
-
-* server commands
-* latency and failure affordances
-* dirty states
-
-### prerequisite: `e/RetryToken`
-
-!fn[](electric-tutorial.forms-from-scratch/DemoToken)
-
-* todo explain `e/RetryToken`
-* disabled
-* `::ok`
-* `(t)`
-* `e/Offload` - move the function to a thread pool, so Thread/sleep doesn't block the Electric server which is async. Using an async sleep here is also fine.
-* failure handling?
-* we call this the "Service" pattern, we will extract a reusable abstraction
-
 ### `Input!` - a transactional input w/ server
 
-!fn[](electric-tutorial.forms-from-scratch/DemoInputServer)
+!fn[electric-tutorial.form-explainer/FormExplainer]()
 
-!fn-src[electric-tutorial.forms-from-scratch/UserFormServer1]()
+!fn-src[electric-tutorial.form-explainer/UserFormServer1]()
 
 * fields are named, like the DOM `<input name="foo">`
 * yellow dirty state
@@ -99,7 +39,7 @@ However there are some concerns:
 
 Here's again the same demo as the top of the page:
 
-!fn[](electric-tutorial.forms-from-scratch-form/DemoFormServer1)
+!fn[electric-tutorial.forms-from-scratch-form/DemoFormServer1]()
 
 * debug
 * in flight cancellation - hit discard while commit is in flight to try to cancel the commit (you are racing the database transaction, it might not work)
@@ -136,7 +76,7 @@ Which the service interprets and evaluates:
 * e.g. iOS preferences, or settings page in a b2b saas.
 * Just wrap each `Input!` field it's own `Form!`, due to the concurrent `e/amb` structure, the inline forms will interact with the server concurrently without any further effort:
 
-!fiddle-ns[](electric-tutorial.forms3b-inline-submit/Forms3b-inline-submit)
+!ns[electric-tutorial.forms3b-inline-submit/Forms3b-inline-submit]()
 
 * For this demo, we don't let you fully suppress the buttons (see: `(or (Checkbox show-buttons* :label "show-buttons") ::cqrs/smart)`), but you can just set `:show-buttons` to `false` in your app to make them go away entirely and rely only on the keyboard - which is often what you want! (For example, TodoMVC, Slack)
 
