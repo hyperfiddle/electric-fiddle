@@ -17,7 +17,8 @@
       (binding [conn (check conn)
                 db (check db)
                 schema (check schema)]
-        (datomic-browser.datomic-browser/DatomicBrowser)))))
+        (e/client
+          (datomic-browser.datomic-browser/DatomicBrowser))))))
 
 (e/defn Fiddles []
   {`DatomicBrowser DatomicBrowser})
