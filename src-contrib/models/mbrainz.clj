@@ -12,11 +12,13 @@
 
 (defn init-datomic []
   (def uri "datomic:dev://localhost:4334/mbrainz-1968-1973")
-  (alter-var-root #'*datomic-conn* (constantly (d/connect uri)))
-  (alter-var-root #'*datomic-db* (constantly (m/? (d/db *datomic-conn*)))) ; task
-  [*datomic-conn* *datomic-db*])
+  (m/via m/blk
+    (try
+      (alter-var-root #'*datomic-conn* (constantly (d/connect uri)))
+      (alter-var-root #'*datomic-db* (constantly (m/? (d/db *datomic-conn*)))) ; task
+      ::ok (catch Exception e ::datomic-unavailable))))
 
-(comment (init-datomic))
+(comment (m/? (init-datomic)))
 
 ;; below this point - not sure what this is - DJG 2024-11-6
 

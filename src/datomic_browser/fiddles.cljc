@@ -6,19 +6,22 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
             [datomic-browser.datomic-browser :refer [conn db schema]]
-            #?(:clj [models.mbrainz :as model])
+            [models.mbrainz #?(:clj :as :cljs :as-alias) model]
             ;#?(:clj [models.teeshirt-orders-datomic :as model])
             ))
 
 (e/defn DatomicBrowser []
   (e/server
-    (let [[conn db] (model/init-datomic)
-          schema (check (e/Task (dx/schema! db)))]
-      (binding [conn (check conn)
-                db (check db)
-                schema (check schema)]
-        (e/client
-          (datomic-browser.datomic-browser/DatomicBrowser))))))
+    (let [x (e/Task (model/init-datomic) ::pending)]
+      (case x
+        ::pending (dom/h1 (dom/text "Waiting for Datomic connection ..."))
+        ::model/ok (binding [conn (check model/*datomic-conn*)
+                             db (check model/*datomic-db*)
+                             schema (check (e/Task (dx/schema! db)))]
+                     (e/client
+                       (datomic-browser.datomic-browser/DatomicBrowser)))
+        (do (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
+          (dom/code (dom/text x)))))))
 
 (e/defn Fiddles []
   {`DatomicBrowser DatomicBrowser})
