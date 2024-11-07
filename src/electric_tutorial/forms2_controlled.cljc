@@ -29,4 +29,4 @@
 (e/defn Forms2-controlled []
   (let [m (e/with-cycle [m state0] ; dataflow recursion via cycle (equivalent)
             (UserForm m))]
-    (dom/code (dom/text (e/server (pr-str m))))))
+    (dom/code (dom/text (pr-str m)))))

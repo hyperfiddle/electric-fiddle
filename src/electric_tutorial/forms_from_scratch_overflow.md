@@ -55,3 +55,42 @@ e.g. `(Input! :user/str1 x)`
   * `edit`, e.g. `(edit-monoid k v)` (defaults to `hash-map`) - an *edit* - a KV structure that contains the field name and its target value. This edit type must be a monoid because the form will use it to merge a set of field edits into a single batch form edit for atomic commit.
   * when `waiting?`, return the *edit request* (token + edit) to the service
   * returns nothing (`(e/amb`, NOT `nil`) when not `waiting?`. This prevents spurious `nil` edit requests, and also enables requesting concurrent independent edits, such as `(e/amb (Input! :foo ...) (Input! :bar ...))`
+
+
+
+
+      * This is a Clojure function (not Electric function) to bypass Electric's reactive work skipping semantics, for two reasons:
+    * 1) `.-target` is a reference not a value meaning `.-value` will be workskipped incorrectly.
+    * 2) you sometimes need to run side effects like `(.preventDefault e)` on every event, and Electric's continuous time semantics may skip effects if the system's sampling rate is slower than the event rate.
+
+
+      * `""` is the signal's initial state
+  * `#(-> % .-target .-value)` is a discrete sampler function that derives the current state from the event.
+
+
+
+
+  ### `e/with-cycle`
+
+!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit-amb)
+
+* Equivalent - "cycle by side effect", looping via reactive atom
+* in fact, that's how `e/with-cycle` is implemented today
+* but, the idiom is still pure functional, the fact that we happen to use an imperative implementation of the cycle operator does not mean the operator is impure. Electric could reify dataflow cycles with a special form just as Haskell does, and maybe we will some day.
+
+
+Note: using `e/with-cycle` here is confusing, because really we want to loop the table (not force the table to collapse into a singular value), so let's not do that. (See: optimistic updates, which loops tables)
+
+
+### `e/with-cycle` – dataflow recursion
+
+This "cycle by atom side effect" pattern is so common that we provide `e/with-cycle`, a macro over it:
+
+!fn[](electric-tutorial.forms-from-scratch/DemoFormSync-cycle)
+
+* Think of this as an electrical circuit, it's a closed loop!
+* Squint and you can almost fit it to loop/recur:
+  * `(loop [s ""] (recur (Input s)))`
+  * (it doesn't quite match, e.g. we want 1 input not N - so we need a new primitive)
+* I point this out because, loop/recur is pure functional. It is just recursion. Recursion is not a side effect.
+* Dataflow cycles are also pure functional. In Haskell see the [RecursiveDo](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html) extension which introduces a `rec` keyword that matches this structure.

@@ -29,54 +29,34 @@ How it works
 * Very simple
 * No error states, no latency
 
-### naive low-level DOM input – uncontrolled staate
+### naive low-level DOM input – uncontrolled state
 
 !fn[](electric-tutorial.forms-from-scratch/DemoInputNaive)
 
 * dom/on - derive a state (latest value, or signal from the FRP perspective) from a sequence of events
-  * `""` is the signal's initial state
-  * `#(-> % .-target .-value)` is a discrete sampler function that derives a value from the event.
-    * This is a Clojure function (not Electric function) to bypass Electric's reactive work skipping semantics, for two reasons:
-    * 1) `.-target` is a reference not a value meaning `.-value` will be workskipped incorrectly.
-    * 2) you sometimes need to run side effects like `(.preventDefault e)` on every event, and Electric's continuous time semantics may skip effects if the system's sampling rate is slower than the event rate.
 * recall that dom elements return their last child via implicit do
 
-### circuit input (synchronous input) – controlled state
+### synchronous `Input` - uncontrolled state
 
-!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit3)
+!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit-uncontrolled)
 
-* Think of this as an electrical circuit, it's a closed loop!
-* Squint and you can almost fit it to loop/recur:
-  * `(loop [s ""] (recur (Input s)))`
-  * (it doesn't quite match, e.g. we want 1 input not N - so we need a new primitive)
-  * I point this out because, loop/recur is pure functional. It is just recursion. Dataflow cycles are also pure functional.
-  * In Haskell see [RecursiveDo](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html) for recursive bindings in certain monadic computations, such as the continuous time dataflow computation used by Electric.
+### synchronous `Input` – controlled state
 
-!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit)
-
-* Equivalent - "cycle by side effect", looping via reactive atom
-* in fact, that's how `e/with-cycle` is implemented today
-* but, the idiom is still pure functional, the fact that we happen to use an imperative implementation of the cycle operator does not mean the operator is impure. Electric could reify dataflow cycles with a special form just as Haskell does, and maybe we will some day.
-
-### concurrent controlled inputs
-
-!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit4)
+!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit-controlled)
 
 * Observe two `reset!` effects
 * Can we unify them? Hold my beer ...
 
 ### e/amb - concurrent values in superposition
 
-!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit5)
+!fn[](electric-tutorial.forms-from-scratch/DemoInputCircuit-amb)
 
 * tables - do is not sufficient
 * auto-mapping
 
-Note: using `e/with-cycle` here is confusing, because really we want to loop the table (not force the table to collapse into a singular value), so let's not do that. (See: optimistic updates, which loops tables)
+### synchronous forms
 
-### circuit forms
-
-!fn[](electric-tutorial.forms-from-scratch/DemoUserForm)
+!fn[](electric-tutorial.forms-from-scratch/DemoFormSync)
 
 * Why are they ordered? I think we're getting lucky with the reader (todo explain)
 * It's just an educational demo, vector them if you want
@@ -150,12 +130,6 @@ Which the service interprets and evaluates:
 * How does failure propagate from service back into the form buttons?
   * `(t ::rejected)` routes the error back to the source (e.g. the commit button) so the button can turn red (maybe put the error in a tooltip) and reset to a ready state for the user to try again.
 
-### Keyboard support
-
-* Go back up to the prior demo and try it -
-* `enter` to submit, `esc` to discard.
-* The buttons are optional! There is a form option to suppress them.
-
 ### Inline form submit
 
 * Sometimes, you want to submit each field individually (NOT as a form)
@@ -165,5 +139,14 @@ Which the service interprets and evaluates:
 !fiddle-ns[](electric-tutorial.forms3b-inline-submit/Forms3b-inline-submit)
 
 * For this demo, we don't let you fully suppress the buttons (see: `(or (Checkbox show-buttons* :label "show-buttons") ::cqrs/smart)`), but you can just set `:show-buttons` to `false` in your app to make them go away entirely and rely only on the keyboard - which is often what you want! (For example, TodoMVC, Slack)
+
+### Keyboard support
+
+* Try it above! select the numeric field, `up`/`down`, `enter` to submit, `esc` to discard.
+* Go to the top of the page - toggle the checkbox - esc to discard - space to toggle again - enter in any field to submit form - button turns yellow and disabled.
+* Note: yes, enter in *any* field will submit *all* fields in the form.
+* But - you're actually used to that! We use tab to navigate a form, and we use enter to submit it at the end.
+* These are in fact the native browser semantics being exposed, i.e. we didn't implement this behavior! We just setup the DOM properly. I believe the only think we implemented is to submit when buttons are hidden, i.e. there is no `<button type="submit">` in the form.
+* If you want to prevent premature submit, add validation.
 
 ### Next up - optimistic updates

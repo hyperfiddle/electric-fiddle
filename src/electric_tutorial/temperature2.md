@@ -23,7 +23,7 @@ What's happening
 
 We call these "amb values," **tables**.
 
-* This is a SQL analogy: most SQL operators, such as `SELECT`, operate on tables not individual values.
+* This is a SQL analogy: most SQL operators, such as `SELECT`, operate on tables (sets of records) not individual records.
 * The idea is also reminiscent This is a similar concept as "vector" from [vector programming languages](https://en.wikipedia.org/wiki/Array_programming) such as MATLAB, but (speaking to MATLAB) it is not quite the right concept, as in mathematics, vectors store quantities that have a specific relation between them such that they transform in a specific way under changes in coordinates such as rotations. Electric tables are not this.
 * All electric expressions and scopes (lexical and dynamic) evaluate/resolve to tables that hold zero or more values in superposition (typically one).
 

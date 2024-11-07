@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok PendingController]]
+            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok]]
             [hyperfiddle.input-zoo0 :refer [Input! Checkbox! Checkbox]]))
 
 #?(:clj (def !conn))
@@ -18,9 +18,7 @@
           (d/transact! !conn tx)))
 
 (e/defn Query-record [db id forms]
-  (e/client
-    #_(PendingController1 nil nil forms)
-    (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id)))))
+  (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id))))
 
 (e/defn UserForm [db id forms]
   (dom/fieldset (dom/legend (dom/text "UserForm"))

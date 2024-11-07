@@ -73,6 +73,4 @@
     (let [db (e/server (e/watch !conn))]
       (Service
         (e/with-cycle* first [edits (e/amb)]
-          (e/amb
-            (UserForm db 42 edits)
-            (UserForm db 42 edits)))))))
+          (UserForm db 42 edits))))))
