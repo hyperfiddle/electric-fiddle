@@ -23,7 +23,6 @@
 
             [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.counter :refer [Counter]]
-            [electric-tutorial.chat :refer [Chat]]
 
             [electric-tutorial.inputs-local :refer
              [InputCicruit DemoInputNaive
@@ -148,7 +147,6 @@
    `FizzBuzz FizzBuzz
    `Toggle Toggle
    `Counter Counter
-   `Chat Chat
    `ChatMonitor ChatMonitor
    `Backpressure Backpressure
 
