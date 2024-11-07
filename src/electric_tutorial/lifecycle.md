@@ -2,7 +2,7 @@
 
 mount/unmount component lifecycle
 
-!fiddle-ns[](electric-tutorial.lifecycle/Lifecycle)
+!ns[electric-tutorial.lifecycle/Lifecycle]()
 
 What's happening
 

@@ -2,4 +2,4 @@
 
 SVG support. Note the animation is reactive and driven by javascript cosine.
 
-!fiddle-ns[](electric-tutorial.svg/SVG)
+!ns[electric-tutorial.svg/SVG]()

@@ -4,7 +4,7 @@
 * Goal: start to think about this differential structure.
 * Open js console and start incrementing the `10` to see cool diffs
 
-!fiddle-ns[](electric-tutorial.fizzbuzz/FizzBuzz)
+!ns[electric-tutorial.fizzbuzz/FizzBuzz]()
 
 What's happening
 * as you change the input state, the collection output is incrementally maintained

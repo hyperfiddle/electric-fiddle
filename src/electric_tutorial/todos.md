@@ -4,7 +4,7 @@
 * Unfortunately, we didn't finish implementing the failure states yet (as of October 20 2024).
 * I think it otherwise works
 
-!fiddle-ns[](electric-tutorial.todos/Todos)
+!ns[electric-tutorial.todos/Todos]()
 
 What's happening
 * It's a functional todo list, the first "real app"

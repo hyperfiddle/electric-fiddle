@@ -2,7 +2,7 @@
 
 Lambdas
 
-!fiddle-ns[](electric-tutorial.webview2/Webview2)
+!ns[electric-tutorial.webview2/Webview2]()
 
 What's happening
 * Typeahead - we will explain this later, pulling this forward for the cool demo

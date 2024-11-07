@@ -4,7 +4,7 @@
 
 This is just the Two Clocks demo with slight modifications, there is more to learn here.
 
-!fiddle-ns[](electric-tutorial.backpressure/Backpressure)
+!ns[electric-tutorial.backpressure/Backpressure]()
 
 What's happening
 * The timer `e/system-time-secs` is a float and updates at the browser animation rate, let's say 120hz.

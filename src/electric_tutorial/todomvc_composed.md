@@ -1,3 +1,3 @@
 # TodoMVC Composed
 
-!fiddle-ns[](electric-tutorial.todomvc-composed/TodoMVC-composed)
+!ns[electric-tutorial.todomvc-composed/TodoMVC-composed]()

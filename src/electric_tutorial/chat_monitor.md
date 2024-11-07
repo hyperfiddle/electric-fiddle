@@ -2,7 +2,7 @@
 
 Pending
 
-!fiddle-ns[](electric-tutorial.chat-monitor/ChatMonitor)
+!ns[electric-tutorial.chat-monitor/ChatMonitor]()
 
 `(e/with-cycle* first [edits (e/amb)] ...)`
 * note the `*` and the `first`, this is not `e/with-cycle`

@@ -4,7 +4,7 @@
 * Type into the input and see the query update live.
 * Goal here is to understand basic client/server data flow in a simple query/view topology.
 
-!fiddle-ns[](electric-tutorial.system-properties/SystemProperties)
+!ns[electric-tutorial.system-properties/SystemProperties]()
 
 What's happening
 

@@ -4,7 +4,7 @@
 * This is an example of something that is easy to do in Electric but hard to do with competing technologies.
 * Goal: get comfortable with Electric v3's client/server transfer semantics in a more interesting topology.
 
-!fiddle-ns[](electric-tutorial.dir-tree/DirTree)
+!ns[electric-tutorial.dir-tree/DirTree]()
 
 What's happening
 

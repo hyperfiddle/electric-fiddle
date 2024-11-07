@@ -4,7 +4,7 @@
 * There is progress, and concurrency. Try mashing the button.
 * It's multiplayer – the counter is on the server.
 
-!fiddle-ns[](electric-tutorial.counter/Counter)
+!ns[electric-tutorial.counter/Counter]()
 
 What's happening
 

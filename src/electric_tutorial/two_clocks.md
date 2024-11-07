@@ -3,7 +3,7 @@
 * The easiest way to understand Electric is **streaming lexical scope**.
 * Here, the server clock is streamed to the client.
 
-!fiddle-ns[](electric-tutorial.two-clocks/TwoClocks)
+!ns[electric-tutorial.two-clocks/TwoClocks]()
 
 What's happening
 

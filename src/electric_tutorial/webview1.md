@@ -2,7 +2,7 @@
 
 A database backed webview with reactive updates.
 
-!fiddle-ns[](electric-tutorial.webview1/Webview1)
+!ns[electric-tutorial.webview1/Webview1]()
 
 What's happening
 * The webview is subscribed to the database, which updates with each transaction.

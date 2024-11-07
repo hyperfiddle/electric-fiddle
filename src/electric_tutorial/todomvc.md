@@ -1,3 +1,3 @@
 # TodoMVC
 
-!fiddle-ns[](electric-tutorial.todomvc/TodoMVC)
+!ns[electric-tutorial.todomvc/TodoMVC]()

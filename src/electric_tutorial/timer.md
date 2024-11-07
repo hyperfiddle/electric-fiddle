@@ -2,4 +2,4 @@
 
 See <https://eugenkiss.github.io/7guis/tasks#timer>
 
-!fiddle-ns[](electric-tutorial.timer/Timer)
+!ns[electric-tutorial.timer/Timer]()
