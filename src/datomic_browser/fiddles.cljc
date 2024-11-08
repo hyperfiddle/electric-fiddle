@@ -17,7 +17,7 @@
         ::pending (dom/h1 (dom/text "Waiting for Datomic connection ..."))
         ::model/ok (binding [conn (check model/*datomic-conn*)
                              db (check model/*datomic-db*)
-                             schema (check (e/Task (dx/schema! db)))]
+                             schema (check (e/Task (dx/schema! model/*datomic-db*)))]
                      (e/client
                        (datomic-browser.datomic-browser/DatomicBrowser)))
         (do (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
