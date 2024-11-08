@@ -94,3 +94,7 @@ This "cycle by atom side effect" pattern is so common that we provide `e/with-cy
   * (it doesn't quite match, e.g. we want 1 input not N - so we need a new primitive)
 * I point this out because, loop/recur is pure functional. It is just recursion. Recursion is not a side effect.
 * Dataflow cycles are also pure functional. In Haskell see the [RecursiveDo](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html) extension which introduces a `rec` keyword that matches this structure.
+
+
+
+* Because Electric's evaluation model is concurrent—Electric auto-maximizes concurrency by default—an expression like `(do (swap! !x not) ::ok)` will return `::ok` *concurrently* with running the swap!, which is not what you want! We therefore use `case` as a sequencing idiom. This is common.
