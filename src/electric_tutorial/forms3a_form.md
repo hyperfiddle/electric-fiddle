@@ -103,7 +103,7 @@ attempting the transaction.
   * ::ok -> `(t)`, release staged form as it is safe now, which releases the fields as well
   * anything else -> `(t err)` to prompt for retry, releases commit interaction but retains staged form as it is in retry state
 
-!fn-src[hyperfiddle.cqrs0/Service]()
+!fn-src[hyperfiddle.electric-forms0/Service]()
 
 Future work
   * What if the form buffer was moved to the server, so that if you refresh the page, your state is not lost?

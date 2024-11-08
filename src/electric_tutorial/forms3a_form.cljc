@@ -2,8 +2,8 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok]]
-            [hyperfiddle.input-zoo0 :refer [Input! Checkbox! Checkbox]]))
+            [hyperfiddle.electric-forms0 :as forms :refer
+             [Input! Checkbox! Checkbox Form! Service try-ok effects*]]))
 
 #?(:clj (def !conn))
 (def debug* true)
@@ -41,7 +41,7 @@
       (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
 
 (e/defn Forms3a-form []
-  (binding [cqrs/effects* {`UserFormSubmit UserFormSubmit}
+  (binding [effects* {`UserFormSubmit UserFormSubmit}
             debug* (Checkbox debug* :label "debug")
             slow* (Checkbox slow* :label "latency")
             fail* (Checkbox fail* :label "failure")]

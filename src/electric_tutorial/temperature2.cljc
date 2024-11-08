@@ -2,7 +2,7 @@
   (:require [clojure.math :refer [round]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer [Input]]
+            [hyperfiddle.electric-forms0 :refer [Input]]
             [missionary.core :as m]))
 
 (defn c->f [c] (+ (* c (/ 9 5)) 32))

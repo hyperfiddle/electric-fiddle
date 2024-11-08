@@ -1,13 +1,8 @@
 (ns electric-tutorial.form-explainer
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :refer [Form!]]
-            [hyperfiddle.input-zoo0 :refer [Input Checkbox Input! Checkbox!]]))
-
-; slow* (dom/div (Checkbox true :label "latency"))
-; todo fix crash on cancellation when typing faster than latency
-; (when (true? slow*) (Thread/sleep 1000))
-; Note: the crash doesn't actually matter because we're about to wrap `Input!` into a `Form!` which is going to change the interaction pattern in an interesting way. (But IIUC the crash is an Electric bug, we will fix it)
+            [hyperfiddle.electric-forms0 :refer
+             [Input Checkbox Input! Checkbox! Form!]]))
 
 (def state0 {:user/str1 "hello" :user/num1 42 :user/bool1 true})
 
@@ -33,5 +28,3 @@
           ::ok (t)
           (t res))))
     (dom/pre (dom/text (pr-str x)))))
-
-(e/defn Grid [])

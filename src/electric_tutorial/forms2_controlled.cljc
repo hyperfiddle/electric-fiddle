@@ -1,7 +1,7 @@
 (ns electric-tutorial.forms2-controlled
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer [Input Checkbox]]))
+            [hyperfiddle.electric-forms0 :refer [Input Checkbox]]))
 
 (def state0 {:user/str1 "hello" :user/num1 42 :user/bool1 true})
 

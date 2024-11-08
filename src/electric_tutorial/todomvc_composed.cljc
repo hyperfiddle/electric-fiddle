@@ -1,7 +1,7 @@
 (ns electric-tutorial.todomvc-composed
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Service]]
+            [hyperfiddle.electric-forms0 :refer [Service effects*]]
             [electric-tutorial.todomvc :as todomvc :refer
              [TodoMVC-UI Effects !state state state0
               db Transact! #?(:clj !conn)]]))
@@ -21,7 +21,7 @@
       (binding [state (e/watch !state)]
         (binding [db (e/server (e/watch !conn))
                   Transact! (e/server (e/Partial Transact! !conn (e/client (::todomvc/delay state))))
-                  cqrs/effects* (Effects)]
+                  effects* (Effects)]
           (Service
             (e/with-cycle* first [edits (e/amb)]
               (e/Filter some?

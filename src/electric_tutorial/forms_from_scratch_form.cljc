@@ -2,9 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form!]]
-            [hyperfiddle.input-zoo0 :refer
-             [Checkbox Input! Checkbox!]]))
+            [hyperfiddle.electric-forms0 :refer [Form! Checkbox Input! Checkbox!]]))
 
 #?(:clj (defonce !conn (doto (d/create-conn {})
                          (d/transact! [{:db/id 42 :user/str1 "one"

@@ -3,9 +3,9 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service PendingController try-ok]]
-            [hyperfiddle.input-zoo0 :refer
-             [Input! Checkbox! Checkbox Button!]]
+            [hyperfiddle.electric-forms0 :as cqrs :refer
+             [Input! Checkbox! Checkbox Button!
+              Form! Service PendingController try-ok effects*]]
             [electric-tutorial.forms3a-form :refer [#?(:clj transact-unreliable)]]))
 
 (defn stable-kf [tempids-rev {:keys [:db/id]}]
@@ -143,7 +143,7 @@
         results (e/for [form (e/diff-by {} forms)] ; diff by effect position, not great
                   (e/When form
                     (let [[effect & args] form
-                          Effect (cqrs/effects* effect (e/fn default [& args] (doto ::effect-not-found (prn effect))))
+                          Effect (effects* effect (e/fn default [& args] (doto ::effect-not-found (prn effect))))
                           res #_[t form guess db] (e/Apply Effect args)] ; effect handlers span client and server
                       res)))
         results (e/as-vec results)]
@@ -156,11 +156,11 @@
 
 (e/defn Todos []
   (e/client
-    (binding [cqrs/effects* {`Create-todo Create-todo
-                             `Edit-todo-desc Edit-todo-desc
-                             `Toggle Toggle
-                             `Delete-todo Delete-todo
-                             `Batch Batch}
+    (binding [effects* {`Create-todo Create-todo
+                        `Edit-todo-desc Edit-todo-desc
+                        `Toggle Toggle
+                        `Delete-todo Delete-todo
+                        `Batch Batch}
               debug* (Checkbox debug* :label "debug")
               slow* (Checkbox slow* :label "latency")
               fail* (Checkbox fail* :label "failure" :disabled true)

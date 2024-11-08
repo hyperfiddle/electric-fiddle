@@ -2,8 +2,8 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service try-ok]]
-            [hyperfiddle.input-zoo0 :refer [Input! Checkbox! Checkbox]]
+            [hyperfiddle.electric-forms0 :as forms :refer
+             [Input! Checkbox! Checkbox Form! Service try-ok effects*]]
             [electric-tutorial.forms3a-form :refer
              [Query-record #?(:clj !conn) #?(:clj transact-unreliable)]]))
 
@@ -61,13 +61,13 @@
       (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
 
 (e/defn Forms3b-inline-submit []
-  (binding [cqrs/effects* {`Str1FormSubmit Str1FormSubmit
-                           `Num1FormSubmit Num1FormSubmit
-                           `Bool1FormSubmit Bool1FormSubmit}
+  (binding [effects* {`Str1FormSubmit Str1FormSubmit
+                      `Num1FormSubmit Num1FormSubmit
+                      `Bool1FormSubmit Bool1FormSubmit}
             debug* (Checkbox debug* :label "debug")
             slow* (Checkbox slow* :label "latency")
             fail* (Checkbox fail* :label "failure")
-            show-buttons* (or (Checkbox show-buttons* :label "show-buttons") ::cqrs/smart)
+            show-buttons* (or (Checkbox show-buttons* :label "show-buttons") ::forms/smart)
             auto-submit* (Checkbox auto-submit* :label "auto-submit")]
     debug* fail* slow* auto-submit* show-buttons*
     (let [db (e/server (e/watch !conn))]

@@ -1,7 +1,7 @@
 (ns electric-tutorial.token-explainer
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer [Checkbox]]))
+            [hyperfiddle.electric-forms0 :refer [Checkbox]]))
 
 (e/defn TokenExplainer []
   (let [slow (dom/div (Checkbox true :label "latency"))

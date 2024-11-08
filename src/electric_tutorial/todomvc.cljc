@@ -3,9 +3,9 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.cqrs0 :as cqrs :refer [Form! Service]]
-            [hyperfiddle.input-zoo0 :refer
-             [Input! Input Checkbox! InputSubmitCreate! Button!]]))
+            [hyperfiddle.electric-forms0 :as cqrs :refer
+             [Input! Input Checkbox! Button! Form! Service]]
+            [hyperfiddle.input-zoo0 :refer [InputSubmitCreate!]]))
 
 #?(:clj
    (defn query-todos [db filter]

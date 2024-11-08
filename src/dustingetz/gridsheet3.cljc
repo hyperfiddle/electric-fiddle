@@ -6,7 +6,7 @@
             [contrib.data :refer [auto-props round-floor]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.input-zoo0 :refer [Input Input!]]
+            [hyperfiddle.electric-forms0 :refer [Input Input!]]
             [hyperfiddle.router3 :as r] ; todo remove
             #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])
             #?(:cljs goog.object)))
