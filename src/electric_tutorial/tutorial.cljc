@@ -22,7 +22,6 @@
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.backpressure :refer [Backpressure]]
 
-            [electric-tutorial.toggle :refer [Toggle]]
             [electric-tutorial.counter :refer [Counter]]
 
             [electric-tutorial.inputs-local :refer
@@ -146,7 +145,6 @@
    `Webview1 Webview1
    `Webview2 Webview2
    `FizzBuzz FizzBuzz
-   `Toggle Toggle
    `Counter Counter
    `ChatMonitor ChatMonitor
    `Backpressure Backpressure
