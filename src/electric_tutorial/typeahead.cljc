@@ -1,7 +1,6 @@
 (ns electric-tutorial.typeahead
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.token-zoo0 :refer [TokenNofail]]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 (def ul-style {:position "absolute"
                :z-index 2
@@ -22,9 +21,10 @@
           t (e/client
               (dom/input
                 (dom/props {:placeholder "Filter..."})
-                (if-some [t (TokenNofail (dom/On "focus"))]
-                  (do (reset! !search (dom/On "input" #(-> % .-target .-value) "")) t)
-                  (dom/props {:value (OptionLabel v-id)}))))] ; controlled only when not focused
+                (let [[t err] (e/Token (dom/On "focus"))]
+                  (if t
+                    (do (reset! !search (dom/On "input" #(-> % .-target .-value) "")) t)
+                    (dom/props {:value (OptionLabel v-id)})))))] ; controlled only when not focused
 
       ; neutral
       (if (e/client (some? t)) ; token unserializable
