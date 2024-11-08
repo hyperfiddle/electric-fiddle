@@ -9,7 +9,6 @@
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-svg3 :as svg]
-            [hyperfiddle.token-zoo0 :refer [TokenNofail]]
             [hyperfiddle.router3 :as r]
 
             ; Part 1
@@ -130,8 +129,9 @@
                       (dom/props {:value (str id) :selected (= page id)})
                       (dom/text (str (inc (::order m)) ". " (title m))))))))
             (when-some [^js e ($ dom/On "change")]
-              (when-some [done! ($ TokenNofail e)]
-                (done! ($ r/Navigate! ['. [(clojure.edn/read-string (.. e -target -value))]]))))))
+              (let [[done! err] (e/Token e)]
+                (when done!
+                  (done! ($ r/Navigate! ['. [(clojure.edn/read-string (.. e -target -value))]])))))))
         (when next
           (r/link ['. [(::id next)]] ; why nested?
             (dom/props {:class "user-examples-nav-next"})
