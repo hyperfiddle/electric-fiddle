@@ -1,6 +1,7 @@
 (ns electric-tutorial.toggle
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]))
+            [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.token-zoo0 :refer [TokenNofail]]))
 
 #?(:clj (defonce !x (atom true))) ; server state
 
@@ -16,7 +17,7 @@
       (dom/dt (dom/text "type")) (dom/dd (dom/text (NumberType x)))))
 
   (dom/button (dom/text "toggle client/server")
-    (when-some [t (e/Token (dom/On "click" identity nil))]
+    (when-some [t (TokenNofail (dom/On "click" identity nil))]
       (dom/props {:disabled true})
       (case (e/server (case (swap! !x not) ::ok))
         ::ok (t)))))

@@ -10,7 +10,7 @@
     slow fail
     (when-some [t (dom/button (dom/text "toggle!")
                     (let [e (dom/On "click" identity nil)
-                          [t err] (e/RetryToken e)]
+                          [t err] (e/Token e)]
                       (dom/props {:aria-busy (some? t)
                                   :disabled (some? t)
                                   :aria-invalid (some? err)})

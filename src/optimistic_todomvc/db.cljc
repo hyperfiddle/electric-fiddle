@@ -76,9 +76,9 @@
       (dom/button
         (dom/text "commit")
         (dom/props {:disabled disabled?, :aria-busy disabled?})
-        ($ Commit (reset! !busy ($ e/Token ($ dom/On "click"))) dd*))
+        ($ Commit (reset! !busy ($ e/TokenNofail ($ dom/On "click"))) dd*))
       (dom/button
         (dom/text "discard")
         (dom/props {:disabled disabled?, :aria-busy disabled?})
-        ($ Discard (reset! !busy ($ e/Token ($ dom/On "click"))) dd*))
+        ($ Discard (reset! !busy ($ e/TokenNofail ($ dom/On "click"))) dd*))
       (dom/pre (dom/props {:style {:align-self "start"}}) (dom/text (contrib.str/pprint-str (e/as-vec (::tx stage))))))))

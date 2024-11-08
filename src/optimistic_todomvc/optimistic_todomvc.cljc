@@ -104,7 +104,7 @@
           ($ TxUI t)
           (dom/props {:title (when (= ::db/rejected t) ?e)})
           (let [nx ($ dom/On "change" checked)]
-            (if-some [spend ($ e/Token nx)]  [nx spend]  (e/amb))))))))
+            (if-some [spend ($ e/TokenNofail nx)]  [nx spend]  (e/amb))))))))
 
 #?(:cljs (defn input-commit> [nd]
            (->> (mx/mix
