@@ -7,6 +7,7 @@
             [dustingetz.gridsheet3 :as gridsheet :refer [Explorer]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.electric-forms0 :as forms :refer [Input! Form! Checkbox]]
             [hyperfiddle.router3 :as r]
             [missionary.core :as m]))
 
@@ -83,23 +84,30 @@
                  :v (dom/text (pr-str v))                ; when a is ref, render link
                  (dom/text (str tx))))))}))))
 
-(e/defn Format-entity [[k v :as row] col]
-  (e/server
-    (check schema)
-    (case col
-      ::k (cond
-            (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-            (contains? schema k) (e/client (r/link ['.. '.. [:attribute k]] (dom/text k)))
-            () (dom/text (str k))) ; str is needed for Long db/id, why?
-      ::v (if-not (coll? v)           ; don't render card :many intermediate row
-            (let [[valueType cardinality]
-                  ((juxt (comp unqualify dx/identify :db/valueType)
-                     (comp unqualify dx/identify :db/cardinality)) (k schema))]
-              (cond
-                ;; link two levels up because Format-entity is under EntityDetail's scope
-                (= :db/id k) (e/client (r/link ['.. '.. [:entity v]] (dom/text v)))
-                (= :ref valueType) (e/client (r/link ['.. '.. [:entity v]] (dom/text v)))
-                () (dom/text (pr-str v))))))))
+#?(:clj (defn easy-attr [schema k]
+          ((juxt
+             (comp unqualify dx/identify :db/valueType)
+             (comp unqualify dx/identify :db/cardinality))
+           (k schema))))
+
+(e/defn Format-entity [row col]
+  ; keep vals on server, row can contain refs
+  (let [k (e/server (some-> row (nth 0))), v (e/server (some-> row (nth 1)))]
+    (when (e/server (some? row))
+      (case col
+        ::k (cond
+              (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
+              (e/server (contains? schema k)) (r/link ['.. '.. [:attribute k]] (dom/text k))
+              () (dom/text (str k))) ; str is needed for Long db/id, why?
+        ::v (if-not (e/server (coll? v))           ; don't render card :many intermediate row
+              (let [[valueType cardinality] (e/server (easy-attr schema k))]
+                (cond
+                  (= :db/id k) (r/link ['.. '.. [:entity v]] (dom/text v))
+                  (= :ref valueType) (r/link ['.. '.. [:entity v]] (dom/text v))
+                  (= :string valueType) (Form! (Input! k v)
+                                          :commit (fn [] [])
+                                          :show-buttons :smart)
+                  () (dom/text (pr-str v)))))))))
 
 (e/defn EntityDetail []
   (let [[e _] r/route]
@@ -201,7 +209,7 @@
     (r/link ['.. [:db-stats]] (dom/text "db-stats")) (dom/text " ")
     (r/link ['.. [:recent-tx]] (dom/text "recent-tx"))))
 
-(e/defn DatomicBrowser []
+(e/defn Page []
   (dom/props {:class "user-gridsheet-demo"})
   (dom/link (dom/props {:rel :stylesheet, :href "gridsheet-optional.css"}))
   (let [[page] r/route] (when-not page (r/ReplaceState! ['. [:attributes]]))
@@ -211,8 +219,21 @@
         :attributes (Attributes)
         :attribute (AttributeDetail)
         :tx (TxDetail)
-        :entity (e/amb (EntityDetail) (EntityHistory)) ; todo untangle router inputs
+        :entity (e/amb (EntityDetail) #_(EntityHistory)) ; todo untangle router inputs
         :db-stats (DbStats)
         :recent-tx (RecentTx)))))
+
+(e/defn DatomicBrowser []
+  (e/client
+    (let [fail (dom/div (Checkbox true :label "failure"))
+          edits (e/Filter some? (Page))]
+      fail
+      (println 'edits (e/Count edits) (e/as-vec edits))
+      (e/for [[t form guess] edits]
+        (let [res (e/server (if fail ::rejected (do (println form) ::ok)))]
+          (case res
+            nil (prn 'res-was-nil-stop!)
+            ::ok (t)
+            (t res)))))))
 
 ; (e/defn Where [] ((fn [] #?(:clj ::clj :cljs ::cljs))))
