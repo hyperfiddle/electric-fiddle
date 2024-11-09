@@ -11,20 +11,14 @@
             #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])
             #?(:cljs goog.object)))
 
-; ui/scroll-state<
-
 (e/defn GridSheet [xs props]
-  ; e/server
-  #_(dom/h1 (dom/text (count (seq xs))))
-  (let [props (auto-props props
-                {::row-height 24
-                 ::page-size 20})
-        {:keys [::Format
-                ::columns
-                ::grid-template-columns
-                ::row-height ; px, same unit as scrollTop
-                ::page-size #_"tight"]} props
-        Format (or Format (e/fn [m a] (dom/text #_(e/client) (pr-str (a m)))))
+  #_(e/server) ; todo site neutrality, today requires server bias
+  (let [{::keys [Format columns grid-template-columns
+                 row-height ; px, same unit as scrollTop
+                 page-size #_"tight"]}
+        (auto-props props {::row-height 24
+                           ::page-size 20
+                           ::Format (e/fn [m a] (dom/text #_(e/client) (pr-str (a m))))})
         client-height (* (inc (check number? page-size)) (check number? row-height))
         rows (seq xs)
         row-count (count rows)]
