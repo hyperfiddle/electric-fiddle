@@ -1,0 +1,11 @@
+/* Forms, Crud, TodoMVC(!important), Datomic browser */
+[aria-busy="true"] { background-color: yellow !important; }
+input[type="checkbox"][aria-busy="true"] {
+    /* Can't color or background-color native checkboxes
+       border and outline are tricky to get right without messing up keyboard nav */
+    box-shadow: 0 0 0.2rem 0.2rem yellow; /* simulate a border */
+    outline: none;
+}
+[aria-invalid="true"] { background-color: pink; }
+input[aria-invalid="true"] { outline: 3px pink solid; }
+input[type="checkbox"][aria-invalid="true"]:focus { outline: 4px pink solid; }
