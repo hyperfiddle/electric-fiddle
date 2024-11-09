@@ -15,7 +15,7 @@
 (def schema)
 
 (e/defn Attributes []
-  (dom/h1 (dom/text "Attributes — " (pr-str r/route) #_(pr-str (r/Route-at ['.]))))
+  (dom/h1 (dom/text "Attributes — Datomic Browser"))
   (r/focus [0]
     (let [cols [:db/ident :db/valueType :db/cardinality :db/unique :db/isComponent
                 #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs]]
@@ -195,23 +195,24 @@
            :db/id (e/client (r/link ['.. [::tx tx]] (dom/text tx)))
            :db/txInstant (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v)))))})))
 
+(e/defn Nav []
+  (dom/div (dom/text "Nav: ")
+    (r/link ['.. [:attributes]] (dom/text "home")) (dom/text " ")
+    (r/link ['.. [:db-stats]] (dom/text "db-stats")) (dom/text " ")
+    (r/link ['.. [:recent-tx]] (dom/text "recent-tx"))))
+
 (e/defn DatomicBrowser []
-  (dom/h1 (dom/text "Datomic browser" " - " (pr-str r/route)))
+  (dom/props {:class "user-gridsheet-demo"})
   (dom/link (dom/props {:rel :stylesheet, :href "gridsheet-optional.css"}))
-  (dom/div (dom/props {:class "user-gridsheet-demo"})
-    (dom/div (dom/text "Nav: ")
-      (r/link ['. []] (dom/text "home")) (dom/text " ")
-      (r/link ['. [:db-stats]] (dom/text "db-stats")) (dom/text " ")
-      (r/link ['. [:recent-tx]] (dom/text "recent-tx")))
-    (let [[page] r/route]
-      (if-not page (r/ReplaceState! ['. [:attributes]])
-        (r/pop
-          (case page
-            :attributes (Attributes)
-            :attribute (AttributeDetail)
-            :tx (TxDetail)
-            :entity (e/amb (EntityDetail) (EntityHistory)) ; todo untangle router inputs
-            :db-stats (DbStats)
-            :recent-tx (RecentTx)))))))
+  (let [[page] r/route] (when-not page (r/ReplaceState! ['. [:attributes]]))
+    (r/pop
+      (Nav)
+      (case page
+        :attributes (Attributes)
+        :attribute (AttributeDetail)
+        :tx (TxDetail)
+        :entity (e/amb (EntityDetail) (EntityHistory)) ; todo untangle router inputs
+        :db-stats (DbStats)
+        :recent-tx (RecentTx)))))
 
 ; (e/defn Where [] ((fn [] #?(:clj ::clj :cljs ::cljs))))
