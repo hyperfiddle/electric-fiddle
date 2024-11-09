@@ -18,16 +18,18 @@
 (e/defn GenericTable [colspec Query Row]
   (let [ids (Query)]
     (dom/table
-      (e/for [id ids]
+      (e/for [id ids] ; server
         (dom/tr
-          (let [m (Row id)]
+          (let [m (Row id)] ; server m
+            #_(e/server) ; server: sync initial load, lagged typeahead options. why??
             (e/for [k colspec]
               (dom/td
+                #_(e/client) ; don't damage sync row load
                 (e/call (get m k))))))))))
 
 (e/defn Row [db id]
   (e/server
-    (let [!e         (d/entity db id)
+    (let [!e         (e/Offload #(d/entity db id))
           email      (-> !e :order/email)
           gender     (-> !e :order/gender :db/ident)
           shirt-size (-> !e :order/shirt-size :db/ident)]
@@ -35,24 +37,25 @@
        :order/email      (e/fn [] (dom/text email))
        :order/gender     (e/fn [] (Typeahead gender
                                     (e/fn Options [search] (Genders db search))
-                                    (e/fn OptionLabel [x] (pr-str x))))
+                                    #_(e/fn OptionLabel [x] (pr-str x))))
        :order/shirt-size (e/fn [] (Typeahead shirt-size
                                     (e/fn Options [search] (Shirt-sizes db gender search))
-                                    (e/fn OptionLabel [x] (pr-str x))))})))
+                                    #_(e/fn OptionLabel [x] (pr-str x))))})))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
 #?(:cljs (def !sort-key (atom [:order/email])))
 
 (e/defn Webview2 []
   (dom/props {:class "webview"})
-  (e/server
-    (let [db (e/watch conn)
-          colspec (e/client (e/diff-by identity (e/watch !colspec)))
-          search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
-      (GenericTable
-        colspec
-        (e/Partial Teeshirt-orders db search (e/client (e/watch !sort-key)))
-        (e/Partial Row db)))))
+  (e/client
+    (let [db (e/server (e/watch conn))
+          colspec (e/diff-by identity (e/watch !colspec))
+          search (dom/input (dom/On "input" #(-> % .-target .-value) ""))]
+      (e/server ; perf: sync server push row loads
+        (GenericTable
+          colspec
+          (e/Partial Teeshirt-orders db search (e/client (e/watch !sort-key)))
+          (e/Partial Row db))))))
 
 (comment
   ; todo align grid css to number of columns
