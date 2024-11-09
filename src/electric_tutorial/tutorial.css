@@ -18,6 +18,7 @@
 .user-examples-target.webview tr { display: contents; }
 .user-examples-target.webview.Webview1 table {grid-template-columns: repeat(3, max-content);}
 .user-examples-target.webview.Webview2 table {grid-template-columns: repeat(4, max-content);}
+.user-examples-target.webview.Webview2 { padding-bottom: 5em; /* room for options */}
 
 .user-examples-target.SystemProperties { max-height: 27rem; } /* match size of the 22 loc */
 .user-examples-target.DirTree { max-height: 33rem; } /* match size of the 27 loc */
