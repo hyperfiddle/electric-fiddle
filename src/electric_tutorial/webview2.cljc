@@ -16,23 +16,22 @@
   (e/server (e/diff-by identity (e/Offload #(teeshirt-orders db search sort-key)))))
 
 (e/defn GenericTable [colspec Query Row]
-  (let [ids (Query)]
+  (let [ids (Query)] ; server query
     (dom/table
-      (e/for [id ids] ; server
+      (e/for [id ids] ; server loop, for sync load of rows and cells
         (dom/tr
           (let [m (Row id)] ; server m
-            #_(e/server) ; server: sync initial load, lagged typeahead options. why??
-            (e/for [k colspec]
+            (e/for [k colspec] ; server loop, for sync row load
               (dom/td
-                #_(e/client) ; don't damage sync row load
-                (e/call (get m k))))))))))
+                #_(e/client) ; don't damage sync cell load
+                (e/call (get m k)))))))))) ; server lambda, for sync cell load
 
 (e/defn Row [db id]
-  (e/server
-    (let [!e         (e/Offload #(d/entity db id))
-          email      (-> !e :order/email)
-          gender     (-> !e :order/gender :db/ident)
-          shirt-size (-> !e :order/shirt-size :db/ident)]
+  (let [!e         (e/server (e/Offload #(d/entity db id)))
+        email      (e/server (-> !e :order/email))
+        gender     (e/server (-> !e :order/gender :db/ident))
+        shirt-size (e/server (-> !e :order/shirt-size :db/ident))]
+    (e/server ; cell renderers available on server for sync cell load
       {:db/id            (e/fn [] (dom/text id))
        :order/email      (e/fn [] (dom/text email))
        :order/gender     (e/fn [] (Typeahead gender
