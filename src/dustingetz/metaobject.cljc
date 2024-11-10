@@ -1,4 +1,5 @@
 (ns dustingetz.metaobject
+  "https://github.com/NikolaySuslov/electric-objmodel"
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.incseq :as i]))
@@ -11,26 +12,23 @@
     (Some Fs)))
 
 (e/defn MetaObject [] ; bootstraped Object
-  (let [!vtable (i/spine) vtable (e/join !vtable)
-        Self (e/fn Self [mname & args]
-               (case mname
-                 ::get-vtable vtable ; hack
-                 (e/Apply (Vtable-lookup vtable mname) Self args)))]
-    (!vtable ::add-method {} (e/fn [Self mname F] (!vtable mname {} F)))
-    (!vtable ::get-method {} (e/fn [Self Super mname]
-                               (or (Vtable-lookup (Self ::get-vtable) mname)
-                                 (Super ::get-method mname))))
-    Self))
+  (let [!vtable (i/spine) vtable (e/join !vtable)]
+    (!vtable ::add-method {} (e/fn [Self mname F] ((Self ::get-!vtable) mname {} F)))
+    (!vtable ::get-method {} (e/fn [Self mname] (Vtable-lookup (Self ::get-vtable) mname)))
+    (e/fn Self [mname & args]
+      (case mname
+        ::get-vtable vtable ::get-!vtable !vtable ; hack
+        (e/Apply (Vtable-lookup vtable mname) Self args)))))
 
 (e/defn Object
   ([] (Object (MetaObject)))
   ([Super]
-   (let [!vtable (i/spine) vtable (e/join !vtable)
-         Get-method (Super ::get-method ::get-method)]
+   (let [!vtable (i/spine)
+         vtable (e/amb (e/join !vtable) (Super ::get-vtable))]
      (e/fn Self [mname & args]
        (case mname
-         ::get-vtable vtable ; hack
-         (e/Apply (Get-method Self Super mname) args))))))
+         ::get-vtable vtable ::get-!vtable !vtable ; hack
+         (e/Apply (Vtable-lookup vtable mname) Self args))))))
 
 (e/defn Scratch []
   (let [O (Object)]
