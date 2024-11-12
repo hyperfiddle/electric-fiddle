@@ -23,6 +23,7 @@
             #_[dustingetz.y-dir :refer [Y-dir]]
             #_electric-fiddle.main
             ;#?(:clj models.teeshirt-orders-datomic)
+            [dustingetz.metaobject :refer [DemoMetaobject]]
             ))
 
 (e/defn Fiddles []
@@ -37,6 +38,7 @@
   ;;  `MillionCheckboxes2 MillionCheckboxes2
   ;;  `Logic Logic
    `DirectoryExplorer DirectoryExplorer
+   `DemoMetaobject DemoMetaobject
    ;`Y-fib Y-fib
    ;`Y-dir Y-dir
    ;`Essay Essay #_(With-HFQL-Bindings. Essay)
