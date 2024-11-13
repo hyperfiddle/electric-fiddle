@@ -3,6 +3,7 @@
    #?(:clj [clojure.tools.logging :as log])
    [hyperfiddle.electric3 :as e]
    #?(:cljs [hyperfiddle.electric-client3])
+   #?(:clj [hyperfiddle.entrypoint])
    [hyperfiddle.rcf :as rcf]
    #?(:clj config)
    fiddles))
@@ -45,7 +46,7 @@
        (@shadow-watch :dev)
                                         ; todo block until finished?
        (comment (@shadow-stop!))
-       (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/FiddleMain (e/server ring-req)))
+       (def server (@start-server! (fn [ring-req] (hyperfiddle.entrypoint/boot-server {} fiddles/FiddleMain (e/server ring-req)))
                     (assoc config :electric-fiddle.ring-middleware/accept-ws-connect-fn (fn [_] (not @!cljs-is-compiling)))))
        (comment
          (.stop server) ; jetty
