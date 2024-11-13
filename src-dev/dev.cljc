@@ -33,7 +33,7 @@
 
        (def server (jetty/start-server!
                      (fn [ring-request]
-                       (hyperfiddle.entrypoint/boot-server ring-request {} electric-starter-app.main/Main (e/server ring-request)))
+                       (hyperfiddle.entrypoint/boot-server {} electric-starter-app.main/Main (e/server ring-request)))
                      config))
        (comment
          (.stop server)

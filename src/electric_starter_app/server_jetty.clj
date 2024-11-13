@@ -6,7 +6,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [contrib.assert :refer [check]]
-   [electric-starter-app.auth :as auth]
    [hyperfiddle.electric-ring-adapter3 :as electric-ring]
    [ring.adapter.jetty :as ring]
    [ring.middleware.content-type :refer [wrap-content-type]]
@@ -35,7 +34,6 @@
   (-> (electric-ring/wrap-electric-websocket next-handler entrypoint) ; 5. connect electric client
     ; 4. this is where you would add authentication middleware (after cookie parsing, before Electric starts)
     (electric-ring/wrap-reject-stale-client config) ; 3. reject stale electric client
-    (auth/wrap-authenticate)
     (cookies/wrap-cookies) ; 2. makes cookies available to auth and Electric app
     (wrap-params))) ; 1. parse query params
 
