@@ -7,6 +7,18 @@
            ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
            datascript/datascript          {:mvn/version "1.6.1"} ; for demo
            }
- :paths   ["src" "resources" "target/classes"]
+ :paths   ["src" "resources"]
  :aliases {:dev {:extra-paths ["src-dev"]
-                 :extra-deps  {thheller/shadow-cljs {:mvn/version "2.26.2"}}}}}
+                 :extra-deps  {thheller/shadow-cljs {:mvn/version "2.26.2"}}}
+
+           :prod {:extra-paths ["src-prod"]}
+
+           :build ; use `clj -X:build build-client`, NOT -T!
+           {:extra-paths ["src-build"]
+            :ns-default  build
+            :extra-deps  {thheller/shadow-cljs          {:mvn/version "2.26.2"}
+                          io.github.clojure/tools.build {:mvn/version "0.9.6"
+                                                         :exclusions  [com.google.guava/guava  ; tools.build / clojurescript Guava dep conflict.
+                                                                       org.slf4j/slf4j-nop ; clashes with app logger
+                                                                       ]}}}
+           }}

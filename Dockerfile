@@ -2,6 +2,7 @@ FROM clojure:openjdk-11-tools-deps AS build
 WORKDIR /app
 
 COPY deps.edn deps.edn
+COPY vendor/hyperfiddle.jar vendor/hyperfiddle.jar
 RUN clojure -A:build:prod -M -e ::ok   # preload and cache dependencies, only reruns if deps.edn changes
 
 COPY .git .git
