@@ -3,7 +3,6 @@
    clojure.edn
    electric-starter-app.main
    [hyperfiddle.electric3 :as e :refer [$]]
-   #?(:clj [hyperfiddle.entrypoint])
    #?(:cljs [hyperfiddle.electric-client3])
    #?(:clj [electric-starter-app.server-jetty :as jetty])
    #?(:clj [shadow.cljs.devtools.api :as shadow])
@@ -33,7 +32,7 @@
 
        (def server (jetty/start-server!
                      (fn [ring-request]
-                       (hyperfiddle.entrypoint/boot-server {} electric-starter-app.main/Main (e/server ring-request)))
+                       (e/boot-server {} electric-starter-app.main/Main (e/server ring-request)))
                      config))
        (comment
          (.stop server)

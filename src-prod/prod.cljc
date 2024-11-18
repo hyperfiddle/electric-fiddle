@@ -7,7 +7,6 @@
    electric-starter-app.main
    #?(:clj [electric-starter-app.server-jetty :as jetty])
    [hyperfiddle.electric3 :as e]
-   #?(:clj [hyperfiddle.entrypoint])
    #?(:cljs [hyperfiddle.electric-client3]))
   #?(:cljs (:require-macros [prod :refer [compile-time-resource]])))
 
@@ -33,7 +32,7 @@
      (log/info (pr-str config))
      (check string? (:hyperfiddle.electric/user-version config))
      (jetty/start-server!
-       (fn [ring-req] (hyperfiddle.entrypoint/boot-server {} electric-starter-app.main/Main (e/server ring-req)))
+       (fn [ring-req] (e/boot-server {} electric-starter-app.main/Main (e/server ring-req)))
        config)))
 
 ;;; Prod client entrypoint
