@@ -5,8 +5,7 @@
 (declare css)
 (e/defn Typeahead [v-id Options #_OptionLabel] ; & [OptionLabel] -- broken
   (e/client ; workaround let/drain bug, this shouldn't be needed
-    (dom/div (dom/props {:class "hyperfiddle-typeahead"
-                         :style {:position "relative"}})
+    (dom/div (dom/props {:class "hyperfiddle-typeahead"})
       (dom/style (dom/text css))
       (let [OptionLabel (e/server (or #_OptionLabel (e/fn [x] (pr-str x))))
             !v-id (e/client (atom v-id)) v-id (e/client (e/watch !v-id))
@@ -32,6 +31,7 @@
         v-id))))
 
 (def css "
+.hyperfiddle-typeahead { position: relative; }
 .hyperfiddle-typeahead > ul {
   position: absolute; z-index: 2; padding: 0;
   list-style: none; background-color: white; width: 12em;
