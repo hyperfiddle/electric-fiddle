@@ -1,10 +1,10 @@
 {:deps    {com.hyperfiddle/electric       {:mvn/version "v3-alpha-SNAPSHOT"}
-           ring/ring                      {:mvn/version "1.11.0"} ; to serve the app
            org.clojure/clojure            {:mvn/version "1.12.0-alpha5"}
            org.clojure/clojurescript      {:mvn/version "1.11.121"}
            org.clojure/tools.logging      {:mvn/version "1.2.4"}
            ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
-           datascript/datascript          {:mvn/version "1.6.1"} ; for demo
+           ring/ring                      {:mvn/version "1.11.0"} ; to serve the app
+           ring-basic-authentication/ring-basic-authentication {:mvn/version "1.2.0"} ; for demo
            }
  :paths   ["src" "resources"]
  :aliases {:dev {:extra-paths ["src-dev"]
