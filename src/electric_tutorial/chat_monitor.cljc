@@ -1,7 +1,6 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Form! Input!]]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Login [username]
   (dom/div
@@ -31,17 +30,6 @@
 (defn ->msg-record [username msg & [tempid]]
   {:db/id (or tempid (random-uuid)) :username username :msg msg})
 
-
-(e/defn Query-chats-optimistic [username edits]
-  (prn 'edits (e/as-vec edits))
-  ; Hack in optimistic updates; we'll formalize a better pattern in Todos tutorial
-  (let [server-xs (e/server (Query-chats)) ; reuse server query (differential!)
-        client-xs (e/for [[t cmd local-index] edits] ; cheap optimistic updates
-                    (let [m (get local-index t)] ; token as tempid convention
-                      (assoc m ::pending true)))]
-    ; todo reconcile records by id for count consistency and fix flicker
-    (e/amb client-xs server-xs))) ; e/amb is differential concat here
-
 (e/defn Channel [msgs]
   (dom/ul (dom/props {:class "channel"})
     ; Our very naive optimistic update impl here means the query can return more
@@ -55,24 +43,38 @@
         (dom/span (dom/props {:style {:text-align "right"}})
           (dom/text (if pending "pending" "ok")))))))
 
-(e/defn SendMessageInput [username]
-  (Form! (Input! ::msg "" :disabled (nil? username)
-           :placeholder (if username "Send message" "Login to chat"))
-    :show-buttons false ; enter to submit
-    :genesis true ; immediately consume form, ready for next submit
-    :commit (fn [{msg ::msg} tempid] (prn 'TodoCreate-commit msg)
-              [[`Create-todo username msg]
-               {tempid (->msg-record username msg tempid)}])))
+(e/defn InputSubmitCreate?!
+  "transactional chat input with busy state. Supports rapid submit, sending
+concurrent in-flight submits to the server which race. ?! marks this control
+as an anti-pattern because it has no error handling: rejected edits are silently
+lost. Fixing this requires form semantics, see forms tutorial."
+  [& {:keys [maxlength type parse] :as props
+      :or {maxlength 100 type "text" parse identity}}]
+  (e/client
+    (dom/input (dom/props (-> props (dissoc :parse) (assoc :maxLength maxlength :type type)))
+      (letfn [(read! [node] (not-empty (subs (.-value node) 0 maxlength)))
+              (read-clear! [node] (when-some [v (read! node)] (set! (.-value node) "") v))
+              (submit! [e] (let [k (.-key e)]
+                             (cond
+                               (= "Enter" k) (parse (read-clear! (.-target e)))
+                               (= "Escape" k) (do (set! (.-value dom/node) "") nil)
+                               () nil)))]
+        (let [edits (dom/On-all "keydown" submit!)] ; concurrent pending submits
+          (dom/props {:aria-busy (pos? (e/Count edits))})
+          edits)))))
 
-(e/defn ChatApp [username present edits]
+(e/defn SendMessageInput [username]
+  (InputSubmitCreate?! :disabled (nil? username) :placeholder (if username "Send message" "Login to chat")))
+
+(e/defn ChatApp [username present]
   (e/amb
     (Present present)
     (dom/hr (e/amb)) ; silence nil
-    (Channel (Query-chats-optimistic username edits))
+    (Channel (Query-chats))
     (SendMessageInput username)
     (Login username)))
 
-(e/defn Create-todo [username msg]
+(e/defn Create-message [username msg]
   (e/server ; secure, validate command here
     (let [record (->msg-record username msg)] ; secure
       (e/Offload #(try (Thread/sleep 500) ; artificial latency
@@ -84,16 +86,12 @@
   (dom/style (dom/text css))
   (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
         present (e/server (Presence! !present username))
-        edits (e/with-cycle* first [edits (e/amb)] ; loop in-flight edits
-                (ChatApp username present edits))]
+        edits (ChatApp username present)]
     (prn 'edits (e/as-vec edits))
-    (e/for [[t [cmd & args] guess] (e/Filter some? edits)]
-      (let [res (e/server
-                  (case cmd
-                    `Create-todo (e/apply Create-todo args)
-                    (prn ::unmatched-cmd)))]
+    (e/for [[token message] (e/Filter some? edits)]
+      (let [res (e/server (e/apply Create-message username message))]
         (case res
-          ::ok (t)
+          ::ok (token)
           ::fail nil))))) ; for retry, we're not done yet - todo finish demo
 
 ; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
