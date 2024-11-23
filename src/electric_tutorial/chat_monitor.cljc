@@ -89,7 +89,7 @@ lost. Fixing this requires form semantics, see forms tutorial."
         edits (ChatApp username present)]
     (prn 'edits (e/as-vec edits))
     (e/for [[token message] (e/Filter some? edits)]
-      (let [res (e/server (e/apply Create-message username message))]
+      (let [res (e/server (Create-message username message))]
         (case res
           ::ok (token)
           ::fail nil))))) ; for retry, we're not done yet - todo finish demo
