@@ -1,5 +1,5 @@
-# Reagent Interop
+# SVG support
 
-SVG support. Note the animation is reactive and driven by javascript cosine.
+Note the animation is reactive and driven by javascript cosine.
 
 !ns[electric-tutorial.svg/SVG]()
