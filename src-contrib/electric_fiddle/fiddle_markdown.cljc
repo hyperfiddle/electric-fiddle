@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [#?(:cljs Fn)])
   (:require clojure.string
             [contrib.electric-codemirror :refer [CodeMirror]] ; extensions only
-            [electric-fiddle.index :refer [Index]] ; why
+            [electric-fiddle.fiddle-index :refer [FiddleIndex]] ; why
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src-safe!]])
             [hyperfiddle :refer [pages]]
             [hyperfiddle.electric3 :as e]
@@ -96,7 +96,7 @@
         (Src* (symbol target-s) :ns? false)))))
 
 (e/defn Fiddle [& [target-s el-selector ?wrap :as route]] ; direct fiddle link http://localhost:8080/electric-fiddle.fiddle!Fiddle/dustingetz.y-fib!Y-fib
-  (if (nil? (seq route)) (Index)
+  (if (nil? (seq route)) (FiddleIndex)
     (Ns "" target-s ?wrap)))
 
 (e/defn Target [& [target-s el-selector ?wrap-s]]

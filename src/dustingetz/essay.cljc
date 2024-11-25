@@ -2,7 +2,7 @@
   (:require clojure.string
             [electric-fiddle.fiddle :refer [Fiddle-fn Fiddle-ns]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown]]
-            [electric-fiddle.index :refer [Index]]
+            [electric-fiddle.fiddle-index :refer [FiddleIndex]]
             [hyperfiddle :as hf]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -26,6 +26,6 @@
     (let [[?essay] (ffirst r/route) ; wut
           essay-filename (get essays ?essay)]
       (cond
-        (nil? ?essay) (binding [hf/pages essays] (Index))
+        (nil? ?essay) (binding [hf/pages essays] (FiddleIndex))
         (nil? essay-filename) (dom/h1 (dom/text "Essay not found: " ?essay))
         () (Custom-markdown (Extensions) (str fiddle-root essay-filename))))))

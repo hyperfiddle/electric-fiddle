@@ -4,7 +4,7 @@
             contrib.str
             contrib.data
             #?(:clj [datomic.api :as d])
-            [electric-fiddle.index :refer [Index]]
+            [electric-fiddle.fiddle-index :refer [FiddleIndex]]
             [hyperfiddle.api :as hf]
             [hyperfiddle.electric :as e]
             [hyperfiddle.electric-dom2 :as dom]
