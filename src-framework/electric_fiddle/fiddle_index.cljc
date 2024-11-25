@@ -13,7 +13,8 @@
   (e/client
     (dom/h1 (dom/text `FiddleIndex))
     ;; (dom/pre (dom/text (pr-str r/route)))
-    (e/cursor [[k _] (e/diff-by key (sort-by key pages))]
-      (dom/div
-        (r/link [k] (dom/text (name k)))
-        (dom/text " " k)))))
+    (dom/table (dom/props {:class "hyperfiddle-index"})
+      (e/for [[k _] (e/diff-by key (sort-by key pages))]
+        (dom/tr
+          (dom/td (r/link [k] (dom/text (name k))))
+          (dom/td (dom/text k)))))))
