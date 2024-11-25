@@ -60,8 +60,8 @@ so do not use `clj -T`"
   (when-not skip-client
     (build-client {::hf/domain (check some? domain)
                    :optimize optimize, :debug debug, :verbose verbose}))
-  
-  (b/copy-dir {:target-dir class-dir :src-dirs ["src-contrib" "src-prod" "resources"]})
+
+  (b/copy-dir {:target-dir class-dir :src-dirs ["src-framework" "src-prod" "resources"]})
   (b/copy-dir {:target-dir (str class-dir "/" (domain->dir domain)) :src-dirs [(str "src/" (domain->dir domain))]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
                    (format "target/electricfiddle-%s-%s.jar" domain electric-user-version))
