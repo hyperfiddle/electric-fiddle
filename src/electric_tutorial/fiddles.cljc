@@ -1,6 +1,5 @@
 (ns electric-tutorial.fiddles
   (:require [electric-fiddle.fiddle-index :refer [pages]]
-            #_[electric-fiddle.main] ; why
             [electric-tutorial.tutorial :refer [Tutorial]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
