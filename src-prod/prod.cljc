@@ -3,10 +3,9 @@
   (:require #?(:clj [clojure.tools.logging :as log])
             [contrib.assert :refer [check]]
             [contrib.template :refer [comptime-resource]]
-            electric-fiddle.main
             #?(:clj [electric-fiddle.server-jetty :refer [start-server!]])
             [hyperfiddle :as hf]
-            [hyperfiddle.electric3 :as e :refer [$]]
+            [hyperfiddle.electric3 :as e]
             #?(:cljs hyperfiddle.electric-client3)
             #?(:cljs #=(clojure.core/identity hyperfiddle/*hyperfiddle-user-ns*)))) ; domain DI here
 

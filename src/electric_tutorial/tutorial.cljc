@@ -3,8 +3,8 @@
             #?(:clj [clojure.java.io :as io])
             clojure.string
             contrib.data
+            [electric-fiddle.fiddle-index :refer [pages]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
-            [hyperfiddle :as hf]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-svg3 :as svg]
@@ -203,7 +203,7 @@
           (Consulting-banner)
           (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
             (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
-          (binding [hf/pages (Fiddles)]
+          (binding [pages (Fiddles)]
             (Nav ?essay-filename false)
             (Custom-markdown (Fiddle-markdown-extensions) (str tutorial-path ?essay-filename ".md"))
             #_(Nav ?tutorial true)))))))

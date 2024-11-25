@@ -2,9 +2,8 @@
   (:refer-clojure :exclude [#?(:cljs Fn)])
   (:require clojure.string
             [contrib.electric-codemirror :refer [CodeMirror]] ; extensions only
-            [electric-fiddle.fiddle-index :refer [FiddleIndex]] ; why
+            [electric-fiddle.fiddle-index :refer [FiddleIndex pages]] ; why
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src-safe!]])
-            [hyperfiddle :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.rcf :refer [tests]]

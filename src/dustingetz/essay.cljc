@@ -1,9 +1,7 @@
 (ns dustingetz.essay
   (:require clojure.string
-            [electric-fiddle.fiddle :refer [Fiddle-fn Fiddle-ns]]
+            [electric-fiddle.fiddle-index :refer [FiddleIndex pages]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown]]
-            [electric-fiddle.fiddle-index :refer [FiddleIndex]]
-            [hyperfiddle :as hf]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]))
@@ -17,8 +15,10 @@
    'hfql-teeshirt-orders "hfql_teeshirt_orders.md"})
 
 (e/defn Extensions []
-  {'fiddle Fiddle-fn
-   'fiddle-ns Fiddle-ns})
+  {'fiddle electric-fiddle.fiddle-markdown/Fn ; compat
+   'fiddle-ns electric-fiddle.fiddle-markdown/Ns ; compat
+   'fn electric-fiddle.fiddle-markdown/Fn
+   'ns electric-fiddle.fiddle-markdown/Ns})
 
 (e/defn Essay []
   #_(e/client (dom/div #_(dom/props {:class ""}))) ; fix css grid next
@@ -26,6 +26,6 @@
     (let [[?essay] (ffirst r/route) ; wut
           essay-filename (get essays ?essay)]
       (cond
-        (nil? ?essay) (binding [hf/pages essays] (FiddleIndex))
+        (nil? ?essay) (binding [pages essays] (FiddleIndex))
         (nil? essay-filename) (dom/h1 (dom/text "Essay not found: " ?essay))
         () (Custom-markdown (Extensions) (str fiddle-root essay-filename))))))

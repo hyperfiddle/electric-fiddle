@@ -1,28 +1,22 @@
 (ns electric-fiddle.main
   (:require
-   [hyperfiddle :as hf]
-   [hyperfiddle.electric3 :as e :refer [$]]
+   [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]
    [hyperfiddle.router3 :as r]
-   [electric-fiddle.fiddle-index :refer [FiddleIndex]]
-   ))
-
-(e/defn NotFoundPage [& args] (e/client (dom/h1 (dom/text "Page not found: " (pr-str r/route)))))
-
-(e/defn Entrypoint [f & args] (e/apply (get hf/pages f NotFoundPage) args))
+   [electric-fiddle.fiddle-index :refer
+    [FiddleIndex Entrypoint pages]]))
 
 (e/defn Main [ring-req]
   (binding [e/http-request (e/server ring-req)
             dom/node js/document.body]
-    (dom/div ; FIXME wrapper div to circumvent v3 mount-point mounting nodes in reverse order if there are existing foreign DOM children.
-      (r/router ($ r/HTML5-History)
+    (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
+      (r/router (r/HTML5-History)
         #_(dom/pre (dom/text (pr-str r/route)))
-        (let [[f & _] r/route]
-          (if-not f (r/ReplaceState! ['. `(FiddleIndex)])
+        (let [[fiddle & _] r/route]
+          (if-not fiddle (r/ReplaceState! ['. `(FiddleIndex)])
             (do
-              (set! (.-title js/document) (str (some-> f name (str " – ")) "Electric Fiddle"))
-              (case f
+              (set! (.-title js/document) (str (some-> fiddle name (str " – ")) "Electric Fiddle"))
+              (case fiddle
                 `FiddleIndex (FiddleIndex)
                 (r/pop
-                  (binding [hf/Entrypoint Entrypoint] ; allow for recursive navigation
-                    (hf/Entrypoint f)))))))))))
+                  (Entrypoint fiddle))))))))))

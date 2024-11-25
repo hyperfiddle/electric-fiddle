@@ -1,6 +1,4 @@
-(ns hyperfiddle
-  (:require #_[clojure.spec.alpha :as s]
-            [hyperfiddle.electric3 :as e]))
+(ns hyperfiddle)
 
 ; See discussion of single-segment namespaces here
 ; https://github.com/bbatsov/clojure-style-guide/pull/100
@@ -14,9 +12,3 @@
 ; internal specs anywhere
 
 #?(:clj (def ^:dynamic *hyperfiddle-user-ns* nil)) ; cljs comptime, prod only, injected by build-client
-
-; binding fiddles in entrypoint fixes comptime stackoverflow
-(def pages #_(install-fiddles)) ; client
-
-(def Entrypoint "Meant to be bound to an app's entrypoint to allow for recursive navigation.") ; [f & args]
-

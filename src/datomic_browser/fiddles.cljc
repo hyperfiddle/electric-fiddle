@@ -1,7 +1,7 @@
 (ns datomic-browser.fiddles
   (:require [contrib.assert :refer [check]]
             #?(:clj [contrib.datomic-contrib :as dx])
-            [hyperfiddle :as hf]
+            [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
@@ -30,7 +30,7 @@
   (e/client
     (binding [dom/node js/document.body
               e/http-request (e/server ring-req)
-              hf/pages (Fiddles)]
-      (dom/div ; fixme
+              pages (Fiddles)]
+      (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
         (r/router (r/HTML5-History)
           (DatomicBrowser))))))
