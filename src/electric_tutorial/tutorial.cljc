@@ -51,24 +51,24 @@
 
 (def tutorials
   [["Basics"
-    [`TwoClocks ; hello world
-     `SystemProperties ; simple query/view topology
-     `DirTree ; complex topology
-     `FizzBuzz ; differential
-     `Webview1 ; diffs, IO encapsulation
-     `Webview2 ; abstraction, lambda demo
-     `Lifecycle ; components
-     `Backpressure]]
+    ['two_clocks ; hello world
+     'system_properties ; simple query/view topology
+     'dir_tree ; complex topology
+     'fizzbuzz ; differential
+     'webview1 ; diffs, IO encapsulation
+     'webview2 ; abstraction, lambda demo
+     'lifecycle ; components
+     'backpressure]]
    ["Forms"
-    [`InputCicruit ; supersedes TemperatureConverter or embeds
-     `TokenExplainer ; supersedes Toggle, introduce token and service
-     `FormExplainer ; Transactional forms
+    ['inputs_local ; supersedes TemperatureConverter or embeds
+     'token_explainer ; supersedes Toggle, introduce token and service
+     'form_explainer ; Transactional forms
      ; Inline forms, keyboard
 
-     `ChatMonitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
-     `Todos ; create-new, optimistic updates, service
-     `TodoMVC
-     `TodoMVC-composed
+     'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
+     'todos ; create-new, optimistic updates, service
+     'todomvc
+     'todomvc_composed
 
 ;`Temperature ; local form, cycle by side effect
      ;`Forms2-controlled ; local form, no e/amb
@@ -82,9 +82,9 @@
      #_`Datagrid]]
    ["HFQL" [#_`wip.teeshirt-orders/Webview-HFQL]]
    ["Misc"
-    [`Counter ; on-all, progress, serializable lambda. Oddball demo, todo improve
+    ['counter ; on-all, progress, serializable lambda. Oddball demo, todo improve
      #_`DirectoryExplorer
-     `SVG
+     'svg
 
      #_`ReagentInterop
      #_`Timer
@@ -197,15 +197,13 @@
 (e/defn Tutorial []
   (e/client
     (dom/style (dom/text (e/server (slurp (io/resource "electric_tutorial/tutorial.css")))))
-    (let [[?tutorial & _] r/route]
-      (if-not ?tutorial (r/ReplaceState! ['. [`TwoClocks]])
+    (let [[?essay-filename & _] r/route]
+      (if-not ?essay-filename (r/ReplaceState! ['. ['two_clocks]]) ; "two_clocks.md" encodes to /'two_clocks.md'
         (do
-          #_(dom/pre (dom/text ?tutorial " " (namespace-name ?tutorial) " " (pr-str route))) ; debug
           (Consulting-banner)
           (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
             (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
           (binding [hf/pages (Fiddles)]
-            (Nav ?tutorial false)
-            (let [essay-filename (str tutorial-path (namespace-name ?tutorial) ".md")]
-              (Custom-markdown (Fiddle-markdown-extensions) essay-filename))
+            (Nav ?essay-filename false)
+            (Custom-markdown (Fiddle-markdown-extensions) (str tutorial-path ?essay-filename ".md"))
             #_(Nav ?tutorial true)))))))
