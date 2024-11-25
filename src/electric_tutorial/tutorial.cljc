@@ -3,8 +3,7 @@
             #?(:clj [clojure.java.io :as io])
             clojure.string
             contrib.data
-            [electric-fiddle.fiddle :refer [Fiddle-markdown-extensions]]
-            [electric-fiddle.fiddle-markdown :refer [Custom-markdown]]
+            [electric-fiddle.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
             [hyperfiddle :as hf]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
