@@ -14,7 +14,7 @@
     (dom/h1 (dom/text `FiddleIndex))
     ;; (dom/pre (dom/text (pr-str r/route)))
     (dom/table (dom/props {:class "hyperfiddle-index"})
-      (e/for [[k _] (e/diff-by key (sort-by key pages))]
+      (e/for [[k F] (e/diff-by key (sort-by key pages))]
         (dom/tr
           (dom/td (r/link [k] (dom/text (name k))))
           (dom/td (dom/text k)))))))

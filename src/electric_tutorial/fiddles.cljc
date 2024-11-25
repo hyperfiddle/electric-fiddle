@@ -5,7 +5,8 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]))
 
-(e/defn Fiddles [] {`Tutorial Tutorial})
+(e/defn Fiddles []
+  {#_`Tutorial 'tutorial Tutorial})
 
 (e/defn FiddleMain [ring-req]
   (e/client
