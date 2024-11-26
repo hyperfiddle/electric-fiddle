@@ -1,7 +1,7 @@
 (ns dustingetz.logic
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-local-def3 :as l]))
+            #_[hyperfiddle.electric-local-def3 :as l]))
 
 (defn has-blue-house [house] (= house "blue"))
 #_(defn tea-drinker-doesnt-have-a-dog [drink pet] (and (= drink "tea") (= pet "dog")))
@@ -63,3 +63,31 @@
 (comment (time ((l/single {} (prn (Logic*))) prn prn)))
 ;; {:mike ["red" "bird" "milk"], :sarah ["green" "dog" "coffee"], :john ["blue" "cat" "tea"]}
 ;; "Elapsed time: 231.37984 msecs"
+
+
+; prime-sum-pair from SICP
+
+(defn prime? [n] ; from claude
+  (cond
+    (<= n 1) false
+    (= n 2) true
+    (even? n) false
+    :else (not-any? #(zero? (rem n %))
+            (range 3 (inc (Math/sqrt n)) 2))))
+
+(comment (map-indexed vector (map prime? (range 20))))
+
+(defn do_ [& xs] (last xs))
+
+(e/defn Prime-sum-pair [as bs]
+  (e/for [a as, b bs]
+    (if (prime? (+ a b))
+      [a b]
+      (e/amb))))
+
+(e/defn Demo-prime-sum-pair []
+  (let [result (e/as-vec ; [[3 20] [3 110] [8 35]]
+                 (Prime-sum-pair
+                   (e/amb 1 3 5 8)
+                   (e/amb 20 35 110)))]
+    (dom/text (pr-str result))))

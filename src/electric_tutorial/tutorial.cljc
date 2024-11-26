@@ -57,10 +57,15 @@
      'fizzbuzz ; differential
      'webview1 ; diffs, IO encapsulation
      'webview2 ; abstraction, lambda demo
-     'lifecycle ; components
-     'backpressure]]
+     ]]
+   ["Language"
+    ['lifecycle ; components
+     'backpressure
+     ]]
    ["Forms"
     ['inputs_local ; supersedes TemperatureConverter or embeds
+     'amb
+     'temperature2
      'token_explainer ; supersedes Toggle, introduce token and service
      'form_explainer ; Transactional forms
      ; Inline forms, keyboard
@@ -70,9 +75,7 @@
      'todomvc
      'todomvc_composed
 
-;`Temperature ; local form, cycle by side effect
      ;`Forms2-controlled ; local form, no e/amb
-     ;`Temperature2 ; with-cycle - for ChatMonitor - and e/amb
      ;`Forms3a-form ; transactional form
      ;`Forms3b-inline-submit ; transactional fields
      ]]
@@ -83,6 +86,7 @@
    ["HFQL" [#_`wip.teeshirt-orders/Webview-HFQL]]
    ["Misc"
     ['counter ; on-all, progress, serializable lambda. Oddball demo, todo improve
+     #_'temperature
      #_`DirectoryExplorer
      'svg
 

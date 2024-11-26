@@ -12,15 +12,15 @@
                                      (m/amb (rand-int 40) (recur))))))
 
 (e/defn Temperature2 []
-  (e/with-cycle [v 0]
-    (prn 'v v) ; see console
-    (e/amb
-      (e/input random-writer) ; concurrent writer
-      (dom/dl
-        (e/amb
-          (dom/dt (dom/text "Celsius"))
-          (dom/dd (some-> (Input (round v) :type "number")
-                    not-empty parse-long))
-          (dom/dt (dom/text "Fahrenheit"))
-          (dom/dd (some-> (Input (round (c->f v)) :type "number")
-                    not-empty parse-long f->c long)))))))
+  (let [!v (atom 0) v (e/watch !v)
+        v' (e/amb
+             (e/input random-writer) ; concurrent writer
+             (dom/dl
+               (e/amb
+                 (dom/dt (dom/text "Celsius"))
+                 (dom/dd (some-> (Input (round v) :type "number")
+                           not-empty parse-long))
+                 (dom/dt (dom/text "Fahrenheit"))
+                 (dom/dd (some-> (Input (round (c->f v)) :type "number")
+                           not-empty parse-long f->c long)))))]
+    (reset! !v v')))
