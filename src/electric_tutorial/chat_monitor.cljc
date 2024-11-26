@@ -32,16 +32,10 @@
 
 (e/defn Channel [msgs]
   (dom/ul (dom/props {:class "channel"})
-    ; Our very naive optimistic update impl here means the query can return more
-    ; than 10 elements, so we use a css fixed height with overflow-y:clip so we
-    ; don't have to bother maintaining the length of the query.
-    (e/for [{:keys [username msg ::pending]} msgs] ; render list bottom up in CSS
+    (e/for [{:keys [username msg]} msgs] ; render list bottom up in CSS
       (dom/li (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")
                                   :grid-template-columns "1fr 1fr"}})
-        (dom/props {:aria-busy pending})
-        (dom/span (dom/strong (dom/text username)) (dom/text " " msg))
-        (dom/span (dom/props {:style {:text-align "right"}})
-          (dom/text (if pending "pending" "ok")))))))
+        (dom/span (dom/strong (dom/text username)) (dom/text " " msg))))))
 
 (e/defn InputSubmitCreate?!
   "transactional chat input with busy state. Supports rapid submit, sending
@@ -77,8 +71,7 @@ lost. Fixing this requires form semantics, see forms tutorial."
 (e/defn Create-message [username msg]
   (e/server ; secure, validate command here
     (let [record (->msg-record username msg)] ; secure
-      (e/Offload #(try (Thread/sleep 500) ; artificial latency
-                    (send-message! record) ::ok
+      (e/Offload #(try (send-message! record) ::ok
                     (catch Exception e (doto ::rejected (prn e))))))))
 
 (declare css)
