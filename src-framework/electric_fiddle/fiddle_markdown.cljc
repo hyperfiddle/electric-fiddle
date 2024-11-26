@@ -53,9 +53,9 @@
       (let [Target (get pages target ::not-found)
             Wrap (when ?wrap (get pages ?wrap ::not-found))]
         (cond
-          (= ::not-found Target) (dom/h1 (dom/text "target not found: " target
-                                           " (did you register it in the fiddle index?)"))
-          (= ::not-found Wrap) (dom/h1 (dom/text "not found, wrap: " ?wrap))
+          (= ::not-found Target) (dom/p (dom/text "target not found: " target
+                                          " (did you register it in the fiddle index?)"))
+          (= ::not-found Wrap) (dom/p (dom/text "wrap not found: " ?wrap))
           (some? Wrap) (Wrap Target)
           () (Target))))))
 
