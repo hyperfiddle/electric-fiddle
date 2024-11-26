@@ -83,7 +83,7 @@ lost. Fixing this requires form semantics, see forms tutorial."
 
 (declare css)
 (e/defn ChatMonitor []
-  (dom/style (dom/text css))
+  (dom/props {:class "ChatMonitor"}) (dom/style (dom/text css))
   (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
         present (e/server (Presence! !present username))
         edits (ChatApp username present)]
@@ -94,12 +94,10 @@ lost. Fixing this requires form semantics, see forms tutorial."
           ::ok (token)
           ::fail nil))))) ; for retry, we're not done yet - todo finish demo
 
-; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
 (def css "
-.user-examples-target.ChatMonitor ul.channel li,
-.user-examples-target.Chat ul.channel li { display: grid; }
-.user-examples-target.Chat ul.channel,
-.user-examples-target.ChatMonitor ul.channel {
+.ChatMonitor [aria-busy=true] { background-color: yellow; }
+.ChatMonitor ul.channel li { display: grid; }
+.ChatMonitor ul.channel {
     display: flex; flex-direction: column-reverse; /* bottom up */
-    height: 220px; overflow-y: clip; /* pending pushes up server records */
+    height: 220px; overflow-y: clip;
     padding: 0; /* remove room for bullet in grid layout */ }")
