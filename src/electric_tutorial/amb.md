@@ -60,7 +60,7 @@ Connection with `e/for`
 Given the language's auto-mapping semantics, why is `e/for` needed then? Is there any difference between
 * `(let [x (e/amb 1 2)] (dom/text x))` and
 * `(e/for [x (e/amb 1 2)] (dom/text x))` ?
-* YES, `e/for` will allocate *two* dom/text object, but `let` will allocate *one* dom/text object, and update it twice! (The two dom writes race, last one wins.)
+* YES, `e/for` will allocate *two* dom/text objects, but `let` will allocate *one* dom/text object, and update it twice! (The two dom writes race, last one wins.)
 * Quiz: What if we replace `dom/text` with `println`? A: No perceptible difference, because `println` does not allocate a resource that needs to be freed, so there is no difference between *mounting it twice* vs *mounting it once and updating it twice*.
 
 Another example. What's happening here?

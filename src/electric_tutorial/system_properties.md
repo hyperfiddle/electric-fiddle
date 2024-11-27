@@ -38,7 +38,7 @@ Simple free text input
 
 Reactive for details
 
-* `e/for-by` ensures that each table row is bound to a logical element of the collection, and only touched when a row dependency changes.
+* `e/for` ensures that each table row is bound to a logical element of the collection, and only touched when a row dependency changes.
 * Notice there is a `println` inside the for loop. This is so you can verify in the browser console that it only runs when its arguments change. Open the browser console now and confirm for yourself:
   * On initial render, each row is rendered once
   * Slowly input "java.class.path"
@@ -52,7 +52,7 @@ Network transfer can be reasoned about clearly
 * values are only transferred between sites when and if they are used. The `system-props` collection is never actually accessed from a client region and therefore never escapes the server.
 * Look at which remote scope values are closed over and accessed.
 * Only remote access is transferred. Mere *availability* in scope does not transfer.
-* In the `e/for-by`, `k` and `v` exist in a server scope, and yet are accessed from a client scope.
+* In the `e/for`, `k` and `v` exist in a server scope, and yet are accessed from a client scope.
 * Electric tracks this and sends a stream of individual `k` and `v` updates over network.
 * The collection value `system-props` is not accessed from client scope, so Electric will not move it. Values are only moved if they are accessed.
 
@@ -69,4 +69,4 @@ Network transparent composition is not the heavy, leaky abstraction you might th
   * Functions are an abstract mathematical object
   * Javascript already generalizes from function -> async function (`async/await`) -> generator function (`fn*/yield`)
   * Electric generalizes further: stream function -> reactive function -> distributed function
-* With Electric, you can refactor across the frontend/backend boundary, all in one place, without caring about any plumbing. Refactoring is an algebraic activity with local reasoning, just as it should be.
+* With Electric, you can refactor across the frontend/backend boundary, all in one place, without caring about any plumbing.
