@@ -1,8 +1,8 @@
 # e/amb — concurrent values in superposition
 
 * Amb is classically is a multiplexing primitive, representing **concurrent evaluation**, as seen in [SICP's amb operator](https://sarabander.github.io/sicp/html/4_002e3.xhtml) and also [Verse](https://simon.peytonjones.org/assets/pdfs/verse-conf.pdf).
-* We've found that in UI, `(e/amb)` is an important primitive for representing concurrent processes.
-* `e/amb` is foundational in Electric v3, don't skip it!
+* We've found that in UI, `(e/amb)` is an important primitive for representing concurrent reactive processes.
+* If you understand most of this page, you'll know enough to understand <https://electric.hyperfiddle.net/form_explainer/> where we use `e/amb` to collect concurrent form edit commands from the user.
 
 !fn[electric-tutorial.inputs-local/DemoInputCircuit-amb]()
 
@@ -25,6 +25,12 @@ Auto-mapping
 * `(prn (inc (e/amb 1 2)))` will print `2` `3` — the `prn` ran twice, as did the `inc`! This is called **auto-mapping**
 * In the form example, `(reset! !s s')` will run the expression *for each* value in table `s'`
 
+Why are amb values called "tables" in Electric?
+
+* This is a SQL analogy: most SQL operators, such as `SELECT`, operate on tables/sets of records, not individual records.
+* This is a similar concept as "vector" from [vector programming languages](https://en.wikipedia.org/wiki/Array_programming) such as MATLAB, but (speaking to MATLAB) it is not quite the right concept. In mathematics, vectors store related quantities which transform together under changes in coordinate basis, such as rotations. Electric tables are not this.
+* All electric expressions and scopes (lexical and dynamic) evaluate/resolve to tables that hold zero or more values in superposition (typically one).
+
 Tables are what `e/diff-by` returns, and what `e/for` iterates over.
 
 * `(e/diff-by identity [1 2])` evaluates to `(e/amb 1 2)`
@@ -35,24 +41,44 @@ Tables are reactive at element granularity, unlike clojure vectors/tuples
 
 * i.e., tables are differential collections
 * so, `(println (e/amb 1 (e/watch !b)))` will print twice (`1` and `b`) on initial boot, and subsequently never print `1` again, printing only `b` when it changes
-* in other words, `println` will auto-map across the table, and the auto-mapping happens elementwise on *changes*
+* in other words, `println` will auto-map across the table, and the **auto-mapping happens element-wise on *changes*!**
 
 How is the table `(e/amb 1 2)` different from the Clojure vector `[1 2]`?
 
 * Electric tables are incrementally maintained data structures and are reactive at the granularity of the individual element.
-* `(e/as-vec (e/amb 1 2))` returns `[1 2]` - **materializing** the Clojure vector from the incremental Electric table (by reducing over the flow of diffs!)
-* Once you have a clojure vector, you've lost reactivity at element granularity, so there's really not much you can do with it other than print it, or use `e/diff-by` to diff it back into a reactive collection.
+* use `e/as-vec` to **materialize** a `clojure.core/vector` from the incremental Electric table (by reducing over the flow of diffs!)
+  * `(e/as-vec (e/amb 1 2))` returns `[1 2]`
+* Once you have a Clojure vector, you've **lost reactivity at element granularity**, so there's really not much you can do with it other than print it (i.e. debugging), or use `e/diff-by` to diff it back into a reactive collection.
 
 **Tables are not a data type**, they are built into the language itself as part of it's evaluation model.
 
 * In `(let [x (e/amb 1)] ...)`, table `x` is a differential collection of length 1
-* In `(let [x 1] ...)` — this expression is identical! lite ral `1` is auto-lifted into a table, and table `x` is a differential collection of length 1.
-* Why? Because the network wire protocol needs to be aware of the diffs, and this impacts the backpressure semantics of the language itself.
+* In `(let [x 1] ...)` — this expression is identical! literal `1` is auto-lifted into a table, and table `x` is a differential collection of length 1.
+* Why? Because Electric's network wire protocol needs to be aware of the diffs, and this impacts the backpressure semantics of the language itself.
 
-Why are amb values called "tables" in Electric?
+Given the language's auto-mapping semantics, what is `e/for` then? Is there any difference between
+* `(let [x (e/amb 1 2)] (println x))` and
+* `(e/for [x (e/amb 1 2)] (println x))` ?
 
-* This is a SQL analogy: most SQL operators, such as `SELECT`, operate on tables (sets of records) not individual records.
-* This is a similar concept as "vector" from [vector programming languages](https://en.wikipedia.org/wiki/Array_programming) such as MATLAB, but (speaking to MATLAB) it is not quite the right concept. In mathematics, vectors store quantities that transform together under changes in coordinates such as rotations. Electric tables are not this.
-* All electric expressions and scopes (lexical and dynamic) evaluate/resolve to tables that hold zero or more values in superposition (typically one).
+YES, two major differences. Consider the more interesting:
+```
+(e/for [x (e/amb 1 2)]
+  (let [!a (atom 0)]
+    (reset! !a x)))
+```
+* Two atoms are created, each is reset once: `e/for` mounts a branch with `x` bound to `(e/amb 1)` and another branch with `x` bound to `(e/amb 2)`.
+* Now replace `e/for` with `let`, you get two resets on a single atom.
+* So, `e/for` affects **resource allocation** semantics.
 
-The above is enough to understand <https://electric.hyperfiddle.net/electric-tutorial.form-explainer!FormExplainer/> where we use `e/amb` to collect concurrent form edit commands from the user.
+The second difference is, Electric `if`'s current implementation interacts badly with auto-mappimg semantics:
+
+* `if` produces useful results only when used with singular values.
+* If you use `if` with non-singular values, you will get very wide products which are not semantically interesting or useful.
+* This is a design flaw in electric `if` and should be fixed.
+* [Verse](https://simon.peytonjones.org/assets/pdfs/verse-conf.pdf) gets this right. Future work!
+
+Some other interesting examples to try, consider the difference between `e/for` and `let`:
+* `(e/for [x (e/amb 1 2)] (prn 1))`
+* `(e/for [x (e/amb 1 2)] (prn [x x]))`
+
+Discussion thread: <https://clojurians.slack.com/archives/C7Q9GSHFV/p1732440842517199> (Nov 2024)

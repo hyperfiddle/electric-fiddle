@@ -729,7 +729,7 @@
 
 .markdown-body .highlight pre,
 .markdown-body pre {
-  padding: 16px;
+  /* padding: 16px; */ /* DJG better styling for markdown essays with mid-paragraph code snippets */
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;

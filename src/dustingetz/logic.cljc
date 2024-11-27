@@ -79,11 +79,16 @@
 
 (defn do_ [& xs] (last xs))
 
+(defmacro Where [test? & body]
+  `(if test?
+     (do ~@body)
+     (e/amb)))
+
 (e/defn Prime-sum-pair [as bs]
-  (e/for [a as, b bs]
-    (if (prime? (+ a b))
-      [a b]
-      (e/amb))))
+  #_(e/for [as as, bs bs])
+  (if (prime? (+ as bs))
+    [as bs]
+    (e/amb)))
 
 (e/defn Demo-prime-sum-pair []
   (let [result (e/as-vec ; [[3 20] [3 110] [8 35]]
