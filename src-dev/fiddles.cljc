@@ -1,8 +1,9 @@
 (ns fiddles
-  (:require [electric-fiddle.fiddle-index :refer [FiddleIndex Entrypoint pages]]
+  (:require [electric-fiddle.fiddle-index :refer [FiddlePage pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
+            [electric-fiddle.fiddle-index :refer []]
             ;; Inject fiddle namespaces, keeping clj and cljs builds in sync
             ;; :clj doesn't have #@ (read splicing), so we resort to #?@(:default ...)
             #?@(:default #=(config/loaded-fiddles))))
@@ -16,12 +17,4 @@
             pages (Fiddles)]
     (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
       (r/router (r/HTML5-History)
-        #_(dom/pre (dom/text (pr-str r/route)))
-        (let [[fiddle & _] r/route]
-          (if-not fiddle (r/ReplaceState! ['. `(FiddleIndex)])
-            (do
-              (set! (.-title js/document) (str (some-> fiddle name (str " – ")) "Electric Fiddle"))
-              (case fiddle
-                `FiddleIndex (FiddleIndex)
-                (r/pop
-                  (Entrypoint fiddle))))))))))
+        (FiddlePage)))))

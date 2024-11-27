@@ -18,3 +18,16 @@
         (dom/tr
           (dom/td (r/link [k] (dom/text (name k))))
           (dom/td (dom/text k)))))))
+
+(e/defn FiddlePage
+  [& {:keys [default]
+      :or {default `(FiddleIndex)}}]
+  #_(dom/pre (dom/text (pr-str r/route)))
+  (let [[fiddle & _] r/route]
+    (if-not fiddle (r/ReplaceState! ['. default])
+      (do
+        (set! (.-title js/document) (str (some-> fiddle name (str " – ")) "Electric Fiddle"))
+        (case fiddle
+          `FiddleIndex (FiddleIndex)
+          (r/pop
+            (Entrypoint fiddle)))))))
