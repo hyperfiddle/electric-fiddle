@@ -6,6 +6,7 @@
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src-safe!]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
+            #_[hyperfiddle.router3 :as r]
             [hyperfiddle.rcf :refer [tests]]
             #?(:clj [markdown.core :refer [md-to-html-string]])))
 
@@ -103,10 +104,15 @@
       (dom/div (dom/props {:class "user-examples"})
         (Target* (symbol target-s) (some-> ?wrap-s symbol))))))
 
+#_(e/defn Link [& [label target-s _]]
+  (r/link ['. [(symbol target-s)]] (dom/text label)))
+
 (e/defn Fiddle-markdown-extensions []
   {'fiddle Fn ; compat
    'fiddle-ns Ns ; compat
    'ns Ns
    'fn Fn
    'fn-src Fn-src
-   'target Target})
+   'target Target
+   ;'link Link -- no inline directives yet
+   })

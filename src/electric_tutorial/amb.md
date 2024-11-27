@@ -2,7 +2,7 @@
 
 * Amb is classically is a multiplexing primitive, representing **concurrent evaluation**, as seen in [SICP's amb operator](https://sarabander.github.io/sicp/html/4_002e3.xhtml) and also [Verse](https://simon.peytonjones.org/assets/pdfs/verse-conf.pdf).
 * We've found that in UI, `(e/amb)` is an important primitive for representing concurrent reactive processes, and it is foundational in Electric v3.
-* If you understand most of this page, you'll know enough to understand <https://electric.hyperfiddle.net/form_explainer/> where we use `e/amb` to collect concurrent form edit commands from the user.
+* If you understand most of this page, you'll know enough to understand the <a href="/tutorial/form_explainer">form tutorial</a> where we use `e/amb` to collect concurrent form edit commands from the user.
 
 !fn[electric-tutorial.inputs-local/DemoInputCircuit-amb]()
 
