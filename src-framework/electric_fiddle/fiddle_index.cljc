@@ -5,9 +5,14 @@
 
 (def pages) ; inject, binding fiddles in entrypoint fixes comptime stackoverflow
 
-(e/defn NotFoundPage [& args] (e/client (dom/h1 (dom/text "Page not found: " (pr-str r/route)))))
+(e/defn NotFoundPage [& args]
+  (e/client
+    (dom/h1 (dom/text "Page not found"))
+    (dom/p (dom/text "Probably we broke URLs, sorry! ")
+      (r/link ['/ []] (dom/text "index")))))
 
-(e/defn Entrypoint [fiddle & args] (e/apply (get pages fiddle NotFoundPage) args))
+(e/defn Entrypoint [fiddle & args]
+  (e/apply (get pages fiddle NotFoundPage) args))
 
 (e/defn FiddleIndex []
   (e/client
