@@ -25,7 +25,7 @@
   ([] (Objekt (MetaObject)))
   ([Super]
    (let [!vtable (i/spine)
-         vtable (e/amb (e/join !vtable) (Super ::get-vtable))]
+         vtable (e/amb (e/join !vtable) (Super ::get-vtable))] ; inherit parent vtable
      (e/fn Self [mname & args]
        (case mname
          ::get-vtable vtable ::get-!vtable !vtable ; hack
