@@ -1,7 +1,7 @@
 # e/amb — concurrent values in superposition
 
 * Amb is classically is a multiplexing primitive, representing **concurrent evaluation**, as seen in [SICP's amb operator](https://sarabander.github.io/sicp/html/4_002e3.xhtml) and also [Verse](https://simon.peytonjones.org/assets/pdfs/verse-conf.pdf).
-* We've found that in UI, `(e/amb)` is an important primitive for representing concurrent reactive processes.
+* We've found that in UI, `(e/amb)` is an important primitive for representing concurrent reactive processes, and it is foundational in Electric v3.
 * If you understand most of this page, you'll know enough to understand <https://electric.hyperfiddle.net/form_explainer/> where we use `e/amb` to collect concurrent form edit commands from the user.
 
 !fn[electric-tutorial.inputs-local/DemoInputCircuit-amb]()
@@ -60,7 +60,7 @@ Given the language's auto-mapping semantics, what is `e/for` then? Is there any 
 * `(let [x (e/amb 1 2)] (println x))` and
 * `(e/for [x (e/amb 1 2)] (println x))` ?
 
-YES, two major differences. Consider the more interesting:
+YES, two major differences in semantics. Consider the more interesting:
 ```
 (e/for [x (e/amb 1 2)]
   (let [!a (atom 0)]
@@ -70,7 +70,7 @@ YES, two major differences. Consider the more interesting:
 * Now replace `e/for` with `let`, you get two resets on a single atom.
 * So, `e/for` affects **resource allocation** semantics.
 
-The second difference is, Electric `if`'s current implementation interacts badly with auto-mappimg semantics:
+The second difference occurs when there is an `if` in the control form's body. Electric `if`'s current implementation interacts badly with auto-mapping semantics:
 
 * `if` produces useful results only when used with singular values.
 * If you use `if` with non-singular values, you will get very wide products which are not semantically interesting or useful.
