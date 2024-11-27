@@ -73,9 +73,8 @@ YES, two major differences in semantics. Consider the more interesting:
 The second difference occurs when there is an `if` in the control form's body. Electric `if`'s current implementation interacts badly with auto-mapping semantics:
 
 * `if` produces useful results only when used with singular values.
-* If you use `if` with non-singular values, you will get very wide products which are not semantically interesting or useful.
-* This is a design flaw in electric `if` and should be fixed.
-* [Verse](https://simon.peytonjones.org/assets/pdfs/verse-conf.pdf) gets this right. Future work!
+* If you use `if` with non-singular values, you will get very wide products which don't seem semantically interesting or useful.
+* We acknowledge the semantics gap here, we're still exploring and figuring out the right semantics. Future work! The current semantics, despite being sometimes surprising, are at least well defined and consistent.
 
 Some other interesting examples to try, consider the difference between `e/for` and `let`:
 * `(e/for [x (e/amb 1 2)] (prn 1))`
