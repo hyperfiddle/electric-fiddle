@@ -31,12 +31,6 @@ Why are amb values called "tables" in Electric?
 * This is a similar concept as "vector" from [vector programming languages](https://en.wikipedia.org/wiki/Array_programming) such as MATLAB, but (speaking to MATLAB) it is not quite the right concept. In mathematics, vectors store related quantities which transform together under changes in coordinate basis, such as rotations. Electric tables are not this.
 * All electric expressions and scopes (lexical and dynamic) evaluate/resolve to tables that hold zero or more values in superposition (typically one).
 
-Tables are what `e/diff-by` returns, and what `e/for` iterates over.
-
-* `(e/diff-by identity [1 2])` evaluates to `(e/amb 1 2)`
-* `(e/for [x (e/amb 1 2)] (prn (inc x))` will print `2` `3`.
-  * The `e/for` is isolating the branches of the e/amb so you can think about them one at a time.
-
 Tables are reactive at element granularity, unlike clojure vectors/tuples
 
 * i.e., tables are differential collections
@@ -56,11 +50,20 @@ How is the table `(e/amb 1 2)` different from the Clojure vector `[1 2]`?
 * In `(let [x 1] ...)` — this expression is identical! literal `1` is auto-lifted into a table, and table `x` is a differential collection of length 1.
 * Why? Because Electric's network wire protocol needs to be aware of the diffs, and this impacts the backpressure semantics of the language itself.
 
-Given the language's auto-mapping semantics, what is `e/for` then? Is there any difference between
-* `(let [x (e/amb 1 2)] (println x))` and
-* `(e/for [x (e/amb 1 2)] (println x))` ?
+Connection with `e/for`
 
-YES, two major differences in semantics. Consider the more interesting:
+* Tables are what `e/diff-by` returns, and what `e/for` iterates over.
+* `(e/diff-by identity [1 2])` evaluates to `(e/amb 1 2)`
+* `(e/for [x (e/amb 1 2)] (prn (inc x))` will print `2` `3`.
+* The `e/for` is isolating the branches of the e/amb so you can think about them one at a time.
+
+Given the language's auto-mapping semantics, why is `e/for` needed then? Is there any difference between
+* `(let [x (e/amb 1 2)] (dom/text x))` and
+* `(e/for [x (e/amb 1 2)] (dom/text x))` ?
+* YES, `e/for` will allocate *two* dom/text object, but `let` will allocate *one* dom/text object, and update it twice! (The two dom writes race, last one wins.)
+* Quiz: What if we replace `dom/text` with `println`? A: No perceptible difference, because `println` does not allocate a resource that needs to be freed, so there is no difference between *mounting it twice* vs *mounting it once and updating it twice*.
+
+Another example. What's happening here?
 ```
 (e/for [x (e/amb 1 2)]
   (let [!a (atom 0)]
@@ -68,16 +71,35 @@ YES, two major differences in semantics. Consider the more interesting:
 ```
 * Two atoms are created, each is reset once: `e/for` mounts a branch with `x` bound to `(e/amb 1)` and another branch with `x` bound to `(e/amb 2)`.
 * Now replace `e/for` with `let`, you get two resets on a single atom.
-* So, `e/for` affects **resource allocation** semantics.
+* So, `e/for` affects **resource allocation** semantics. Do you want two objects, or one object with multiple updates sent to it?
 
-The second difference occurs when there is an `if` in the control form's body. Electric `if`'s current implementation interacts badly with auto-mapping semantics:
+auto-mapping is really about cartesian products:
+```
+(list (e/amb 1 2 3)) ; auto mapping
+; (e/amb (1) (2) (3))
 
-* `if` produces useful results only when used with singular values.
+(list (e/amb 1 2 3) (e/amb :a :b)) ; auto product
+; (e/amb (1 :a) (1 :b) (2 :a) (2 :b) (3 :a) (3 :b))
+```
+
+* Todo: this requires further elaboration.
+* Basically since the language is differential, we're automapping over *changesets*. So if we add a `:c` to `(e/amb :a :b)`, we need to incrementally maintain the resulting expression by adding `:c` for each of `(e/amb 1 2 3)`, which is a product over the changeset: `(1 :c) (2 :c) (3 :c)`.
+* This implies that the collections are held in memory so that `1 2 3` can be reconstructed. True! Reactive programming is a time-space tradeoff - you cache more stuff to recompute less stuff.
+
+Surprising interaction between auto-mapping and Electric's `if`. Consider:
+```
+(e/as-vec
+  (let [x (e/amb 1 2 3)]
+    (if (odd? x)
+      x
+      (e/amb))))
+
+; [1 2 3 1 2 3]   -- wtf
+```
+* This does not seem to be a semantically interesting or useful result.
+* What's happening is, Electric `if`'s current implementation interacts badly with auto-mapping semantics.
+* Today, `if` produces useful results only when used with singular values.
 * If you use `if` with non-singular values, you will get very wide products which don't seem semantically interesting or useful.
 * We acknowledge the semantics gap here, we're still exploring and figuring out the right semantics. Future work! The current semantics, despite being sometimes surprising, are at least well defined and consistent.
-
-Some other interesting examples to try, consider the difference between `e/for` and `let`:
-* `(e/for [x (e/amb 1 2)] (prn 1))`
-* `(e/for [x (e/amb 1 2)] (prn [x x]))`
 
 Discussion thread: <https://clojurians.slack.com/archives/C7Q9GSHFV/p1732440842517199> (Nov 2024)
