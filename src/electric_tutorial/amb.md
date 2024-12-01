@@ -56,12 +56,13 @@ Connection with `e/for`
 * `(e/diff-by identity [1 2])` evaluates to `(e/amb 1 2)`
 * `(e/for [x (e/amb 1 2)] (prn (inc x))` will print `2` `3`.
 * The `e/for` is isolating the branches of the e/amb so you can think about them one at a time.
+* Yes, that means `(reset! !s (e/amb 1 2))` could be written equivalently as `(e/for [x (e/amb 1 2)] (reset! !s x))`, which I would consider more idiomatic.
 
-Given the language's auto-mapping semantics, why is `e/for` needed then? Is there any difference between
+Then why is `e/for` needed at all, given the language's auto-mapping semantics? Is there any difference between
 * `(let [x (e/amb 1 2)] (dom/text x))` and
 * `(e/for [x (e/amb 1 2)] (dom/text x))` ?
-* YES, `e/for` will allocate *two* dom/text objects, but `let` will allocate *one* dom/text object, and update it twice! (The two dom writes race, last one wins.)
-* Quiz: What if we replace `dom/text` with `println`? A: No perceptible difference, because `println` does not allocate a resource that needs to be freed, so there is no difference between *mounting it twice* vs *mounting it once and updating it twice*.
+* YES, here `e/for` will allocate *two* dom/text objects, but `let` will allocate *one* dom/text object, and *update it twice*! (The two dom writes race, last one wins.)
+* Quiz: What if we replace `dom/text` with `println`? A: In that case there will be no externally visible difference, because `println` does not allocate a resource that needs to be freed, so there is no difference between *mounting it twice* vs *mounting it once and updating it twice*.
 
 Another example. What's happening here?
 ```
@@ -71,9 +72,9 @@ Another example. What's happening here?
 ```
 * Two atoms are created, each is reset once: `e/for` mounts a branch with `x` bound to `(e/amb 1)` and another branch with `x` bound to `(e/amb 2)`.
 * Now replace `e/for` with `let`, you get two resets on a single atom.
-* So, `e/for` affects **resource allocation** semantics. Do you want two objects, or one object with multiple updates sent to it?
+* So, `e/for` affects **resource allocation** semantics. **Do you want two objects, or one object with multiple updates sent to it?**
 
-auto-mapping is really about cartesian products:
+Auto-mapping is really about **cartesian products**:
 ```
 (list (e/amb 1 2 3)) ; auto mapping
 ; (e/amb (1) (2) (3))
@@ -97,9 +98,6 @@ Surprising interaction between auto-mapping and Electric's `if`. Consider:
 ; [1 2 3 1 2 3]   -- wtf
 ```
 * This does not seem to be a semantically interesting or useful result.
-* What's happening is, Electric `if`'s current implementation interacts badly with auto-mapping semantics.
-* Today, `if` produces useful results only when used with singular values.
-* If you use `if` with non-singular values, you will get very wide products which don't seem semantically interesting or useful.
+* What's happening is, Electric `if`'s current implementation interacts badly with auto-mapping (product) semantics.
+* So, `if` produces useful results today only when used with singular values. When used with non-singular values, you will get wide products which don't make much sense.
 * We acknowledge the semantics gap here, we're still exploring and figuring out the right semantics. Future work! The current semantics, despite being sometimes surprising, are at least well defined and consistent.
-
-Discussion thread: <https://clojurians.slack.com/archives/C7Q9GSHFV/p1732440842517199> (Nov 2024)
