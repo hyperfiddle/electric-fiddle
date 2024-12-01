@@ -1,11 +1,11 @@
 (ns electric-tutorial.token-explainer
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Checkbox]]))
+            [hyperfiddle.electric-forms0 :refer [Checkbox*]]))
 
 (e/defn TokenExplainer []
-  (let [slow (dom/div (Checkbox true :label "latency"))
-        fail (dom/div (Checkbox true :label "failure"))
+  (let [slow (dom/div (Checkbox* true :label "latency"))
+        fail (dom/div (Checkbox* true :label "failure"))
         !x (e/server (atom true)) x (e/server (e/watch !x))]
     slow fail
     (when-some [t (dom/button (dom/text "toggle!")

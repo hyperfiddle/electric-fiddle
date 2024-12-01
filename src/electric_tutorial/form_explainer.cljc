@@ -2,7 +2,7 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer
-             [Input Checkbox Input! Checkbox! Form!]]))
+             [Input! Checkbox! Checkbox* Form!]]))
 
 (def state0 {:user/str1 "hello" :user/num1 42 :user/bool1 true})
 
@@ -15,7 +15,7 @@
     :commit (fn [dirty-form] [dirty-form nil])))
 
 (e/defn FormExplainer []
-  (let [fail (dom/div (Checkbox true :label "failure"))
+  (let [fail (dom/div (Checkbox* true :label "failure"))
         !x (e/server (atom state0)) x (e/server (e/watch !x))
         edits (e/amb
                 (UserFormServer1 x)

@@ -1,7 +1,7 @@
 (ns electric-tutorial.fizzbuzz
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input]]))
+            [hyperfiddle.electric-forms0 :refer [Input*]]))
 
 (defn clamp [n min max] (Math/min (Math/max n min) max))
 
@@ -11,9 +11,9 @@
 (declare css)
 (e/defn FizzBuzz []
   (e/client
-    (let [fizz (Input "fizz")
-          buzz (Input "buzz")
-          n (-> (Input 10 :type "number" :min "0" :max "100")
+    (let [fizz (Input* "fizz")
+          buzz (Input* "buzz")
+          n (-> (Input* 10 :type "number" :min "0" :max "100")
               parse-long (clamp 0 100))
           ns (RangeN n) ; differential collection
           xs (e/for [n ns] ; materialize individual elements from collection diffs

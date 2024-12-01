@@ -2,7 +2,8 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer
-             [Input Checkbox Input! Checkbox!]]))
+             [Input Input* Input!
+             Checkbox Checkbox* Checkbox!]]))
 
 (e/defn InputCicruit []) ; boilerplate
 
@@ -13,10 +14,10 @@
     (dom/code (dom/text (pr-str s)))))
 
 (e/defn DemoInputCircuit-uncontrolled []
-  (let [s (Input "" :class "foo" :maxlength 100)]
+  (let [s (Input* "" :class "foo" :maxlength 100)]
     (dom/code (dom/text (pr-str s))))
   (dom/br)
-  (let [s (Input "" :class "foo" :maxlength 100)]
+  (let [s (Input* "" :class "foo" :maxlength 100)]
     (dom/code (dom/text (pr-str s)))))
 
 (e/defn DemoInputCircuit-controlled []
