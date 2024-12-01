@@ -18,9 +18,9 @@
              (dom/dl
                (e/amb
                  (dom/dt (dom/text "Celsius"))
-                 (dom/dd (some-> (Input (round v) :type "number")
+                 (dom/dd (some-> (Input v :type "number")
                            not-empty parse-long))
                  (dom/dt (dom/text "Fahrenheit"))
                  (dom/dd (some-> (Input (round (c->f v)) :type "number")
-                           not-empty parse-long f->c long)))))]
+                           not-empty parse-long f->c round)))))]
     (reset! !v v')))
