@@ -24,6 +24,9 @@ java -cp target/app.jar clojure.main -m prod
 ```
 
 Deployment:
-- [Dockerfile](Dockerfile)
-- fly.io deployment [fly.toml](fly.toml)
-    - through github actions: [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+```
+docker build -t starter-app:latest .
+docker run starter-app:latest
+```
+- fly.io deployment: [fly.toml](fly.toml)
+- github actions + fly: [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
