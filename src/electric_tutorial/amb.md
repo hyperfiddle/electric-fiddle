@@ -79,7 +79,7 @@ Auto-mapping is really about **cartesian products**:
 (list (e/amb 1 2 3)) ; auto mapping
 ; (e/amb (1) (2) (3))
 
-(list (e/amb 1 2 3) (e/amb :a :b)) ; auto product
+(list (e/amb 1 2 3) (e/amb :a :b)) ; cross product
 ; (e/amb (1 :a) (1 :b) (2 :a) (2 :b) (3 :a) (3 :b))
 ```
 
@@ -87,7 +87,7 @@ Auto-mapping is really about **cartesian products**:
 * Basically since the language is differential, we're automapping over *changesets*. So if we add a `:c` to `(e/amb :a :b)`, we need to incrementally maintain the resulting expression by adding `:c` for each of `(e/amb 1 2 3)`, which is a product over the changeset: `(1 :c) (2 :c) (3 :c)`.
 * This implies that the collections are held in memory so that `1 2 3` can be reconstructed. True! Reactive programming is a time-space tradeoff - you cache more stuff to recompute less stuff.
 
-Surprising interaction between auto-mapping and Electric's `if`. Consider:
+There's a surprising interaction between product semantics and `if`. Consider:
 ```
 (e/as-vec
   (let [x (e/amb 1 2 3)]
@@ -98,6 +98,11 @@ Surprising interaction between auto-mapping and Electric's `if`. Consider:
 ; [1 2 3 1 2 3]   -- wtf
 ```
 * This does not seem to be a semantically interesting or useful result.
-* What's happening is, Electric `if`'s current implementation interacts badly with auto-mapping (product) semantics.
-* So, `if` produces useful results today only when used with singular values. When used with non-singular values, you will get wide products which don't make much sense.
+* What's happening is, Electric `if`'s current implementation interacts badly with auto-mapping (product) semantics:
+  * `(if (e/amb false true false) (e/amb 1 2 3) (e/amb))`
+  * `if` will be called 9 times, `(e/amb false true false)` X `(e/amb 1 2 3)`
+  * `true` branches return `x` - six times
+  * `false` branches return `(e/amb)` - three times
+  * i.e. something like: `(e/amb (e/amb 1 2 3) (e/amb) (e/amb 1 2 3))`, where the middle `true`/`2` branch has been elided.
+* Conclusion: `if` produces useful results today only when used with singular values. When used with non-singular values, you will get wide products which don't seem useful.
 * We acknowledge the semantics gap here, we're still exploring and figuring out the right semantics. Future work! The current semantics, despite being sometimes surprising, are at least well defined and consistent.
