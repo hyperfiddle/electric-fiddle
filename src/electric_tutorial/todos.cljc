@@ -4,7 +4,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as cqrs :refer
-             [Input! Checkbox! Checkbox Button!
+             [Input! Checkbox! Checkbox* Button!
               Form! Service PendingController try-ok effects*]]
             [electric-tutorial.forms3a-form :refer [#?(:clj transact-unreliable)]]))
 
@@ -161,10 +161,10 @@
                         `Toggle Toggle
                         `Delete-todo Delete-todo
                         `Batch Batch}
-              debug* (Checkbox debug* :label "debug")
-              slow* (Checkbox slow* :label "latency")
-              fail* (Checkbox fail* :label "failure" :disabled true)
-              show-buttons* (Checkbox show-buttons* :label "show-buttons" :disabled true)
+              debug* (Checkbox* debug* :label "debug")
+              slow* (Checkbox* slow* :label "latency")
+              fail* (Checkbox* fail* :label "failure" :disabled true)
+              show-buttons* (Checkbox* show-buttons* :label "show-buttons" :disabled true)
               !tx-report (e/server (atom {:db-after @!conn}))]
       debug* slow* fail* show-buttons*
 
