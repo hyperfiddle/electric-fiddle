@@ -21,9 +21,10 @@
 
 (e/defn Todo-records [db tempids forms] ; todo field awareness
   (e/client
-    (let [tempids-rev (clojure.set/map-invert tempids)]
-      (PendingController (partial fast-stable-kf ; passed to e/diff-by, crazy slowdown if fn value updates
-                           ((e/capture-fn) (constantly (doto tempids-rev (prn "generate new stable-kf"))))) :task/description forms ; rebind transact to with, db must escape
+    (let [tempids-rev (clojure.set/map-invert tempids)
+          kf (partial fast-stable-kf ; passed to e/diff-by, crazy slowdown if fn value updates
+               ((e/capture-fn) (constantly (doto tempids-rev (prn "generate new stable-kf")))))]
+      (PendingController kf :task/description forms ; rebind transact to with, db must escape
         (e/server
           (e/diff-by :db/id
             (e/Offload ; good reason to not require offload to have # ?

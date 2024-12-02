@@ -8,22 +8,23 @@
 
 What's happening
 * It's a functional todo list, the first "real app"
-* <https://github.com/hyperfiddle/electric-starter-app>
 * Submit remote txn on enter and clear (e.g. **Chat**, **TodoMVC**, i.e. create new entity). Uncontrolled!
 
-Create new form - auto-submit false, genesis true
-  input
-Item form - auto-submit true, this has the retry state
-  Item status form - auto-submit true
-    checkbox
-  Item desc form - auto-submit false
-    input
+Structure of app (todo elaborate)
 
+* Create new form - auto-submit false, genesis true
+  * input
+* Item form - auto-submit true, this has the retry state
+  * Item status form - auto-submit true
+    * checkbox
+  * Item desc form - auto-submit false
+    * input
 
 Key ideas
+
 * dependency injection
 * dynamic scope
-* unserializable reference transfer - `d/transact!` returns an unserializable ref which cannot be moved over network, when this happens it is typically unintentional, so instead of crashing we warn and send `nil` instead.
+* unserializable reference transfer - `d/transact!` returns an unserializable ref which cannot be moved over network, when this happens it is typically unintentional, so instead of crashing we warn and send `nil` instead.
 * nested transfers, even inside a loop
 * query diffing
 
