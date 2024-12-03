@@ -6,7 +6,7 @@
             [hyperfiddle.router3 :as r]
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
-            [staffly.staffly-worker-detail :refer [WorkerDetail]]))
+            [staffly.staff-detail :refer [StaffDetail]]))
 
 (def *effects {}) ; to be bound to `{`Cmd-sym Cmd-efn}
 
@@ -15,7 +15,7 @@
     (r/link ['.. [:index]] (dom/text "home")) (dom/text " ")))
 
 (e/defn Page []
-  (dom/props {:class ["staffly"
+  (dom/props {:class ["rosie"
                       "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 bg-white" ; responsive container
                       "flex flex-col gap-2" ; items in the page flow down, properly spaced and aligned
                       ]})
@@ -26,7 +26,7 @@
       (Nav)
       (case page
         :index (Index)
-        :worker (WorkerDetail)
+        :staff (StaffDetail)
         (dom/text "page not found")))))
 
 (e/defn Service [edits]

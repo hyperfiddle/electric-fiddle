@@ -14,6 +14,8 @@
 (def schema)
 
 (def test-uri "datomic:mem://staffly")
+(def staff-sarah [:staff/id 1001])
+(def venue-grand-concert [:venue/id 2003])
 
 #?(:clj (defn init-datomic
           [& {:keys []}]
