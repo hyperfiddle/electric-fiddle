@@ -2,7 +2,7 @@
   (:require #?(:clj [datomic.api :as d])
             [dustingetz.gridsheet3 :refer [Explorer3]]
             [dustingetz.ui :refer
-             [Text EasyTableNoScroll EasyForm TagPickerReadOnly Debug]]
+             [Text EasyForm TagPickerReadOnly Debug]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer
@@ -95,7 +95,7 @@
                             (mapv (partial hash-map :db/ident) x)))
 
            :staff/documents (e/fn [x]
-                              (EasyTableNoScroll x
+                              (Explorer3 x
                                 :columns [:document/type :document/name :document/expiry :document/status]
                                 :grid-template-columns "2fr 3fr 2fr 1fr"
                                 :Format (e/fn [x a]
@@ -106,10 +106,11 @@
                                                 v))))))
 
            :staff/restrictions (e/fn [x]
-                                 (EasyTableNoScroll x
+                                 (Explorer3 x
                                    :columns [:restriction/venue :restriction/reason
                                              :restriction/scope :restriction/expires-at]
                                    :grid-template-columns "2fr 2fr 2fr 2fr"
+                                   :page-size 8
                                    :Format (e/fn [x a]
                                              (let [v (e/server (get x a nil))]
                                                (dom/text
@@ -119,9 +120,10 @@
                                                    v))))))
 
            :staff/shifts (e/fn [x]
-                           (EasyTableNoScroll x
+                           (Explorer3 x
                              :columns [:shift/date :shift/venue :shift/role :shift/rating]
                              :grid-template-columns "2fr 2fr 2fr 1fr"
+                             :page-size 8
                              :Format (e/fn [x a]
                                        (let [v (e/server (get x a nil))]
                                          (dom/text
