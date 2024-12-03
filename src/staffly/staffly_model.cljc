@@ -21,8 +21,8 @@
             (try
               (d/create-database test-uri)
               (alter-var-root #'*datomic-conn* (constantly (d/connect test-uri)))
-              (d/transact *datomic-conn* staffly.staffly-fixtures/schema)
-              (d/transact *datomic-conn* staffly.staffly-fixtures/fixtures)
+              @(d/transact *datomic-conn* staffly.staffly-fixtures/schema)
+              @(d/transact *datomic-conn* staffly.staffly-fixtures/fixtures)
               (alter-var-root #'*db* (constantly (d/db *datomic-conn*)))
               (alter-var-root #'*schema* (constantly (m/? (dx/schema! *db*))))
               ::ok (catch Exception e (prn e) ::datomic-unavailable)))))

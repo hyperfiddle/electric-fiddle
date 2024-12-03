@@ -8,7 +8,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
-            [dustingetz.gridsheet3 :as gridsheet :refer [Explorer]]))
+            [dustingetz.gridsheet4 :as gridsheet :refer [Explorer]]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 

@@ -1,6 +1,6 @@
-(ns dustingetz.gridsheet3
+(ns dustingetz.gridsheet4
   "todo deprecate, use HFQL grid. Used by datomic-browser and folder-explorer"
-  #?(:cljs (:require-macros dustingetz.gridsheet3))
+  #?(:cljs (:require-macros dustingetz.gridsheet4))
   (:require clojure.math
             [contrib.assert :refer [check]]
             [contrib.data :refer [auto-props round-floor]]

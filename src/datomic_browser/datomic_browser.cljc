@@ -4,7 +4,7 @@
             [contrib.str :refer [any-matches?]]
             #?(:clj [contrib.datomic-contrib :as dx])
             #?(:clj [contrib.datomic-m :as d])
-            [dustingetz.gridsheet3 :as gridsheet :refer [Explorer]]
+            [dustingetz.gridsheet4 :as gridsheet :refer [Explorer]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer [Input! Form! Checkbox]]
