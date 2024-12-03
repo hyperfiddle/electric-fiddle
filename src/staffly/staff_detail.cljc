@@ -45,7 +45,6 @@
 
 (comment (staff-detail model/staff-sarah))
 
-
 (def links [:staff-shifts :staff-feedback :staff-restrictions :entity-history])
 (def cmds [:change-staff-status :update-roles :add-restriction])
 
@@ -80,17 +79,7 @@
         (EasyForm
           (e/server (e/Offload #(staff-detail e)))
           cols
-          {
-           ;:staff/id Text
-           ;:staff/name Text
-           ;:staff/email Text
-           ;:staff/phone Text
-           ;:staff/notify-method Text
-           ;:staff/events-worked Text
-           ;:staff/venue-rating Text
-           ;:staff/punctuality-score Text
-
-           :staff/roles (e/fn [x]
+          {:staff/roles (e/fn [x]
                           (TagPickerReadOnly :db/ident
                             (mapv (partial hash-map :db/ident) x)))
 
