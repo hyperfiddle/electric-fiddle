@@ -19,6 +19,7 @@
                       "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 bg-white" ; responsive container
                       "flex flex-col gap-2" ; items in the page flow down, properly spaced and aligned
                       ]})
+  (dom/link (dom/props {:rel :stylesheet, :href "/staffly.css"}))
   (dom/link (dom/props {:rel :stylesheet, :href "/gridsheet-optional.css"}))
   (let [[page] r/route]
     (when-not page (r/ReplaceState! ['. [:index]]))
