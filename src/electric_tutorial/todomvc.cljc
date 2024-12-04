@@ -135,9 +135,9 @@
                   (d/transact! !conn tx) (doto ::cqrs/ok prn)
                   (catch Throwable e (doto ::fail (prn e)))))))
 
-(def db nil)
-(def !state nil)
-(def state nil)
+(e/declare db)
+(e/declare !state)
+(e/declare state)
 
 (e/defn Clear-completed []
   (e/server (->> (seq (query-todos db :done))

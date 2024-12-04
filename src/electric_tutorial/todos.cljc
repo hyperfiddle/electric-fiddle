@@ -41,10 +41,10 @@
 ; checkboxes don't do that (don't have enter behavior - toggle with space, enter is noop), therefore you need
 ; auto-submit true on the form if you want inputs to auto-submit.
 
-(def debug* false)
-(def slow* true)
-(def fail* false)
-(def show-buttons* false)
+(e/declare debug*)
+(e/declare slow*)
+(e/declare fail*)
+(e/declare show-buttons*)
 
 (e/defn TodoCreate []
   (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
@@ -104,7 +104,7 @@
                         {:task/description "buy milk" :task/status :active}
                         {:task/description "call mom" :task/status :active}]))))
 
-(def !tx-report (atom {}))
+(e/declare !tx-report)
 
 (defn accumulate-tx-reports! [!tx-report new-tx-report]
   (swap! !tx-report (fn [{:keys [tempids] :as tx-report}]

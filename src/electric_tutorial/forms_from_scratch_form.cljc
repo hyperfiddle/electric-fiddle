@@ -15,9 +15,9 @@
           (when (true? fail) (throw (ex-info "artificial failure" {})))
           (d/transact! !conn tx)))
 
-(def debug*)
-(def slow*)
-(def fail*)
+(e/declare debug*)
+(e/declare slow*)
+(e/declare fail*)
 
 (e/defn Query-record [db id]
   (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id))))

@@ -141,50 +141,52 @@
             (dom/text (str (title next) " >"))))))))
 
 (e/defn Fiddles []
-  {`TwoClocks TwoClocks
-   `SystemProperties SystemProperties
-   `DirTree DirTree
-   `Lifecycle Lifecycle
-   `Webview1 Webview1
-   `Webview2 Webview2
-   `FizzBuzz FizzBuzz
-   `Counter Counter
-   `ChatMonitor ChatMonitor
-   `Backpressure Backpressure
+  (merge
+    {`TwoClocks TwoClocks
+     `SystemProperties SystemProperties
+     `DirTree DirTree
+     `Lifecycle Lifecycle
+     `Webview1 Webview1
+     `Webview2 Webview2
+     `FizzBuzz FizzBuzz
+     `Counter Counter
+     `ChatMonitor ChatMonitor
+     `Backpressure Backpressure
+     }
+    {
+                                        ; Interlude
+                                        ;`FormsFromScratch FormsFromScratch
+     `InputCicruit InputCicruit
+     `DemoInputNaive DemoInputNaive
+     `DemoInputCircuit-uncontrolled DemoInputCircuit-uncontrolled
+     `DemoInputCircuit-controlled DemoInputCircuit-controlled
+     `DemoInputCircuit-amb DemoInputCircuit-amb
+     `DemoInputCircuit-cycle DemoInputCircuit-cycle
+     `DemoInputCircuit4 DemoInputCircuit4
+     `DemoInputCircuit5 DemoInputCircuit5
+     `DemoInputCircuit6 DemoInputCircuit6
+     `DemoFormSync DemoFormSync
+     `DemoFormSync-cycle DemoFormSync-cycle
+     }
+    {`TokenExplainer TokenExplainer
+     `FormExplainer FormExplainer
+     `DemoFormServer1 DemoFormServer1
 
-   ; Interlude
-   ;`FormsFromScratch FormsFromScratch
-   `InputCicruit InputCicruit
-   `DemoInputNaive DemoInputNaive
-   `DemoInputCircuit-uncontrolled DemoInputCircuit-uncontrolled
-   `DemoInputCircuit-controlled DemoInputCircuit-controlled
-   `DemoInputCircuit-amb DemoInputCircuit-amb
-   `DemoInputCircuit-cycle DemoInputCircuit-cycle
-   `DemoInputCircuit4 DemoInputCircuit4
-   `DemoInputCircuit5 DemoInputCircuit5
-   `DemoInputCircuit6 DemoInputCircuit6
-   `DemoFormSync DemoFormSync
-   `DemoFormSync-cycle DemoFormSync-cycle
+                                        ; Part 2
+     `Temperature Temperature
+     `Temperature2 Temperature2
+     `Forms2-controlled Forms2-controlled ; obselete
+     `Forms3a-form Forms3a-form
+     `Forms3b-inline-submit Forms3b-inline-submit
+     `Todos Todos
+     `TodoMVC TodoMVC
+     `TodoMVC-composed TodoMVC-composed
 
-   `TokenExplainer TokenExplainer
-   `FormExplainer FormExplainer
-   `DemoFormServer1 DemoFormServer1
-
-   ; Part 2
-   `Temperature Temperature
-   `Temperature2 Temperature2
-   `Forms2-controlled Forms2-controlled ; obselete
-   `Forms3a-form Forms3a-form
-   `Forms3b-inline-submit Forms3b-inline-submit
-   `Todos Todos
-   `TodoMVC TodoMVC
-   `TodoMVC-composed TodoMVC-composed
-
-   ; Kitchen Sink
-   ;`Timer Timer
-   `SVG SVG
-   ;`ReagentInterop ReagentInterop
-   })
+                                        ; Kitchen Sink
+                                        ;`Timer Timer
+     `SVG SVG
+                                        ;`ReagentInterop ReagentInterop
+     }))
 
 (defn namespace-name [qualified-symbol]
   (some-> qualified-symbol namespace

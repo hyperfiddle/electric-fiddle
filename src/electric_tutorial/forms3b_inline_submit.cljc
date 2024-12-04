@@ -7,11 +7,11 @@
             [electric-tutorial.forms3a-form :refer
              [Query-record #?(:clj !conn) #?(:clj transact-unreliable)]]))
 
-(def debug* false)
-(def slow* true)
-(def fail* false)
-(def show-buttons* false)
-(def auto-submit* false)
+(e/declare debug*)
+(e/declare slow*)
+(e/declare fail*)
+(e/declare show-buttons*)
+(e/declare auto-submit*)
 
 (e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "UserForm"))

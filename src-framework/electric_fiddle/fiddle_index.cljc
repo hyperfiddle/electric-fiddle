@@ -3,7 +3,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]))
 
-(def pages) ; inject, binding fiddles in entrypoint fixes comptime stackoverflow
+(e/declare pages) ; inject, binding fiddles in entrypoint fixes comptime stackoverflow
 
 (e/defn NotFoundPage [& args]
   (e/client

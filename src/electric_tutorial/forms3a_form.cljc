@@ -6,9 +6,9 @@
              [Input! Checkbox! Checkbox Form! Service try-ok effects*]]))
 
 #?(:clj (def !conn))
-(def debug* true)
-(def slow* true)
-(def fail* false)
+(e/declare debug*)
+(e/declare slow*)
+(e/declare fail*)
 
 #?(:clj (defn transact-unreliable [!conn tx
                                    & {:keys [slow fail]
