@@ -9,9 +9,9 @@
 (def ^:dynamic *db*) ; todo reactive
 (def ^:dynamic *schema*)
 
-(def datomic-conn)
-(def db)
-(def schema)
+(e/declare datomic-conn)
+(e/declare db)
+(e/declare schema)
 
 (def staff-sarah [:staff/id 1001])
 (def venue-grand-concert [:venue/id 2003])

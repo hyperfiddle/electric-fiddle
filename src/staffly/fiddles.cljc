@@ -8,7 +8,7 @@
             [staffly.staffly-index :refer [Index]]
             [staffly.staff-detail :refer [StaffDetail]]))
 
-(def *effects {}) ; to be bound to `{`Cmd-sym Cmd-efn}
+(e/declare *effects) ; to be bound to `{`Cmd-sym Cmd-efn}
 
 (e/defn Nav []
   (dom/div (dom/text "Nav: ")

@@ -11,9 +11,9 @@
             [hyperfiddle.router3 :as r]
             [missionary.core :as m]))
 
-(def conn)
-(def db)
-(def schema)
+(e/declare conn)
+(e/declare db)
+(e/declare schema)
 
 (e/defn Attributes []
   (dom/h1 (dom/text "Attributes — Datomic Browser"))
