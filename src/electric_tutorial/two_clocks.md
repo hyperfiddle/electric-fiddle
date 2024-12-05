@@ -63,7 +63,7 @@ Electric is a reactivity compiler
 
 There is an isomorphism between programs and DAGs
 
-* you already knew this, if you think about it – for exmaple, [call graph (wikipedia)](https://en.wikipedia.org/wiki/Call_graph)
+* you already knew this, if you think about it – for example, [call graph (wikipedia)](https://en.wikipedia.org/wiki/Call_graph)
 * The Electric DAG is an abstract representation of your program
 * The DAG contains everything there is to know about the **flow of data ("dataflow")** through the Electric program's **control flow** structures
 * Electric uses this DAG to drive reactivity, so we sometimes call the DAG a "reactivity graph".
