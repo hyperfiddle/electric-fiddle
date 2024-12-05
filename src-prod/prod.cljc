@@ -16,15 +16,18 @@
      :resources-path "public"
      :manifest-path "public/js/manifest.edn"})) ; shadow build manifest
 
+#?(:clj (defn ensure-sym-ns-required! "return qualified sym only if successfully resolved, else nil"
+          [qs] (when (some? (requiring-resolve qs)) qs)))
+
 #?(:clj
    (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
      (check string? (:hyperfiddle.electric/user-version config))
      (check string? (::hf/domain config))
-     (let [entrypoint (symbol (str (::hf/domain config) ".fiddles") "ProdMain")]
-       (requiring-resolve entrypoint) ; load userland server
-       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#))))
+     (let [?entrypoint (ensure-sym-ns-required! (symbol (str (::hf/domain config) ".fiddles") "ProdMain"))]
+       ; is there a sensible default ProdMain? user would need to supply a default index fiddle
+       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~?entrypoint (e/server ring-req#))))
          config))))
 
 (defmacro install-user-inject [] (symbol (name hf/*hyperfiddle-user-ns*) "ProdMain"))
