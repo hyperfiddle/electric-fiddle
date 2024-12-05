@@ -1,4 +1,4 @@
-(ns london-talk-2024.fiddles
+(ns london-talk-2024.london-talk-2024
   (:require
    [hyperfiddle.electric3 :as e]
    [london-talk-2024.webview-concrete :refer [WebviewConcrete]]

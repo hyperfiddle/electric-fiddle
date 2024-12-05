@@ -1,13 +1,14 @@
 ;; For dev only - listed fiddles will be loaded at REPL start.
 ;; Restart your REPL for changes to take effect.
-{:loaded-fiddles [hello-fiddle
-                  electric-tutorial   ; requires :electric-tutorial alias
-                  #_datomic-browser   ; requires :datomic-browser alias
-                  #_xtdb-demo         ; requires :xtdb-demo alias
-                  #_uix-demo          ; requires :uix-demo alias and `npm install`
-                  #_datagrid
-                  #_custom-types
-                  london-talk-2024
-                  #_heroicons
-                  ]
- }
+{:hyperfiddle/fiddles
+ [hello-fiddle.hello-fiddle
+  electric-tutorial.fiddles ; requires :electric-tutorial alias
+  #_datomic-browser.fiddles ; requires :datomic-browser alias
+  #_xtdb-demo ; requires :xtdb-demo alias
+  #_uix-demo ; requires :uix-demo alias and `npm install`
+  #_datagrid
+  #_custom-types
+  london-talk-2024.london-talk-2024
+  #_heroicons
+  #_dustingetz.fiddles
+  #_staffly.fiddles]}
