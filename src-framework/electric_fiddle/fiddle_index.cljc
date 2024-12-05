@@ -3,16 +3,13 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]))
 
-(e/declare pages) ; inject, binding fiddles in entrypoint fixes comptime stackoverflow
+(e/declare pages) ; inject so FiddleIndex is routable as a fiddle, also used by tutorial
 
 (e/defn NotFoundPage [& args]
   (e/client
     (dom/h1 (dom/text "Page not found"))
     (dom/p (dom/text "Probably we broke URLs, sorry! ")
       (r/link ['/ []] (dom/text "index")))))
-
-(e/defn Entrypoint [fiddle & args]
-  (e/apply (get pages fiddle NotFoundPage) args))
 
 (e/defn FiddleIndex []
   (e/client
@@ -25,14 +22,15 @@
           (dom/td (dom/text k)))))))
 
 (e/defn FiddleRoot ; also used in prod tutorial, which leverages the dev fiddle infrastructure
-  [& {:keys [default]
+  [fiddles
+   & {:keys [default]
       :or {default `(FiddleIndex)}}]
   #_(dom/pre (dom/text (pr-str r/route)))
   (let [[fiddle & _] r/route]
     (if-not fiddle (r/ReplaceState! ['. default])
-      (do
+      (let [Fiddle (get fiddles fiddle NotFoundPage)]
         (set! (.-title js/document) (str (some-> fiddle name (str " – ")) "Electric Fiddle"))
-        (case fiddle
-          `FiddleIndex (FiddleIndex)
-          (r/pop
-            (Entrypoint fiddle)))))))
+        (binding [pages fiddles] ; todo untangle - tutorial uses some fiddle infrastructure, perhaps should use more?
+          (case fiddle
+            `FiddleIndex #_(FiddleIndex) (Fiddle) ; lol why - workaround crash 20241205
+            (r/pop (Fiddle))))))))

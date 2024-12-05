@@ -1,5 +1,5 @@
 (ns fiddles
-  (:require [electric-fiddle.fiddle-index :refer [FiddleRoot pages]]
+  (:require [electric-fiddle.fiddle-index :refer [FiddleRoot FiddleIndex]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
@@ -9,9 +9,10 @@
 
 (e/defn DevMain [ring-req]
   (binding [e/http-request (e/server ring-req)
-            dom/node js/document.body
-            pages (merge #?@(:default ; ensure clj and cljs stay in sync
-                             #=(config/loaded-fiddles-entrypoints)))]
+            dom/node js/document.body]
     (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
       (r/router (r/HTML5-History)
-        (FiddleRoot)))))
+        (let [fiddles (merge {`FiddleIndex FiddleIndex}
+                        #?@(:default ; keep clj/s in sync
+                          #=(config/loaded-fiddles-entrypoints)))]
+          (FiddleRoot fiddles))))))
