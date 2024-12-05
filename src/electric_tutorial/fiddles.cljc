@@ -1,5 +1,5 @@
 (ns electric-tutorial.fiddles
-  (:require [electric-fiddle.fiddle-index :refer [FiddlePage pages]]
+  (:require [electric-fiddle.fiddle-index :refer [FiddleRoot pages]]
             [electric-tutorial.tutorial :refer [Tutorial]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -16,5 +16,5 @@
       (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
         (r/router (r/HTML5-History)
           #_(Tutorial) ; we're going to deploy multiple fiddles to electric.hf.net
-          (FiddlePage ; keep /tutorial/ in the URL
+          (FiddleRoot ; keep /tutorial/ in the URL
             :default '(tutorial)))))))

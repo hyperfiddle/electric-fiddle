@@ -24,7 +24,7 @@
           (dom/td (r/link [k] (dom/text (name k))))
           (dom/td (dom/text k)))))))
 
-(e/defn FiddlePage
+(e/defn FiddleRoot ; also used in prod tutorial, which leverages the dev fiddle infrastructure
   [& {:keys [default]
       :or {default `(FiddleIndex)}}]
   #_(dom/pre (dom/text (pr-str r/route)))

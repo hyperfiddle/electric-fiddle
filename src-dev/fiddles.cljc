@@ -1,5 +1,5 @@
 (ns fiddles
-  (:require [electric-fiddle.fiddle-index :refer [FiddlePage pages]]
+  (:require [electric-fiddle.fiddle-index :refer [FiddleRoot pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
@@ -14,4 +14,4 @@
                              #=(config/loaded-fiddles-entrypoints)))]
     (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
       (r/router (r/HTML5-History)
-        (FiddlePage)))))
+        (FiddleRoot)))))
