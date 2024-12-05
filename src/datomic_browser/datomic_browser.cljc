@@ -59,7 +59,8 @@
                  :e (r/link ['.. '.. [:entity e]] (dom/text e))
                  :a (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa)
                  :v (some-> v str dom/text) ; todo when a is ref, render link
-                 :tx (r/link ['.. '.. [:tx tx]] (dom/text tx))))))}))))
+                 :tx (r/link ['.. '.. [:tx tx]] (dom/text tx))
+                 (e/amb)))))}))))
 
 (e/defn TxDetail []
   (let [[e _] r/route]
@@ -107,7 +108,8 @@
                   (= :string valueType) (Form! (Input! k v)
                                           :commit (fn [] [])
                                           :show-buttons :smart)
-                  () (dom/text (pr-str v)))))))))
+                  () (dom/text (pr-str v)))))
+        (e/amb)))))
 
 (e/defn EntityDetail []
   (let [[e _] r/route]
@@ -131,7 +133,7 @@
 (e/defn Format-history-row [[e aa v tx op :as row] a]
   (when row          ; when this view unmounts, somehow this fires as nil
     (case a
-      ::op (e/client (dom/text (name (case op true :db/add false :db/retract))))
+      ::op (e/client (dom/text (name (case op true :db/add false :db/retract (e/amb)))))
                  ;; link two levels up because we are under EntityHistory's scope
       ::e (e/client (r/link ['.. '.. [:entity e]] (dom/text e)))
       ::a (if (some? aa)
@@ -177,7 +179,8 @@
              ::k (dom/text (pr-str k))
              ::v (cond
                    (= k :attrs) nil                ; print children instead
-                   () (dom/text (pr-str v))))))})))
+                   () (dom/text (pr-str v)))
+             (e/amb))))})))
 
 (comment
   {:datoms 800958,
@@ -201,7 +204,8 @@
        (e/fn [[e _ v tx op :as record] a]
          (case a
            :db/id (e/client (r/link ['.. [::tx tx]] (dom/text tx)))
-           :db/txInstant (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v)))))})))
+           :db/txInstant (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v)))
+           (e/amb)))})))
 
 (e/defn Nav []
   (dom/div (dom/text "Nav: ")
@@ -221,7 +225,8 @@
         :tx (TxDetail)
         :entity (e/amb (EntityDetail) #_(EntityHistory)) ; todo untangle router inputs
         :db-stats (DbStats)
-        :recent-tx (RecentTx)))))
+        :recent-tx (RecentTx)
+        (e/amb)))))
 
 (e/defn DatomicBrowser []
   (e/client
