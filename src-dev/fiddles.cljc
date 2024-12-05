@@ -7,7 +7,7 @@
             ;; :clj doesn't have #@ (read splicing), so we resort to #?@(:default ...)
             #?@(:default #=(config/loaded-fiddles))))
 
-(e/defn FiddleMain [ring-req]
+(e/defn DevMain [ring-req]
   (binding [e/http-request (e/server ring-req)
             dom/node js/document.body
             pages (merge #?@(:default ; ensure clj and cljs stay in sync
