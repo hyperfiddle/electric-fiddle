@@ -1,13 +1,27 @@
 (ns dev
   (:require
-   #?(:clj [clojure.tools.logging :as log])
-   [hyperfiddle.electric3 :as e]
-   #?(:cljs [hyperfiddle.electric-client3])
-   [hyperfiddle.rcf :as rcf]
-   #?(:clj config)
-   fiddles))
+    #?(:clj [clojure.tools.logging :as log])
+    [electric-fiddle.fiddle-index :refer [FiddleRoot FiddleIndex]]
+    [hyperfiddle.electric3 :as e]
+    #?(:cljs [hyperfiddle.electric-client3])
+    [hyperfiddle.electric-dom3 :as dom]
+    [hyperfiddle.router3 :as r]
+    [hyperfiddle.rcf :as rcf]
+
+    #?(:clj dev-fiddle-config)
+    load-dev-fiddles!))
 
 (comment (-main)) ; repl entrypoint
+
+(e/defn DevMain [ring-req]
+  (binding [e/http-request (e/server ring-req)
+            dom/node js/document.body]
+    (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
+      (r/router (r/HTML5-History)
+        (let [fiddles (merge {`FiddleIndex FiddleIndex}
+                        #?@(:default ; keep clj/s in sync
+                            #=(dev-fiddle-config/dev-fiddle-routes)))]
+          (FiddleRoot fiddles))))))
 
 #?(:clj
    (do
@@ -45,7 +59,7 @@
        (@shadow-watch :dev)
                                         ; todo block until finished?
        (comment (@shadow-stop!))
-       (def server (@start-server! (fn [ring-req] (e/boot-server {} fiddles/DevMain (e/server ring-req)))
+       (def server (@start-server! (fn [ring-req] (e/boot-server {} DevMain (e/server ring-req)))
                     (assoc config :electric-fiddle.ring-middleware/accept-ws-connect-fn (fn [_] (not @!cljs-is-compiling)))))
        (comment
          (.stop server) ; jetty
@@ -61,11 +75,10 @@
 
 #?(:cljs
    (do
-
      (defonce reactor nil)
 
      (defn ^:dev/after-load ^:export start! []
-       (set! reactor ((e/boot-client {} fiddles/DevMain (e/server nil)) ; to match program shape for (e/server ring-req)
+       (set! reactor ((e/boot-client {} DevMain (e/server nil)) ; to match program shape for (e/server ring-req)
                        #(js/console.log "Reactor success:" %)
                        #(js/console.error "Reactor failure:" %)))
        (hyperfiddle.rcf/enable!))
