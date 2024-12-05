@@ -37,18 +37,18 @@
 
   (e/boot-server {:cognitect.transit/read-handlers {"hello-fiddle.fiddles/CustomType" (cognitect.transit/read-handler (fn [[x]] (CustomType. x)))}
                   :cognitect.transit/write-handlers {CustomType (cognitect.transit/write-handler (constantly "hello-fiddle.fiddles/CustomType") (fn [obj] [(.-x obj)]))}}
-      FiddleMain (e/server ring-req))
+    ProdMain (e/server ring-req))
 
   (e/boot-client {:cognitect.transit/read-handlers {"hello-fiddle.fiddles/CustomType" (cognitect.transit/read-handler (fn [[x]] (CustomType. x)))}
                   :cognitect.transit/write-handlers {CustomType (cognitect.transit/write-handler (constantly "hello-fiddle.fiddles/CustomType") (fn [obj] [(.-x obj)]))}}
-      FiddleMain (e/server nil)))
+    ProdMain (e/server nil)))
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
 (e/defn Fiddles [] {`CustomTypes CustomTypes})
 
 ;; Prod entrypoint, called by `prod.clj`
-(e/defn FiddleMain [_ring-request]
+(e/defn ProdMain [_ring-request]
   (e/client
     (binding [dom/node js/document.body] ; where to mount dom elements
       ($ CustomTypes))))

@@ -25,7 +25,7 @@
 
 (e/defn Fiddles [] {`XTDB-Demo XTDB-Demo})
 
-(e/defn FiddleMain [_ring-request]
+(e/defn ProdMain [_ring-request]
   (binding [dom/node js/document.body]
     (XTDB-Demo)))
 

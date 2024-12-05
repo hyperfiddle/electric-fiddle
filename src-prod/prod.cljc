@@ -22,12 +22,12 @@
      (log/info (pr-str config))
      (check string? (:hyperfiddle.electric/user-version config))
      (check string? (::hf/domain config))
-     (let [entrypoint (symbol (str (::hf/domain config) ".fiddles") "FiddleMain")]
+     (let [entrypoint (symbol (str (::hf/domain config) ".fiddles") "ProdMain")]
        (requiring-resolve entrypoint) ; load userland server
        (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#))))
          config))))
 
-(defmacro install-user-inject [] (symbol (name hf/*hyperfiddle-user-ns*) "FiddleMain"))
+(defmacro install-user-inject [] (symbol (name hf/*hyperfiddle-user-ns*) "ProdMain"))
 
 #?(:cljs
    (do

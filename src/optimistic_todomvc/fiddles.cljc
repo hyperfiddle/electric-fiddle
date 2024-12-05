@@ -9,7 +9,7 @@
 (e/defn Fiddles [] {`Optimistic-TodoMVC optimistic-todomvc.optimistic-todomvc/OptimisticTodoMVC}) ; FIXME DE - should be simplified to `(def fiddles {`a a})`
 
 ;; Prod entrypoint, called by `prod.clj`
-(e/defn FiddleMain [ring-request]
+(e/defn ProdMain [ring-request]
   (e/client
     (binding [dom/node js/document.body] ; where to mount dom elements
       ($ optimistic-todomvc.optimistic-todomvc/OptimisticTodoMVC))))

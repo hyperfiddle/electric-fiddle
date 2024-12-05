@@ -16,7 +16,7 @@
    `Scratch Scratch})
 
 ;; Prod entrypoint, called by `prod.clj`
-(e/defn FiddleMain [ring-req]
+(e/defn ProdMain [ring-req]
   (e/client
     (binding [dom/node js/document.body
               e/http-request (e/server ring-req)

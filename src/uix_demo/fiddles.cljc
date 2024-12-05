@@ -9,7 +9,7 @@
 (e/def fiddles {`UixInterop UixInterop})
 
 ;; Prod entrypoint, called by `prod.clj`
-(e/defn FiddleMain [ring-request]
+(e/defn ProdMain [ring-request]
   (e/server
     (binding [e/http-request ring-request] ; make ring request available through the app
       (e/client

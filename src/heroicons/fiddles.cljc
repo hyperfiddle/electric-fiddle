@@ -55,7 +55,7 @@
 
 (e/defn Fiddles [] {`Heroicons Heroicons})
 
-(e/defn FiddleMain [_ring-request]
+(e/defn ProdMain [_ring-request]
   (e/client
     (binding [dom/node js/document.body] ; where to mount dom elements
       (dom/div
