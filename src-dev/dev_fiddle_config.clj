@@ -11,7 +11,7 @@
 ;   - a prod entrypoint, i.e. that elides the dev scaffolding electric-fiddle.fiddle-index/FiddleRoot
 
 (defn- read-config []
-  (let [config-file (io/file "electric-fiddle.edn")]
+  (let [config-file (io/file "src-dev/electric-fiddle.edn")] ; io/resource doesn't work at read time
     (when (.exists config-file)
       (edn/read-string (slurp config-file)))))
 
