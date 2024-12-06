@@ -62,7 +62,7 @@
           :name ::toggle
           :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
                                           {id (-> m (dissoc ::pending) (assoc :task/status v))}])
-          :show-buttons show-buttons* :auto-submit true)
+          :show-buttons show-buttons* :auto-submit (not show-buttons*))
         (Form! (Input! :task/description description)
           :name ::edit-desc
           :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
@@ -70,14 +70,14 @@
           :show-buttons show-buttons*
           :debug debug*)
         (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
-          :auto-submit true :show-buttons show-buttons*
+          :auto-submit (not show-buttons*) :show-buttons show-buttons*
           :name ::destroy
           :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))
 
         (if-let [[t xcmd guess] pending]
           [t {::pending xcmd} guess]
           (e/amb)))
-      :auto-submit true :show-buttons show-buttons* :debug debug*
+      :auto-submit (not show-buttons*) :show-buttons show-buttons* :debug debug*
       :commit (fn [{:keys [::toggle ::edit-desc ::destroy ::pending]}]
                 [[`Batch toggle edit-desc destroy pending] {}]
                 #_(let [[_ id status] toggle
