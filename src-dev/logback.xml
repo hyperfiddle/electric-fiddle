@@ -14,4 +14,6 @@
     <logger name="datomic" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
     <logger name="electric-fiddle" level="DEBUG" additivity="false"><appender-ref ref="STDOUT" /></logger>
     <logger name="dustingetz" level="DEBUG" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="hyperfiddle" level="INFO" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="hyperfiddle.electric-ring-adapter3" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
 </configuration>
