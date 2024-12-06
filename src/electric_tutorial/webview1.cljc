@@ -24,16 +24,16 @@
 
 (e/defn Webview1 []
   (dom/props {:class "webview"})
-  (e/server
-    (let [db (e/watch conn) ; reactive "database value"
+  (e/client
+    (let [db (e/server (e/watch conn)) ; reactive "database value"
           search (dom/input (dom/props {:placeholder "Filter..."})
-                   (dom/on "input" #(-> % .-target .-value) ""))
+                   (dom/On "input" #(-> % .-target .-value) "")) ; #() is client-sited
           ids (Teeshirt-orders db search)]
-      (e/client (e/Tap-diffs ids))
       (dom/table
-        (e/for [id ids] ; e/for is server-sited
-          (let [!e (d/entity db id)] ; no round trip!
-            (dom/tr
-              (dom/td (dom/text id))
-              (dom/td (dom/text (:order/email !e)))
-              (dom/td (dom/text (:order/gender !e))))))))))
+        (e/server
+          (e/for [id (e/Tap-diffs ids)] ; e/for is server-sited
+            (let [!e (d/entity db id)] ; id stays on server - no round trip!
+              (dom/tr
+                (dom/td (dom/text id))
+                (dom/td (dom/text (:order/email !e))) ; entity query on server!
+                (dom/td (dom/text (:order/gender !e)))))))))))
