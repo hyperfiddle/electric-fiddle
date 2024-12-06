@@ -32,7 +32,7 @@ upstream: https://github.com/formicagreen/electric-clojure-painter"
           (e/for [emoji (e/amb "🕉" "🧬" "🧿" "🌀" "♻️" "🐍" "🐱" "🫥" "🌰" "🐞" "🐹" "🪙" "🕸" "📞")]
             (dom/div (dom/text emoji)
               (dom/props {:style {:cursor "pointer"}})
-              (reset! !current-emoji (dom/On "click" (constantly emoji)))))
+              (reset! !current-emoji (dom/On "click" (constantly emoji) "🐱"))))
           (dom/div (dom/text "🗑️")
             (dom/props {:style {:cursor "pointer" :padding-top "50px"}})
             (when-some [t (e/TokenNofail (dom/On "click"))]
