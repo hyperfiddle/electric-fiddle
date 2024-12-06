@@ -24,8 +24,8 @@
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
      (check string? (:hyperfiddle.electric/user-version config))
-     (check string? (::hf/domain config))
-     (let [?entrypoint (ensure-sym-ns-required! (symbol (str (::hf/domain config) ".fiddles") "ProdMain"))]
+     (check string? (:build/fiddle-ns config))
+     (let [?entrypoint (ensure-sym-ns-required! (symbol (str (:build/fiddle-ns config)) "ProdMain"))]
        ; is there a sensible default ProdMain? user would need to supply a default index fiddle
        (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~?entrypoint (e/server ring-req#))))
          config))))

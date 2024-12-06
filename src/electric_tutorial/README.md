@@ -2,11 +2,11 @@
 
 ```
 # prod local
-clojure -X:build:prod:electric-tutorial build-client :hyperfiddle/domain electric-tutorial
+clojure -X:build:prod:electric-tutorial build-client :build/fiddle-ns electric-tutorial.fiddles
 clj -M:prod:electric-tutorial -m prod
 
 # prod uberjar
-clojure -X:build:prod:electric-tutorial uberjar :hyperfiddle/domain electric-tutorial :build/jar-name "app.jar"
+clojure -X:build:prod:electric-tutorial uberjar :build/fiddle-ns electric-tutorial.fiddles :build/fiddle-deps-alias electric-tutorial :build/jar-name "app.jar"
 java -cp app.jar clojure.main -m prod
 
 # deploy via dockerfile

@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [clojure.tools.build.api :as b]
             [contrib.assert :refer [check]]
+            contrib.ednish
             [hyperfiddle :as hf]
             [shadow.cljs.devtools.api :as shadow-api]
             [shadow.cljs.devtools.server :as shadow-server]
@@ -11,17 +12,18 @@
 
 (defn build-client
   "build Electric app client, invoke with -X e.g. 
-`clojure -X:build:prod:hello-fiddle build-client :hyperfiddle/domain hello-fiddle :debug true`
+`clojure -X:build:prod:hello-fiddle build-client :hyperfiddle/fiddle-ns hello-fiddle :debug true`
 Note: Electric shadow compilation requires application classpath to be available, 
 so do not use `clj -T`"
   ; No point in sheltering shadow from app classpath, shadow loads it anyway!
   [argmap] ; invoke with -X
-  (let [{:keys [::hf/domain optimize debug verbose]
+  (let [{:keys [::fiddle-ns optimize debug verbose]
          :or {optimize true, debug false, verbose false}
          :as config}
         (-> argmap 
-          (update ::hf/domain str) ; coerce, -X under bash evals as symbol unless shell quoted like '"'foo'"'
+          (update ::fiddle-ns str) ; coerce, -X under bash evals as symbol unless shell quoted like '"'foo'"'
           (assoc :hyperfiddle.electric/user-version electric-user-version))]
+    (log/info `build-client (pr-str argmap))
     (b/delete {:path "resources/public/js"})
     (b/delete {:path "resources/electric-manifest.edn"})
     
@@ -32,7 +34,7 @@ so do not use `clj -T`"
     ; adding com.google.guava/guava {:mvn/version "31.1-jre"} to deps, 
     ; see https://hf-inc.slack.com/archives/C04TBSDFAM6/p1692636958361199
     (shadow-server/start!)
-    (binding [hf/*hyperfiddle-user-ns* (symbol (str (name (check string? domain)) ".fiddles"))]
+    (binding [hf/*hyperfiddle-user-ns* (symbol (check string? fiddle-ns))]
       (as->
         (shadow-api/release :prod
           {:debug debug,
@@ -42,7 +44,7 @@ so do not use `clj -T`"
              :closure-defines {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION electric-user-version}}]})
         shadow-status (assert (= shadow-status :done) "shadow-api/release error"))) ; fail build on error
     (shadow-server/stop!)
-    (log/info domain "client built")))
+    (log/info "client built for fiddle-ns: " fiddle-ns)))
 
 (def class-dir "target/classes")
 
@@ -50,7 +52,9 @@ so do not use `clj -T`"
   (str/replace (str domain) #"-" "_"))
 
 (defn uberjar
-  [{:keys [::hf/domain optimize debug verbose ::jar-name, ::skip-client]
+  [{:keys [::fiddle-ns ; shell string read as symbol
+           ::fiddle-deps-alias ; shell string read as symbol (NOT keyword)
+           optimize debug verbose ::jar-name, ::skip-client]
     :or {optimize true, debug false, verbose false, skip-client false}
     :as args}]
   ; careful, shell quote escaping combines poorly with clj -X arg parsing, strings read as symbols
@@ -58,15 +62,15 @@ so do not use `clj -T`"
   (b/delete {:path "target"})
 
   (when-not skip-client
-    (build-client {::hf/domain (check some? domain)
+    (build-client {::fiddle-ns (check some? fiddle-ns) ; pass unparsed, build-client also can be invoked from shell
                    :optimize optimize, :debug debug, :verbose verbose}))
 
   (b/copy-dir {:target-dir class-dir :src-dirs ["src-framework" "src-prod" "resources"
                                                 "src"]}) ; allow code sharing across fiddle domains
-  #_(b/copy-dir {:target-dir (str class-dir "/" (domain->dir domain)) :src-dirs [(str "src/" (domain->dir domain))]})
+  #_(b/copy-dir {:target-dir (str class-dir "/" (domain->dir fiddle-domain)) :src-dirs [(str "src/" (domain->dir fiddle-domain))]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
-                   (format "target/electricfiddle-%s-%s.jar" domain electric-user-version))
-        aliases [:prod (keyword domain)]]
+                   (format "target/electricfiddle-%s-%s.jar" (contrib.ednish/encode (str fiddle-ns)) electric-user-version))
+        aliases [:prod (keyword (name (check some? fiddle-deps-alias)))]]
     (log/info `uberjar "included aliases:" aliases)
     (b/uber {:class-dir class-dir
              :uber-file jar-name
@@ -74,6 +78,7 @@ so do not use `clj -T`"
     (log/info jar-name)))
 
 ; clj -A:prod:hello-fiddle -M -e ::ok 
-; clj -A:build:prod:hello-fiddle -M -e ::ok 
-; clj -X:build:prod:hello-fiddle uberjar :hyperfiddle/domain hello-fiddle :debug true
+; clj -A:build:prod:hello-fiddle -M -e ::ok
+; clj -X:build:prod:hello-fiddle build-client :hyperfiddle/fiddle-ns hello-fiddle :debug true
+; clj -X:build:prod:hello-fiddle uberjar :hyperfiddle/fiddle-ns hello-fiddle :build/deps-alias :hello-fiddle :debug true
 ; java -cp target/electricfiddle-hello-fiddle-77ebb18-dirty.jar clojure.main -m prod
