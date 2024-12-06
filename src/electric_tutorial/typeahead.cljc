@@ -13,7 +13,7 @@
 
             t (e/client
                 (dom/input (dom/props {:placeholder "Filter..."})
-                  (let [[t err] (e/Token (dom/On "focus"))]
+                  (let [[t err] (e/Token (dom/On "focus" identity nil))]
                     (if t
                       (reset! !search (dom/On "input" #(-> % .-target .-value) ""))
                       (dom/props {:value (OptionLabel v-id)}))
@@ -27,7 +27,7 @@
                   (dom/li (dom/text (OptionLabel x)) ; sync row load
                     (dom/On "click" (e/client
                                       (fn [e] (doto e (.stopPropagation) (.preventDefault))
-                                        (reset! !v-id x) (t))))))))))
+                                        (reset! !v-id x) (t))) nil)))))))
         v-id))))
 
 (def css "

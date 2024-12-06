@@ -131,7 +131,7 @@
                     (dom/option
                       (dom/props {:value (str id) :selected (= page id)})
                       (dom/text (str (inc (::order m)) ". " (title m))))))))
-            (when-some [^js e ($ dom/On "change")]
+            (when-some [^js e ($ dom/On "change" identity nil)]
               (let [[done! err] (e/Token e)]
                 (when done!
                   (done! ($ r/Navigate! ['. [(clojure.edn/read-string (.. e -target -value))]])))))))

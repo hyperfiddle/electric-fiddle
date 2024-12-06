@@ -22,8 +22,8 @@
       (dom/span (dom/props {:style {:grid-row 3}}) (dom/text "Duration: " goal "s"))
       (dom/input
         (dom/props {:type "range", :min 0, :max 60, :style {:grid-row 3}})
-        ($ dom/On "input" (fn [e] (->> e .-target .-value parse-long (reset! !goal)))))
+        ($ dom/On "input" (fn [e] (->> e .-target .-value parse-long (reset! !goal))) nil))
       (dom/button
         (dom/text "Reset")
         (dom/props {:style {:grid-row 4, :grid-column "1/3"}})
-        ($ dom/On "click" (fn [_] (reset! !start (now))))))))
+        ($ dom/On "click" (fn [_] (reset! !start (now))) nil)))))

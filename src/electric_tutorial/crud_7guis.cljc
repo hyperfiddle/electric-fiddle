@@ -61,7 +61,7 @@
       (let [!needle (atom ""), needle (e/watch !needle)]
         (dom/input
           (dom/props {:style {:grid-area "b"}})
-          ($ dom/On "input" (fn [e] (reset! !needle (-> e .-target .-value)))))
+          ($ dom/On "input" (fn [e] (reset! !needle (-> e .-target .-value))) nil))
         (dom/ul
           (dom/props {:style {:grid-area "d", :background-color "white"
                               :line-style-type "none", :padding 0
@@ -74,23 +74,23 @@
                 (dom/props {:style {:cursor "pointer", :padding "0.1rem 0.5rem"
                                     :color (if (= selected id) "white" "inherit")
                                     :background-color (if (= selected id) "blue" "inherit")}})
-                ($ dom/On "click" (fn [_] (select! id))))))))
+                ($ dom/On "click" (fn [_] (select! id)) nil))))))
       (let [stage (:stage state)]
         (dom/span (dom/props {:style {:grid-area "e"}}) (dom/text "Name:"))
         (dom/input
           (dom/props {:style {:grid-area "f"}})
-          ($ dom/On "input" (fn [e] (set-name! (-> e .-target .-value))))
+          ($ dom/On "input" (fn [e] (set-name! (-> e .-target .-value))) nil)
           (when-not ($ dom/Focused?) (set! (.-value dom/node) (:name stage))))
         (dom/span (dom/props {:style {:grid-area "g"}}) (dom/text "Surname:"))
         (dom/input
           (dom/props {:style {:grid-area "h"}})
-          ($ dom/On "input" (fn [e] (set-surname! (-> e .-target .-value))))
+          ($ dom/On "input" (fn [e] (set-surname! (-> e .-target .-value))) nil)
           (when-not ($ dom/Focused?) (set! (.-value dom/node) (:surname stage)))))
       (dom/div
         (dom/props {:style {:grid-area "j", :display "grid", :grid-gap "0.5rem"
                             :grid-template-columns "auto auto auto 1fr"}})
-        (dom/button (dom/text "Create") ($ dom/On "click" (fn [_] (create!))))
-        (dom/button (dom/text "Update") ($ dom/On "click" (fn [_] (update!)))
+        (dom/button (dom/text "Create") ($ dom/On "click" (fn [_] (create!)) nil))
+        (dom/button (dom/text "Update") ($ dom/On "click" (fn [_] (update!)) nil)
           (dom/props {:disabled (not selected)}))
-        (dom/button (dom/text "Delete") ($ dom/On "click" (fn [_] (delete!)))
+        (dom/button (dom/text "Delete") ($ dom/On "click" (fn [_] (delete!)) nil)
           (dom/props {:disabled (not selected)}))))))

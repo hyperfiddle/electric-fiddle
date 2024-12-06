@@ -16,7 +16,7 @@
     (dom/div
       (dom/input (dom/props {:type :checkbox})
                  (set! (.-checked dom/node) (e/server (case (:task/status e) :active false, :done true)))
-                 (let [value (dom/On "change" (fn [event] (-> event .-target .-checked)))]
+                 (let [value (dom/On "change" (fn [event] (-> event .-target .-checked)) nil)]
                    (when-let [spend! (e/TokenNofail value)]
                      (spend! (e/server (e/Task (submit-tx !xtdb [[:xtdb.api/put
                                                                   {:xt/id            id

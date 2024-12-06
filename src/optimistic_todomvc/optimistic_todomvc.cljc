@@ -103,7 +103,7 @@
           (case t ::db/pending nil #_else (set! (.-checked dom/node) db/v))
           ($ TxUI t)
           (dom/props {:title (when (= ::db/rejected t) ?e)})
-          (let [nx ($ dom/On "change" checked)]
+          (let [nx ($ dom/On "change" checked nil)]
             (if-some [spend ($ e/TokenNofail nx)]  [nx spend]  (e/amb))))))))
 
 #?(:cljs (defn input-commit> [nd]
@@ -119,8 +119,8 @@
             (reset! !x v)  (set! (.-value nd) v) (.blur nd)))]
   (e/defn InputValue [v]
     (let [!x (atom ($ e/Snapshot v)), x (e/watch !x)]
-      ($ dom/On "input" #(reset! !x (-> % .-target .-value)))
-      ($ dom/On "keyup" (partial escape dom/node !x v))
+      ($ dom/On "input" #(reset! !x (-> % .-target .-value)) nil)
+      ($ dom/On "keyup" (partial escape dom/node !x v) nil)
       (when-not ($ dom/Focused?) (set! (.-value dom/node) x))
       x)))
 
