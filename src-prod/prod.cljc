@@ -23,7 +23,7 @@
    (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
-     (check string? (:hyperfiddle.electric/user-version config))
+     (check string? (:build/electric-user-version config))
      (check string? (:build/fiddle-ns config))
      (let [?entrypoint (ensure-sym-ns-required! (symbol (str (:build/fiddle-ns config)) "ProdMain"))]
        ; is there a sensible default ProdMain? user would need to supply a default index fiddle

@@ -22,7 +22,7 @@ so do not use `clj -T`"
          :as config}
         (-> argmap 
           (update ::fiddle-ns str) ; coerce, -X under bash evals as symbol unless shell quoted like '"'foo'"'
-          (assoc :hyperfiddle.electric/user-version electric-user-version))]
+          (assoc ::electric-user-version electric-user-version))]
     (log/info `build-client (pr-str argmap))
     (b/delete {:path "resources/public/js"})
     (b/delete {:path "resources/electric-manifest.edn"})
