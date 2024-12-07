@@ -1,5 +1,6 @@
 (ns datomic-browser.datomic-browser
   (:require [contrib.assert :refer [check]]
+            [contrib.clojurex :refer [bindx]]
             [contrib.data :refer [unqualify treelister]]
             [contrib.str :refer [any-matches?]]
             #?(:clj [contrib.datomic-contrib :as dx])
@@ -228,10 +229,14 @@
         :recent-tx (RecentTx)
         (e/amb)))))
 
-(e/defn DatomicBrowser []
+(e/defn DatomicBrowser [conn]
   (e/client
     (let [fail (dom/div (Checkbox true :label "failure"))
-          edits (e/Filter some? (Page))]
+          edits (bindx [conn conn
+                        db (e/server (check (e/Task (d/db conn))))
+                        schema (e/server (check (e/Task (dx/schema! db))))]
+                  (Page))
+          edits (e/Filter some? edits)]
       fail
       (println 'edits (e/Count edits) (e/as-vec edits))
       (e/for [[t form guess] edits]
@@ -240,5 +245,3 @@
             nil (prn 'res-was-nil-stop!)
             ::ok (t)
             (t res)))))))
-
-; (e/defn Where [] ((fn [] #?(:clj ::clj :cljs ::cljs))))

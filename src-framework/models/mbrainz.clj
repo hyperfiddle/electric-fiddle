@@ -1,32 +1,50 @@
 (ns models.mbrainz
-  (:require [contrib.datomic-contrib :as dx]
-            [contrib.datomic-m :as d]
-            [missionary.core :as m]
-            [hyperfiddle.rcf :refer [tests]]))
+  (:require [datomic.api :as d]
+            #_[hyperfiddle.electric3 :as e] ; not allowed in clj file
+            [hyperfiddle.rcf :refer [tests]]
+            [missionary.core :as m]))
 
+(def datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973")
+
+(defn connect []
+  (try (d/connect datomic-uri) (catch Exception e (prn e) nil)))
+
+(comment
+  (def conn (connect))
+  (def db (d/db conn))
+  (d/touch (d/entity db 100))
+  := #:db{:id 100,
+          :ident :release/name,
+          :valueType :db.type/string,
+          :cardinality :db.cardinality/one,
+          :index true,
+          :fulltext true,
+          :doc "The name of the release"})
+
+#_#_#_#_
 (def ^:dynamic *datomic-client*)
 (def ^:dynamic *datomic-conn*)
 (def ^:dynamic *datomic-db*)
 (def ^:dynamic *schema*)
-(def ^:dynamic fixtures []) ; local datomic tx to rebase onto the db
 
+#_
 (defn init-datomic []
-  (def uri "datomic:dev://localhost:4334/mbrainz-1968-1973")
   (m/via m/blk
     (try
-      (alter-var-root #'*datomic-conn* (constantly (d/connect uri)))
-      (alter-var-root #'*datomic-db* (constantly (m/? (d/db *datomic-conn*)))) ; task
-      ::ok (catch Exception e ::datomic-unavailable))))
-
-(comment (m/? (init-datomic)))
+      (let [conn (d/connect uri)]
+        (alter-var-root #'*datomic-conn* (constantly conn))
+        (let [db (d/db *datomic-conn*)]
+          (alter-var-root #'*datomic-db* (constantly db)))) ; task
+      *datomic-conn* (catch Exception e ::datomic-unavailable))))
 
 ;; below this point - not sure what this is - DJG 2024-11-6
-
+#_#_#_
 (def pour-lamour 87960930235113)
 (def cobblestone 536561674378709)
 
 (def datomic-config {:server-type :dev-local :system "datomic-samples"})
 
+#_
 (defn install-test-state []
   (alter-var-root #'*datomic-client* (constantly (d/client datomic-config)))
   (assert (some? *datomic-client*))
@@ -40,6 +58,7 @@
   (alter-var-root #'*schema* (constantly (m/? (dx/schema! *datomic-db*))))
   (assert (some? *schema*)))
 
+#_
 (comment tests
   (some? *schema*) := true
 
