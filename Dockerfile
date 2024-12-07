@@ -24,8 +24,8 @@ ARG HYPERFIDDLE_FIDDLE_DEPS_ALIAS
 RUN clojure -A:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS -M -e ::ok         # preload
 RUN clojure -A:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS -M -e ::ok   # preload
 RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
-    :build/fiddle-ns $HYPERFIDDLE_FIDDLE_NS \
-    :build/fiddle-deps-alias $HYPERFIDDLE_FIDDLE_DEPS_ALIAS \
-    :build/jar-name user.jar
+    :hyperfiddle.fiddle-build/fiddle-ns $HYPERFIDDLE_FIDDLE_NS \
+    :hyperfiddle.fiddle-build/fiddle-deps-alias $HYPERFIDDLE_FIDDLE_DEPS_ALIAS \
+    :hyperfiddle.fiddle-build/jar-name user.jar
 
 CMD java -cp user.jar clojure.main -m prod

@@ -18,7 +18,7 @@
             dom/node js/document.body]
     (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
       (r/router (r/HTML5-History)
-        (let [fiddles (merge #?@(:default #=(dev-fiddle-config/dev-comptime-fiddle-indexes)))]
+        (let [fiddles (merge #?@(:default #=(dev-fiddle-config/comptime-dev-fiddle-indexes)))]
           (FiddleRoot (merge {`FiddleIndex FiddleIndex} fiddles)))))))
 
 #?(:clj

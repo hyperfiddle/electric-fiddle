@@ -34,7 +34,7 @@
   :build
   ;; use `clj -X:build build-client`, NOT -T! build/app classpath contamination cannot be prevented
   {:extra-paths ["src-build"]
-   :ns-default  build
+   :ns-default  hyperfiddle.fiddle-build
    :extra-deps
    {thheller/shadow-cljs          {:mvn/version "2.26.2"}
     io.github.clojure/tools.build {:mvn/version "0.9.6"
