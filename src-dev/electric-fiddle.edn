@@ -2,7 +2,7 @@
 ;; Restart your REPL for changes to take effect.
 {:hyperfiddle/fiddles
  [hello-fiddle.hello-fiddle
-  electric-tutorial.fiddles ; requires :electric-tutorial alias
+  electric-tutorial.tutorial ; requires :electric-tutorial alias
   #_datomic-browser.fiddles ; requires :datomic-browser alias
   #_xtdb-demo ; requires :xtdb-demo alias
   #_uix-demo ; requires :uix-demo alias and `npm install`

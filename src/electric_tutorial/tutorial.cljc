@@ -3,7 +3,7 @@
             #?(:clj [clojure.java.io :as io])
             clojure.string
             contrib.data
-            [electric-fiddle.fiddle-index :refer [pages]]
+            [electric-fiddle.fiddle-index :refer [pages FiddleMain]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
@@ -47,7 +47,7 @@
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
-            #_[electric-tutorial.explorer :refer [DirectoryExplorer]]))
+            [dustingetz.explorer :refer [DirectoryExplorer]]))
 
 (def tutorials
   [["Basics"
@@ -140,7 +140,7 @@
             (dom/props {:class "user-examples-nav-next"})
             (dom/text (str (title next) " >"))))))))
 
-(e/defn Fiddles []
+(e/defn TutorialFiddles []
   (merge
     {`TwoClocks TwoClocks
      `SystemProperties SystemProperties
@@ -213,7 +213,7 @@
           (Consulting-banner)
           (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
             (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
-          (binding [pages (Fiddles)]
+          (binding [pages (TutorialFiddles)]
             (Nav ?essay-filename false)
             (if-some [md-content (e/server (slurp-safe (str tutorial-path ?essay-filename ".md")))]
               (Custom-markdown (Fiddle-markdown-extensions) md-content)
@@ -221,3 +221,12 @@
                 (dom/p (dom/text "Probably we broke URLs, sorry! ")
                   (r/link ['. []] (dom/text "tutorial index")))))
             #_(Nav ?tutorial true)))))))
+
+(e/defn Fiddles []
+  {'tutorial Tutorial
+   `DirectoryExplorer DirectoryExplorer})
+
+(e/defn ProdMain [ring-req]
+  ; keep /tutorial/ in the URL
+  (FiddleMain ring-req (Fiddles)
+    :default '(tutorial)))

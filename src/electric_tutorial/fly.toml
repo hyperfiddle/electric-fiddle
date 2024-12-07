@@ -8,7 +8,7 @@ primary_region = "ewr"
 processes = []
 
 [build.args]
-  HYPERFIDDLE_FIDDLE_NS="electric-tutorial.fiddles"
+  HYPERFIDDLE_FIDDLE_NS="electric-tutorial.tutorial"
   HYPERFIDDLE_FIDDLE_DEPS_ALIAS="electric-tutorial"
 
 [env]
