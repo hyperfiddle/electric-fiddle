@@ -22,15 +22,19 @@
 #?(:clj (defn ensure-ns-required! "return symbolic-ns only if successfully loaded, else nil"
           [ns-sym] (try (require ns-sym) ns-sym (catch Exception e (prn e) nil))))
 
+#?(:clj (defn ensure-resolved! "return symbolic-var only if successfully resolved, else nil"
+          [var-qualified-sym] (when (some? (resolve var-qualified-sym)) var-qualified-sym)))
+
 #?(:clj
    (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
      (check string? (:hyperfiddle.fiddle-build/electric-user-version config))
-     (let [?user-ns (ensure-ns-required! (symbol (check string? (:hyperfiddle.fiddle-build/fiddle-ns config))))
-           ?entrypoint (symbol (name (check ?user-ns)) "ProdMain")]
-       ; is there a sensible default ProdMain? user would need to supply a default index fiddle
-       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~?entrypoint (e/server ring-req#))))
+     (let [user-ns (check (ensure-ns-required! (symbol (check string? (:hyperfiddle.fiddle-build/fiddle-ns config)))))
+           entrypoint (check (ensure-resolved! (symbol (name user-ns) "ProdMain")))] ; magic name
+       ; todo use fiddle-index by default in prod to eliminate userland boilerplate
+       ; (or #_(ensure-resolved! (symbol electric-fiddle.fiddle-index/DevMain)))
+       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#))))
          config))))
 
 (defmacro inject-user-main [] (symbol (name prod-fiddle-config/*comptime-prod-fiddle-ns*) "ProdMain"))

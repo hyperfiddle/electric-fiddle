@@ -1,11 +1,9 @@
 (ns dev
   (:require
     #?(:clj [clojure.tools.logging :as log])
-    [electric-fiddle.fiddle-index :refer [FiddleRoot FiddleIndex]]
+    [electric-fiddle.fiddle-index :refer [FiddleMain]]
     [hyperfiddle.electric3 :as e]
     #?(:cljs [hyperfiddle.electric-client3])
-    [hyperfiddle.electric-dom3 :as dom]
-    [hyperfiddle.router3 :as r]
     [hyperfiddle.rcf :as rcf]
 
     #?(:clj dev-fiddle-config)
@@ -14,12 +12,8 @@
 (comment (-main)) ; repl entrypoint
 
 (e/defn DevMain [ring-req]
-  (binding [e/http-request (e/server ring-req)
-            dom/node js/document.body]
-    (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
-      (r/router (r/HTML5-History)
-        (let [fiddles (merge #?@(:default #=(dev-fiddle-config/comptime-dev-fiddle-indexes)))]
-          (FiddleRoot (merge {`FiddleIndex FiddleIndex} fiddles)))))))
+  (let [fiddles (merge #?@(:default #=(dev-fiddle-config/comptime-dev-fiddle-indexes)))]
+    (FiddleMain ring-req fiddles)))
 
 #?(:clj
    (do

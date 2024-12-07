@@ -21,7 +21,7 @@
           (dom/td (r/link [k] (dom/text (name k))))
           (dom/td (dom/text k)))))))
 
-(e/defn FiddleRoot ; also used in prod tutorial, which leverages the dev fiddle infrastructure
+(e/defn FiddleRoot
   [fiddles
    & {:keys [default]
       :or {default `(FiddleIndex)}}]
@@ -34,3 +34,10 @@
           (case fiddle
             `FiddleIndex #_(FiddleIndex) (Fiddle) ; lol why - workaround crash 20241205
             (r/pop (Fiddle))))))))
+
+(e/defn FiddleMain [ring-req fiddles & {:as props}] ; dev, optionally in prod (e.g. tutorial)
+  (binding [e/http-request (e/server ring-req)
+            dom/node js/document.body]
+    (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
+      (r/router (r/HTML5-History)
+        (FiddleRoot (merge {`FiddleIndex FiddleIndex} fiddles) props)))))
