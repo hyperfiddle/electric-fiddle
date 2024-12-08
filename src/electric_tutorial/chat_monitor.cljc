@@ -81,10 +81,10 @@ lost. Fixing this requires form semantics, see forms tutorial."
         present (e/server (Presence! !present username))
         edits (ChatApp username present)]
     (prn 'edits (e/as-vec edits))
-    (e/for [[token message] (e/Filter some? edits)]
+    (e/for [[t message] (e/Filter some? edits)]
       (let [res (e/server (Create-message username message))]
         (case res
-          ::ok (token)
+          ::ok (t)
           ::fail nil))))) ; for retry, we're not done yet - todo finish demo
 
 (def css "

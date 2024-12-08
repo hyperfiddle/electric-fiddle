@@ -4,6 +4,7 @@ WORKDIR /app
 COPY deps.edn deps.edn
 RUN clojure -A:build:prod -M -e ::ok   # preload and cache dependencies, only reruns if deps.edn changes
 
+# electric-user-version is computed from git sha during clj build
 COPY .git .git
 COPY shadow-cljs.edn shadow-cljs.edn
 COPY src src

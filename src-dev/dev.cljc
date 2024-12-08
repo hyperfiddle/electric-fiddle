@@ -2,8 +2,8 @@
   (:require
    clojure.edn
    electric-starter-app.main
-   [hyperfiddle.electric3 :as e :refer [$]]
-   #?(:cljs [hyperfiddle.electric-client3])
+   [hyperfiddle.electric3 :as e]
+   #?(:cljs hyperfiddle.electric-client3)
    #?(:clj [electric-starter-app.server-jetty :as jetty])
    #?(:clj [shadow.cljs.devtools.api :as shadow])
    #?(:clj [shadow.cljs.devtools.server :as shadow-server])
@@ -11,7 +11,7 @@
 
 (comment (-main)) ; repl entrypoint
 
-#?(:clj ;; Server Entrypoint
+#?(:clj ; server entrypoint
    (do
      (def config
        (merge
@@ -19,15 +19,14 @@
           :port 8080
           :resources-path "public/electric_starter_app"
           :manifest-path ; contains Electric compiled program's version so client and server stays in sync
-          "public//electric_starter_app/js/manifest.edn"}
-         (try (clojure.edn/read-string (slurp "resources/config.edn")) (catch java.io.FileNotFoundException _))
-         ))
+          "public/electric_starter_app/js/manifest.edn"}))
 
      (defn -main [& args]
        (log/info "Starting Electric compiler and server...")
 
-       (shadow-server/start!)
+       (shadow-server/start!) ; no-op in calva shadow-cljs configuration which starts this out of band
        (shadow/watch :dev)
+
        (comment (shadow-server/stop!))
 
        (def server (jetty/start-server!
@@ -35,11 +34,12 @@
                        (e/boot-server {} electric-starter-app.main/Main (e/server ring-request)))
                      config))
        (comment
-         (.stop server)
+         (.stop server) ; jetty
+         (server)       ; httpkit
          )
        )))
 
-#?(:cljs ;; Client Entrypoint
+#?(:cljs ; client entrypoint
    (do
      (defonce reactor nil)
 

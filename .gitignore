@@ -5,6 +5,7 @@
 .clj-kondo/.cache
 .cpcache
 .lsp
+.idea
 .nrepl-port
 .shadow-cljs
 node_modules
