@@ -3,7 +3,7 @@
     #?(:clj [clojure.tools.logging :as log])
     [electric-fiddle.fiddle-index :refer [FiddleMain]]
     [hyperfiddle.electric3 :as e]
-    #?(:cljs [hyperfiddle.electric-client3])
+    #?(:cljs hyperfiddle.electric-client3)
     [hyperfiddle.rcf :as rcf]
 
     #?(:clj dev-fiddle-config)

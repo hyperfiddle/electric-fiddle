@@ -1,7 +1,7 @@
 (ns hyperfiddle.fiddle-build
   (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [clojure.tools.build.api :as b]
+            [clojure.tools.logging :as log]
             [contrib.assert :refer [check]]
             contrib.ednish
             [shadow.cljs.devtools.api :as shadow-api]
@@ -10,13 +10,12 @@
 
 (def electric-user-version (b/git-process {:git-args "describe --tags --long --always --dirty"}))
 
-(defn build-client
-  "build Electric app client, invoke with -X e.g. 
-`clojure -X:build:prod:hello-fiddle build-client :hyperfiddle.build/fiddle-ns hello-fiddle :debug true`
-Note: Electric shadow compilation requires application classpath to be available, 
-so do not use `clj -T`"
+(defn build-client "
+invoke like: clj -X:build:prod build-client`
+Note: do not use `clj -T`, because Electric shadow compilation requires
+application classpath to be available"
   ; No point in sheltering shadow from app classpath, shadow loads it anyway!
-  [argmap] ; invoke with -X
+  [argmap] ; from clj -X
   (let [{:keys [::fiddle-ns optimize debug verbose]
          :or {optimize true, debug false, verbose false}
          :as config}
@@ -27,8 +26,8 @@ so do not use `clj -T`"
     (b/delete {:path "resources/public/js"})
     (b/delete {:path "resources/electric-manifest.edn"})
     
-    ; bake domain and user-version into artifact, cljs and clj
-    (b/write-file {:path "resources/electric-manifest.edn" :content config}) ; even used?
+    ; bake fiddle-ns and electric-user-version into artifact, cljs and clj
+    (b/write-file {:path "resources/electric-manifest.edn" :content config}) ; read in prod
     
     ; "java.lang.NoClassDefFoundError: com/google/common/collect/Streams" is fixed by
     ; adding com.google.guava/guava {:mvn/version "31.1-jre"} to deps, 
