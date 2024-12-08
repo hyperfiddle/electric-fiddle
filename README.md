@@ -16,12 +16,12 @@ clj -X:build:prod build-client
 clj -M:prod -m prod
 
 # Uberjar (optional)
-clj -X:build:prod uberjar :build/jar-name "target/app.jar"
+clj -X:build:prod uberjar :build/jar-name "app.jar"
 java -cp target/app.jar clojure.main -m prod
 
 # Docker
 docker build -t electric3-starter-app:latest .
-docker run electric3-starter-app:latest
+docker run --rm -it -p 8080:8080 electric3-starter-app:latest
 
 ```
 - fly.io deployment: [fly.toml](fly.toml)

@@ -29,7 +29,7 @@
    (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
-     (check string? (:hyperfiddle.electric/user-version config))
+     (check string? (:hyperfiddle.electric-ring-adapter3/electric-user-version config))
      (jetty/start-server!
        (fn [ring-req] (e/boot-server {} electric-starter-app.main/Main (e/server ring-req)))
        config)))
