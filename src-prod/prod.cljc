@@ -29,7 +29,7 @@
    (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
-     (check string? (:hyperfiddle.fiddle-build/electric-user-version config))
+     (check string? (:hyperfiddle.electric-ring-adapter3/electric-user-version config))
      (let [user-ns (check (ensure-ns-required! (symbol (check string? (:hyperfiddle.fiddle-build/fiddle-ns config)))))
            entrypoint (check (ensure-resolved! (symbol (name user-ns) "ProdMain")))] ; magic name
        ; todo use fiddle-index by default in prod to eliminate userland boilerplate

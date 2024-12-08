@@ -21,7 +21,7 @@ application classpath to be available"
          :as config}
         (-> argmap 
           (update ::fiddle-ns (comp not-empty str)) ; coerce, -X under bash evals as symbol unless shell quoted like '"'foo'"'
-          (assoc ::electric-user-version electric-user-version))]
+          (assoc :hyperfiddle.electric-ring-adapter3/electric-user-version electric-user-version))]
     (log/info 'build-client (pr-str config #_argmap))
     (b/delete {:path "resources/public/js"})
     (b/delete {:path "resources/electric-manifest.edn"})
