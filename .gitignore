@@ -22,3 +22,4 @@ data
 /src/datomic_browser/state/
 /src/datagrid/state/
 /.dir-locals.el
+/resources/public/user/ui_demo.css
