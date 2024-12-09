@@ -93,7 +93,10 @@
   {:extra-deps
    {backtick/backtick {:mvn/version "0.3.4"}
     com.datomic/peer {:mvn/version "1.0.7075"}
-    org.clojure/core.match {:mvn/version "0.3.0-alpha5"}}}
+    org.clojure/core.match {:mvn/version "0.3.0-alpha5"}}
+   :override-deps ; uberjar sees only this one alias
+   {com.hyperfiddle/electric {:local/root "vendor/electric"}
+    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
 
   :xtdb-demo ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-demo:...`
   {:extra-deps

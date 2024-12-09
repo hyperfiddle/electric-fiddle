@@ -1,0 +1,24 @@
+# fly.toml app configuration file generated for staffly on 2024-12-09T15:08:02-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'staffly'
+primary_region = 'ewr'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 4
+
+[build.args]
+  HYPERFIDDLE_FIDDLE_NS="datomic-browser.mbrainz-browser"
+  HYPERFIDDLE_FIDDLE_DEPS_ALIAS="datomic-browser"
