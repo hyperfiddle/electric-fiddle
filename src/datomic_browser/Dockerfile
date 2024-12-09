@@ -33,7 +33,7 @@ RUN ./datomic_fixtures.sh
 FROM amazoncorretto:11 AS app
 WORKDIR /app
 #RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends netcat
-COPY --from=build /app/app.jar app.jar
+COPY --from=build /app/target/app.jar app.jar
 COPY --from=datomic-fixtures /app/state /app/state
 COPY src/datomic_browser/prod.sh prod.sh
 EXPOSE 8080

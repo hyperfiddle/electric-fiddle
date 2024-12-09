@@ -28,4 +28,4 @@ RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
     :hyperfiddle.fiddle-build/fiddle-deps-alias $HYPERFIDDLE_FIDDLE_DEPS_ALIAS \
     :hyperfiddle.fiddle-build/jar-name user.jar
 
-CMD java -cp user.jar clojure.main -m prod
+CMD java -cp target/user.jar clojure.main -m prod

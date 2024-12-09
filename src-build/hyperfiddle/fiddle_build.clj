@@ -69,11 +69,11 @@ so do not use `clj -T`"
                                                 "src"]}) ; allow code sharing across fiddle domains
   #_(b/copy-dir {:target-dir (str class-dir "/" (domain->dir fiddle-domain)) :src-dirs [(str "src/" (domain->dir fiddle-domain))]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
-                   (format "target/electricfiddle-%s-%s.jar" (contrib.ednish/encode (str fiddle-ns)) electric-user-version))
+                   (format "electricfiddle-%s-%s.jar" (contrib.ednish/encode (str fiddle-ns)) electric-user-version))
         aliases [:prod (keyword (name (check some? fiddle-deps-alias)))]]
     (log/info 'uberjar "included aliases:" aliases)
     (b/uber {:class-dir class-dir
-             :uber-file jar-name
+             :uber-file (str "target/" jar-name)
              :basis     (b/create-basis {:project "deps.edn" :aliases aliases})})
     (log/info jar-name)))
 
