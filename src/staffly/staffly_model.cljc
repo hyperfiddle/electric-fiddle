@@ -35,7 +35,7 @@
               (alter-var-root #'*datomic-conn* (fn [_] (create-test-db)))
               (alter-var-root #'*db* (constantly (d/db *datomic-conn*)))
               (alter-var-root #'*schema* (constantly (m/? (dx/schema! *db*))))
-              ::ok (catch Exception e (prn e) ::datomic-unavailable)))))
+              *datomic-conn* (catch Exception e (prn e) nil)))))
 
 (comment (m/? (init-datomic)))
 

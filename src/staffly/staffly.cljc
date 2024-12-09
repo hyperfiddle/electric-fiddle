@@ -1,5 +1,8 @@
-(ns staffly.fiddles
+(ns staffly.staffly
   (:require [contrib.assert :refer [check]]
+            [contrib.clojurex :refer [bindx]]
+            [datomic-browser.mbrainz-browser :refer [Inject]]
+            [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
@@ -32,33 +35,26 @@
 (e/defn Service [edits]
   (e/drain edits))
 
-(e/defn Inject-datomic [Page]
+(e/defn Staffly [datomic-conn]
   (e/server
-    (let [x (e/Task (model/init-datomic) ::pending)]
-      (case x
-        ::pending (dom/h1 (dom/text "Waiting for Datomic connection ..."))
-        ::model/ok (binding [model/datomic-conn (check model/*datomic-conn*)
-                             model/db (check model/*db*)
-                             model/schema (check model/*schema*)]
-                     (e/client
-                       (Page)))
-        (do (dom/h1 (dom/text "Datomic transactor not found"))
-            (dom/code (dom/text x)))))))
-
-(e/defn Staffly []
-  (Inject-datomic
-    (e/fn []
-      (binding [*effects {}]
+    (bindx [model/datomic-conn (check datomic-conn)
+            model/db (check model/*db*)
+            model/schema (check model/*schema*)
+            *effects {}]
+      (e/client
         (Service
           (Page))))))
 
+(e/defn Inject-datomic [F]
+  (e/server
+    (Inject (e/Task (model/init-datomic))
+      {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
+       :Failed (e/fn [] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md")))
+       :Ok F})))
+
 (e/defn Fiddles []
-  {`Staffly Staffly})
+  {`Staffly (Inject-datomic Staffly)})
 
 (e/defn ProdMain [ring-req]
-  (e/client
-    (binding [dom/node js/document.body
-              e/http-request (e/server ring-req)]
-      (dom/div ; mandatory wrapper div - https://github.com/hyperfiddle/electric/issues/74
-        (r/router (r/HTML5-History)
-          (Staffly))))))
+  (FiddleMain ring-req (Fiddles)
+    :default `(Staffly)))
