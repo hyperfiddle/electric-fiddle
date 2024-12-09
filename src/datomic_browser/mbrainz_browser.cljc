@@ -10,18 +10,23 @@
   ; todo needs to be a lot more sophisticated to inject many dependencies concurrently and report status in batch
   (cond
     (ex/None? ?x) Busy
-    (nil? ?x) Failed
+    (or (some? (ex-message ?x)) (nil? ?x)) (Failed ?x)
     () (e/Partial Ok ?x)))
 
 (e/defn Inject-datomic [F]
   (e/server
     (Inject (e/Offload #(model/connect))
       {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
-       :Failed (e/fn [] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md")))
+       :Failed (e/fn [err] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
+                 (dom/pre (dom/text (pr-str err))))
        :Ok F})))
 
+(e/defn DatomicBrowser*
+  ([] (e/call (Inject-datomic DatomicBrowser*)))
+  ([conn] (DatomicBrowser conn)))
+
 (e/defn Fiddles []
-  {`DatomicBrowser (Inject-datomic DatomicBrowser)})
+  {`DatomicBrowser DatomicBrowser*})
 
 (e/defn ProdMain [ring-req]
   (FiddleMain ring-req (Fiddles)

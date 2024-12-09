@@ -35,25 +35,28 @@
 (e/defn Service [edits]
   (e/drain edits))
 
-(e/defn Staffly [datomic-conn]
-  (e/server
-    (bindx [model/datomic-conn (check datomic-conn)
-            model/db (check model/*db*)
-            model/schema (check model/*schema*)
-            *effects {}]
-      (e/client
-        (Service
-          (Page))))))
-
 (e/defn Inject-datomic [F]
   (e/server
     (Inject (e/Task (model/init-datomic))
       {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
-       :Failed (e/fn [] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md")))
+       :Failed (e/fn [err] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
+                 (dom/pre (dom/text (pr-str err))))
        :Ok F})))
 
+(e/defn Staffly
+  ([] (e/call (Inject-datomic Staffly))) ; wait until runtime to inject
+  ([datomic-conn]
+   (e/server
+     (bindx [model/datomic-conn (check datomic-conn)
+             model/db (check model/*db*)
+             model/schema (check model/*schema*)
+             *effects {}]
+       (e/client
+         (Service
+           (Page)))))))
+
 (e/defn Fiddles []
-  {`Staffly (Inject-datomic Staffly)})
+  {`Staffly Staffly})
 
 (e/defn ProdMain [ring-req]
   (FiddleMain ring-req (Fiddles)

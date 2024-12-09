@@ -1,5 +1,7 @@
 (ns models.mbrainz
-  (:require [datomic.api :as d]
+  (:require [clojure.tools.logging :as log]
+            [contrib.assert :refer [check]]
+            [datomic.api :as d]
             #_[hyperfiddle.electric3 :as e] ; not allowed in clj file
             [hyperfiddle.rcf :refer [tests]]
             [missionary.core :as m]))
@@ -7,7 +9,8 @@
 (def datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973")
 
 (defn connect []
-  (try (d/connect datomic-uri) (catch Exception e (prn e) nil)))
+  (try (check (d/connect datomic-uri))
+       (catch Exception e (log/error e) e)))
 
 (comment
   (def conn (connect))
