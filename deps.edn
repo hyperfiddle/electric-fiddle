@@ -84,7 +84,10 @@
 
   :datomic-browser
   {:extra-deps
-   {com.datomic/peer {:mvn/version "1.0.7075"}}}
+   {com.datomic/peer {:mvn/version "1.0.7075"}}
+   :override-deps ; uberjar sees only this one alias
+   {com.hyperfiddle/electric {:local/root "vendor/electric"}
+    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
 
   :staffly
   {:extra-deps

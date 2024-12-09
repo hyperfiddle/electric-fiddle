@@ -1,27 +1,31 @@
-# Electric Datomic Browser
-
+# Datomic Browser — Electric v3
 
 You need [Datomic pro](https://docs.datomic.com/pro/releases.html) (now free!) to run this demo.
 
 https://user-images.githubusercontent.com/124158/219978031-939344eb-4489-4b97-af9f-4b2df38c70db.mp4
 
-## Getting started
+# Dev
 
 ```shell
-# get Datomic and also install the mbrainz example data set
-./datomic_fixtures.sh
-
-# Run Datomic
+./datomic_fixtures.sh # get Datomic and also install the mbrainz example data set
 ./state/datomic-pro/bin/transactor config/samples/dev-transactor-template.properties >>state/datomic.log 2>&1 &
-
-# Run the electric-fiddle app and REPL
-clj -A:dev:datomic-browser
-
-# From the fiddle REPL, load the datomic-browser fiddle
-(dev/load-fiddle! 'datomic-browser)
-
-# Run the fiddle server
-(dev/-main)
+# add `datomic-browser.mbrainz-browser` to electric-fiddle.edn
+clj -A:dev:datomic-browser # Run the electric-fiddle app and REPL
+(dev/-main) # Run the fiddle server
+http://localhost:8080
 ```
 
-http://localhost:8080
+# Prod
+
+```
+# prod local
+clojure -X:build:prod:datomic-browser build-client :hyperfiddle.fiddle-build/fiddle-ns datomic-browser.mbrainz-browser
+clj -M:prod:datomic-browser -m prod
+
+# prod uberjar
+clojure -X:build:prod:datomic-browser uberjar :hyperfiddle.fiddle-build/fiddle-ns datomic-browser.mbrainz-browser :hyperfiddle.fiddle-build/fiddle-deps-alias datomic-browser :hyperfiddle.fiddle-build/jar-name "app.jar"
+java -cp app.jar clojure.main -m prod
+
+# deploy via dockerfile
+fly deploy --remote-only --config src/datomic_browser/fly.toml --dockerfile src/datomic_browser/Dockerfile
+```
