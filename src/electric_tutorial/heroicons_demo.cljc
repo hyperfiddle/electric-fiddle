@@ -1,9 +1,9 @@
-(ns heroicons.fiddles
+(ns electric-tutorial.heroicons-demo
   (:require
    contrib.str
    [heroicons.electric3.v24.outline]
    [heroicons.electric3.v24.solid]
-   [hyperfiddle.electric3 :as e :refer [$]]
+   [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-css3 :as css]
    [hyperfiddle.electric-dom3 :as dom]
    [hyperfiddle.electric-svg3 :as svg]))
@@ -52,11 +52,3 @@
       (IconSet 'heroicons.electric3.v24.outline needle)
       (dom/h2 (dom/text "Solid"))
       (IconSet 'heroicons.electric3.v24.solid needle))))
-
-(e/defn Fiddles [] {`Heroicons Heroicons})
-
-(e/defn ProdMain [_ring-request]
-  (e/client
-    (binding [dom/node js/document.body] ; where to mount dom elements
-      (dom/div
-        ($ Heroicons)))))

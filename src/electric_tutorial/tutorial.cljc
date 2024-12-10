@@ -47,7 +47,8 @@
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
-            [dustingetz.explorer :refer [DirectoryExplorer]]))
+            [dustingetz.explorer :refer [DirectoryExplorer]]
+            #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
 
 (def tutorials
   [["Basics"
@@ -185,6 +186,7 @@
                                         ; Kitchen Sink
                                         ;`Timer Timer
      `SVG SVG
+     #_#_`Heroicons Heroicons
                                         ;`ReagentInterop ReagentInterop
      }))
 
