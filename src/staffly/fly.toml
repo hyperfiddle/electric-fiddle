@@ -20,5 +20,5 @@ primary_region = 'ewr'
   cpus = 4
 
 [build.args]
-  HYPERFIDDLE_FIDDLE_NS="datomic-browser.mbrainz-browser"
-  HYPERFIDDLE_FIDDLE_DEPS_ALIAS="datomic-browser"
+  HYPERFIDDLE_FIDDLE_NS="staffly.staffly"
+  HYPERFIDDLE_FIDDLE_DEPS_ALIAS="staffly"
