@@ -1,4 +1,4 @@
-(ns london-talk-2024.differential-tricks
+(ns dustingetz.london-talk-2024.differential-tricks
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 

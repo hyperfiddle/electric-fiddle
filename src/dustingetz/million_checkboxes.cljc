@@ -6,8 +6,6 @@
             [hyperfiddle.incseq :as i]
             [missionary.core :as m]))
 
-(e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
-
 (e/defn Holding [lock F]
   (case (e/Task lock)
     (do (e/client (println "I have the lock")) (e/on-unmount #(lock)) (F))))
@@ -16,7 +14,7 @@
 
 #?(:clj (def !xs (i/spine)))
 #?(:clj (def !n (atom (long 200))))
-(comment (reset! !n (long 100000)))
+(comment (reset! !n (long 10000)))
 
 (defn randomly! [n f!]
   (m/sp (loop [] (m/? (m/sleep (rand-int n))) (f!) (recur))))
@@ -54,7 +52,7 @@
         (Writer !xs count (e/watch !n))))
 
     (dom/h1 (dom/text "count: " count))
-    (Tap-diffs xs)
+    (e/Tap-diffs xs)
 
     (e/for [[i x] xs]
       ; electric-dom3 uses 5x more memory per element, todo investigate
@@ -69,10 +67,11 @@
 
       (e/amb))
 
-    (e/for [[[i v] t] (dom/On-all "change"
+    (e/for [[t [i v]] (dom/On-all "change"
                         (fn [e] (let [x (.-target e)]
                                   [(long (.getAttribute x "data-index"))
                                    (.-checked x)])))]
-      (t (e/server (!xs i {} [i v]) i)))))
+      (case (e/server (!xs i {} [i v]) i)
+        (t)))))
 
 #_(e/server (e/Task (randomly! (* 100 1000) #(!xs i (fn [[i v] _] [i (not v)]) ::x))) (e/amb))

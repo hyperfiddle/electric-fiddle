@@ -1,7 +1,7 @@
 (ns dustingetz.logic
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            #_[hyperfiddle.electric-local-def3 :as l]))
+            [hyperfiddle.electric-local-def3 :as l]))
 
 (defn has-blue-house [house] (= house "blue"))
 #_(defn tea-drinker-doesnt-have-a-dog [drink pet] (and (= drink "tea") (= pet "dog")))

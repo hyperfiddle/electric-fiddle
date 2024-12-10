@@ -1,10 +1,10 @@
-(ns london-talk-2024.webview-generic
+(ns dustingetz.london-talk-2024.webview-generic
   (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.typeahead :refer [Typeahead]]
-            [london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
+            [dustingetz.london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
 
 (e/defn GenericTable [Query Row]
   (let [ids (Query)]

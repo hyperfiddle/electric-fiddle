@@ -5,8 +5,6 @@
             [hyperfiddle.incseq :as i]
             [missionary.core :as m]))
 
-(e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
-
 (e/defn Holding [lock F]
   (case (e/Task lock)
     (do (e/client (println "I have the lock")) (e/on-unmount #(lock)) (F))))
@@ -15,7 +13,7 @@
 
 #?(:clj (def !xs (i/spine)))
 #?(:clj (def !n (atom (long 100))))
-(comment (reset! !n 100))
+(comment (reset! !n 1000))
 
 (e/defn Writer [!xs count target]
   (e/server
@@ -28,8 +26,8 @@
     (e/amb)))
 
 #?(:clj (def lock (m/sem)))
-(declare css)
 
+(declare css)
 (e/defn MillionCheckboxes2 []
   (dom/style (dom/text css))
   (let [xs (e/server (e/join !xs))
@@ -43,13 +41,14 @@
           (.appendChild dom/node node)))
 
       (let [mouse-down? (dom/Mouse-down?)]
-        (e/for [[[i v] t] (dom/On-all "mouseover"
+        (e/for [[t [i v]] (dom/On-all "mouseover"
                             (fn [e]
                               (when mouse-down?
                                 (let [x (.-target e)]
                                   [(some-> (.getAttribute x "data-index") parse-long) ; defend mouseover board itself
                                    (some-> (.getAttribute x "data-checked") parse-boolean)]))))]
-          (t (e/server (!xs i {} [i true]) i)) ; check
+          (case (e/server (!xs i {} [i true]) i) ; check
+            (t))
           (e/amb))))))
 
 (def css "
