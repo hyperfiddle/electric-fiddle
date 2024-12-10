@@ -7,7 +7,6 @@
   #_xtdb-demo ; requires :xtdb-demo alias
   #_uix-demo ; requires :uix-demo alias and `npm install`
   #_datagrid
-  #_custom-types
   london-talk-2024.london-talk-2024
   #_dustingetz.fiddles
   staffly.staffly]}
