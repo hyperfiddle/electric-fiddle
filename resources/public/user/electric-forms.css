@@ -1,11 +1,205 @@
 /* Forms, Crud, TodoMVC(!important), Datomic browser */
-[aria-busy="true"] { background-color: yellow !important; }
-input[type="checkbox"][aria-busy="true"] {
+/* [aria-busy="true"] { background-color: yellow !important; } */
+/* input[type="checkbox"][aria-busy="true"] { */
+    /* Can't color or background-color native checkboxes
+       border and outline are tricky to get right without messing up keyboard nav */
+    /* box-shadow: 0 0 0.2rem 0.2rem yellow; /\* simulate a border *\/ */
+    /* outline: none; */
+/* } */
+/* [aria-invalid="true"] { background-color: pink; } */
+/* input[aria-invalid="true"] { outline: 3px pink solid; } */
+/* input[type="checkbox"][aria-invalid="true"]:focus { outline: 4px pink solid; } */
+
+/* Layout */
+
+form dl { margin: 0; display: grid; grid-template-columns: max-content auto; gap: 0.5rem 0.75rem; }
+form dl dt {
+    grid-column: 1;
+    display:flex; align-items: baseline; justify-content: end; height:100%;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+form dl dd {
+    grid-column: 2;
+    display: flex; gap: 0.5rem; flex-wrap: nowrap; align-items: center;
+    /* white-space: nowrap; */
+}
+
+form input{
+    border-radius: 4px;
+}
+
+form input:disabled{
+    border-color: #cdcdcd; /* native */
+    color: rgb(109, 109, 109); /* native */
+}
+
+form [type="text"]
+, form input:where(:not([type]))
+, form [type="email"]
+, form [type="url"]
+, form [type="password"]
+, form [type="number"]
+, form [type="date"]
+, form [type="datetime-local"]
+, form [type="month"]
+, form [type="search"]
+, form [type="tel"]
+, form [type="time"]
+, form [type="week"]
+, form [multiple]
+, form textarea
+, form select{
+    border-radius: 3px;
+    padding: 0.125rem 0.5rem;
+}
+
+form dl[role=radiogroup]{
+    --radiogroup-items-count: 0;
+    grid-template-rows: repeat(var(--radiogroup-items-count), auto);
+}
+
+form dl[role=radiogroup] dt label::after{
+    display: none;
+}
+
+form dl[role=radiogroup] dd{
+    display: inline;
+}
+
+form dl[role=radiogroup] dd input{
+    vertical-align: baseline;
+    margin-right: 0.5rem;
+}
+
+/* Validation */
+/* [aria-invalid=true] means tx rejected, :invalid or :user-invalid means user input failed validation */
+
+form [data-role=errormessage]{ visibility:hidden; color: red;}
+/* Field-level error messages */
+form :invalid + [data-role=errormessage]{}
+
+form dt label::after{
+    visibility: hidden;
+    content: "*";
+    color: crimson;
+    padding-left: 0.1rem;
+    font-weight: 300;
+}
+form dt:has(+ dd :required) label::after
+{
+    visibility: visible;
+}
+
+form dd:has(:invalid){
+    --error-message: "";
+}
+
+form dd:has(:invalid)::after,
+form [role=radiogroup][data-errormessage]::after{
+    content: var(--error-message);
+    color: red;
+    font-size: 0.85rem;
+}
+
+/* Nested case: data-errormessage has precedence over native :invalid state */
+form dd:has([data-errormessage])::after,
+form dd:has([data-errormessage]) dd::after
+{
+    display: none;
+}
+
+form [role=radiogroup][data-errormessage]::after{
+    border-left: 1px red solid;
+    height: 100%;
+    display: flex; align-items:center;
+    padding-left: .5rem;
+}
+
+form dd:has(:invalid:required){
+    --error-message: "Required";
+}
+
+form dd [role=radiogroup][data-errormessage]{
+    --error-message: attr(data-errormessage);
+}
+form dd [role=radiogroup][data-errormessage]::after{
+    grid-column: 3;
+    grid-row: 1 / -1;
+}
+
+
+
+/* Form-level error message */
+form:has([type=submit]:is([aria-busy=true], :disabled)) /* form is busy but is waiting for a change to allow commit again */
+        > [data-role=errormessage]
+{
+    visibility: visible;
+}
+
+/* Validation runs continuously, but might or might not be displayed immediately to not disrupt user flow */
+
+/* Option 1: form always report validation, even before user interaction - mounts with red state */
+form [data-role=errormessage]
+{}
+/* {visibility: visible;} */
+form input:not([type=submit]):invalid
+{}
+/* {outline: 3px pink solid;} */
+
+/* Option 2: form reports validation as soon as the user interact with controls.*/
+form:invalid /* in a form containing invalid user input */
+  :invalid /* target all invalid user inputs */
+     + [data-role=errormessage] /* select their respectively associated error containers */
+{}
+/* { visibility : visible;} */
+form input:not([type=submit]):invalid
+{}
+/* {outline: 3px pink solid;} */
+
+
+/* Option 3: form reports validation after user click commit */
+/* in a form containing invalid user input, having a visual commit affordance (TODO handle :show-button false), in a pending or tx-rejected state */
+form:invalid:has([type=submit]:is([aria-busy=true],[aria-invalid=true]))
+ :invalid /* target all invalid user inputs */
+  + [data-role=errormessage] /* select their respectively associated error containers */
+/* {} */
+{visibility: visible;}
+
+form:invalid:has([type=submit]:is([aria-busy=true],[aria-invalid=true])) :invalid
+/* {} */
+{outline: 3px pink solid;}
+
+
+/* Transaction */
+
+form :is([type=submit], [type=reset]){
+    border: 1px gray solid;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+form [type=submit]:disabled{
+    background-color: #F4F4F6; /* native button disabled bgcolor */
+    color: rgb(109, 109, 109);
+}
+form :is([type=submit], [type=reset]):not(:disabled):hover{
+    cursor: pointer;
+    background-color: whitesmoke;
+}
+
+form [aria-busy=true] {background-color: yellow;}
+/* form input:not([type=submit]):invalid {outline: 3px pink solid;} /\* field validation error *\/ */
+form input[type=submit][aria-invalid] {background-color: pink;} /* tx-rejected on commit button */
+
+form input[type=checkbox]{appearance: checkbox;}
+form input[type=radio]{appearance: radio;}
+
+form input:is([type=checkbox],[type=radio])[aria-busy=true] {
     /* Can't color or background-color native checkboxes
        border and outline are tricky to get right without messing up keyboard nav */
     box-shadow: 0 0 0.2rem 0.2rem yellow; /* simulate a border */
     outline: none;
 }
-[aria-invalid="true"] { background-color: pink; }
-input[aria-invalid="true"] { outline: 3px pink solid; }
-input[type="checkbox"][aria-invalid="true"]:focus { outline: 4px pink solid; }
+

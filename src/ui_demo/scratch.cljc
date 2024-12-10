@@ -10,6 +10,8 @@
             [hyperfiddle.ui.stepper :as step]
             [hyperfiddle.ui.typeahead :as t]
             [hyperfiddle.ui.wizard :as wiz]
+            [hyperfiddle.electric-css3 :as css]
+            [ui-demo.form]
             ))
 
 (def lorem "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum tincidunt, enim ac tempor consectetur, justo lorem lobortis magna, eu tincidunt diam sem sed nulla. Nullam gravida arcu sit amet ante congue, eu porttitor est rhoncus. Morbi molestie lorem vel venenatis posuere. Praesent ultricies vehicula ornare. Aenean ornare euismod risus. Donec diam massa, lacinia in commodo in, egestas non nisl. Pellentesque quis mollis est.")
@@ -27,7 +29,7 @@
     (dom/hr)
 
     (acc/accordion
-      (acc/entry {::acc/open? true}
+      #_(acc/entry {::acc/open? true}
         (acc/header (dom/h2 (dom/text "Typeahead")))
         (acc/body (t/Typeahead {:user/name "Alice"}
                     :Options (e/fn [search] (e/diff-by :user/name (filter (comp #(clojure.string/includes? % search) :user/name)
@@ -36,17 +38,17 @@
                                                                      {:user/name "Charlie"}])))
                     :option-label :user/name)))
 
-      (acc/entry {}
+      #_(acc/entry {}
         (acc/header (dom/h2 (dom/text "tag picker")))
         (acc/body (Tag lorem)))
 
-      (acc/entry {}
+      #_(acc/entry {}
         (acc/header
           (dom/h2 (dom/text "Spinner")))
         (acc/body
           (hyperfiddle.ui.spinner/spinner (dom/props {:class "w-8 h-8"}))))
 
-      (acc/entry {}
+      #_(acc/entry {}
         (acc/header
           (dom/h2 (dom/text "Menu")))
         (acc/body
@@ -64,7 +66,7 @@
                   (dom/props {:class item-class})
                   (dom/text "Entry 3")))))))
 
-      (acc/entry {}
+      #_(acc/entry {}
         (acc/header
           (dom/h2 (dom/text "Context Menu")))
         (acc/body
@@ -92,7 +94,7 @@
                 (dom/On "contextmenu" #(menu/open! nil %) nil)
                 )))))
 
-      (acc/entry {}
+      #_(acc/entry {}
         (acc/header
           (dom/h2 (dom/text "Disclosure")))
         (acc/body
@@ -100,7 +102,7 @@
             (dis/button (dom/text "click me to toggle"))
             (dis/panel {} (dom/text "disclosed content")))))
 
-      (acc/entry {}
+      #_(acc/entry {}
         (acc/header
           (dom/h2 (dom/text "Accordion")))
         (acc/body
@@ -116,7 +118,13 @@
               (acc/header (dom/h2 (dom/text "Three")))
               (acc/body (dom/text "content three")))
             )))
-      (acc/entry {}
+      (acc/entry {::acc/open? true}
+        (acc/header
+          (dom/h2 (dom/text "Form")))
+        (acc/body
+          (ui-demo.form/FormDemo)
+          ))
+      #_(acc/entry {}
         (acc/header
           (dom/h2 (dom/text "Stepper")))
         (acc/body
