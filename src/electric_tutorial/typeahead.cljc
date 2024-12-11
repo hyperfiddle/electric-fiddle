@@ -25,6 +25,7 @@
               (e/server ; fix sync row load (lost neutrality)
                 (e/for [x (Options search)] ; x server
                   (dom/li (dom/text (OptionLabel x)) ; sync row load
+                    #_(dom/text search) ; d-glitch
                     (dom/On "click" (e/client
                                       (fn [e] (doto e (.stopPropagation) (.preventDefault))
                                         (reset! !v-id x) (t))) nil)))))))
