@@ -31,16 +31,15 @@
   (e/client (set! (.-innerHTML dom/node) (e/server (some-> chunk md-to-html-string)))))
 
 (e/defn Custom-markdown [extensions md-content]
-  (e/server
-    (let [lines (second (e/diff-by first (e/Offload #(map-indexed vector (parse-sections md-content)))))]
-      (e/for [line lines]
-        (if (clojure.string/starts-with? line "!")
-          (let [[extension & args] (parse-md-directive line)]
-            (if-let [F (get extensions extension)]
-              (e/apply F args)
-              (dom/div (dom/text "Unsupported markdown directive: " (pr-str line)))))
-          (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-            (Markdown line)))))))
+  (e/client
+    (e/for [line (e/server (e/diff-by {} (e/Offload #(parse-sections md-content))))]
+      (if (clojure.string/starts-with? line "!")
+        (let [[extension & args] (parse-md-directive line)]
+          (if-let [F (get extensions extension)]
+            (e/apply F args)
+            (dom/div (dom/text "Unsupported markdown directive: " (pr-str line)))))
+        (dom/div (dom/props {:class "markdown-body user-examples-readme"})
+          (Markdown line))))))
 
 ; Extensions - optional
 
