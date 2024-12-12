@@ -8,7 +8,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
-            [dustingetz.gridsheet3 :refer [Explorer]]))
+            [dustingetz.gridsheet4 :as gridsheet :refer [Explorer]]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 
@@ -36,11 +36,11 @@
           (->> (nav m ::fs/children (::fs/children m))
             (treelister ::fs/children #(includes-str? (::fs/name %) %2)))
           {::dom/style {:height "calc((20 + 1) * 24px)"}
-           :page-size 20
-           :row-height 24
-           :Format Render-cell
-           :columns [::fs/name ::fs/modified ::fs/size ::fs/kind]
-           :grid-template-columns "auto 8em 5em 3em"})))))
+           ::gridsheet/page-size 20
+           ::gridsheet/row-height 24
+           ::gridsheet/Format Render-cell
+           ::gridsheet/columns [::fs/name ::fs/modified ::fs/size ::fs/kind]
+           ::gridsheet/grid-template-columns "auto 8em 5em 3em"})))))
 
 (e/defn DirectoryExplorer []
   (dom/link (dom/props {:rel :stylesheet, :href "user/gridsheet-optional.css"}))
