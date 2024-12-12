@@ -1,6 +1,6 @@
 (ns electric-fiddle.fiddle-markdown
   (:refer-clojure :exclude [#?(:cljs Fn)])
-  (:require clojure.string
+  (:require [clojure.string :as str]
             [contrib.electric-codemirror :refer [CodeMirror]] ; extensions only
             [electric-fiddle.fiddle-index :refer [FiddleIndex pages]] ; why
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src-safe!]])
@@ -11,35 +11,33 @@
             #?(:clj [markdown.core :refer [md-to-html-string]])))
 
 #?(:clj (defn parse-sections [md-str]
-          (->> md-str clojure.string/split-lines
-            (partition-by #(not= \! (first %))) ; isolate the directive lines
-            (map #(apply str (interpose "\n" %))))))
+          (eduction (partition-by #(str/starts-with? % "!"))
+            (map #(str/join "\n" %))
+            (map #(if (str/starts-with? % "!") [::directive %] [::html (md-to-html-string %)]))
+            (str/split-lines md-str))))
 
 (comment (parse-sections (slurp "src/electric_tutorial/two_clocks.md")))
 
 (defn parse-md-directive [s]
   (let [[_ extension alt-text arg arg2] (re-find #"!(.*?)\[(.*?)\]\((.*?)\)(?:\((.*?)\))?" s)]
-    [(symbol extension) alt-text arg arg2]))
+    [(symbol extension) [alt-text arg arg2]]))
 
 (tests
   (parse-md-directive "!foo[example](https://example.com)")
-  := ['foo "example" "https://example.com" nil]
+  := ['foo ["example" "https://example.com" nil]]
   (parse-md-directive "!foo[example](b)(c)")
-  := ['foo "example" "b" "c"])
-
-(e/defn Markdown [chunk]
-  (e/client (set! (.-innerHTML dom/node) (e/server (some-> chunk md-to-html-string)))))
+  := ['foo ["example" "b" "c"]])
 
 (e/defn Custom-markdown [extensions md-content]
   (e/client
-    (e/for [line (e/server (e/diff-by {} (e/Offload #(parse-sections md-content))))]
-      (if (clojure.string/starts-with? line "!")
-        (let [[extension & args] (parse-md-directive line)]
-          (if-let [F (get extensions extension)]
-            (e/apply F args)
-            (dom/div (dom/text "Unsupported markdown directive: " (pr-str line)))))
-        (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-          (Markdown line))))))
+    (e/for [[t v] (e/server (e/diff-by {} (e/Offload #(parse-sections md-content))))]
+      (case t
+        (::directive) (let [[extension args] (parse-md-directive v)]
+                        (if-let [F (get extensions extension)]
+                          (e/Apply F args)
+                          (dom/div (dom/text "Unsupported markdown directive: " (pr-str v)))))
+        (::html) (dom/div (dom/props {:class "markdown-body user-examples-readme"})
+                   (set! (.-innerHTML dom/node) v))))))
 
 ; Extensions - optional
 
