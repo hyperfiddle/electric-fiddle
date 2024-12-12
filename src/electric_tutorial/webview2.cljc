@@ -18,28 +18,26 @@
 (e/defn GenericTable [colspec Query Row]
   (let [ids (Query)] ; server query
     (dom/table
-      (e/for [id ids] ; server loop, for sync load of rows and cells
+      (e/for [id ids]
         (dom/tr
-          (let [m (Row id)] ; server m
-            (e/for [k colspec] ; server loop, for sync row load
+          (let [m (Row id)]
+            (e/for [k colspec]
               (dom/td
-                #_(e/client) ; don't damage sync cell load
-                (e/call (get m k)))))))))) ; server lambda, for sync cell load
+                (e/call (get m k))))))))))
 
 (e/defn Row [db id]
   (let [!e         (e/server (e/Offload #(d/entity db id)))
         email      (e/server (-> !e :order/email))
         gender     (e/server (-> !e :order/gender :db/ident))
         shirt-size (e/server (-> !e :order/shirt-size :db/ident))]
-    (e/server ; cell renderers available on server for sync cell load
-      {:db/id            (e/fn [] (dom/text id))
-       :order/email      (e/fn [] (dom/text email))
-       :order/gender     (e/fn [] (Typeahead gender
-                                    (e/fn Options [search] (Genders db search))
-                                    #_(e/fn OptionLabel [x] (pr-str x))))
-       :order/shirt-size (e/fn [] (Typeahead shirt-size
-                                    (e/fn Options [search] (Shirt-sizes db gender search))
-                                    #_(e/fn OptionLabel [x] (pr-str x))))})))
+    {:db/id            (e/fn [] (dom/text id))
+     :order/email      (e/fn [] (dom/text email))
+     :order/gender     (e/fn [] (Typeahead gender
+                                  (e/fn Options [search] (Genders db search))
+                                  #_(e/fn OptionLabel [x] (pr-str x))))
+     :order/shirt-size (e/fn [] (Typeahead shirt-size
+                                  (e/fn Options [search] (Shirt-sizes db gender search))
+                                  #_(e/fn OptionLabel [x] (pr-str x))))}))
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
 #?(:cljs (def !sort-key (atom [:order/email])))
@@ -50,11 +48,10 @@
     (let [db (e/server (e/watch conn))
           colspec (e/diff-by identity (e/watch !colspec))
           search (dom/input (dom/On "input" #(-> % .-target .-value) ""))]
-      (e/server ; perf: sync server push row loads
-        (GenericTable
-          colspec
-          (e/Partial Teeshirt-orders db search (e/client (e/watch !sort-key)))
-          (e/Partial Row db))))))
+      (GenericTable
+        colspec
+        (e/Partial Teeshirt-orders db search (e/client (e/watch !sort-key)))
+        (e/Partial Row db)))))
 
 (comment
   ; todo align grid css to number of columns

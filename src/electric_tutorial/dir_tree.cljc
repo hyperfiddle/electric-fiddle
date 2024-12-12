@@ -18,10 +18,9 @@
         (dom/li (dom/text name_))))))
 
 (e/defn DirTree []
-  (e/server
-    (let [s (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))
-          h (-> "./vendor/electric/src/hyperfiddle"
-              (java.nio.file.Path/of (into-array String []))
-              .toAbsolutePath str clojure.java.io/file)]
-      (dom/ul
-        (Dir-tree* h s)))))
+  (let [s (dom/input (dom/On "input" #(-> % .-target .-value) ""))
+        h (e/server (-> "./vendor/electric/src/hyperfiddle"
+                      (java.nio.file.Path/of (into-array String []))
+                      .toAbsolutePath str clojure.java.io/file))]
+    (dom/ul
+      (Dir-tree* h s))))
