@@ -24,10 +24,10 @@
         (dom/td (dom/text email))
         (dom/td (Typeahead gender
                   (e/fn Options [search] (Genders db search))
-                  (e/fn OptionLabel [x] (pr-str x))))
+                  #_(e/fn OptionLabel [x] (pr-str x))))
         (dom/td (Typeahead shirt-size
                   (e/fn Options [search] (Shirt-sizes db gender search))
-                  (e/fn OptionLabel [x] (pr-str x))))))))
+                  #_(e/fn OptionLabel [x] (pr-str x))))))))
 
 (e/defn WebviewGeneric []
   (e/server

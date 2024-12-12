@@ -30,7 +30,7 @@
               (dom/td (dom/text (:order/email !e)))
               (dom/td (Typeahead gender
                         (e/fn Options [search] (Genders db search))
-                        (e/fn OptionLabel [x] (pr-str x))))
+                        #_(e/fn OptionLabel [x] (pr-str x))))
               (dom/td (Typeahead (-> !e :order/shirt-size :db/ident)
                         (e/fn Options [search] (Shirt-sizes db gender search))
-                        (e/fn OptionLabel [x] (pr-str x)))))))))))
+                        #_(e/fn OptionLabel [x] (pr-str x)))))))))))

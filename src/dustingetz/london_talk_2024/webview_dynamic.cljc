@@ -26,10 +26,10 @@
        :order/email      (e/fn [] (dom/text email))
        :order/gender     (e/fn [] (Typeahead gender
                                     (e/fn Options [search] (Genders db search))
-                                    (e/fn OptionLabel [x] (pr-str x))))
+                                    #_(e/fn OptionLabel [x] (pr-str x))))
        :order/shirt-size (e/fn [] (Typeahead shirt-size
                                     (e/fn Options [search] (Shirt-sizes db gender search))
-                                    (e/fn OptionLabel [x] (pr-str x))))})))
+                                    #_(e/fn OptionLabel [x] (pr-str x))))})))
 
 
 #?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
