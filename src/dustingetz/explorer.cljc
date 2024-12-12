@@ -17,8 +17,8 @@
     (case a
       ::fs/name (case (::fs/kind m)
                   ::fs/dir (let [absolute-path (::fs/absolute-path m)]
-                             (r/link #_['.. 0 absolute-path] ['.. [absolute-path ""]] ; discard search
-                               (dom/text v #_#_" - " absolute-path)))
+                             #_(r/link #_['.. 0 absolute-path] ['.. [absolute-path ""]]) ; discard search
+                             (dom/text v #_#_" - " absolute-path))
                   (::fs/other ::fs/symlink ::fs/unknown-kind) (dom/text v)
                   (dom/text v))
       ::fs/modified (dom/text (e/client (some-> v .toLocaleDateString)))
