@@ -29,31 +29,30 @@
             ))
 
 (e/defn Fiddles []
-  {`Scratch Scratch
-   `DirectoryExplorer DirectoryExplorer
-   `DemoMetaobject DemoMetaobject
-   `Painter Painter
-   `FileWatcherDemo FileWatcherDemo
-   `Y-Fac Y-Fac
-   `Y-dir Y-dir
-   `TreeDemo TreeDemo
-   `MillionCheckboxes MillionCheckboxes
-   `MillionCheckboxes2 MillionCheckboxes2
-   `Logic Logic
-
-   `ScrollDemo ScrollDemo
-   `Scroll-abc Scroll-abc
-
-   `WebviewConcrete WebviewConcrete
-   `WebviewGeneric WebviewGeneric
-   `WebviewDynamic WebviewDynamic
-   `WebviewScroll WebviewScroll
-   `DifferentialTricks DifferentialTricks
-   `Essay Essay #_(With-HFQL-Bindings. Essay)
-   ;`Teeshirt-orders-1 (With-HFQL-Bindings. Teeshirt-orders-1)
-   ;`Teeshirt-orders-2 (With-HFQL-Bindings. Teeshirt-orders-2)
-   ;`Teeshirt-orders-3 (With-HFQL-Bindings. Teeshirt-orders-3)
-   ;`Teeshirt-orders-4 (With-HFQL-Bindings. Teeshirt-orders-4)
-   ;`Teeshirt-orders-5 (With-HFQL-Bindings. Teeshirt-orders-5)
-   ;`DirectoryExplorer-HFQL (With-HFQL-Bindings. DirectoryExplorer-HFQL)
-   })
+  (merge
+    {`Scratch Scratch
+     `DirectoryExplorer DirectoryExplorer
+     `DemoMetaobject DemoMetaobject
+     `Painter Painter
+     `FileWatcherDemo FileWatcherDemo
+     `Y-Fac Y-Fac
+     `Y-dir Y-dir
+     `TreeDemo TreeDemo
+     `MillionCheckboxes MillionCheckboxes
+     `MillionCheckboxes2 MillionCheckboxes2
+     `Logic Logic
+     `ScrollDemo ScrollDemo
+     `Scroll-abc Scroll-abc}
+    {`WebviewConcrete WebviewConcrete
+     `WebviewGeneric WebviewGeneric
+     `WebviewDynamic WebviewDynamic
+     `WebviewScroll WebviewScroll
+     `DifferentialTricks DifferentialTricks
+     `Essay Essay #_(With-HFQL-Bindings. Essay)
+     ;`Teeshirt-orders-1 (With-HFQL-Bindings. Teeshirt-orders-1)
+     ;`Teeshirt-orders-2 (With-HFQL-Bindings. Teeshirt-orders-2)
+     ;`Teeshirt-orders-3 (With-HFQL-Bindings. Teeshirt-orders-3)
+     ;`Teeshirt-orders-4 (With-HFQL-Bindings. Teeshirt-orders-4)
+     ;`Teeshirt-orders-5 (With-HFQL-Bindings. Teeshirt-orders-5)
+     ;`DirectoryExplorer-HFQL (With-HFQL-Bindings. DirectoryExplorer-HFQL)
+     }))
