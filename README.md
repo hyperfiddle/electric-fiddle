@@ -2,19 +2,19 @@
 
 We publish all our demos here in one place. This is how we fiddle around with our many demos at work.
 
-This repo is structured to allow multiple "fiddles" (little apps) to run simultaneously on the same merged local dev classpath, with some common dev infrastructure (e.g. routing and example databases). Prod classpaths are isolated, so that each fiddle can be deployed individually and separately.
+This repo is structured to allow multiple "fiddles" (little apps) to share common dev infrastructure (e.g. routing, databases). During dev, these classpaths are merged, but prod classpaths are isolated so that each fiddle can deployed individually.
 
-* **local dev**: the [dev entrypoint](src-dev/dev.cljc) uses a [clever reader trick](src-dev/load_dev_fiddles!.cljc) to drive Clojure/Script namespace `:require` directives from a config file, [`electric-fiddle.edn`](electric-fiddle.edn).
+* **local dev**: the [dev entrypoint](src-dev/dev.cljc#L10) uses a [clever reader trick](src-dev/load_dev_fiddles!.cljc#L6) to drive Clojure/Script namespace `:require` directives dynamically from a config file, [`electric-fiddle.edn`](src-dev/electric-fiddle.edn).
 
-* **prod**: the [prod entrypoint](src-prod/prod.cljc) runs only one fiddle at a time, with an isolated classpath. Prod has a mandatory [build](src-build/build.clj), which bakes the Electric application client program. At compile time, both the electric user application version number (derived from git) and the fiddle entrypoint namespace are known statically, and built into both the client assets and also the server asset `resources/electric-manifest.edn`. At runtime, the prod entrypoint uses the reader trick to lookup the name of the entrypoint to run.
+* **prod**: the [prod entrypoint](src-prod/prod.cljc) runs only one fiddle at a time, with an isolated classpath. Prod has a mandatory [build](src-build/hyperfiddle/fiddle_build.clj), which bakes the Electric application client program. At compile time, both the Electric program hash (derived from git) and the fiddle entrypoint namespace are known statically, and built into both the client assets and also the server asset `resources/electric-manifest.edn` which is used to ensure that the client & server agree about the baked Electric program hash. At runtime, the prod entrypoint uses the reader trick to lookup the name of the entrypoint to run.
 
 This is all done in a rather tiny amount of LOC, so we feel it is reasonable to expect you to understand it.
 
-For a minimalist starter example, see https://github.com/hyperfiddle/electric-starter-app which is able to hardcode the electric user application entrypoint functions and thereby eliminate some of this dynamism.
+For a minimalist starter example, see https://github.com/hyperfiddle/electric3-starter-app.
 
 ## Quick Start
 
-Begin with an example "Hello World" fiddle:
+Begin with an example "Hello World" fiddle (`src/hello_fiddle/hello-fiddle.cljc`):
 
 ```shell
 $ clj -A:dev
@@ -27,16 +27,13 @@ shadow-cljs - nREPL server started on port 9001
 INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
 ```
 
-1. Navigate to [http://localhost:8080](http://localhost:8080)
-2. Corresponding source code is in `src/hello_fiddle`
-
 ## Load more fiddles
 
-In [`electric-fiddle.edn`](electric-fiddle.edn), under `:loaded-fiddles`, add `electric-tutorial`:
+In [`electric-fiddle.edn`](electric-fiddle.edn), under `:hyperfiddle/fiddles`, add `electric-tutorial.tutorial`:
 
 ```diff
- {:loaded-fiddles [hello-fiddle
-+                  electric-tutorial ; requires :electric-tutorial alias and `npm install`
+ {:loaded-fiddles [hello-fiddle.hello-fiddle
++                  electric-tutorial.tutorial ; requires :electric-tutorial deps alias and `npm install`
                    ]
  }
 ```
@@ -45,41 +42,12 @@ Restart your REPL with the required dependencies:
 ```shell
 npm install
 clj -A:dev:electric-tutorial
+...
+INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
 ```
+The fiddle index page now shows a new entry for `electric-tutorial`.
 
-Navigate to [http://localhost:8080](http://localhost:8080) (or refresh your browser tab). The pages shows a new entry for `electric-tutorial`.
-
-## Roll your own
-
-- `mkdir src/my_fiddle`
-- Add the following to `src/my_fiddle/fiddles.cljc`:
-```clojure
-(ns my-fiddle.fiddles
-  (:require [hyperfiddle.electric :as e]
-            [hyperfiddle.electric-dom2 :as dom]))
-
-(e/defn MyFiddle []
-  (e/client
-    (dom/h1 (dom/text "Hello from my fiddle."))))
-
-(e/def fiddles ; Entries for the dev index
-  {`MyFiddle MyFiddle})
-
-(e/defn FiddleMain [ring-req] ; prod entrypoint
-  (e/server
-    (binding [e/http-request ring-req])
-      (e/client
-        (binding [dom/node js/document.body]
-          (MyFiddle.)))))
-```
-
-- Add `my-fiddle` to `electric-fiddle.edn` > `:loaded-fiddles`.
-- add your dependencies to deps.edn (under an alias) and package.json
-- Restart your REPL with your new deps alias
-
-# Prod build
-
-Deploys one fiddle at a time.
+# Prod build (deploy one fiddle at a time)
 
 ```shell
 # prod build
