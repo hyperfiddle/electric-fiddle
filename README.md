@@ -82,25 +82,21 @@ Navigate to [http://localhost:8080](http://localhost:8080) (or refresh your brow
 Deploys one fiddle at a time.
 
 ```shell
-# "Hello World" prod build
-
-clojure -X:build:prod build-client :hyperfiddle/domain hello-fiddle
-clojure -X:build:prod build-client :hyperfiddle/domain hello-fiddle :debug false :verbose false :optimize true
-clj -M:prod -m prod
-
-# With extra dependencies
-
+# prod build
 npm install
-clojure -X:build:prod:electric-tutorial build-client :hyperfiddle/domain electric-tutorial
+clojure -X:build:prod:electric-tutorial build-client :hyperfiddle.fiddle-build/fiddle-ns electric-tutorial.tutorial :debug false :verbose false :optimize true
 clj -M:prod:electric-tutorial -m prod
-# http://localhost:8080/electric-tutorial.tutorial!%54utorial/electric-tutorial.demo-two-clocks!%54wo%43locks
 
-# Uberjar
+# uberjar
+clojure -X:build:prod:electric-tutorial uberjar :hyperfiddle.fiddle-build/fiddle-ns electric-tutorial.tutorial :hyperfiddle.fiddle-build/fiddle-deps-alias electric-tutorial :hyperfiddle.fiddle-build/jar-name "app.jar"
+java -cp target/app.jar clojure.main -m prod
 
-clojure -X:build:prod uberjar :hyperfiddle/domain hello-fiddle :build/jar-name "app.jar"
-java -cp app.jar clojure.main -m prod
+# docker
+HYPERFIDDLE_FIDDLE_NS=electric-tutorial.tutorial
+HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial
+docker build -t electric-tutorial:latest .
+docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
-# Fly.io deployment
-
-fly deploy --remote-only --config src/hello_fiddle/fly.toml
+# fly deploy via Dockerfile
+fly deploy --remote-only --config src/electric_tutorial/fly.toml
 ```
