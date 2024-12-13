@@ -1,11 +1,10 @@
 (ns dustingetz.london-talk-2024.webview-concrete
-  (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn teeshirt-orders genders shirt-sizes]])
+  (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer
+                     [ensure-db! teeshirt-orders genders shirt-sizes]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.typeahead :refer [Typeahead]]))
-
-(e/defn Tap-diffs [x] (println 'diff (pr-str (e/input (e/pure x)))) x)
 
 (e/defn Genders [db search]
   (e/server (e/diff-by identity (e/Offload #(genders db search)))))
@@ -18,7 +17,7 @@
 
 (e/defn WebviewConcrete []
   (e/server
-    (let [db (e/watch conn)
+    (let [db (e/watch (ensure-db!))
           search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))
           ids (Teeshirt-orders db search)]
       (dom/table

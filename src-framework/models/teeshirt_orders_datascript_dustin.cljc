@@ -12,42 +12,37 @@
    :order/tags       {:db/cardinality :db.cardinality/many}
    :db/ident         {:db/unique :db.unique/identity, :hf/valueType :db.type/keyword}})
 
-(def a [{:db/id 1, :order/type :order/gender, :db/ident :order/male} ; straight cut
-        {:db/id 2, :order/type :order/gender, :db/ident :order/female}]) ; fitted
-(def b [{:db/id 3 :order/type :order/shirt-size :db/ident :order/mens-small :order/gender :order/male}
-        {:db/id 4 :order/type :order/shirt-size :db/ident :order/mens-medium :order/gender :order/male}
-        {:db/id 5 :order/type :order/shirt-size :db/ident :order/mens-large :order/gender :order/male}
-        {:db/id 6 :order/type :order/shirt-size :db/ident :order/womens-small :order/gender :order/female}
-        {:db/id 7 :order/type :order/shirt-size :db/ident :order/womens-medium :order/gender :order/female}
-        {:db/id 8 :order/type :order/shirt-size :db/ident :order/womens-large :order/gender :order/female}])
-(def c [{:db/id 9,  :order/email "alice@example.com",   :order/gender :order/female,  :order/shirt-size :order/womens-large, :order/tags  [:a :b :c]}
-        {:db/id 10, :order/email "bob@example.com",     :order/gender :order/male,    :order/shirt-size :order/mens-large,   :order/tags  [:b]}
-        {:db/id 11, :order/email "charlie@example.com", :order/gender :order/male,    :order/shirt-size :order/mens-medium}])
+(def fixtures-genders
+  [{:db/id 1, :order/type :order/gender, :db/ident :order/male} ; straight cut
+   {:db/id 2, :order/type :order/gender, :db/ident :order/female}]) ; fitted
+(def fixtures-shirt-sizes
+  [{:db/id 3 :order/type :order/shirt-size :db/ident :order/mens-small :order/gender :order/male}
+   {:db/id 4 :order/type :order/shirt-size :db/ident :order/mens-medium :order/gender :order/male}
+   {:db/id 5 :order/type :order/shirt-size :db/ident :order/mens-large :order/gender :order/male}
+   {:db/id 6 :order/type :order/shirt-size :db/ident :order/womens-small :order/gender :order/female}
+   {:db/id 7 :order/type :order/shirt-size :db/ident :order/womens-medium :order/gender :order/female}
+   {:db/id 8 :order/type :order/shirt-size :db/ident :order/womens-large :order/gender :order/female}])
+(def fixtures-alice-bob-charlie
+  [{:db/id 9,  :order/email "alice@example.com",   :order/gender :order/female,  :order/shirt-size :order/womens-large, :order/tags  [:a :b :c]}
+   {:db/id 10, :order/email "bob@example.com",     :order/gender :order/male,    :order/shirt-size :order/mens-large,   :order/tags  [:b]}
+   {:db/id 11, :order/email "charlie@example.com", :order/gender :order/male,    :order/shirt-size :order/mens-medium}])
 
-(defn rand-str [len] (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
+(defn fixtures [db]
+  (-> db
+    (d/with fixtures-genders) :db-after
+    (d/with fixtures-shirt-sizes) :db-after
+    (d/with fixtures-alice-bob-charlie) :db-after))
 
-(declare genders shirt-sizes conn)
+(declare conn)
 
-(defn more [N]
-  (let [db @conn]
-    (for [i (range N)]
-      (let [gender (rand-nth (genders db ""))]
-        {:db/id (+ 1000 i)
-         :order/email (rand-str 10)
-         :order/gender gender
-         :order/shirt-size (rand-nth (shirt-sizes db gender ""))}))))
-
-(defn fixtures [db] (-> db (d/with a) :db-after (d/with b) :db-after (d/with c) :db-after))
-
-(defn setup-db! []
-  (def conn (d/create-conn schema))
-  (d/transact conn a)
-  (d/transact conn b)
-  (d/transact conn c)
-  #_(d/transact conn (more 1000)) ; careful, cyclic dependency, install with repl
-  #_(alter-var-root #'hf/*$* (constantly (fixtures (d/db conn)))))
-
-(setup-db!) ; test db - intended to have simple fixtures only, and not transacted. fixme
+(let [conn (delay (def conn (d/create-conn schema))
+             @(d/transact conn fixtures-genders)
+             @(d/transact conn fixtures-shirt-sizes)
+             @(d/transact conn fixtures-alice-bob-charlie)
+             conn)]
+  (defn ensure-db! []
+    #_(alter-var-root #'hf/*$* (constantly (fixtures (d/db conn))))
+    @conn))
 
 #_(def db hf/*$*) ; for @(requiring-resolve 'user.example-datascript-db/db)
 
@@ -93,7 +88,7 @@
           db (or ?gender-search ""))
      sort (into []))))
 
-(defn resolve-ref [db x] (:db/id (d/entity @conn x))) ; hax
+(defn resolve-ref [db x] (:db/id (d/entity db #_@conn x))) ; hax
 
 (defn shirt-sizes [db gender search]
   (let [gender (resolve-ref db gender)]
@@ -109,6 +104,8 @@
                [?s :order/type :order/shirt-size]
                [?s :db/ident ?ss] [(contrib.str/includes-str? ?ss ?search)]]
           db (or search ""))))))
+
+(tests (ensure-db!)) ; test db - intended to have simple fixtures only
 
 (tests
   (teeshirt-orders @conn "" [:order/email])

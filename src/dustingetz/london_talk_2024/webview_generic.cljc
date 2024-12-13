@@ -1,10 +1,10 @@
 (ns dustingetz.london-talk-2024.webview-generic
-  (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [conn]])
+  (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-tutorial.typeahead :refer [Typeahead]]
-            [dustingetz.london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes Tap-diffs]]))
+            [dustingetz.london-talk-2024.webview-concrete :refer [Teeshirt-orders Genders Shirt-sizes]]))
 
 (e/defn GenericTable [Query Row]
   (let [ids (Query)]
@@ -31,7 +31,7 @@
 
 (e/defn WebviewGeneric []
   (e/server
-    (let [db (e/watch conn)
+    (let [db (e/watch (ensure-db!))
           search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
       (GenericTable
         (e/Partial Teeshirt-orders db search)
