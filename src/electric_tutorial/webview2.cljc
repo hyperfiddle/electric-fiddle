@@ -1,6 +1,6 @@
 (ns electric-tutorial.webview2
   (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer
-                     [conn teeshirt-orders genders shirt-sizes]])
+                     [ensure-db! teeshirt-orders genders shirt-sizes]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -45,7 +45,7 @@
 (e/defn Webview2 []
   (dom/props {:class "webview"})
   (e/client
-    (let [db (e/server (e/watch conn))
+    (let [db (e/server (e/watch (ensure-db!)))
           colspec (e/diff-by identity (e/watch !colspec))
           search (dom/input (dom/On "input" #(-> % .-target .-value) ""))]
       (GenericTable
