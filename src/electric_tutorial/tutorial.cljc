@@ -17,6 +17,7 @@
             [electric-tutorial.fizzbuzz :refer [FizzBuzz]]
             [electric-tutorial.webview1 :refer [Webview1]]
             [electric-tutorial.webview2 :refer [Webview2]]
+            [electric-tutorial.scroll-spool :refer [WebviewScroll]]
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.backpressure :refer [Backpressure]]
 
@@ -56,9 +57,12 @@
      'system_properties ; simple query/view topology
      'dir_tree ; complex topology
      'fizzbuzz ; differential
-     'webview1 ; diffs, IO encapsulation
-     'webview2 ; abstraction, lambda demo
      ]]
+   ["Tables"
+    ['webview1 ; diffs, IO encapsulation
+     'webview2 ; abstraction, lambda demo
+     'scroll_spool
+     #_'scroll-seek]]
    ["Language"
     ['lifecycle ; components
      'backpressure
@@ -149,6 +153,7 @@
      `Lifecycle Lifecycle
      `Webview1 Webview1
      `Webview2 Webview2
+     `WebviewScroll WebviewScroll
      `FizzBuzz FizzBuzz
      `Counter Counter
      `ChatMonitor ChatMonitor

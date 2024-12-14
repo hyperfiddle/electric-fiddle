@@ -1,9 +1,8 @@
-(ns dustingetz.london-talk-2024.webview-scroll
+(ns electric-tutorial.scroll-spool
   (:require #?(:clj [datascript.core :as d])
             [electric-tutorial.typeahead :refer [Typeahead]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window Spool]]
             #?(:clj [models.teeshirt-orders-datascript-dustin :refer
                      [teeshirt-orders genders shirt-sizes]])
@@ -31,7 +30,7 @@
   [xs #_& {:keys [Row record-count row-height]}]
   (dom/props {:style {:overflow-y "auto"}}) ; no wrapper div! attach to natural container
   (let [[offset limit] (Scroll-window row-height record-count dom/node
-                         {:overquery-factor 1})]
+                         {:overquery-factor 2})]
     (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
       (e/for [[i x] (Spool record-count xs offset limit)] ; site neutral, caller chooses
         (Row x))) ; no row markup/style requirement!
@@ -40,19 +39,16 @@
 (declare css)
 (e/defn WebviewScroll []
   (dom/style (dom/text css))
-  (let [db (e/server (e/watch (ensure-db!)))
-        search (Input* "")]
-    (dom/div (dom/props {:class "UserViewport"})
-      (let [xs (e/server (e/Offload #(teeshirt-orders db search [:order/email])))]
-        (e/server ; caller chooses topology, perf is about the same
-          (TableScrollFixedCounted xs
-            {:Row (e/Partial Row db)
-             :record-count (e/server (count xs))
-             :row-height 25}))))))
+  (let [db (e/server (e/watch (ensure-db!)))]
+    (let [xs (e/server (e/Offload #(teeshirt-orders db "" [:order/email])))]
+      (e/server ; caller chooses topology, perf is about the same
+        (TableScrollFixedCounted xs
+          {:Row (e/Partial Row db)
+           :record-count (e/server (count xs))
+           :row-height 25})))))
 
 ; Requires css {box-sizing: border-box;}
 (def css "
-.UserViewport { position: fixed; top: 3em; bottom:0; left:0; right:0; }
-.UserViewport table { display: grid; grid-template-columns: 4em 12em 10em auto; }
-.UserViewport table tr { display: contents; }
+table { display: grid; grid-template-columns: 4em 12em 10em auto; }
+table tr { display: contents; }
 ")
