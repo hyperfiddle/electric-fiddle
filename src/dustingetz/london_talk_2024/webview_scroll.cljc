@@ -21,19 +21,19 @@
           email      (-> !e :order/email)
           gender     (-> !e :order/gender :db/ident)
           shirt-size (-> !e :order/shirt-size :db/ident)]
-      (dom/props {:style {:background-color (if (zero? (mod id 10)) "red")}})
-      (dom/td (dom/text id))
-      (dom/td (dom/text email))
-      (dom/td #_(dom/text gender) (Typeahead gender (e/fn [search] (Genders db search))))
-      (dom/td #_(dom/text shirt-size) (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search)))))))
+      (dom/tr
+        (dom/td (dom/text id) (dom/props {:style {:background-color (if (zero? (mod id 10)) "red")}}))
+        (dom/td (dom/text email))
+        (dom/td #_(dom/text gender) (Typeahead gender (e/fn [search] (Genders db search))))
+        (dom/td #_(dom/text shirt-size) (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search))))))))
 
 (e/defn TableScrollFixedCounted
   [xs #_& {:keys [Row record-count row-height]}]
-  (dom/props {:style {:overflow-y "auto"}})
+  (dom/props {:style {:overflow-y "auto"}}) ; attach to user container
   (let [[offset limit] (Scroll-window row-height record-count dom/node)]
-    (e/for [[i x] (Spool record-count xs offset limit)] ; site neutral, caller chooses
-      (dom/tr (dom/props {:style {:position "absolute" :top (str (* i row-height) "px")}}) ; todo no inline markup allowed
-        (Row x)))
+    (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
+      (e/for [[i x] (Spool record-count xs offset limit)] ; site neutral, caller chooses
+        (Row x))) ; no markup/style requirement!
     (dom/div (dom/props {:style {:height (str (* row-height record-count) "px")}}))))
 
 (declare css)
@@ -52,5 +52,6 @@
 ; Requires css {box-sizing: border-box;}
 (def css "
 .Viewport { position: fixed; top: 3em; bottom:0; left:0; right:0; }
-.Viewport tr { display: grid; grid-template-columns: 4em 12em 10em auto; } /* hack */
+table { display: grid; grid-template-columns: 4em 12em 10em auto; }
+table tr { display: contents; }
 ")
