@@ -23,12 +23,12 @@
       (dom/tr
         (dom/td (dom/text id) (dom/props {:style {:background-color (if (zero? (mod id 10)) "red")}}))
         (dom/td (dom/text email))
-        (dom/td #_(dom/text gender) (Typeahead gender (e/fn [search] (Genders db search))))
-        (dom/td #_(dom/text shirt-size) (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search))))))))
+        (dom/td (Typeahead gender (e/fn [search] (Genders db search))))
+        (dom/td (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search))))))))
 
 (e/defn TableScrollFixedCounted
   [xs #_& {:keys [Row record-count row-height]}]
-  (dom/props {:style {:overflow-y "auto"}}) ; no wrapper div! attach to natural container
+  (dom/props {:style {:overflow-y "auto"}}) ; attach to natural container
   (let [[offset limit] (Scroll-window row-height record-count dom/node
                          {:overquery-factor 2})]
     (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
