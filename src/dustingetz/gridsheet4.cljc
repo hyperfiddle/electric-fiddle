@@ -8,7 +8,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input Input!]]
             [hyperfiddle.router3 :as r] ; todo remove
-            #?(:cljs [london-talk-2024.dom-scroll-helpers :refer [scroll-state resize-observer]])
+            #?(:cljs [hyperfiddle.electric-scroll0 :refer [scroll-state resize-observer]])
             #?(:cljs goog.object)))
 
 (e/defn GridSheet [xs props]
