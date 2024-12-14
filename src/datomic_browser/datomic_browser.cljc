@@ -5,7 +5,7 @@
             [contrib.str :refer [any-matches?]]
             #?(:clj [contrib.datomic-contrib :as dx])
             #?(:clj [contrib.datomic-m :as d])
-            [dustingetz.gridsheet4 :as gridsheet :refer [Explorer]]
+            [dustingetz.gridsheet4 :refer [Explorer]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer [Input! Form! Checkbox]]
@@ -25,11 +25,11 @@
         (e/server (->> (dx/attributes> db cols) (m/reductions conj []) (m/relieve {}) e/input
                     (sort-by :db/ident) ; slow
                     (treelister (fn [_]) any-matches?)))
-        {::gridsheet/page-size 15
-         ::gridsheet/row-height 24
-         ::gridsheet/columns cols
-         ::gridsheet/grid-template-columns "auto 6em 4em 4em 4em"
-         ::gridsheet/Format
+        {:page-size 15
+         :row-height 24
+         :columns cols
+         :grid-template-columns "auto 6em 4em 4em 4em"
+         :Format
          (e/fn [row col]
            (e/client
              (let [v (col row)]
@@ -48,11 +48,11 @@
         (e/server (->> (d/datoms> db {:index :aevt, :components [a]})
                     (m/reductions conj []) (m/relieve {}) e/input
                     (treelister (fn [_]) any-matches?)))
-        {::gridsheet/page-size 20
-         ::gridsheet/row-height 24
-         ::gridsheet/columns [:e :a :v :tx]
-         ::gridsheet/grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
-         ::gridsheet/Format
+        {:page-size 20
+         :row-height 24
+         :columns [:e :a :v :tx]
+         :grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
+         :Format
          (e/fn [x k]
            (e/client
              (let [[e _ v tx op] x] ; destructure on client to workaround glitch
@@ -72,11 +72,11 @@
           (->> (d/tx-range> conn {:start e, :end (inc e)}) ; global
             (m/eduction (map :data) cat) (m/reductions conj []) (m/relieve {}) e/input
             (treelister (fn [_]) any-matches?)))
-        {::gridsheet/page-size 20
-         ::gridsheet/row-height 24
-         ::gridsheet/columns [:e :a :v :tx]
-         ::gridsheet/grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
-         ::gridsheet/Format
+        {:page-size 20
+         :row-height 24
+         :columns [:e :a :v :tx]
+         :grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
+         :Format
          (e/fn [x a]
            (e/client
              (let [[e aa v tx op] x] ; workaround glitch
@@ -119,11 +119,11 @@
       (Explorer
         (e/server (->> (e/Task (d/pull db {:eid e :selector ['*] :compare compare})) ; TODO inject sort
                     (treelister (partial dx/entity-tree-entry-children schema) any-matches?)))
-        {::gridsheet/page-size 15
-         ::gridsheet/row-height 24
-         ::gridsheet/columns [::k ::v]
-         ::gridsheet/grid-template-columns "15em auto"
-         ::gridsheet/Format Format-entity}))))
+        {:page-size 15
+         :row-height 24
+         :columns [::k ::v]
+         :grid-template-columns "15em auto"
+         :Format Format-entity}))))
 
 (comment
   (def schema (m/? (dx/schema! models.mbrainz/*datomic-db*)))
@@ -157,11 +157,11 @@
             (m/reductions conj []) ; track a running count as well?
             (m/relieve {}) e/input
             (treelister (fn [_]) any-matches?)))
-        {::gridsheet/page-size 20
-         ::gridsheet/row-height 24
-         ::gridsheet/columns [::e ::a ::op ::v ::tx-instant ::tx]
-         ::gridsheet/grid-template-columns "10em 10em 3em auto auto 9em"
-         ::gridsheet/Format Format-history-row}))))
+        {:page-size 20
+         :row-height 24
+         :columns [::e ::a ::op ::v ::tx-instant ::tx]
+         :grid-template-columns "10em 10em 3em auto auto 9em"
+         :Format Format-history-row}))))
 
 (e/defn DbStats []
   (dom/h1 (dom/text "Db stats"))
@@ -169,11 +169,11 @@
     (Explorer
       (e/server (->> (e/Task (d/db-stats db))
                   (treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil)) any-matches?)))
-      {::gridsheet/page-size 20
-       ::gridsheet/row-height 24
-       ::gridsheet/columns [::k ::v]
-       ::gridsheet/grid-template-columns "20em auto"
-       ::gridsheet/Format
+      {:page-size 20
+       :row-height 24
+       :columns [::k ::v]
+       :grid-template-columns "20em auto"
+       :Format
        (e/fn [[k v :as row] col]
          (e/client
            (case col
@@ -197,11 +197,11 @@
       (e/server (->> (d/datoms> db {:index :aevt, :components [:db/txInstant]})
                   (m/reductions conj ()) (m/relieve {}) e/input
                   (treelister (fn [_]) any-matches?)))
-      {::gridsheet/page-size 30
-       ::gridsheet/row-height 24
-       ::gridsheet/columns [:db/id :db/txInstant]
-       ::gridsheet/grid-template-columns "10em auto"
-       ::gridsheet/Format
+      {:page-size 30
+       :row-height 24
+       :columns [:db/id :db/txInstant]
+       :grid-template-columns "10em auto"
+       :Format
        (e/fn [[e _ v tx op :as record] a]
          (case a
            :db/id (e/client (r/link ['.. [::tx tx]] (dom/text tx)))
