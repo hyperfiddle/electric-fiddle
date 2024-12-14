@@ -4,7 +4,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input*]]
-            [hyperfiddle.electric-scroll0 :refer [Scroll-window Spool]]
+            [hyperfiddle.electric-scroll0 :refer [TableScrollFixedCounted]]
             #?(:clj [models.teeshirt-orders-datascript-dustin :refer
                      [teeshirt-orders genders shirt-sizes]])
             #?(:clj [models.teeshirt-orders-datascript-dustin-large :refer [ensure-db!]])))
@@ -26,15 +26,6 @@
         (dom/td (dom/text email))
         (dom/td (Typeahead gender (e/fn [search] (Genders db search))))
         (dom/td (Typeahead shirt-size (e/fn [search] (Shirt-sizes db gender search))))))))
-
-(e/defn TableScrollFixedCounted
-  [xs TableBody #_& {:keys [record-count row-height]}]
-  (dom/props {:style {:overflow-y "auto"}}) ; no wrapper div! attach to natural container
-  (let [[offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})
-        xs (second (Spool record-count xs offset limit))] ; site neutral, caller chooses
-    (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
-      (TableBody xs)) ; no row markup/style requirement
-    (dom/div (dom/props {:style {:height (str (* row-height record-count) "px")}}))))
 
 (declare css)
 (e/defn WebviewScroll []
