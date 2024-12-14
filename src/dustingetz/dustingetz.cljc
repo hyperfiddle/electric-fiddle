@@ -9,6 +9,7 @@
             [dustingetz.london-talk-2024.webview-generic :refer [WebviewGeneric]]
             [dustingetz.london-talk-2024.webview-dynamic :refer [WebviewDynamic]]
             [dustingetz.london-talk-2024.webview-scroll :refer [WebviewScroll]]
+            [dustingetz.london-talk-2024.webview-scroll-dynamic :refer [WebviewScrollDynamic]]
             [dustingetz.london-talk-2024.differential-tricks :refer [DifferentialTricks]]
             [dustingetz.metaobject :refer [DemoMetaobject]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
@@ -47,6 +48,7 @@
      `WebviewGeneric WebviewGeneric
      `WebviewDynamic WebviewDynamic
      `WebviewScroll WebviewScroll
+     `WebviewScrollDynamic WebviewScrollDynamic
      `DifferentialTricks DifferentialTricks
      `Essay Essay #_(With-HFQL-Bindings. Essay)
      ;`Teeshirt-orders-1 (With-HFQL-Bindings. Teeshirt-orders-1)
