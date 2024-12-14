@@ -7,8 +7,9 @@
             [contrib.str :refer [includes-str?]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router3 :as r]
-            [dustingetz.gridsheet4 :as gridsheet :refer [Explorer]]))
+            [hyperfiddle.electric-forms0 :refer [Input*]]
+            [hyperfiddle.electric-scroll0 :refer [TableScrollFixedCounted]]
+            [hyperfiddle.router3 :as r]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 
@@ -17,8 +18,8 @@
     (case a
       ::fs/name (case (::fs/kind m)
                   ::fs/dir (let [absolute-path (::fs/absolute-path m)]
-                             #_(r/link #_['.. 0 absolute-path] ['.. [absolute-path ""]]) ; discard search
-                             (dom/text v #_#_" - " absolute-path))
+                             (r/link #_['.. 0 absolute-path] ['.. [absolute-path ""]] ; discard search
+                               (dom/text v #_#_" - " absolute-path)))
                   (::fs/other ::fs/symlink ::fs/unknown-kind) (dom/text v)
                   (dom/text v))
       ::fs/modified (dom/text (e/client (some-> v .toLocaleDateString)))
@@ -29,22 +30,27 @@
 
 (e/defn Dir [x]
   (e/server
-    (let [m (datafy x)]
-      (dom/h1 (dom/text (::fs/absolute-path m)))
+    (let [m (datafy x)
+          search (do (dom/h1 (dom/text (::fs/absolute-path m)))
+                     "" #_(e/client (Input* "" :placeholder "Search")))]
       (r/focus [1] ; search
-        (Explorer
-          (->> (nav m ::fs/children (::fs/children m))
-            (treelister ::fs/children #(includes-str? (::fs/name %) %2)))
-          {::dom/style {:height "calc((20 + 1) * 24px)"}
-           ::gridsheet/page-size 20
-           ::gridsheet/row-height 24
-           ::gridsheet/Format Render-cell
-           ::gridsheet/columns [::fs/name ::fs/modified ::fs/size ::fs/kind]
-           ::gridsheet/grid-template-columns "auto 8em 5em 3em"})))))
+        (dom/div (dom/props {:class "Viewport"})
+          (TableScrollFixedCounted
+            (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
+                    (nav m ::fs/children (::fs/children m))) search))
+            (e/fn TableBody [xs]
+              (e/for [[tab x] xs]
+                (dom/tr
+                  (dom/td (Render-cell x ::fs/name) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
+                  (dom/td (Render-cell x ::fs/modified))
+                  (dom/td (Render-cell x ::fs/size))
+                  (dom/td (Render-cell x ::fs/kind)))))
+            {:row-height 24 :overquery-factor 2}))))))
 
+(declare css)
 (e/defn DirectoryExplorer []
-  (dom/link (dom/props {:rel :stylesheet, :href "user/gridsheet-optional.css"}))
-  (dom/div (dom/props {:class "user-gridsheet-demo"})
+  (dom/style (dom/text css))
+  (dom/div (dom/props {:class "DirectoryExplorer"})
     (let [[fs-path search] r/route]
       (if-not fs-path (r/ReplaceState! ['. [(e/server (fs/absolute-path "./src/")) (or search "")]])
         (Dir (e/server (clojure.java.io/file fs-path)))))))
@@ -54,8 +60,18 @@
   (def xs (nav m ::fs/children (::fs/children m)))
   (def xs ((treelister ::fs/children #(includes-str? (::fs/name %) %2) xs) ""))
   (count (seq xs))
+  (def qs (take 10 xs)))
 
-  )
+(def css "
+.DirectoryExplorer .Viewport { position: fixed; top: 8em; bottom:0; left:0; right:0; overflow-x: hidden; }
+.DirectoryExplorer table { display: grid; grid-template-columns: auto 8em 8em 10em; }
+.DirectoryExplorer table tr { display: contents; }
+.DirectoryExplorer table tr:nth-child(even) td { background-color: #f2f2f2; }
+.DirectoryExplorer table tr:hover td { background-color: #ddd; }
+")
+
+
+
 
 ; Improvements
 ; Native search
