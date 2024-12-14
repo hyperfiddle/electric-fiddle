@@ -29,8 +29,9 @@
 
 (e/defn TableScrollFixedCounted
   [xs #_& {:keys [Row record-count row-height]}]
-  (dom/props {:style {:overflow-y "auto"}}) ; attach to user container
-  (let [[offset limit] (Scroll-window row-height record-count dom/node)]
+  (dom/props {:style {:overflow-y "auto"}}) ; no wrapper div! attach to natural container
+  (let [[offset limit] (Scroll-window row-height record-count dom/node
+                         {:overquery-factor 1})]
     (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
       (e/for [[i x] (Spool record-count xs offset limit)] ; site neutral, caller chooses
         (Row x))) ; no markup/style requirement!
