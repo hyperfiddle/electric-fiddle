@@ -34,7 +34,7 @@
     (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
       (e/for [[i x] (Spool record-count xs offset limit)] ; site neutral, caller chooses
         (Row x))) ; no row markup/style requirement!
-    (dom/div (dom/props {:style {:height (str (* row-height record-count) "px")}}))))
+    (dom/div (dom/props {:style {:height (str (* row-height (- record-count limit)) "px")}}))))
 
 (declare css)
 (e/defn WebviewScroll []
