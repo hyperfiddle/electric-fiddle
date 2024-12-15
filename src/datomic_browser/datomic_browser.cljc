@@ -5,10 +5,10 @@
             [contrib.str :refer [any-matches?]]
             #?(:clj [contrib.datomic-contrib :as dx])
             #?(:clj [contrib.datomic-m :as d])
-            [dustingetz.gridsheet4 :refer [Explorer]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer [Input! Form! Checkbox]]
+            [hyperfiddle.electric-scroll0 :as scroll :refer [Scroll-indexed-headless]]
             [hyperfiddle.router3 :as r]
             [missionary.core :as m]))
 
@@ -16,75 +16,55 @@
 (e/declare db)
 (e/declare schema)
 
+(e/defn Grid [xs! #_& {::keys [Row] :as props}]
+  (dom/div (dom/props {:class "Viewport"})
+    (let [{::scroll/keys [row-height Offset limit record-count Spool]}
+          (Scroll-indexed-headless dom/node xs!
+            (assoc props :row-height 24 :overquery-factor 1))]
+      (dom/table (dom/props {:style {:top (str (* (Offset) row-height) "px")}})
+        (e/for [[i x] (e/server (Spool))]
+          (dom/tr (Row x))))
+      (dom/div (dom/props {:style {:height (str (* row-height (- record-count limit)) "px")}})))))
+
 (e/defn Attributes []
   (dom/h1 (dom/text "Attributes — Datomic Browser"))
   (r/focus [0]
-    (let [cols [:db/ident :db/valueType :db/cardinality :db/unique :db/isComponent
-                #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs]]
-      (Explorer
-        (e/server (->> (dx/attributes> db cols) (m/reductions conj []) (m/relieve {}) e/input
-                    (sort-by :db/ident) ; slow
-                    (treelister (fn [_]) any-matches?)))
-        {:page-size 15
-         :row-height 24
-         :columns cols
-         :grid-template-columns "auto 6em 4em 4em 4em"
-         :Format
-         (e/fn [row col]
-           (e/client
-             (let [v (col row)]
-               (case col
-                 :db/ident (r/link ['.. '.. [:attribute v]] (dom/text v))
-                 :db/valueType (some-> v :db/ident name dom/text)
-                 :db/cardinality (some-> v :db/ident name dom/text)
-                 :db/unique (some-> v :db/ident name dom/text)
-                 (dom/text (str v))))))}))))
+    (e/server
+      (Grid (->> (dx/attributes> db
+                   [:db/ident {:db/valueType [:db/ident]} {:db/cardinality [:db/ident]} :db/unique :db/isComponent
+                    #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs])
+              (m/reduce conj []) e/Task (sort-by :db/ident))
+        {::Row (e/fn [x]
+                 (dom/td (let [v (:db/ident x)] (r/link ['.. '.. [:attribute v]] (dom/text v))))
+                 (dom/td (some-> x :db/valueType :db/ident name dom/text))
+                 (dom/td (some-> x :db/cardinality :db/ident name dom/text))
+                 (dom/td (some-> x :db/unique :db/ident name dom/text))
+                 (dom/td (some-> x :db/isComponent :db/ident name dom/text)))}))))
 
 (e/defn AttributeDetail []
   (let [[a _] r/route]
     (dom/h1 (dom/text "Attribute detail: " (pr-str a)))
     (r/focus [1]
-      (Explorer
-        (e/server (->> (d/datoms> db {:index :aevt, :components [a]})
-                    (m/reductions conj []) (m/relieve {}) e/input
-                    (treelister (fn [_]) any-matches?)))
-        {:page-size 20
-         :row-height 24
-         :columns [:e :a :v :tx]
-         :grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
-         :Format
-         (e/fn [x k]
-           (e/client
-             (let [[e _ v tx op] x] ; destructure on client to workaround glitch
-               (case k
-                 :e (r/link ['.. '.. [:entity e]] (dom/text e))
-                 :a (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa)
-                 :v (some-> v str dom/text) ; todo when a is ref, render link
-                 :tx (r/link ['.. '.. [:tx tx]] (dom/text tx))
-                 (e/amb)))))}))))
+      (e/server
+        (Grid (->> (d/datoms> db {:index :aevt, :components [a]}) (m/reduce conj []) e/Task)
+          {::Row (e/fn [[e _ v tx op]] ; possible destr glitch
+                   (dom/td (r/link ['.. '.. [:entity e]] (dom/text e)))
+                   (dom/td (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa))
+                   (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
+                   (dom/td (r/link ['.. '.. [:tx-detail tx]] (dom/text tx))))})))))
 
 (e/defn TxDetail []
   (let [[e _] r/route]
     (dom/h1 (dom/text "Tx detail: " e))
     (r/focus [1]
-      (Explorer
-        (e/server
-          (->> (d/tx-range> conn {:start e, :end (inc e)}) ; global
-            (m/eduction (map :data) cat) (m/reductions conj []) (m/relieve {}) e/input
-            (treelister (fn [_]) any-matches?)))
-        {:page-size 20
-         :row-height 24
-         :columns [:e :a :v :tx]
-         :grid-template-columns "15em 15em calc(100% - 15em - 15em - 9em) 9em"
-         :Format
-         (e/fn [x a]
-           (e/client
-             (let [[e aa v tx op] x] ; workaround glitch
-               (case a
-                 :e (let [e (e/server (e/Task (dx/ident! db e)))] (r/link ['.. '.. [:entity e]] (dom/text e)))
-                 :a (let [aa (e/server (e/Task (dx/ident! db aa)))] (r/link ['.. '.. [:attribute aa]] (dom/text aa)))
-                 :v (dom/text (pr-str v))                ; when a is ref, render link
-                 (dom/text (str tx))))))}))))
+      (e/server
+        (Grid (->> (d/tx-range> conn {:start e, :end (inc e)}) ; global
+                (m/eduction (map :data) cat) (m/reduce conj []) e/Task)
+          {::Row (e/fn [[e aa v tx op]] ; possible destr glitch
+                   (dom/td (let [e (e/server (e/Task (dx/ident! db e)))] (r/link ['.. '.. [:entity e]] (dom/text e))))
+                   (dom/td (let [aa (e/server (e/Task (dx/ident! db aa)))] (r/link ['.. '.. [:attribute aa]] (dom/text aa))))
+                   (dom/td (dom/text (pr-str v))) ; when a is ref, render link
+                   (dom/td (r/link ['.. '.. [:tx-detail tx]] (dom/text tx))))})))))
 
 #?(:clj (defn easy-attr [schema k]
           ((juxt
@@ -92,38 +72,30 @@
              (comp unqualify dx/identify :db/cardinality))
            (k schema))))
 
-(e/defn Format-entity [row col]
+(e/defn Format-entity [[tab [k v :as row]]]
   ; keep vals on server, row can contain refs
-  (let [k (e/server (some-> row (nth 0))), v (e/server (some-> row (nth 1)))]
-    (when (e/server (some? row))
-      (case col
-        ::k (cond
+  (when (some? row)
+    (dom/td (cond
               (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
               (e/server (contains? schema k)) (r/link ['.. '.. [:attribute k]] (dom/text k))
-              () (dom/text (str k))) ; str is needed for Long db/id, why?
-        ::v (if-not (e/server (coll? v))           ; don't render card :many intermediate row
+              () (dom/text (str k)))) ; str is needed for Long db/id, why?
+    (dom/td (if-not (coll? v) ; don't render card :many intermediate row
               (let [[valueType cardinality] (e/server (easy-attr schema k))]
                 (cond
                   (= :db/id k) (r/link ['.. '.. [:entity v]] (dom/text v))
                   (= :ref valueType) (r/link ['.. '.. [:entity v]] (dom/text v))
-                  (= :string valueType) (Form! (Input! k v)
-                                          :commit (fn [] [])
-                                          :show-buttons :smart)
-                  () (dom/text (pr-str v)))))
-        (e/amb)))))
+                  (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
+                  () (dom/text (pr-str v))))))))
 
 (e/defn EntityDetail []
   (let [[e _] r/route]
     (r/focus [1]
       (dom/h1 (dom/text "Entity detail: " e))
-      (Explorer
-        (e/server (->> (e/Task (d/pull db {:eid e :selector ['*] :compare compare})) ; TODO inject sort
-                    (treelister (partial dx/entity-tree-entry-children schema) any-matches?)))
-        {:page-size 15
-         :row-height 24
-         :columns [::k ::v]
-         :grid-template-columns "15em auto"
-         :Format Format-entity}))))
+      (e/server
+        (Grid (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches?
+                      (e/Task (d/pull db {:eid e :selector ['*] :compare compare}))) "")) ; TODO inject sort
+          {:columns [::k ::v]
+           ::Row Format-entity})))))
 
 (comment
   (def schema (m/? (dx/schema! models.mbrainz/*datomic-db*)))
@@ -131,57 +103,38 @@
   (def q (treelister (partial dx/entity-tree-entry-children schema) any-matches? xs))
   (q ""))
 
-(e/defn Format-history-row [[e aa v tx op :as row] a]
-  (when row          ; when this view unmounts, somehow this fires as nil
-    (case a
-      ::op (e/client (dom/text (name (case op true :db/add false :db/retract (e/amb)))))
-                 ;; link two levels up because we are under EntityHistory's scope
-      ::e (e/client (r/link ['.. '.. [:entity e]] (dom/text e)))
-      ::a (if (some? aa)
-            (let [ident (:db/ident (e/Task (d/pull db {:eid aa :selector [:db/ident]})))]
-              (dom/text (pr-str ident))))
-      ::v (some-> v pr-str dom/text)
-      ::tx (e/client (r/link ['.. '.. [:tx tx]] (dom/text tx)))
-      ::tx-instant (let [x (:db/txInstant (e/Task (d/pull db {:eid tx :selector [:db/txInstant]})))]
-                     (dom/text (e/client (pr-str x))))
-      (dom/text (str v)))))
+(e/defn Format-history-row [[e aa v tx op :as row]]
+  (when row ; glitch
+    (dom/td (e/client (dom/text (name (case op true :db/add false :db/retract (e/amb))))))
+    (dom/td (e/client (r/link ['.. '.. [:entity e]] (dom/text e)))) ; link two levels up because we are under EntityHistory's scope
+    (dom/td (if (some? aa)
+              (let [ident (:db/ident (e/Task (d/pull db {:eid aa :selector [:db/ident]})))]
+                (dom/text (pr-str ident)))))
+    (dom/td (some-> v pr-str dom/text))
+    (dom/td (e/client (r/link ['.. '.. [:tx-detail tx]] (dom/text tx))))
+    (dom/td  (let [x (:db/txInstant (e/Task (d/pull db {:eid tx :selector [:db/txInstant]})))]
+               (dom/text (e/client (pr-str x)))))))
 
 (e/defn EntityHistory []
   (let [[e _] r/route]
     (r/focus [1]
       (dom/h1 (dom/text "Entity history: " e))
-      (Explorer
-        (e/server
-          ; accumulate what we've seen so far, for pagination. Gets a running count. Bad?
-          (->> (dx/entity-history-datoms> db e)
-            (m/reductions conj []) ; track a running count as well?
-            (m/relieve {}) e/input
-            (treelister (fn [_]) any-matches?)))
-        {:page-size 20
-         :row-height 24
-         :columns [::e ::a ::op ::v ::tx-instant ::tx]
-         :grid-template-columns "10em 10em 3em auto auto 9em"
-         :Format Format-history-row}))))
+      (e/server
+        (Grid (->> (dx/entity-history-datoms> db e) (m/reduce conj []) e/Task)
+          {:columns [::e ::a ::op ::v ::tx-instant ::tx]
+           ::Row Format-history-row})))))
 
 (e/defn DbStats []
   (dom/h1 (dom/text "Db stats"))
   (r/focus [0]
-    (Explorer
-      (e/server (->> (e/Task (d/db-stats db))
-                  (treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil)) any-matches?)))
-      {:page-size 20
-       :row-height 24
-       :columns [::k ::v]
-       :grid-template-columns "20em auto"
-       :Format
-       (e/fn [[k v :as row] col]
-         (e/client
-           (case col
-             ::k (dom/text (pr-str k))
-             ::v (cond
-                   (= k :attrs) nil                ; print children instead
-                   () (dom/text (pr-str v)))
-             (e/amb))))})))
+    (e/server
+      (Grid (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil)) any-matches?
+                    (e/Task (d/db-stats db))) ""))
+        {::Row (e/fn [[tab [k v]]] ; thead: [::k ::v]
+                 (dom/td (dom/text (pr-str k)) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
+                 (dom/td (cond
+                           (= k :attrs) nil                ; print children instead
+                           () (dom/text (pr-str v)))))}))))
 
 (comment
   {:datoms 800958,
@@ -193,20 +146,12 @@
 (e/defn RecentTx []
   (r/focus [0]
     (dom/h1 (dom/text "Recent Txs"))
-    (Explorer
-      (e/server (->> (d/datoms> db {:index :aevt, :components [:db/txInstant]})
-                  (m/reductions conj ()) (m/relieve {}) e/input
-                  (treelister (fn [_]) any-matches?)))
-      {:page-size 30
-       :row-height 24
-       :columns [:db/id :db/txInstant]
-       :grid-template-columns "10em auto"
-       :Format
-       (e/fn [[e _ v tx op :as record] a]
-         (case a
-           :db/id (e/client (r/link ['.. [::tx tx]] (dom/text tx)))
-           :db/txInstant (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v)))
-           (e/amb)))})))
+    (e/server
+      (Grid (->> (d/datoms> db {:index :aevt, :components [:db/txInstant]}) (m/reduce conj ()) e/Task)
+        {::Row (e/fn [[e _ v tx op :as record]]
+                 ; columns [:db/id :db/txInstant]
+                 (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
+                 (dom/td (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v)))))}))))
 
 (e/defn Nav []
   (dom/div (dom/text "Nav: ")
@@ -214,16 +159,19 @@
     (r/link ['.. [:db-stats]] (dom/text "db-stats")) (dom/text " ")
     (r/link ['.. [:recent-tx]] (dom/text "recent-tx"))))
 
+(declare css)
 (e/defn Page []
-  (dom/props {:class "user-gridsheet-demo"})
-  (dom/link (dom/props {:rel :stylesheet, :href "gridsheet-optional.css"}))
-  (let [[page] r/route] (when-not page (r/ReplaceState! ['. [:attributes]]))
+  (dom/style (dom/text css))
+  (dom/props {:class "DatomicBrowser"})
+  (let [[page] r/route]
+    (when-not page (r/ReplaceState! ['. [:attributes]]))
+    (dom/props {:class page})
     (r/pop
       (Nav)
       (case page
         :attributes (Attributes)
         :attribute (AttributeDetail)
-        :tx (TxDetail)
+        :tx-detail (TxDetail)
         :entity (e/amb (EntityDetail) #_(EntityHistory)) ; todo untangle router inputs
         :db-stats (DbStats)
         :recent-tx (RecentTx)
@@ -231,7 +179,7 @@
 
 (e/defn DatomicBrowser [conn]
   (e/client
-    (let [fail (dom/div (Checkbox true :label "failure"))
+    (let [fail true #_(dom/div (Checkbox true :label "failure"))
           edits (bindx [conn conn
                         db (e/server (check (e/Task (d/db conn))))
                         schema (e/server (check (e/Task (dx/schema! db))))]
@@ -245,3 +193,21 @@
             nil (prn 'res-was-nil-stop!)
             ::ok (t)
             (t res)))))))
+
+(def css "
+.DatomicBrowser .Viewport { overflow-x:hidden; overflow-y:auto; position:fixed; top:8em; bottom:0; left:0; right:0; }
+.DatomicBrowser table { position: relative; display: grid; }
+.DatomicBrowser table tr { display: contents; }
+.DatomicBrowser table tr:nth-child(even) td { background-color: #f2f2f2; }
+.DatomicBrowser table tr:hover td { background-color: #ddd; }
+.DatomicBrowser table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.DatomicBrowser.attributes table { grid-template-columns: auto 6em 4em 4em 4em; }
+.DatomicBrowser.attribute table { grid-template-columns: 15em 15em calc(100% - 15em - 15em - 9em) 9em; }
+.DatomicBrowser.tx-detail table { grid-template-columns: 15em 15em calc(100% - 15em - 15em - 9em) 9em; }
+.DatomicBrowser.recent-tx table { grid-template-columns: 10em auto; }
+.DatomicBrowser.db-stats table { grid-template-columns: 20em auto; }
+.DatomicBrowser.entity table { grid-template-columns: 15em auto; }
+.DatomicBrowser.entity .entity-history table { grid-template-columns: 10em 10em 3em auto auto 9em; }
+
+")
