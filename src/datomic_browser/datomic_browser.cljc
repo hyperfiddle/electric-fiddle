@@ -17,7 +17,7 @@
 (e/declare schema)
 
 (e/defn Grid [xs! #_& {::keys [Row] :as props}]
-  (dom/div (dom/props {:class "Viewport"})
+  (dom/div (dom/props {:class (or (::dom/class props) "Viewport")})
     (let [{::scroll/keys [row-height Offset limit record-count Spool]}
           (Scroll-indexed-headless dom/node xs!
             (assoc props :row-height 24 :overquery-factor 1))]
@@ -95,6 +95,7 @@
         (Grid (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches?
                       (e/Task (d/pull db {:eid e :selector ['*] :compare compare}))) "")) ; TODO inject sort
           {:columns [::k ::v]
+           ::dom/class "Viewport entity-detail"
            ::Row Format-entity})))))
 
 (comment
@@ -122,6 +123,7 @@
       (e/server
         (Grid (->> (dx/entity-history-datoms> db e) (m/reduce conj []) e/Task)
           {:columns [::e ::a ::op ::v ::tx-instant ::tx]
+           ::dom/class "Viewport entity-history"
            ::Row Format-history-row})))))
 
 (e/defn DbStats []
@@ -172,7 +174,9 @@
         :attributes (Attributes)
         :attribute (AttributeDetail)
         :tx-detail (TxDetail)
-        :entity (e/amb (EntityDetail) #_(EntityHistory)) ; todo untangle router inputs
+        :entity (EntityDetail) #_(EntityHistory) ; todo layout two grids at once
+        #_#_:entity (dom/div (dom/props {:class "entity-wrap"})
+                  (dom/div (EntityDetail)) (dom/div (EntityHistory))) ; todo untangle router inputs
         :db-stats (DbStats)
         :recent-tx (RecentTx)
         (e/amb)))))
@@ -207,7 +211,11 @@
 .DatomicBrowser.tx-detail table { grid-template-columns: 15em 15em calc(100% - 15em - 15em - 9em) 9em; }
 .DatomicBrowser.recent-tx table { grid-template-columns: 10em auto; }
 .DatomicBrowser.db-stats table { grid-template-columns: 20em auto; }
-.DatomicBrowser.entity table { grid-template-columns: 15em auto; }
+.DatomicBrowser.entity .entity-detail table { grid-template-columns: 15em auto; }
 .DatomicBrowser.entity .entity-history table { grid-template-columns: 10em 10em 3em auto auto 9em; }
 
+/*
+.DatomicBrowser.entity > div.entity-wrap { display: grid; grid-template-rows: 1fr 1fr; position: fixed; top: 8em; bottom: 0; left: 0; right: 0; }
+.DatomicBrowser.entity .Viewport2 { overflow-x:hidden; overflow-y:auto; }
+.DatomicBrowser.entity .Viewport2 table { position: relative; display: grid; } */
 ")
