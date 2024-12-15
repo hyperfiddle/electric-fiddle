@@ -61,8 +61,9 @@
   (dom/style (dom/text css))
   (dom/div (dom/props {:class "DirectoryExplorer"})
     (let [[fs-path search] r/route]
-      (if-not fs-path (r/ReplaceState! ['. [(e/server (fs/absolute-path "./src/")) (or search "")]])
-        (Dir (e/server (clojure.java.io/file fs-path)))))))
+      (if-not fs-path
+        (r/ReplaceState! ['. [(e/server (fs/absolute-path "./src/")) (or search "")]])
+        (r/pop (Dir (e/server (clojure.java.io/file fs-path))))))))
 
 (comment
   (def m (datafy (clojure.java.io/file (fs/absolute-path "./"))))
