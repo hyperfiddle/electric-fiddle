@@ -8,7 +8,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input*]]
-            [hyperfiddle.electric-scroll0 :refer [TableScrollFixedCounted]]
+            [hyperfiddle.electric-scroll0 :as scroll :refer [Scroll-indexed-headless]]
             [hyperfiddle.router3 :as r]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
@@ -28,24 +28,28 @@
                   (dom/text (e/client (some-> v name))))
       (dom/text (e/client (str v))))))
 
+(e/defn TableScroll [xs! #_& {:as props}]
+  (dom/div (dom/props {:class "Viewport"})
+    (let [{::scroll/keys [row-height offset limit record-count Spool]}
+          (Scroll-indexed-headless dom/node xs! props)]
+      (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
+        (e/for [[i [tab x]] (Spool)]
+          (dom/tr
+            (dom/td (Render-cell x ::fs/name) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
+            (dom/td (Render-cell x ::fs/modified))
+            (dom/td (Render-cell x ::fs/size))
+            (dom/td (Render-cell x ::fs/kind)))))
+      (dom/div (dom/props {:style {:height (str (* row-height (- record-count limit)) "px")}})))))
+
 (e/defn Dir [x]
   (e/server
     (let [m (datafy x)
           search (do (dom/h1 (dom/text (::fs/absolute-path m)))
                      "" #_(e/client (Input* "" :placeholder "Search")))]
       (r/focus [1] ; search
-        (dom/div (dom/props {:class "Viewport"})
-          (TableScrollFixedCounted
-            (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
-                    (nav m ::fs/children (::fs/children m))) search))
-            (e/fn TableBody [xs]
-              (e/for [[tab x] xs]
-                (dom/tr
-                  (dom/td (Render-cell x ::fs/name) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
-                  (dom/td (Render-cell x ::fs/modified))
-                  (dom/td (Render-cell x ::fs/size))
-                  (dom/td (Render-cell x ::fs/kind)))))
-            {:row-height 24 :overquery-factor 2}))))))
+        (let [xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
+                          (nav m ::fs/children (::fs/children m))) search))]
+          (TableScroll xs! {:row-height 24 :overquery-factor 2}))))))
 
 (declare css)
 (e/defn DirectoryExplorer []
@@ -63,7 +67,7 @@
   (def qs (take 10 xs)))
 
 (def css "
-.DirectoryExplorer .Viewport { position: fixed; top: 8em; bottom:0; left:0; right:0; overflow-x: hidden; }
+.DirectoryExplorer .Viewport { overflow-x:hidden; overflow-y:auto; position:fixed; top:8em; bottom:0; left:0; right:0; }
 .DirectoryExplorer table { display: grid; grid-template-columns: auto 8em 8em 10em; }
 .DirectoryExplorer table tr { display: contents; }
 .DirectoryExplorer table tr:nth-child(even) td { background-color: #f2f2f2; }
