@@ -8,7 +8,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input*]]
-            [hyperfiddle.electric-scroll0 :as scroll :refer [Scroll-indexed-headless]]
+            [hyperfiddle.electric-scroll0 :as scroll :refer [Scroll-indexed-headless Unrotate]]
             [hyperfiddle.router3 :as r]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
@@ -34,8 +34,8 @@
           (Scroll-indexed-headless dom/node xs! props)]
       (e/client
         (dom/table (dom/props {:style {:top (str (* (Offset) row-height) "px")}})
-          (e/for [[i [tab x]] (e/server (Spool))]
-            (dom/tr (dom/props {:data-row-stripe (mod i 2)})
+          (e/for [[i [tab x]] (e/server (Unrotate limit (Spool)))]
+            (dom/tr (dom/props {:style {:--order i} #_#_:data-row-stripe (mod i 2)}) ; striping damages perf slightly
               (dom/td (Render-cell x ::fs/name) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
               (dom/td (Render-cell x ::fs/modified))
               (dom/td (Render-cell x ::fs/size))
@@ -48,7 +48,8 @@
 .DirectoryExplorer table { display: grid; grid-template-columns: auto 8em 8em 10em; }
 .DirectoryExplorer table tr { display: contents; }
 .DirectoryExplorer table td { height: 24px; }
-.DirectoryExplorer table tr[data-row-stripe='0'] td { background-color: #f2f2f2; }
+.DirectoryExplorer table tr td { grid-row: var(--order); }
+/* .DirectoryExplorer table tr[data-row-stripe='0'] td { background-color: #f2f2f2; } */
 .DirectoryExplorer table tr:hover td { background-color: #ddd; }")
 
 (e/defn Dir [x]
@@ -57,7 +58,7 @@
           xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
                       (nav m ::fs/children (::fs/children m))) ""))]
       (dom/h1 (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
-      (TableScroll xs! {:row-height 24 :overquery-factor 3}))))
+      (TableScroll xs! {:row-height 24 :overquery-factor 1}))))
 
 (e/defn DirectoryExplorer []
   (dom/style (dom/text css))
