@@ -46,6 +46,7 @@
 .DirectoryExplorer .Viewport { overflow-x:hidden; overflow-y:auto; position:fixed; top:8em; bottom:0; left:0; right:0; }
 .DirectoryExplorer table { position: relative; display: grid; grid-template-columns: auto 8em 8em 10em; }
 .DirectoryExplorer table tr { display: contents; }
+.DirectoryExplorer table td { height: 24px; }
 .DirectoryExplorer table tr:nth-child(even) td { background-color: #f2f2f2; }
 .DirectoryExplorer table tr:hover td { background-color: #ddd; }")
 
