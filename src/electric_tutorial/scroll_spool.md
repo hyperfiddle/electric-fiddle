@@ -30,7 +30,7 @@ Not merely fast: **it's *faster* than that v2 demo, we've *beaten* it,** in thre
 
 Perf wise, what's changed since the talk?
 
-* Electric v3 is now, let's say "3x" faster than it was in August 2024, we dont have formal metrics to share today but early optimizations resulted in strong improvements that can be immediately felt in userland.
+* Electric v3 is now, let's say "3x" faster than it was in August 2024, we don't have formal metrics to share today but early optimizations resulted in strong improvements that can be immediately felt in userland.
 * more optimized css - optimizing browser layout is just as important as optimizing IO for demos at this throughput
 * general stability/bugfixes, allowing us to express our ideas without electric bugs getting in the way like they did in the talk
 * Other than that, it's a naive loop with no fancy tricks, just like the talk
@@ -66,7 +66,7 @@ Resultset is realized once and held in memory
 * `xs` will be disposed when the value is no longer used, thanks to Missionary's RAII semantics. "Last person to leave turns off the lights"
 * Note that relational queries are eager anyway due to JOIN—you have to run all the JOINs to completion before you see the first record—so realizing the entire resultset before paginating does not actually cost you anything!
 
-Spool contains the secret sauce, it recycles row elements using a clever `e/diff-by` with `mod` as the key:
+Spool contains the secret sauce, it implements a **ring buffer** that recycles row elements, by using `mod` as the `e/diff-by` key:
 
 !fn-src[hyperfiddle.electric-scroll0/Spool]()
 
