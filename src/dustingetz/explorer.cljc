@@ -35,7 +35,7 @@
       (e/client
         (dom/table (dom/props {:style {:top (str (* (Offset) row-height) "px")}})
           (e/for [[i [tab x]] (e/server (Spool))]
-            (dom/tr
+            (dom/tr (dom/props {:data-row-stripe (mod i 2)})
               (dom/td (Render-cell x ::fs/name) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
               (dom/td (Render-cell x ::fs/modified))
               (dom/td (Render-cell x ::fs/size))
@@ -48,7 +48,7 @@
 .DirectoryExplorer table { display: grid; grid-template-columns: auto 8em 8em 10em; }
 .DirectoryExplorer table tr { display: contents; }
 .DirectoryExplorer table td { height: 24px; }
-.DirectoryExplorer table tr:nth-child(even) td { background-color: #f2f2f2; }
+.DirectoryExplorer table tr[data-row-stripe='0'] td { background-color: #f2f2f2; }
 .DirectoryExplorer table tr:hover td { background-color: #ddd; }")
 
 (e/defn Dir [x]
