@@ -20,12 +20,12 @@
                   ::fs/dir (let [absolute-path (::fs/absolute-path m)]
                              (r/link #_['.. 0 absolute-path] ['.. [absolute-path ""]] ; discard search
                                (dom/text v)))
-                  (::fs/other ::fs/symlink ::fs/unknown-kind) (dom/text v)
+                  #_#_(::fs/other ::fs/symlink ::fs/unknown-kind) (dom/text v) ; perf - reuse same text node
                   (dom/text v))
       ::fs/modified (dom/text (e/client (some-> v .toLocaleDateString)))
-      ::fs/kind (case (::fs/kind m)
-                  ::fs/dir (dom/text unicode-folder)
-                  (dom/text (e/client (some-> v name))))
+      ::fs/kind (dom/text (case (::fs/kind m)
+                            ::fs/dir unicode-folder
+                            (e/client (some-> v name))))
       (dom/text (e/client (str v))))))
 
 (e/defn TableScroll [xs! #_& {:as props}]
