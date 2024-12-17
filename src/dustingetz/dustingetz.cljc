@@ -3,6 +3,7 @@
             [dustingetz.electric-tree :refer [TreeDemo]]
             [dustingetz.essay :refer [Essay]]
             [dustingetz.explorer :refer [DirectoryExplorer]]
+            [dustingetz.explorer2 :refer [DirectoryExplorer2]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.logic :refer [Logic]]
             [dustingetz.london-talk-2024.webview-concrete :refer [WebviewConcrete]]
@@ -33,6 +34,7 @@
   (merge
     {`Scratch Scratch
      `DirectoryExplorer DirectoryExplorer
+     `DirectoryExplorer2 DirectoryExplorer2
      `DemoMetaobject DemoMetaobject
      `Painter Painter
      `FileWatcherDemo FileWatcherDemo
