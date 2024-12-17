@@ -17,5 +17,5 @@ docker build -t electric-tutorial:latest .
 docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
 # fly deploy via Dockerfile
-fly deploy --remote-only --config src/electric_tutorial/fly.toml
+fly deploy --remote-only --config src/electric_tutorial/fly.toml --dockerfile src/electric_tutorial/Dockerfile
 ```

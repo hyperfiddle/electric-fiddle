@@ -49,6 +49,7 @@
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
             [dustingetz.explorer :refer [DirectoryExplorer]]
+            datomic-browser.mbrainz-browser
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
 
 (def tutorials
@@ -230,8 +231,10 @@
             #_(Nav ?tutorial true)))))))
 
 (e/defn Fiddles []
-  {'tutorial Tutorial
-   `DirectoryExplorer DirectoryExplorer})
+  (merge
+    {'tutorial Tutorial
+     `DirectoryExplorer DirectoryExplorer}
+    (datomic-browser.mbrainz-browser/Fiddles)))
 
 (e/defn ProdMain [ring-req]
   ; keep /tutorial/ in the URL

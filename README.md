@@ -66,5 +66,12 @@ docker build -t electric-tutorial:latest .
 docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
 # fly deploy via Dockerfile
-fly deploy --remote-only --config src/electric_tutorial/fly.toml
+fly deploy --remote-only --config src/electric_tutorial/fly.toml --dockerfile src/electric_tutorial/Dockerfile
+fly status
+fly platform vm-sizes
+fly scale show
+fly scale count 1 --region ewr
+fly scale count 1 --region cdg
+fly scale count 1 --region sjc
+fly scale count 1 --region gru
 ```

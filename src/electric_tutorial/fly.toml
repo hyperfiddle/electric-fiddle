@@ -38,5 +38,6 @@ primary_region = "ewr"
     timeout = "2s"
 
 [[vm]]
-  size = 'shared-cpu-8x'
   memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 2
