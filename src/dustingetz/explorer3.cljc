@@ -30,8 +30,9 @@
         (dom/props {:class "Viewport"})
         (e/client
           (let [[offset limit] (scroll/Scroll-window row-height record-count dom/node {:overquery-factor overquery-factor})]
-            (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
+            (dom/table (dom/props {:style {:position "sticky" :top 0} #_{:position "relative" :top (str (* offset row-height) "px")}})
               (e/for [i (scroll/IndexRing limit offset)]
                 (let [[tab x] (e/server (update (nth xs! i) 1 dissoc :contrib.datafy-fs/children))]
+                  #_(e/client) ; no difference, good both ways, and the link blue underline lags the link text both ways
                   (Row i x tab (Unglitch i "hidden")))))
             (dom/div (dom/props {:style {:height (str (* row-height (- record-count limit)) "px")}}))))))))
