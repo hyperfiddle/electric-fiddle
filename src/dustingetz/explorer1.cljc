@@ -13,7 +13,7 @@
       (dom/div
         (dom/props {:class "Viewport"})
         (let [[offset limit] (scroll/Scroll-window row-height record-count dom/node {:overquery-factor overquery-factor})]
-          (dom/table (dom/props {:style {:top (str (* offset row-height) "px")}})
+          (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
             (e/for [i (scroll/IndexRing limit offset)]
               (let [[tab x] (e/server (update (nth xs! i) 1 dissoc :contrib.datafy-fs/children))]
                 (e/client

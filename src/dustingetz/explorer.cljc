@@ -40,7 +40,7 @@
   (dom/div (dom/props {:class "Viewport"})
     (let [[offset limit] (scroll/Scroll-window row-height record-count dom/node {:overquery-factor overquery-factor})]
       (e/client
-        (dom/table (dom/props {:style {:top (str (* offset row-height) "px")}})
+        (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
           (e/for [[i [tab x]] (e/server
                                 ((fn [i] [i (update (nth xs! i) 1 dissoc :contrib.datafy-fs/children)])
                                  (scroll/IndexRing limit offset)))]
@@ -49,7 +49,7 @@
 
 (def css "
 .DirectoryExplorer .Viewport { overflow-x:hidden; overflow-y:auto; position:fixed; top:8em; bottom:0; left:0; right:0; }
-.DirectoryExplorer table { position: relative; /* position: sticky; top:0; */ }
+.DirectoryExplorer table { /* position: relative; */ /* position: sticky; top:0; */ }
 .DirectoryExplorer table { display: grid; grid-template-columns: auto 8em 8em 10em; }
 .DirectoryExplorer table tr { display: contents; visibility: var(--visibility); }
 .DirectoryExplorer table td { height: 24px; }
