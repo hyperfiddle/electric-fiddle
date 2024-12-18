@@ -19,7 +19,7 @@
              (let [conn (d/create-conn schema)]
                @(d/transact conn fixtures-genders)
                @(d/transact conn fixtures-shirt-sizes)
-               @(d/transact conn (gen-orders @conn 10000))
+               @(d/transact conn (gen-orders @conn 1000))
                (alter-var-root #'conn (constantly conn))
                conn))]
   (defn ensure-db! []
