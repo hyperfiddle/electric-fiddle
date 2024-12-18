@@ -1,17 +1,11 @@
-# fly.toml file generated for electric-examples-app on 2023-03-31T18:34:16+02:00
-
-# app = "electric-examples-app"
 app = "dawn-night-7975"
 kill_signal = "SIGINT"
 kill_timeout = 5
 primary_region = "ewr"
-processes = []
 
 [build.args]
   HYPERFIDDLE_FIDDLE_NS="electric-tutorial.tutorial"
   HYPERFIDDLE_FIDDLE_DEPS_ALIAS="electric-tutorial"
-
-[env]
 
 [experimental]
   allowed_public_ports = []
