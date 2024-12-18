@@ -13,12 +13,14 @@
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 
+(e/declare base-path)
+
 (e/defn Render-cell [m a]
   (let [v (a m)]
     (case a
       ::fs/name (case (::fs/kind m)
-                  ::fs/dir (let [absolute-path (::fs/absolute-path m)]
-                             (r/link #_['.. 0 absolute-path] ['.. [absolute-path ""]] ; discard search
+                  ::fs/dir (let [path (e/server (fs/relativize-path base-path (::fs/absolute-path m)))]
+                             (r/link #_['.. 0 path] ['.. [path ""]] ; discard search
                                (dom/text v)))
                   #_#_(::fs/other ::fs/symlink ::fs/unknown-kind) (dom/text v) ; perf - reuse same text node
                   (dom/text v))
@@ -63,10 +65,11 @@
 (e/defn DirectoryExplorer []
   (dom/style (dom/text css))
   (dom/div (dom/props {:class "DirectoryExplorer"})
-    (let [[fs-path search] r/route]
-      (if-not fs-path
-        (r/ReplaceState! ['. [(e/server (fs/absolute-path "./src/")) (or search "")]])
-        (r/pop (Dir (e/server (clojure.java.io/file fs-path))))))))
+    (let [[fs-rel-path search] r/route]
+      (if-not fs-rel-path
+        (r/ReplaceState! ['. ["src" (or search "")]])
+        (r/pop (binding [base-path (e/server (fs/absolute-path "./"))]
+                 (Dir (e/server (clojure.java.io/file base-path fs-rel-path)))))))))
 
 (comment
   (def m (datafy (clojure.java.io/file (fs/absolute-path "./"))))

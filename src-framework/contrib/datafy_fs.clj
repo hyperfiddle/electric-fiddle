@@ -212,13 +212,35 @@
   := "src-contrib")
 
 (defn absolute-path [^String path-str & more]
-  (str (.toAbsolutePath (java.nio.file.Path/of ^String path-str (into-array String more)))))
+  (-> (java.nio.file.Path/of ^String path-str (into-array String more))
+    .normalize .toAbsolutePath str))
 
 (comment
-  (absolute-path "./")
-  (absolute-path "node_modules")
+  (absolute-path "./") := "/Users/dustin/src/hf/electric-fiddle"
+  (absolute-path "node_modules") := "/Users/dustin/src/hf/electric-fiddle/node_modules"
   (clojure.java.io/file (absolute-path "./"))
   (clojure.java.io/file (absolute-path "node_modules")))
+
+(defn relativize-path "Convert an absolute path to one relative to base-dir"
+  [base-dir abs-path]
+  (let [base (.toPath (clojure.java.io/file base-dir))
+        full (.toPath (clojure.java.io/file abs-path))]
+    (when (-> full .normalize (.startsWith (.normalize base)))
+      (str (.relativize (.normalize base) (.normalize full))))))
+
+(tests
+  (relativize-path (absolute-path "./") (absolute-path "./vendor/electric/src")) := "vendor/electric/src"
+  (relativize-path (absolute-path "./") (absolute-path "./vendor/electric/src/")) := "vendor/electric/src"
+  (relativize-path (absolute-path "./") (absolute-path "vendor/electric/src")) := "vendor/electric/src"
+  (relativize-path (absolute-path "./") (absolute-path "vendor/electric/src/")) := "vendor/electric/src"
+  (relativize-path (absolute-path "../") (absolute-path "vendor/electric/src")) := "electric-fiddle/vendor/electric/src"
+  (relativize-path (absolute-path "./") (absolute-path "./")) := ""
+  (relativize-path (absolute-path "./") (absolute-path "")) := ""
+  (relativize-path (absolute-path "./") (absolute-path "../")) := nil
+
+  (relativize-path "/fake/" (absolute-path "./src")) := nil
+  (relativize-path (absolute-path "./") "/fake/") := nil
+  (relativize-path (absolute-path "./") "fake") := nil)
 
 (s/fdef list-files :args (s/cat :file any?) :ret (s/coll-of any?))
 (defn list-files [^String path-str]
