@@ -1,4 +1,4 @@
-# Tables with virtual scroll (spooling approach)
+# Tables with virtual scroll (spooling approach) (DRAFT)
 
 * High performance server-streamed virtual scroll in like, 10 LOC
 * This is only one of many interesting scroll configurations. More to come
@@ -9,7 +9,7 @@
 
 What's happening
 
-* 10,000 records, server streamed as you scroll - database to dom
+* 1000 records, server streamed as you scroll - database to dom
 * non trivial row components with server dependencies and control flow:
   * live picklists (server backed)
   * only visible records are hydrated (the query only gives ids)
@@ -18,12 +18,12 @@ What's happening
 
 Background
 * In [Talk: Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8), we demonstrated what we hope to be an abstraction safe virtual scroll, which had performance issues at the time of the talk (which was the first preview of Electric v3).
-* We said we think we can bring this performance in line with the performance of the [Electric v2 datomic browser demo](https://electric-datomic-viewer.fly.dev/(:app.datomic-browser!attribute,:abstract%52elease!name), which has fantastic performance, though it is highly optimized with about 60 LOC to implement a special scroll strategy.
+* We said we think we can bring this performance in line with the performance of the [Electric v2 datomic browser demo](https://github.com/hyperfiddle/electric-datomic-browser), which has fantastic performance, though it was highly optimized with 60 LOC to implement a special scroll strategy.
 * Here, we revisit. And behold, the demo from the talk is now fast! 
 
 Not merely fast: **it's *faster* than that v2 demo, we've *beaten* it,** in three ways:
 * the viewport takes the whole screen, it is not fixed to 20 rows (which was part of the performance trick!)
-* depsite scaling to 10x more rows, the raw performance is *better*
+* depsite scaling to 10x more visible rows, the raw performance is *better*
 * the implementation is *far simpler*, essentially:
 * `(e/for [[i x] (Spool count xs offset limit)] (Row x))`
 * So, OMG!!
@@ -51,7 +51,9 @@ Tech specs
 * row count and row height must be known at mount time (used to set scrollbar height for random access)
 * the resultset must maintain a stable order as it evolves incrementally over time (i.e., sorted)
 
-## How it works
+## How it works (DRAFT)
+
+**NOTE: this section is already out of date as of 2024 Dec 18, we've made many improvements to the implementation. Todo rewrite the essay.**
 
 Resultset is realized once and held in memory
 
@@ -78,7 +80,7 @@ Spool contains the secret sauce, it implements a **ring buffer** that recycles r
 
 This conveyor belt approach enables control flow in the row renderer
 
-* In our Electric v2 demos, anywhere where there is a conditional in a cell renderer, there was typically <a href="https://electric-demo.fly.dev/(user.demo-explorer!%44irectory%45xplorer)">visible flicker (v2 dir explorer demo)</a>, which is an artifact of the scroll strategy that leaves the row elements in place and instead slides the *values* through the grid. The optimization here is that by fixing the dom elements statically, you only have to do point text writes to rotate the row values through the pre-existing row elements. But it's not free: the consequence is, if the row markup is dynamic—recall the folder explorer demo, where folders render as hyperlinks but files do not—we now need to teardown and rebuild the `<a>` element (and its underlying Electric DAG/logic) in order to slide it through the grid, and this happens at the animation rate of 120 fps, and Electric can't keep up, so you see flicker.
+* In our Electric v2 demos, anywhere where there is a conditional in a cell renderer, there was typically visible flicker (v2 dir explorer demo), which is an artifact of the scroll strategy that leaves the row elements in place and instead slides the *values* through the grid (causing row contents to be rebuilt each tick!). The optimization here is that by fixing the dom elements statically, you only have to do point text writes to rotate the row values through the pre-existing row elements. But it's not free: the consequence is, if the row markup is dynamic—recall the folder explorer demo, where folders render as hyperlinks but files do not—we now need to teardown and rebuild the `<a>` element (and its underlying Electric DAG/logic) in order to slide it through the grid, and this happens at the animation rate of 120 fps, and Electric can't keep up, so you see flicker.
 * The v3 conveyor belt approach solves this by binding row elements to a stable entity identity (i.e. the natural thing that you want), and therefore DOM mutations only happen at the edges. Turning an O(N) cost into O(1). Great!
 
 Commentary: So, is Electric v3 faster than v2, or slower ...?
