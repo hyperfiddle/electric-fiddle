@@ -40,4 +40,4 @@ primary_region = "ewr"
 [[vm]]
   memory = '2gb'
   cpu_kind = 'shared'
-  cpus = 2
+  cpus = 4
