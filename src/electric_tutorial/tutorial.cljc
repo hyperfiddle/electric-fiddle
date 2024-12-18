@@ -50,6 +50,7 @@
             #_[electric-tutorial.timer :refer [Timer]]
             [dustingetz.explorer :refer [DirectoryExplorer]]
             datomic-browser.mbrainz-browser
+            staffly.staffly
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
 
 (def tutorials
@@ -234,7 +235,8 @@
   (merge
     {'tutorial Tutorial
      `DirectoryExplorer DirectoryExplorer}
-    (datomic-browser.mbrainz-browser/Fiddles)))
+    (datomic-browser.mbrainz-browser/Fiddles)
+    (staffly.staffly/Fiddles)))
 
 (e/defn ProdMain [ring-req]
   ; keep /tutorial/ in the URL
