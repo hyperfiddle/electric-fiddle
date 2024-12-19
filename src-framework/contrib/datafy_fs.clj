@@ -124,7 +124,7 @@
                                                    (keyword (namespace ::foo) s)
                                                    ::unknown-kind)
                           () ::unknown-kind)
-             ::absolute-path (-> f .getAbsolutePath)
+             ::absolute-path (-> f .toPath .normalize .toAbsolutePath str)
              ::created (-> attrs .creationTime .toInstant java.util.Date/from)
              ::accessed (-> attrs .lastAccessTime .toInstant java.util.Date/from)
              ::modified (-> attrs .lastModifiedTime .toInstant java.util.Date/from)
