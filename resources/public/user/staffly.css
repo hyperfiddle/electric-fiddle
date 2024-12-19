@@ -1,0 +1,144 @@
+:root {
+    --tw-sm:  640px;
+    --tw-md:  768px;
+    --tw-lg:  1024px;
+    --tw-xl:  1280px;
+    --tw-2xl: 1536px;
+    --tw-text-gray-700: rgb(55 65 81);
+    --tw-text-gray-900: rgb(17 24 39);
+    --tw-bg-blue-400: rgb(96 165 250);
+    --tw-bg-blue-500: rgb(59 130 246);
+    --tw-font-semibold: 600;
+}
+
+
+.staffly{
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 80rem;
+    padding: 0 1rem 0 1rem;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    flex-gap: 0.5rem;
+}
+
+@media (min-width: var(--tw-sm)){
+    .staffly{
+        padding: 0 1.5rem 0 1.5rem;
+    }
+}
+
+@media (min-width: var(--tw-lg)){
+    .staffly{
+        padding: 0 2rem 0 2rem;
+    }
+}
+
+.staffly h1{
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: var(--tw-font-semibold);
+    color: var(--tw-text-gray-900);
+}
+
+.staffly h1::first-letter{
+    text-transform: capitalize;
+}
+
+.staffly [role=combobox] + [aria-role=listbox] [aria-role=option]{
+    padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+}
+
+.staffly [role=combobox] + [aria-role=listbox] [aria-role=option]:hover {
+    background-color: var(--tw-bg-blue-400);
+    color: white;
+}
+
+
+.staffly [role=combobox] + [aria-role=listbox] [aria-role=option][aria-selected=true] {
+    background-color: var(--tw-bg-blue-500);
+    color: white;
+}
+
+
+/* legacy gridsheet, to be migrated */
+.staffly [role=grid]{
+    border-radius: 0.25rem;
+    border: 1px lightgray solid;
+}
+
+.staffly [role=grid] [role=columnheader]{
+    color: var(--tw-text-gray-700);
+    font-weight: var(--tw-font-semibold);
+    text-transform: capitalize;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.5rem;
+}
+
+.staffly [role=grid] [role=gridcell]{
+    --indent: 0px;
+    padding: 0 calc(var(--indent) + 0.5rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.staffly [role=grid] :is([role=gridcell], [role=columnheader]):not(:last-child){
+    border-right: 1px lightgray solid;
+}
+
+
+
+.staffly [role=grid] [role=group]:not(:last-child) [role=gridcell] {
+    /* border-bottom: 1px lightgray solid; */
+}
+
+.staffly [role=grid] [role=group]:nth-child(even) [role=gridcell] {
+    background-color: #F2F2F2;
+}
+
+/* ------- */
+
+/* Staffly forms */
+
+.staffly dl{
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1rem;
+}
+
+.staffly dl dt{
+    text-align: right;
+    color: var(--tw-text-gray-900);
+    font-weight: var(--tw-font-semibold);
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+    padding: 0 0.125rem;
+}
+
+.staffly dl dd{
+    margin: 0;
+    padding: 0 0.125rem;
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+
+    color: var(--tw-text-gray-700);
+}
+
+.staffly dl dd nav{
+    display: flex;
+    flex-wrap: wrap;
+    white-space: nowrap;
+    gap: 0 0.5rem;
+    justify-content: flex-end;
+}
+
+
+/* electric-forms customization */
+
+.staffly form dl{
+    gap: 0.5rem 0.75rem;
+}

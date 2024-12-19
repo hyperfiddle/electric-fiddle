@@ -10,6 +10,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input]]
+            [hyperfiddle.ui.typeahead :refer [Typeahead]]
             [hyperfiddle.router3 :as r]
             [staffly.staffly-model :as model]))
 
@@ -79,15 +80,13 @@
 
 (e/defn Index []
   (e/client
-    (dom/div (dom/props {:class "px-4 sm:px-0"})
-      (dom/h1 (dom/props {:class "text-xl/7 font-semibold text-gray-900"})
-        (dom/text (dom/text "Staffly Index"))))
+    (dom/h1 (dom/text (dom/text "Staffly Index")))
     (r/focus [0]
       (let [[search type_] (dom/dl
                              [(Field "search" (Input "" :placeholder "Name, email or request shortcode" :disabled true))
-                              (Field "type" (ComboBox ::staff ; initial value for fast load
+                              (Field "type" (Typeahead ::staff ; initial value for fast load
                                               :Options (e/fn [s] (e/server (e/diff-by identity (entity-type-options s))))
-                                              :Option-label (e/fn [x] (some-> x name))))])
+                                              :option-label (fn [x] (some-> x name))))])
             cols [:db/id ::entity-type]]
         #_(e/server (prn 'q search type_)) ; search is too slow, todo filter in memory w/ treelister
         (Explorer3

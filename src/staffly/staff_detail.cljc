@@ -46,7 +46,7 @@
 (comment (staff-detail model/staff-sarah))
 
 (def links [:staff-shifts :staff-feedback :staff-restrictions :entity-history])
-(def cmds [:change-staff-status :update-roles :add-restriction])
+(def cmds [:restrict-staff-from-venue])
 
 (def cols
   [:staff/id
@@ -67,15 +67,13 @@
 (e/defn StaffDetail []
   (e/client
     (let [[e _] r/route, e (or e model/staff-sarah)]
-      (dom/div (dom/props {:class "px-4 sm:px-0"})
-        (dom/h1 (dom/props {:class "text-xl/7 font-semibold text-gray-900"})
-          (dom/text (str "Staff · " (pr-str e)))))
+      (dom/h1 (dom/text (str "Staff · " (pr-str e))))
       (dom/dl
         (dom/dt #_(dom/text "links"))
         (dom/dd
-          (dom/props {:class "flex flex-wrap text-nowrap gap-x-4 justify-end"})
-          (e/for [k (e/diff-by identity links)] (r/link ['.. [k e]] (dom/text (name k)))) ; links
-          (e/for [k (e/diff-by identity cmds)] (r/link ['.. [k e]] (dom/text (name k))))) ; todo render commands as buttons
+          (dom/nav
+            (e/for [k (e/diff-by {} links)] (r/link ['.. [k e]] (dom/text (name k)))) ; links
+            (e/for [k (e/diff-by {} cmds)] (r/link ['.. [k e]] (dom/text (name k)))))) ; todo render commands as buttons
         (EasyForm
           (e/server (e/Offload #(staff-detail e)))
           cols

@@ -1,14 +1,21 @@
-/* Forms, Crud, TodoMVC(!important), Datomic browser */
-/* [aria-busy="true"] { background-color: yellow !important; } */
-/* input[type="checkbox"][aria-busy="true"] { */
-    /* Can't color or background-color native checkboxes
-       border and outline are tricky to get right without messing up keyboard nav */
-    /* box-shadow: 0 0 0.2rem 0.2rem yellow; /\* simulate a border *\/ */
-    /* outline: none; */
-/* } */
-/* [aria-invalid="true"] { background-color: pink; } */
-/* input[aria-invalid="true"] { outline: 3px pink solid; } */
-/* input[type="checkbox"][aria-invalid="true"]:focus { outline: 4px pink solid; } */
+/*
+  Modern CSS refresher:
+  - :is(selector1, selectorN...) is a logical OR.
+    `input:is(.class1, .class2)` matches INPUT if it has .class1, .class2, or both.
+    - examples:
+      - boolean algebra: :not(:is(.a), :is(.b)) <-> :is(:not(.a), :not(.b))
+      - cartesian product: form input:is([type=radio],[type=checkbox]):is(.classA, .class1) – Matches radio.classA, radio.classB, checkbox.classA, checkbox.classB
+  - :has(selector1, selectorN) is a lookahead.
+    `form:has(input[type=submit])` matches FORM if it contains a submit button.
+    - examples:
+      - `label:has(+ input)` – matches LABEL if it is directly followed by an input
+      - `label:has(+ input) + input` – matches INPUT if it comes just after a label
+      - `label:has(> input)` – matches all LABEL if they contain an input as a direct child
+      - `*:has(*)` – matches all elements containing at least an element. O(n²). That's bad mkay.
+  - :where(selector1, selectorN...) is like `:is`, but for default (base) styles.
+    Do you know about CSS selector specificity? If no just use :is() instead.
+    :where always have a 0-specificity. Use it to provide default styles that are easy to override.
+ */
 
 /* Layout */
 
@@ -22,8 +29,9 @@ form dl dt {
 form dl dd {
     grid-column: 2;
     display: flex; gap: 0.5rem; flex-wrap: nowrap; align-items: center;
-    /* white-space: nowrap; */
 }
+
+/* inputs */
 
 form input{
     border-radius: 4px;
@@ -75,24 +83,36 @@ form dl[role=radiogroup] dd input{
 /* Validation */
 /* [aria-invalid=true] means tx rejected, :invalid or :user-invalid means user input failed validation */
 
-form [data-role=errormessage]{ visibility:hidden; color: red;}
+form [data-role=errormessage]{
+    /*
+      Error messages are hidden by default, waiting for user interaction.
+      Nothing prevents the error message value to be computed early.
+   */
+    color: red;
+}
+
+form [data-role=errormessage]:empty{
+    visibility:hidden;
+}
+
 /* Field-level error messages */
-form :invalid + [data-role=errormessage]{}
 
 form dt label::after{
-    visibility: hidden;
+    /* little red star next to a label of a required input */
     content: "*";
+    visibility: hidden;
     color: crimson;
     padding-left: 0.1rem;
     font-weight: 300;
 }
-form dt:has(+ dd :required) label::after
+
+form dt:has(+ dd :required) label::after /* label is left of (before) a required input */
 {
     visibility: visible;
 }
 
 form dd:has(:invalid){
-    --error-message: "";
+    --error-message: ""; /* set default value */
 }
 
 form dd:has(:invalid)::after,
@@ -114,87 +134,62 @@ form [role=radiogroup][data-errormessage]::after{
     height: 100%;
     display: flex; align-items:center;
     padding-left: .5rem;
-}
 
-form dd:has(:invalid:required){
-    --error-message: "Required";
-}
-
-form dd [role=radiogroup][data-errormessage]{
-    --error-message: attr(data-errormessage);
-}
-form dd [role=radiogroup][data-errormessage]::after{
     grid-column: 3;
     grid-row: 1 / -1;
 }
 
+form dd:has(:invalid:required){
+    /* Note browsers never flag :disabled inputs as :invalid.
+       There are no safe way to detect an invalid disabled input from CSS.
+     */
+    --error-message: "Required";
+}
 
+form dd :is([role=radiogroup], input)[data-errormessage]{
+    --error-message: attr(data-errormessage);
+}
 
 /* Form-level error message */
-form:has([type=submit]:is([aria-busy=true], :disabled)) /* form is busy but is waiting for a change to allow commit again */
+form:has([type=submit]:is([aria-invalid=true], [aria-busy=true])) /* form is invalid or committing */
         > [data-role=errormessage]
 {
     visibility: visible;
 }
 
-/* Validation runs continuously, but might or might not be displayed immediately to not disrupt user flow */
-
-/* Option 1: form always report validation, even before user interaction - mounts with red state */
-form [data-role=errormessage]
-{}
-/* {visibility: visible;} */
-form input:not([type=submit]):invalid
-{}
-/* {outline: 3px pink solid;} */
-
-/* Option 2: form reports validation as soon as the user interact with controls.*/
-form:invalid /* in a form containing invalid user input */
-  :invalid /* target all invalid user inputs */
-     + [data-role=errormessage] /* select their respectively associated error containers */
-{}
-/* { visibility : visible;} */
-form input:not([type=submit]):invalid
-{}
-/* {outline: 3px pink solid;} */
-
-
-/* Option 3: form reports validation after user click commit */
-/* in a form containing invalid user input, having a visual commit affordance (TODO handle :show-button false), in a pending or tx-rejected state */
-form:invalid:has([type=submit]:is([aria-busy=true],[aria-invalid=true]))
- :invalid /* target all invalid user inputs */
-  + [data-role=errormessage] /* select their respectively associated error containers */
-/* {} */
-{visibility: visible;}
-
-form:invalid:has([type=submit]:is([aria-busy=true],[aria-invalid=true])) :invalid
-/* {} */
-{outline: 3px pink solid;}
-
-
 /* Transaction */
 
-form :is([type=submit], [type=reset]){
+form :is(input,button):is([type=submit], [type=reset]){
     border: 1px gray solid;
     padding: 1px 4px;
     border-radius: 4px;
     font-size: 0.85rem;
 }
 
-form [type=submit]:disabled{
+form :where([type=submit]:disabled)
+, form:invalid :where([type=submit])
+{
     background-color: #F4F4F6; /* native button disabled bgcolor */
     color: rgb(109, 109, 109);
+    pointer-events: none;
 }
-form :is([type=submit], [type=reset]):not(:disabled):hover{
+
+form :where(:is([type=submit], [type=reset]):not(:disabled):hover){
     cursor: pointer;
     background-color: whitesmoke;
 }
 
 form [aria-busy=true] {background-color: yellow;}
-/* form input:not([type=submit]):invalid {outline: 3px pink solid;} /\* field validation error *\/ */
-form input[type=submit][aria-invalid] {background-color: pink;} /* tx-rejected on commit button */
 
-form input[type=checkbox]{appearance: checkbox;}
-form input[type=radio]{appearance: radio;}
+/* tx-status on commit button */
+form :is(input, button)[type=submit][aria-invalid=true] {
+    background-color: pink;
+}
+
+form :is(input, button)[type=submit][data-tx-status=accepted]{
+    background-color: rgb(34 197 94); /* tw text-green-500 */
+}
+
 
 form input:is([type=checkbox],[type=radio])[aria-busy=true] {
     /* Can't color or background-color native checkboxes

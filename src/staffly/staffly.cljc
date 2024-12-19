@@ -8,7 +8,8 @@
             [hyperfiddle.router3 :as r]
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
-            [staffly.staff-detail :refer [StaffDetail]]))
+            [staffly.staff-detail :refer [StaffDetail]]
+            [staffly.block-staff-from-venue :refer [BlockStaffFromVenue]]))
 
 (e/declare *effects) ; to be bound to `{`Cmd-sym Cmd-efn}
 
@@ -17,11 +18,8 @@
     (r/link ['.. [:index]] (dom/text "home")) (dom/text " ")))
 
 (e/defn Page []
-  (dom/props {:class ["rosie"
-                      "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 bg-white" ; responsive container
-                      "flex flex-col gap-2" ; items in the page flow down, properly spaced and aligned
-                      ]})
-  (dom/link (dom/props {:rel :stylesheet, :href "/staffly.css"}))
+  (dom/props {:class "staffly "})
+  #_(dom/link (dom/props {:rel :stylesheet, :href "/staffly.css"}))
   (dom/link (dom/props {:rel :stylesheet, :href "/gridsheet-optional.css"}))
   (let [[page] r/route]
     (when-not page (r/ReplaceState! ['. [:index]]))
@@ -30,10 +28,25 @@
       (case page
         :index (Index)
         :staff (StaffDetail)
+        :restrict-staff-from-venue (BlockStaffFromVenue)
         (dom/text "page not found")))))
 
-(e/defn Service [edits]
+#_(e/defn Service [edits]
   (e/drain edits))
+
+(e/defn Service [edits]
+  (e/client
+    (let [fail false #_(dom/div (dom/props {:class "fixed bottom-0"}) (Checkbox* true :label "failure"))
+          edits (e/Filter some? edits)]
+      (println 'edits (e/Count edits) (e/as-vec edits))
+      (e/for [[t [cmd & args] guess] edits]
+        (let [Effect (get *effects cmd (e/fn [& args] (e/server (e/Offload #(do (Thread/sleep 500) (doto ::ok (prn cmd)))))))
+              res (e/server (if fail (e/Offload #(do (Thread/sleep 2000) ::rejected)) (e/Apply Effect args)))]
+          (prn "tx" res)
+          (case res
+            nil (prn 'res-was-nil-stop!)
+            ::ok (t)
+            (t res)))))))
 
 (e/defn Inject-datomic [F]
   (e/server
@@ -56,7 +69,8 @@
            (Page)))))))
 
 (e/defn Fiddles []
-  {`Staffly Staffly})
+  {`Staffly Staffly
+   `BlockStaffFromVenue BlockStaffFromVenue})
 
 (e/defn ProdMain [ring-req]
   (FiddleMain ring-req (Fiddles)
