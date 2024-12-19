@@ -1,4 +1,4 @@
-(ns datagrid.datafy-git
+(ns models.datafy-git
   (:require [clj-jgit.porcelain :as git]
             [clj-jgit.querying :as git2]
             [clojure.core.protocols :as ccp :refer [nav]]

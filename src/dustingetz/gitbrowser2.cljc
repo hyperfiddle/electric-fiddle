@@ -3,13 +3,13 @@
             [contrib.data :refer [omit-keys]]
             [clojure.core.protocols :refer [nav]]
             [contrib.datafy-fs #?(:clj :as :cljs :as-alias) fs]
-            [datagrid.datafy-git #?(:clj :as :cljs :as-alias) git]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.electric-forms0 :as forms :refer [Button! Service]]
-            [missionary.core :as m]))
+            [missionary.core :as m]
+            [models.datafy-git #?(:clj :as :cljs :as-alias) git]))
 
 ; strategy Explorer2 but with e/for on server
 (e/defn TableScroll [xs! #_& {:keys [Row row-height]}]
