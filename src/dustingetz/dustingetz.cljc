@@ -7,6 +7,7 @@
             [dustingetz.explorer2 :refer [DirectoryExplorer2]]
             [dustingetz.explorer3 :refer [DirectoryExplorer3]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
+            [dustingetz.gitbrowser2 :refer [GitBrowser]]
             [dustingetz.logic :refer [Logic]]
             [dustingetz.london-talk-2024.webview-concrete :refer [WebviewConcrete]]
             [dustingetz.london-talk-2024.webview-generic :refer [WebviewGeneric]]
@@ -42,6 +43,7 @@
      `DemoMetaobject DemoMetaobject
      `Painter Painter
      `FileWatcherDemo FileWatcherDemo
+     `GitBrowser GitBrowser
      `Y-Fac Y-Fac
      `Y-dir Y-dir
      `TreeDemo TreeDemo

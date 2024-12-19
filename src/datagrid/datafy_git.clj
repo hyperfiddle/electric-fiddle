@@ -5,8 +5,13 @@
             [clojure.datafy :refer [datafy]])
   (:import (org.eclipse.jgit.api Git)
            (org.eclipse.jgit.diff DiffFormatter DiffEntry RawTextComparator)
+           (org.eclipse.jgit.internal.storage.file FileRepository)
            (org.eclipse.jgit.revwalk RevWalk RevCommit RevCommitList)
-           (org.eclipse.jgit.lib ObjectIdRef)))
+           (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef ObjectIdRef$PeeledNonTag Ref Repository)))
+
+; re-export wrappers for convenience - one API not two
+(defn load-repo [path] (git/load-repo path))
+(defn log [repo & args] (apply git/git-log repo args))
 
 (declare get-commit changes-stats)
 
@@ -19,7 +24,22 @@
   (update-vals (clj-jgit.internal/get-refs repo "") resolve-ref))
 
 (comment
-  (branch-list r)
+  (def r (git/load-repo "./"))
+  (log r)
+  (type r) := Git
+
+  (keys (first (git/log r))) := [:id :msg :author :committer]
+  (def m (datafy r))
+  (keys (first (nav m :log (:log m)))) :=
+  [:email :raw :time :branches :changed_files :merge :author :id :repo :message]
+
+  (def repo (.getRepository r))
+  (type repo) := FileRepository
+  (.getDirectory repo) := _ ; #object[java.io.File 0xa4ef80e "./.git"]
+
+
+  (branch-list r) := { "refs/remotes/origin/release/electric-fiddle-v3" _
+                      ... ...}
   (resolve-ref _ref)
   (get-commit r "refs/remotes/origin/main")
   (git/git-branch-list r :jgit? false :list-mode :all)
@@ -48,28 +68,96 @@
                                       (assoc commit ::branches branches
                                         ::changes (changes-stats original))))})))
 
+(comment
+  (-> r log first :id .getName)
+  (datafy RevCommit)
+
+
+  #_(log (.getRepository r)) ; wrong type
+  )
+
+(defn short-commit-id [id] (apply str (take 7 id)))
+
+(defn better-log [o branch]
+  (let [rev-walk (clj-jgit.internal/new-rev-walk o)
+        index    (git2/build-commit-map o rev-walk) ; pre-compute for fast ref resolve
+        branches (branch-list o)]
+    (->> (git/git-log o :until branch)
+      (map (fn [commit]
+             (with-datafy o branches
+               (git2/commit-info o rev-walk index (:id commit))))))))
+
+(defn repo-path [o]
+  (-> o datafy :repo datafy :dir datafy :contrib.datafy-fs/absolute-path))
+
+#_(defn remote-ref? [^Ref ref] (.startsWith (.getName ref) Constants/R_REMOTES))
+#_(defn local-ref? [^Ref ref] (.startsWith (.getName ref) Constants/R_HEADS))
+(defn ref-type [^Ref ref]
+  (if (.startsWith (.getName ref) "refs/remotes/") :remote :local))
+
+(defn ref-name-short [^Ref ref]
+  )
+
+(comment
+  (datafy r)
+  (-> r datafy :repo datafy :dir datafy :contrib.datafy-fs/absolute-path)
+  (as-> r o
+    (datafy o)
+    (nav o :log (:log o))
+    (first o))
+  )
+
 (extend-protocol ccp/Datafiable
-  org.eclipse.jgit.api.Git
-  (datafy [^org.eclipse.jgit.api.Git repo]
-    (-> {:status (git/git-status repo)
+  Git
+  (datafy [^Git o]
+    (-> {:status (git/git-status o)
+         :repo (.getRepository o)
+         :branch-current (git/git-branch-current o)
+         :branches `...
          :log `...}
       (with-meta
-        {`ccp/nav (fn rec [x k v & {:keys [branch] :or {branch "HEAD"}}]
+        {`ccp/nav (fn rec [x k v
+                           & {:keys [branch]
+                              :or {branch "HEAD"}}]
                     (cond
                       (vector? k)
                       (let [[command & args] k]
                         (apply rec x command v args))
                       (keyword? k)
                       (case k
-                        :log
-                        (let [rev-walk (clj-jgit.internal/new-rev-walk repo)
-                              index    (git2/build-commit-map repo rev-walk) ; pre-compute for fast ref resolve
-                              branches (branch-list repo)]
-                          (map (fn [commit] (with-datafy repo branches (git2/commit-info repo rev-walk index (:id commit))))
-                            (git/git-log repo :until branch)))
-                        v)))}))))
+                        :log (better-log o branch)
+                        :branches (vec (branch-list o))
+                        :branches2 (vec (git/git-branch-list o ; arraylist
+                                          :jgit? true
+                                          :list-mode :all))
+                        v)))})))
+  FileRepository
+  (datafy [^FileRepository o]
+    (-> {:dir (.getDirectory o)}
+      (with-meta
+        {`ccp/nav
+         (fn [x k v & {:as kwargs}]
+           )})))
 
-(defn short-commit-id [id] (apply str (take 7 id)))
+  Ref #_ObjectIdRef ; including ObjectIdRef$PeeledNonTag
+  (datafy [^ObjectIdRef o]
+    {:ref-name (.getName o) ; refs/remotes/origin/agent-network, refs/heads/wip/hot-md
+     :ref-name-short (Repository/shortenRefName (.getName o))
+     :commit (-> o .getObjectId .getName) ; "88a97ef20b1fe5392a6025eca4170c80ad3479ce"
+     :commit-short (-> o .getObjectId .getName short-commit-id)
+     :symbolic (-> o .isSymbolic)
+     :peeled (-> o .isPeeled)
+     :ref-type (-> o ref-type)
+     :object-id (.getObjectId o)}) ; #object[org.eclipse.jgit.lib.ObjectId
+
+  ObjectId
+  (datafy [^ObjectId o]
+    {})
+
+  RevCommit
+  (datafy [^RevCommit o]
+    {:name (.getName o)
+     :short-name (-> o .getName short-commit-id)}))
 
 (defn get-commit
   ([repo commit-id] (get-commit repo (clj-jgit.internal/new-rev-walk repo) commit-id))
@@ -85,11 +173,21 @@
          commit-id)))))
 
 (comment
-  (def r (git/load-repo "./"))
+  (as-> o x
+    (datafy x)
+    (nav x :branches2 (:branches2 x))
+    (nav x 0 (x 0))
+    (datafy x)
+    #_(nav x :name (:name x))
+    #_(nav x :object-id (:object-id x)) #_(datafy x))
+  )
+
+(comment
+  (def o (git/load-repo "./"))
   (git/git-status r)
   (type r)
   (datafy r)
-  (nav (datafy r) :log ())
+  (count (nav (datafy r) :log ()))
   (count (git/git-log r))
   (type (git/git-log r))
   (def x (first (git/git-log r)))
