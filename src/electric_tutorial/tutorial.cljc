@@ -48,7 +48,7 @@
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
-            [dustingetz.explorer :refer [DirectoryExplorer]]
+            [hf-docs-site.demos.explorer :refer [DirectoryExplorer]]
             datomic-browser.mbrainz-browser
             staffly.staffly
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
