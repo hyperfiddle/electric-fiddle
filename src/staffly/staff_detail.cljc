@@ -27,13 +27,13 @@
                        :document/expiry
                        :document/status]}
                      {:staff/restrictions
-                      [:restriction/venue
+                      [{:restriction/venue [:venue/id :venue/name]}
                        :restriction/reason
                        :restriction/scope
                        :restriction/created-at
                        :restriction/expires-at]}
                      {:staff/shifts
-                      [:shift/venue
+                      [{:shift/venue [:venue/id :venue/name]}
                        :shift/date
                        {:shift/role [:db/ident]}
                        :shift/rating
@@ -42,8 +42,6 @@
               (d/pull model/*db* pat e)
               #_(suber-name-kv sub)
               ))))
-
-(comment (staff-detail model/staff-sarah))
 
 (def links [:staff-shifts :staff-feedback :staff-restrictions :entity-history])
 (def cmds [:restrict-staff-from-venue])
@@ -72,7 +70,7 @@
         (dom/dt #_(dom/text "links"))
         (dom/dd
           (dom/nav
-            (e/for [k (e/diff-by {} links)] (r/link ['.. [k e]] (dom/text (name k)))) ; links
+            (e/for [k (e/diff-by {} links)] (r/link ['.. [k e]] (dom/props {:disabled true, :tabindex "-1"}) (dom/text (name k)))) ; links
             (e/for [k (e/diff-by {} cmds)] (r/link ['.. [k e]] (dom/text (name k)))))) ; todo render commands as buttons
         (EasyForm
           (e/server (e/Offload #(staff-detail e)))

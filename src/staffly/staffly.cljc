@@ -9,7 +9,7 @@
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
             [staffly.staff-detail :refer [StaffDetail]]
-            [staffly.restrict-staff-from-venue :refer [RestrictStaffFromVenue]]))
+            [staffly.restrict-staff-from-venue :refer [RestrictStaffFromVenueForm]]))
 
 (e/declare *effects) ; to be bound to `{`Cmd-sym Cmd-efn}
 
@@ -28,7 +28,7 @@
       (case page
         :index (Index)
         :staff (StaffDetail)
-        :restrict-staff-from-venue (RestrictStaffFromVenue)
+        :restrict-staff-from-venue (RestrictStaffFromVenueForm)
         (dom/text "page not found")))))
 
 #_(e/defn Service [edits]
@@ -63,14 +63,14 @@
      (bindx [model/datomic-conn (check datomic-conn)
              model/db (check model/*db*)
              model/schema (check model/*schema*)
-             *effects {}]
+             *effects {`staffly.restrict-staff-from-venue/Restrict-staff-from-venue staffly.restrict-staff-from-venue/Restrict-staff-from-venue}]
        (e/client
          (Service
            (Page)))))))
 
 (e/defn Fiddles []
   {`Staffly Staffly
-   `RestrictStaffFromVenue RestrictStaffFromVenue})
+   `RestrictStaffFromVenueForm RestrictStaffFromVenueForm})
 
 (e/defn ProdMain [ring-req]
   (FiddleMain ring-req (Fiddles)

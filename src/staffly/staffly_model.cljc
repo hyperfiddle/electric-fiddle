@@ -18,7 +18,7 @@
 (def staff-sarah [:staff/id 1001])
 (def venue-grand-concert [:venue/id 2003])
 
-#?(:clj (defn create-test-db [& {:keys []}]
+#?(:clj (defn create-test-db* [& {:keys []}]
           (def test-datomic-uri "datomic:mem://staffly")
           (d/delete-database test-datomic-uri)
           (d/create-database test-datomic-uri)
@@ -27,6 +27,8 @@
           (doseq [tx staffly.staffly-fixtures/fixtures]
             @(d/transact test-datomic-conn tx))
           test-datomic-conn))
+
+#?(:clj (def create-test-db (memoize create-test-db*)))
 
 #?(:clj (defn init-datomic
           [& {:keys []}]

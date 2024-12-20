@@ -35,6 +35,12 @@
     }
 }
 
+.staffly a[disabled=true]{
+    color: gray;
+    opacity: 0.85;
+    pointer-events: none;
+}
+
 .staffly h1{
     font-size: 1.25rem;
     line-height: 1.75rem;
