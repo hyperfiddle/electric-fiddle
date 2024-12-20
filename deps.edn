@@ -114,7 +114,8 @@
 
   :dustingetz
   {:extra-deps
-   {hawk/hawk {:mvn/version "0.2.11"}
+   { ; intentionally blank
+    hawk/hawk {:mvn/version "0.2.11"}
     org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
     clj-jgit/clj-jgit {:mvn/version "1.0.2"}
     #_#_clj-http/clj-http {:mvn/version "3.12.3"}
