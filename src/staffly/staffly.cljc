@@ -9,7 +9,7 @@
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
             [staffly.staff-detail :refer [StaffDetail]]
-            [staffly.block-staff-from-venue :refer [BlockStaffFromVenue]]))
+            [staffly.restrict-staff-from-venue :refer [RestrictStaffFromVenue]]))
 
 (e/declare *effects) ; to be bound to `{`Cmd-sym Cmd-efn}
 
@@ -28,7 +28,7 @@
       (case page
         :index (Index)
         :staff (StaffDetail)
-        :restrict-staff-from-venue (BlockStaffFromVenue)
+        :restrict-staff-from-venue (RestrictStaffFromVenue)
         (dom/text "page not found")))))
 
 #_(e/defn Service [edits]
@@ -70,7 +70,7 @@
 
 (e/defn Fiddles []
   {`Staffly Staffly
-   `BlockStaffFromVenue BlockStaffFromVenue})
+   `RestrictStaffFromVenue RestrictStaffFromVenue})
 
 (e/defn ProdMain [ring-req]
   (FiddleMain ring-req (Fiddles)
