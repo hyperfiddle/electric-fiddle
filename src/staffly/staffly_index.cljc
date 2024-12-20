@@ -5,11 +5,10 @@
             [contrib.data :refer [unqualify]]
             contrib.str
             #?(:clj [datomic.api :as d])
-            [dustingetz.combobox :refer [ComboBox]]
             [dustingetz.gridsheet3 :refer [Explorer3]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input]]
+            [hyperfiddle.electric-forms3 :refer [Input]]
             [hyperfiddle.ui.typeahead :refer [Typeahead]]
             [hyperfiddle.router3 :as r]
             [staffly.staffly-model :as model]))
