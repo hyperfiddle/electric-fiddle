@@ -47,10 +47,9 @@
         (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                     (* row-height (- record-count limit)) 0) "px")}}))))))
 
-(e/defn Dir [x]
+(e/defn Dir [m]
   (e/server
-    (let [m (datafy x)
-          xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
+    (let [xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
                       (nav m ::fs/children (::fs/children m))) ""))]
       (dom/h1 (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
       (TableScroll xs! {:row-height 24 :overquery-factor 1}))))
@@ -64,7 +63,7 @@
         (router/ReplaceState! ['. ["src"]])
         (router/pop
           (binding [base-path (e/server (fs/absolute-path "./"))]
-            (Dir (e/server (clojure.java.io/file base-path fs-rel-path)))))))))
+            (Dir (e/server (datafy (clojure.java.io/file base-path fs-rel-path))))))))))
 
 (comment
   (def m (datafy (clojure.java.io/file (fs/absolute-path "./"))))
