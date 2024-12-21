@@ -2,7 +2,7 @@
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
             #?(:clj clojure.java.io)
-            [contrib.data :refer [treelister]]
+            [contrib.data :refer [treelister clamp-left]]
             [contrib.str :refer [includes-str?]]
             [contrib.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [hyperfiddle.electric3 :as e]
@@ -13,25 +13,28 @@
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 (e/declare base-path)
 
-(e/defn Render-cell [m a]
+(e/defn Render-cell [?m a]
   (e/server
-    (let [v (a m)
-          dir? (= ::fs/dir (::fs/kind m))]
+    (let [?v (a ?m) ; glitch
+          dir? (= ::fs/dir (::fs/kind ?m))]
       (case a
         ::fs/name (if dir? ; fixme blinks on switch - electric issue
-                    (let [path (fs/relativize-path base-path (::fs/absolute-path m))]
-                      (router/link ['.. [path]] (dom/text v)))
-                    (dom/text v))
-        ::fs/modified (dom/text (e/client (some-> v .toLocaleDateString)))
-        ::fs/kind (dom/text (if dir? unicode-folder (some-> v name)))
-        (dom/text (str v))))))
+                    (if-some [path (some->> ?m ::fs/absolute-path (fs/relativize-path base-path))] ; guard glitch
+                      (router/link ['.. [path]] (dom/text ?v)))
+                    (dom/text ?v))
+        ::fs/modified (dom/text (e/client (some-> ?v .toLocaleDateString)))
+        ::fs/kind (dom/text (if dir? unicode-folder (some-> ?v name)))
+        (dom/text (str ?v))))))
 
-(e/defn Row [i [tab x]]
-  (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
-    (dom/td (Render-cell x ::fs/name) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
-    (dom/td (Render-cell x ::fs/modified))
-    (dom/td (Render-cell x ::fs/size))
-    (dom/td (Render-cell x ::fs/kind))))
+(e/defn Row [i ?x]
+  (e/client
+    (let [?tab (e/server (some-> ?x (nth 0)))
+          ?x (e/server (some-> ?x (nth 1)))]
+      (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
+        (dom/td (Render-cell ?x ::fs/name) (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}}))
+        (dom/td (Render-cell ?x ::fs/modified))
+        (dom/td (Render-cell ?x ::fs/size))
+        (dom/td (Render-cell ?x ::fs/kind))))))
 
 (e/defn TableScroll [xs! #_& {:keys [row-height record-count overquery-factor]}]
   (e/server
@@ -39,10 +42,10 @@
       (let [record-count (e/server (or record-count (count xs!)))
             [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor overquery-factor})]
         (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
-          (e/for [i (IndexRing limit offset)]
-            (when-some [x (nth xs! i nil)]
-              (Row i x))))
-        (dom/div (dom/props {:style {:height (str (* row-height (- record-count limit)) "px")}}))))))
+          (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
+            (Row i (e/server (nth xs! i nil)))))
+        (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
+                                                    (* row-height (- record-count limit)) 0) "px")}}))))))
 
 (e/defn Dir [x]
   (e/server
