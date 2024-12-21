@@ -89,9 +89,16 @@
 (e/defn Fn-src [& [target-s el-selector ?wrap]]
   (e/client
     (binding [dom/node (if-some [s (not-empty el-selector)]
-                         (dom/Await-element s) dom/node)]
+                         (dom/Await-element js/document.body s) dom/node)]
       (dom/div (dom/props {:class "user-examples"})
         (Src* (symbol target-s) :ns? false)))))
+
+(e/defn Ns-src [& [target-s el-selector ?wrap]]
+  (e/client
+    (binding [dom/node (if-some [s (not-empty el-selector)]
+                         (dom/Await-element js/document.body s) dom/node)]
+      (dom/div (dom/props {:class "user-examples"})
+        (Src* (symbol target-s) :ns? true)))))
 
 (e/defn Fiddle [& [target-s el-selector ?wrap :as route]] ; direct fiddle link http://localhost:8080/electric-fiddle.fiddle!Fiddle/dustingetz.y-fib!Y-fib
   (if (nil? (seq route)) (FiddleIndex)
@@ -119,6 +126,7 @@
    'ns Ns
    'fn Fn
    'fn-src Fn-src
+   'ns-src Ns-src
    'target Target
    'target-nochrome Target-nochrome
    ;'link Link -- no inline directives yet
