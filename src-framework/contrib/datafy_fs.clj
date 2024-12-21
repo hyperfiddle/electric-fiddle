@@ -3,6 +3,7 @@
   (:require [clojure.core.protocols :as ccp :refer [nav]]
             [clojure.datafy :refer [datafy]]
             [clojure.spec.alpha :as s]
+            [contrib.assert :refer [check]]
             [hyperfiddle.rcf :refer [tests]]
             [clojure.java.io :as io])
   (:import [java.nio.file Path Paths Files]
@@ -223,8 +224,8 @@
 
 (defn relativize-path "Convert an absolute path to one relative to base-dir"
   [base-dir abs-path]
-  (let [base (.toPath (clojure.java.io/file base-dir))
-        full (.toPath (clojure.java.io/file abs-path))]
+  (let [base (.toPath (clojure.java.io/file (check base-dir)))
+        full (.toPath (clojure.java.io/file (check abs-path)))]
     (when (-> full .normalize (.startsWith (.normalize base)))
       (str (.relativize (.normalize base) (.normalize full))))))
 
