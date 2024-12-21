@@ -42,7 +42,7 @@
           (dom/select
             (e/for [[group-label entries] (e/diff-by {} essay-config)]
               (dom/optgroup (dom/props {:label group-label})
-                (e/for [page (e/diff-by identity entries)]
+                (e/for [page (e/diff-by {} entries)]
                   (let [m (essay-index page)]
                     (dom/option
                       (dom/props {:value (str page) :selected (= cur-page page)})
