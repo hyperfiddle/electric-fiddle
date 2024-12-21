@@ -50,7 +50,7 @@
           xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
                       (nav m ::fs/children (::fs/children m))) ""))]
       (dom/h1 (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
-      (TableScroll xs! {:row-height 24 :overquery-factor 2}))))
+      (TableScroll xs! {:row-height 24 :overquery-factor 1}))))
 
 (declare css)
 (e/defn DirectoryExplorer []
