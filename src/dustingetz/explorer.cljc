@@ -8,7 +8,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input*]]
-            [hyperfiddle.electric-scroll0 :as scroll :refer [Scroll-indexed-headless Unrotate]]
+            [hyperfiddle.electric-scroll0 :as scroll]
             [hyperfiddle.router3 :as r]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂

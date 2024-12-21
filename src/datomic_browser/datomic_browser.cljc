@@ -8,9 +8,22 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer [Input! Form! Checkbox]]
-            [hyperfiddle.electric-scroll0 :as scroll :refer [Scroll-indexed-headless]]
+            [hyperfiddle.electric-scroll0 :as scroll :refer [Scroll-window Spool]]
             [hyperfiddle.router3 :as r]
             [missionary.core :as m]))
+
+(e/defn Scroll-indexed-headless ; legacy
+  "random access (fixed height, counted, indexed)"
+  [viewport-node xs!
+   #_& {:keys [record-count row-height overquery-factor]
+        :or {overquery-factor 1}}]
+  (let [record-count (or record-count (count xs!))
+        row-height (check row-height) ; todo measure, account for browser zoom level
+        [offset limit] (Scroll-window row-height record-count viewport-node {:overquery-factor overquery-factor})]
+    {::Spool (e/fn [] (Spool record-count xs! offset limit)) ; site neutral, caller chooses
+     ::Offset (e/fn [] ; isolate animating value to not rebuild hashmap - micro optimization
+                (identity offset)) ; experimental: allow user to artificially delay offset if needed for UX
+     ::limit limit ::record-count record-count ::row-height row-height}))
 
 (e/declare conn)
 (e/declare db)
