@@ -6,7 +6,7 @@
             #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src-safe!]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            #_[hyperfiddle.router3 :as r]
+            [hyperfiddle.router3 :as r] ; for userland
             [hyperfiddle.rcf :refer [tests]]
             #?(:clj [markdown.core :refer [md-to-html-string]])))
 
@@ -41,19 +41,22 @@
 
 ; Extensions - optional
 
+(e/defn Target-nochrome* [target ?wrap]
+  (let [Target (get pages target ::not-found)
+        Wrap (when ?wrap (get pages ?wrap ::not-found))]
+    (cond
+      (= ::not-found Target) (dom/p (dom/text "target not found: " target
+                                      " (did you register it in the fiddle index?)"))
+      (= ::not-found Wrap) (dom/p (dom/text "wrap not found: " ?wrap))
+      (some? Wrap) (r/pop (Wrap Target))
+      () (r/pop (Target)))))
+
 (e/defn Target* [target ?wrap]
   (e/client
     (dom/fieldset
       (dom/props {:class ["user-examples-target" (some-> target name)]})
       (dom/legend (dom/text "Result"))
-      (let [Target (get pages target ::not-found)
-            Wrap (when ?wrap (get pages ?wrap ::not-found))]
-        (cond
-          (= ::not-found Target) (dom/p (dom/text "target not found: " target
-                                          " (did you register it in the fiddle index?)"))
-          (= ::not-found Wrap) (dom/p (dom/text "wrap not found: " ?wrap))
-          (some? Wrap) (Wrap Target)
-          () (Target))))))
+      (Target-nochrome* target ?wrap))))
 
 (e/defn Src* [target & {:keys [ns?]
                         :or {ns? false}}]
@@ -97,9 +100,15 @@
 (e/defn Target [& [target-s el-selector ?wrap-s]]
   (e/client
     (binding [dom/node (if-some [s (not-empty el-selector)]
-                         (dom/Await-element s) dom/node)]
+                         (dom/Await-element js/document.body s) dom/node)]
       (dom/div (dom/props {:class "user-examples"})
         (Target* (symbol target-s) (some-> ?wrap-s symbol))))))
+
+(e/defn Target-nochrome [& [target-s el-selector ?wrap-s]]
+  (e/client
+    (binding [dom/node (if-some [s (not-empty el-selector)]
+                         (dom/Await-element js/document.body s) dom/node)]
+      (Target-nochrome* (symbol target-s) (some-> ?wrap-s symbol)))))
 
 #_(e/defn Link [& [label target-s _]]
   (r/link ['. [(symbol target-s)]] (dom/text label)))
@@ -111,5 +120,6 @@
    'fn Fn
    'fn-src Fn-src
    'target Target
+   'target-nochrome Target-nochrome
    ;'link Link -- no inline directives yet
    })
