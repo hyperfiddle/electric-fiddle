@@ -1,15 +1,8 @@
 (ns electric-tutorial.tutorial
-  (:require clojure.edn
-            #?(:clj [clojure.java.io :as io])
-            clojure.string
-            [contrib.data :refer [index-by]]
-            [electric-fiddle.fiddle-index :refer [FiddleMain]]
-            [contrib.clojurex :refer [#?(:clj slurp-safe)]]
-            [electric-fiddle.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
-            [hyperfiddle.electric3 :as e :refer [$]]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-svg3 :as svg]
-            [hyperfiddle.router3 :as r]
+            [electric-fiddle.fiddle-index :refer [FiddleMain]]
+            [electric-tutorial.tutorial-app :refer [Tutorial]]
 
             ; Part 1
             [electric-tutorial.two-clocks :refer [TwoClocks]]
@@ -104,52 +97,6 @@
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]])
 
-(defn index-essay-index [essay-index]
-  (->> essay-index
-    (mapcat (fn [[group essays]] essays))
-    (map-indexed (fn [idx entry] {::order idx ::id entry}))
-    (index-by ::id)))
-
-(e/defn Get-prev-next [essay-index page]
-  (let [index (index-essay-index essay-index)
-        tutorials-seq (vec (sort-by ::order (vals index)))]
-    (when-let [order (::order (index page))]
-      [(get tutorials-seq (dec order))
-       (get tutorials-seq (inc order))])))
-
-(defn title [m] (name (::id m)))
-
-(e/defn Nav [essay-index cur-page footer?] #_[& [directive alt-text target-s ?wrap :as route]]
-  (e/client
-    (let [[prev next] (Get-prev-next essay-index cur-page)]
-      #_(println `prev cur-page prev next)
-      (dom/div {} (dom/props {:class [(if footer? "user-examples-footer-nav" "user-examples-nav")
-                                      (when-not prev "user-examples-nav-start")
-                                      (when-not next "user-examples-nav-end")]})
-        (when prev
-          (r/link ['. [(::id prev)]] ; why nested?
-            (dom/props {:class "user-examples-nav-prev"})
-            (dom/text (str "< " (title prev)))))
-        (dom/div (dom/props {:class "user-examples-select"})
-          (svg/svg (dom/props {:viewBox "0 0 20 20"})
-            (svg/path (dom/props {:d "M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"})))
-          (dom/select
-            (e/for [[group-label entries] (e/diff-by {} essay-index)]
-              (dom/optgroup (dom/props {:label group-label})
-                (e/for [page (e/diff-by identity entries)]
-                  (let [m ((index-essay-index essay-index) page)]
-                    (dom/option
-                      (dom/props {:value (str page) :selected (= cur-page page)})
-                      (dom/text (str (inc (::order m)) ". " (title m))))))))
-            (when-some [^js e ($ dom/On "change" identity nil)]
-              (let [[done! err] (e/Token e)]
-                (when done!
-                  (done! ($ r/Navigate! ['. [(clojure.edn/read-string (.. e -target -value))]])))))))
-        (when next
-          (r/link ['. [(::id next)]] ; why nested?
-            (dom/props {:class "user-examples-nav-next"})
-            (dom/text (str (title next) " >"))))))))
-
 (e/defn TutorialFiddles []
   (merge
     {`TwoClocks TwoClocks
@@ -165,8 +112,8 @@
      `Backpressure Backpressure
      }
     {
-                                        ; Interlude
-                                        ;`FormsFromScratch FormsFromScratch
+     ; Interlude
+     ;`FormsFromScratch FormsFromScratch
      `InputCicruit InputCicruit
      `DemoInputNaive DemoInputNaive
      `DemoInputCircuit-uncontrolled DemoInputCircuit-uncontrolled
@@ -183,7 +130,7 @@
      `FormExplainer FormExplainer
      `DemoFormServer1 DemoFormServer1
 
-                                        ; Part 2
+     ; Part 2
      `Temperature Temperature
      `Temperature2 Temperature2
      `Forms2-controlled Forms2-controlled ; obselete
@@ -193,41 +140,12 @@
      `TodoMVC TodoMVC
      `TodoMVC-composed TodoMVC-composed
 
-                                        ; Kitchen Sink
-                                        ;`Timer Timer
+     ; Kitchen Sink
+     ;`Timer Timer
      `SVG SVG
      #_#_`Heroicons Heroicons
-                                        ;`ReagentInterop ReagentInterop
+     ;`ReagentInterop ReagentInterop
      }))
-
-(defn namespace-name [qualified-symbol]
-  (some-> qualified-symbol namespace
-    (clojure.string/split #"\.") last
-    (clojure.string/replace "-" "_")))
-(comment (namespace-name `Forms3a-form) := "forms3a_form")
-
-(def tutorial-path "src/electric_tutorial/")
-
-(e/defn Consulting-banner []
-  (dom/p (dom/text "Managers of growth stage businesses, hire us! ")
-    (dom/a (dom/text "Consulting brochure here") (dom/props {:href "https://gist.github.com/dustingetz/c40cde24a393a686e26bce73391cd20f"}))))
-
-(e/defn Tutorial [essay-index]
-  (e/client
-    (dom/style (dom/text (e/server (some-> (io/resource "electric_tutorial/tutorial.css") slurp-safe))))
-    (let [[?essay-filename & _] r/route]
-      (if-not ?essay-filename (r/ReplaceState! ['. ['two_clocks]]) ; "two_clocks.md" encodes to /'two_clocks.md'
-        (do
-          (Consulting-banner)
-          (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
-            (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
-          (Nav essay-index ?essay-filename false)
-          (if-some [md-content (e/server (slurp-safe (str tutorial-path ?essay-filename ".md")))]
-            (Custom-markdown (Fiddle-markdown-extensions) md-content)
-            (do (dom/h1 (dom/text "Tutorial page not found: " ?essay-filename))
-                (dom/p (dom/text "Probably we broke URLs, sorry! ")
-                  (r/link ['. []] (dom/text "tutorial index")))))
-          #_(Nav essay-index ?essay-filename true))))))
 
 (e/defn Fiddles []
   (merge
