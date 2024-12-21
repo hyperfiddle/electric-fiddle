@@ -4,6 +4,7 @@
             clojure.string
             [contrib.data :refer [index-by]]
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
+            [contrib.clojurex :refer [#?(:clj slurp-safe)]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
@@ -210,10 +211,6 @@
 (e/defn Consulting-banner []
   (dom/p (dom/text "Managers of growth stage businesses, hire us! ")
     (dom/a (dom/text "Consulting brochure here") (dom/props {:href "https://gist.github.com/dustingetz/c40cde24a393a686e26bce73391cd20f"}))))
-
-#?(:clj (defn slurp-safe [filename]
-          (try (slurp filename)
-            (catch java.io.FileNotFoundException e nil))))
 
 (e/defn Tutorial [essay-index]
   (e/client
