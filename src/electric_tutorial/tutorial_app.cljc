@@ -17,17 +17,17 @@
     (index-by ::id)))
 
 (e/defn Get-prev-next [essay-index page]
-  (let [index (index-essay-index essay-index)
-        tutorials-seq (vec (sort-by ::order (vals index)))]
-    (when-let [order (::order (index page))]
+  (let [tutorials-seq (vec (sort-by ::order (vals essay-index)))]
+    (when-let [order (::order (essay-index page))]
       [(get tutorials-seq (dec order))
        (get tutorials-seq (inc order))])))
 
 (defn title [m] (name (::id m)))
 
-(e/defn Nav [essay-index cur-page footer?] #_[& [directive alt-text target-s ?wrap :as route]]
+(e/defn Nav [essay-config cur-page footer?] #_[& [directive alt-text target-s ?wrap :as route]]
   (e/client
-    (let [[prev next] (Get-prev-next essay-index cur-page)]
+    (let [essay-index (index-essay-index essay-config)
+          [prev next] (Get-prev-next essay-index cur-page)]
       #_(println `prev cur-page prev next)
       (dom/div {} (dom/props {:class [(if footer? "user-examples-footer-nav" "user-examples-nav")
                                       (when-not prev "user-examples-nav-start")
@@ -40,10 +40,10 @@
           (svg/svg (dom/props {:viewBox "0 0 20 20"})
             (svg/path (dom/props {:d "M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"})))
           (dom/select
-            (e/for [[group-label entries] (e/diff-by {} essay-index)]
+            (e/for [[group-label entries] (e/diff-by {} essay-config)]
               (dom/optgroup (dom/props {:label group-label})
                 (e/for [page (e/diff-by identity entries)]
-                  (let [m ((index-essay-index essay-index) page)]
+                  (let [m (essay-index page)]
                     (dom/option
                       (dom/props {:value (str page) :selected (= cur-page page)})
                       (dom/text (str (inc (::order m)) ". " (title m))))))))
