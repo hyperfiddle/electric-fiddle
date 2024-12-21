@@ -2,8 +2,8 @@
   (:require clojure.edn
             #?(:clj [clojure.java.io :as io])
             clojure.string
-            contrib.data
-            [electric-fiddle.fiddle-index :refer [pages FiddleMain]]
+            [contrib.data :refer [index-by]]
+            [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [electric-fiddle.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
             [hyperfiddle.electric3 :as e :refer [$]]
             [hyperfiddle.electric-dom3 :as dom]
@@ -53,7 +53,7 @@
             staffly.staffly
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
 
-(def tutorials
+(def essay-index
   [["Basics"
     ['two_clocks ; hello world
      'system_properties ; simple query/view topology
@@ -103,23 +103,25 @@
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]])
 
-(def tutorials-index (->> tutorials
-                       (mapcat (fn [[_group entries]] entries))
-                       (map-indexed (fn [idx entry] {::order idx ::id entry}))
-                       (contrib.data/index-by ::id)))
-(def tutorials-seq (vec (sort-by ::order (vals tutorials-index))))
+(defn index-essay-index [essay-index]
+  (->> essay-index
+    (mapcat (fn [[group essays]] essays))
+    (map-indexed (fn [idx entry] {::order idx ::id entry}))
+    (index-by ::id)))
 
-(defn get-prev-next [page]
-  (when-let [order (::order (tutorials-index page))]
-    [(get tutorials-seq (dec order))
-     (get tutorials-seq (inc order))]))
+(e/defn Get-prev-next [essay-index page]
+  (let [index (index-essay-index essay-index)
+        tutorials-seq (vec (sort-by ::order (vals index)))]
+    (when-let [order (::order (index page))]
+      [(get tutorials-seq (dec order))
+       (get tutorials-seq (inc order))])))
 
 (defn title [m] (name (::id m)))
 
-(e/defn Nav [page footer?] #_[& [directive alt-text target-s ?wrap :as route]]
+(e/defn Nav [essay-index cur-page footer?] #_[& [directive alt-text target-s ?wrap :as route]]
   (e/client
-    (let [[prev next] (get-prev-next page)]
-      #_(println `prev page prev next)
+    (let [[prev next] (Get-prev-next essay-index cur-page)]
+      #_(println `prev cur-page prev next)
       (dom/div {} (dom/props {:class [(if footer? "user-examples-footer-nav" "user-examples-nav")
                                       (when-not prev "user-examples-nav-start")
                                       (when-not next "user-examples-nav-end")]})
@@ -131,12 +133,12 @@
           (svg/svg (dom/props {:viewBox "0 0 20 20"})
             (svg/path (dom/props {:d "M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"})))
           (dom/select
-            (e/cursor [[group-label entries] (e/diff-by identity tutorials)]
+            (e/for [[group-label entries] (e/diff-by {} essay-index)]
               (dom/optgroup (dom/props {:label group-label})
-                (e/cursor [id (e/diff-by identity entries)]
-                  (let [m (tutorials-index id)]
+                (e/for [page (e/diff-by identity entries)]
+                  (let [m ((index-essay-index essay-index) page)]
                     (dom/option
-                      (dom/props {:value (str id) :selected (= page id)})
+                      (dom/props {:value (str page) :selected (= cur-page page)})
                       (dom/text (str (inc (::order m)) ". " (title m))))))))
             (when-some [^js e ($ dom/On "change" identity nil)]
               (let [[done! err] (e/Token e)]
@@ -213,28 +215,28 @@
           (try (slurp filename)
             (catch java.io.FileNotFoundException e nil))))
 
-(e/defn Tutorial []
+(e/defn Tutorial [essay-index]
   (e/client
     (dom/style (dom/text (e/server (some-> (io/resource "electric_tutorial/tutorial.css") slurp-safe))))
     (let [[?essay-filename & _] r/route]
       (if-not ?essay-filename (r/ReplaceState! ['. ['two_clocks]]) ; "two_clocks.md" encodes to /'two_clocks.md'
         (do
           (Consulting-banner)
-          (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
+          (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
             (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
-          (binding [pages (TutorialFiddles)]
-            (Nav ?essay-filename false)
-            (if-some [md-content (e/server (slurp-safe (str tutorial-path ?essay-filename ".md")))]
-              (Custom-markdown (Fiddle-markdown-extensions) md-content)
-              (do (dom/h1 (dom/text "Tutorial page not found: " ?essay-filename))
+          (Nav essay-index ?essay-filename false)
+          (if-some [md-content (e/server (slurp-safe (str tutorial-path ?essay-filename ".md")))]
+            (Custom-markdown (Fiddle-markdown-extensions) md-content)
+            (do (dom/h1 (dom/text "Tutorial page not found: " ?essay-filename))
                 (dom/p (dom/text "Probably we broke URLs, sorry! ")
                   (r/link ['. []] (dom/text "tutorial index")))))
-            #_(Nav ?tutorial true)))))))
+          #_(Nav essay-index ?essay-filename true))))))
 
 (e/defn Fiddles []
   (merge
-    {'tutorial Tutorial
+    {'tutorial (e/Partial Tutorial essay-index)
      `DirectoryExplorer DirectoryExplorer}
+    (TutorialFiddles)
     (datomic-browser.mbrainz-browser/Fiddles)
     (staffly.staffly/Fiddles)))
 
