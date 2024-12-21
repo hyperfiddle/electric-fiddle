@@ -99,10 +99,10 @@ There's a surprising interaction between product semantics and `if`. Consider:
 ```
 * This does not seem to be a semantically interesting or useful result.
 * What's happening is, Electric `if`'s current implementation interacts badly with auto-mapping (product) semantics:
-  * `(if (e/amb false true false) (e/amb 1 2 3) (e/amb))`
-  * `if` will be called 9 times, `(e/amb false true false)` X `(e/amb 1 2 3)`
+  * `(if (e/amb true false true) (e/amb 1 2 3) (e/amb))`
+  * `if` will be called 9 times, `(e/amb true false true)` X `(e/amb 1 2 3)`
   * `true` branches return `x` - six times
   * `false` branches return `(e/amb)` - three times
-  * i.e. something like: `(e/amb (e/amb 1 2 3) (e/amb) (e/amb 1 2 3))`, where the middle `true`/`2` branch has been elided.
+  * i.e. something like: `(e/amb (e/amb 1 2 3) (e/amb) (e/amb 1 2 3))`, where the middle `false`/`2` branch has been elided.
 * Conclusion: `if` produces useful results today only when used with singular values. When used with non-singular values, you will get wide products which don't seem useful.
 * We acknowledge the semantics gap here, we're still exploring and figuring out the right semantics. Future work! The current semantics, despite being sometimes surprising, are at least well defined and consistent.
