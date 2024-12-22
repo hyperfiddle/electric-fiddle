@@ -162,10 +162,10 @@
                         `Toggle Toggle
                         `Delete-todo Delete-todo
                         `Batch Batch}
-              debug* (Checkbox* debug* :label "debug")
-              slow* (Checkbox* slow* :label "latency")
-              fail* (Checkbox* fail* :label "failure" :disabled true)
-              show-buttons* (Checkbox* show-buttons* :label "show-buttons" :disabled true)
+              debug* (Checkbox* false :label "debug")
+              slow* (Checkbox* true :label "latency")
+              fail* (Checkbox* false :label "failure" :disabled true)
+              show-buttons* (Checkbox* false :label "show-buttons" :disabled true)
               !tx-report (e/server (atom {:db-after @!conn}))]
       debug* slow* fail* show-buttons*
 

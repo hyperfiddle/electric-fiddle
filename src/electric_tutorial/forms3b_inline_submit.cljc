@@ -1,9 +1,8 @@
 (ns electric-tutorial.forms3b-inline-submit
-  (:require #?(:clj [datascript.core :as d])
-            [hyperfiddle.electric3 :as e]
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer
-             [Input! Checkbox! Checkbox Form! Service try-ok effects*]]
+             [Input! Checkbox! Checkbox* Form! Service try-ok effects*]]
             [electric-tutorial.forms3a-form :refer
              [Query-record #?(:clj !conn) #?(:clj transact-unreliable)]]))
 
@@ -64,11 +63,11 @@
   (binding [effects* {`Str1FormSubmit Str1FormSubmit
                       `Num1FormSubmit Num1FormSubmit
                       `Bool1FormSubmit Bool1FormSubmit}
-            debug* (Checkbox debug* :label "debug")
-            slow* (Checkbox slow* :label "latency")
-            fail* (Checkbox fail* :label "failure")
-            show-buttons* (or (Checkbox show-buttons* :label "show-buttons") ::forms/smart)
-            auto-submit* (Checkbox auto-submit* :label "auto-submit")]
+            debug* (Checkbox* false :label "debug")
+            slow* (Checkbox* true :label "latency")
+            fail* (Checkbox* true :label "failure")
+            show-buttons* (or (Checkbox* false :label "show-buttons") ::forms/smart)
+            auto-submit* (Checkbox* false :label "auto-submit")]
     debug* fail* slow* auto-submit* show-buttons*
     (let [db (e/server (e/watch !conn))]
       (Service
