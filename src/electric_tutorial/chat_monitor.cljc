@@ -98,6 +98,7 @@
 
 ; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
 (def css "
+[aria-busy=true] {background-color: yellow;}
 .user-examples-target.ChatMonitor ul.channel li,
 .user-examples-target.Chat ul.channel li { display: grid; }
 .user-examples-target.Chat ul.channel,

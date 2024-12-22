@@ -3,7 +3,9 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Checkbox*]]))
 
+(declare css)
 (e/defn TokenExplainer []
+  (dom/style (dom/text css))
   (let [slow (dom/div (Checkbox* true :label "latency"))
         fail (dom/div (Checkbox* true :label "failure"))
         !x (e/server (atom true)) x (e/server (e/watch !x))]
@@ -24,3 +26,7 @@
           ::ok (t) ; success sentinel
           (t res)))) ; feed error back into originating control
     (dom/code (dom/text (pr-str x)))))
+
+(def css "
+[aria-busy=true] {background-color: yellow;}
+[aria-invalid=true] {background-color: pink;}")

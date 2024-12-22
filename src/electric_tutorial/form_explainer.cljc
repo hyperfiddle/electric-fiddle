@@ -14,12 +14,14 @@
       (Checkbox! :user/bool1 bool1))
     :commit (fn [dirty-form] [dirty-form nil])))
 
+(declare css)
 (e/defn FormExplainer []
+  (dom/style (dom/text css))
   (let [fail (dom/div (Checkbox* true :label "failure"))
         !x (e/server (atom state0)) x (e/server (e/watch !x))
         edits (e/amb
-                (UserFormServer1 x)
-                (UserFormServer1 x))]
+                (dom/div (UserFormServer1 x))
+                (dom/div (UserFormServer1 x)))]
     fail
     (e/for [[t dirty-form] edits] ; concurrent edit processing
       (let [res (e/server
@@ -28,3 +30,7 @@
           ::ok (t)
           (t res))))
     (dom/pre (dom/text (pr-str x)))))
+
+(def css "
+[aria-busy=true] {background-color: yellow;}
+[aria-invalid=true] {background-color: pink;}")

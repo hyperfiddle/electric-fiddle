@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Form! Checkbox Input! Checkbox!]]))
+            [hyperfiddle.electric-forms0 :refer [Form! Checkbox* Input! Checkbox!]]))
 
 #?(:clj (defonce !conn (doto (d/create-conn {})
                          (d/transact! [{:db/id 42 :user/str1 "one"
@@ -55,12 +55,18 @@
           ::ok (t) ; sentinel, any other value is an error
           (t res)))))) ; feed error back into control to prompt for retry
 
+(declare css)
 (e/defn DemoFormServer1 []
-  (binding [debug* (Checkbox true :label "debug")
-            slow* (Checkbox true :label "latency")
-            fail* (Checkbox false :label "failure")]
+  (dom/style (dom/text css))
+  (binding [debug* (Checkbox* true :label "debug")
+            slow* (Checkbox* true :label "latency")
+            fail* (Checkbox* true :label "failure")]
     debug* fail* slow*
 
     (let [db (e/server (e/watch !conn))
           edits (UserFormServer db 42)]
       (UserService edits))))
+
+(def css "
+[aria-busy=true] {background-color: yellow;}
+[aria-invalid=true] {background-color: pink;}")

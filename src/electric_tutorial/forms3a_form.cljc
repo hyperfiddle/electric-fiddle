@@ -3,7 +3,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer
-             [Input! Checkbox! Checkbox Form! Service try-ok effects*]]))
+             [Input! Checkbox! Checkbox* Form! Service try-ok effects*]]))
 
 #?(:clj (def !conn))
 (e/declare debug*)
@@ -42,9 +42,9 @@
 
 (e/defn Forms3a-form []
   (binding [effects* {`UserFormSubmit UserFormSubmit}
-            debug* (Checkbox debug* :label "debug")
-            slow* (Checkbox slow* :label "latency")
-            fail* (Checkbox fail* :label "failure")]
+            debug* (Checkbox* false :label "debug")
+            slow* (Checkbox* true :label "latency")
+            fail* (Checkbox* true :label "failure")]
     debug* fail* slow*
     (let [db (e/server (e/watch !conn))]
       (Service

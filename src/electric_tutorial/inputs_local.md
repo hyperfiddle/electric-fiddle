@@ -28,16 +28,6 @@ Warmup and for reference, the low-level input that you're already familiar with.
 !fn[electric-tutorial.inputs-local/DemoInputCircuit-controlled]()
 
 * Observe two `reset!` effects
-* Can we unify them? Hold my beer ...
-
-### e/amb - concurrent values in superposition
-
-`(e/amb)` is an important primitive in UI and foundational in electric v3, don't skip it
-
-!fn[electric-tutorial.inputs-local/DemoInputCircuit-amb]()
-
-* tables - do is not sufficient
-* auto-mapping
 
 ### synchronous forms
 
