@@ -1,4 +1,4 @@
-(ns hf-docs-site.demos.explorer
+(ns electric-tutorial.explorer
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
             #?(:clj clojure.java.io)
@@ -15,10 +15,10 @@
 
 (e/defn Render-cell [?m a]
   (e/server
-    (let [?v (a ?m) ; glitch
+    (let [?v (a ?m)
           dir? (= ::fs/dir (::fs/kind ?m))]
       (case a
-        ::fs/name (if dir? ; fixme blinks on switch - electric issue
+        ::fs/name (if dir? ; fixme blinks on switch due to unexplained latency - electric issue?
                     (if-some [path (some->> ?m ::fs/absolute-path (fs/relativize-path base-path))] ; guard glitch
                       (router/link ['.. [path]] (dom/text ?v)))
                     (dom/text ?v))
@@ -38,21 +38,22 @@
 
 (e/defn TableScroll [xs! #_& {:keys [row-height record-count overquery-factor]}]
   (e/server
-    (dom/div (dom/props {:class "Viewport"})
-      (let [record-count (e/server (or record-count (count xs!)))
-            [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor overquery-factor})]
-        (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
-          (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
-            (Row i (e/server (nth xs! i nil)))))
-        (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
-                                                    (* row-height (- record-count limit)) 0) "px")}}))))))
+    (dom/props {:class "Viewport"})
+    (let [record-count (e/server (or record-count (count xs!)))
+          [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor overquery-factor})]
+      (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
+        (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
+          (Row i (e/server (nth xs! i nil)))))
+      (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
+                                                  (* row-height (- record-count limit)) 0) "px")}})))))
 
 (e/defn Dir [m]
   (e/server
     (let [xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
                       (nav m ::fs/children (::fs/children m))) ""))]
-      (dom/h1 (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
-      (TableScroll xs! {:row-height 24 :overquery-factor 1}))))
+
+      (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
+        (TableScroll xs! {:row-height 24 :overquery-factor 1})))))
 
 (declare css)
 (e/defn DirectoryExplorer []
@@ -74,12 +75,18 @@
 
 (def css "
 /* Scroll machinery */
-.DirectoryExplorer .Viewport { overflow-x:hidden; overflow-y:auto; position:fixed; top:8em; bottom:0; left:0; right:0; }
+.DirectoryExplorer .Viewport { overflow-x:hidden; overflow-y:auto; }
 .DirectoryExplorer table { display: grid; }
 .DirectoryExplorer table tr { display: contents; visibility: var(--visibility); }
 .DirectoryExplorer table td { grid-row: var(--order); }
 
+/* fullscreen, except in tutorial mode */
+.Tutorial > .DirectoryExplorer fieldset.Viewport { height: 30em; } /* max-height doesn't work - fieldset quirk */
+:not(.Tutorial) > .DirectoryExplorer .Viewport { position:fixed; top:0em; bottom:0; left:0; right:0; }
+
 /* Cosmetic styles */
+.DirectoryExplorer fieldset { padding: 0; padding-left: 0.5em; background-color: white; }
+.DirectoryExplorer legend { margin-left: 1em; font-size: larger; }
 .DirectoryExplorer table { grid-template-columns: auto 6em 5em 3em; }
 .DirectoryExplorer table td { height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .DirectoryExplorer table tr:hover td { background-color: #ddd; }

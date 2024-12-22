@@ -1,54 +1,11 @@
 # Tables with virtual scroll (spooling approach) (DRAFT)
 
-* High performance server-streamed virtual scroll in like, 10 LOC
-* This is only one of many interesting scroll configurations. More to come
-* Try it on your phone!
-* Under construction / wip, please send feedback/questions/issue reports in the slack
+* todo
 
 !ns[electric-tutorial.scroll-spool/WebviewScroll]()
 
-What's happening
 
-* 1000 records, server streamed as you scroll - database to dom
-* non trivial row components with server dependencies and control flow:
-  * live picklists (server backed)
-  * only visible records are hydrated (the query only gives ids)
-  * some IDs are red (if divisible by 10)
-* Try holding `Page Down` to "play the tape forward"
 
-Background
-* In [Talk: Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8), we demonstrated what we hope to be an abstraction safe virtual scroll, which had performance issues at the time of the talk (which was the first preview of Electric v3).
-* We said we think we can bring this performance in line with the performance of the [Electric v2 datomic browser demo](https://github.com/hyperfiddle/electric-datomic-browser), which has fantastic performance, though it was highly optimized with 60 LOC to implement a special scroll strategy.
-* Here, we revisit. And behold, the demo from the talk is now fast! 
-
-Not merely fast: **it's *faster* than that v2 demo, we've *beaten* it,** in three ways:
-* the viewport takes the whole screen, it is not fixed to 20 rows (which was part of the performance trick!)
-* depsite scaling to 10x more visible rows, the raw performance is *better*
-* the implementation is *far simpler*, essentially:
-* `(e/for [[i x] (Spool count xs offset limit)] (Row x))`
-* So, OMG!!
-
-Perf wise, what's changed since the talk?
-
-* Electric v3 is now, let's say "3x" faster than it was in August 2024, we don't have formal metrics to share today but early optimizations resulted in strong improvements that can be immediately felt in userland.
-* more optimized css - optimizing browser layout is just as important as optimizing IO for demos at this throughput
-* general stability/bugfixes, allowing us to express our ideas without electric bugs getting in the way like they did in the talk
-* Other than that, it's a naive loop with no fancy tricks, just like the talk
-
-Features
-* optimized dom write patterns - rows are bound to a record, DOM is only touched at the edges
-* viewport height automatically determined
-* differential, server-streamed data loading
-* supports an `overquery-factor` (e.g. 2x) which reduces the loading artifacts (visible blank rows)
-* random access, i.e. seek/jump to index (not that important of a feature in real apps actually, but it makes a good perf demo showing what's possible)
-* crisp, simple code — both user code, and the scroll helpers
-* synchronous row loading as described in the talk: the e/for and the (Row) are same sited, so they run synchronously without any request waterfall. Which is certainly necessary for performance here
-* no mandatory row markup or inline styles, the `dom/tr` is cosmetic (note it is actually `display:contents` here, i.e. removed from layout entirely)
-* layout is fully under user control - both scroll viewport layout (here, fixed height), and table layout (here, css grid)
-
-Tech specs
-* row layout is NOT quantized (the rows are NOT snapped to a grid like Google Sheets)
-* row count and row height must be known at mount time (used to set scrollbar height for random access)
 * the resultset must maintain a stable order as it evolves incrementally over time (i.e., sorted)
 
 ## How it works (DRAFT)
