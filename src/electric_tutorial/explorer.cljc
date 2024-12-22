@@ -29,7 +29,7 @@
 
 (e/defn Row [i ?x]
   (e/client
-    (let [?tab (e/server (some-> ?x (nth 0)))
+    (let [?tab (e/server (some-> ?x (nth 0))) ; destructure on server, todo electric can auto-site this
           ?x (e/server (some-> ?x (nth 1)))]
       (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
         (dom/td (Render-cell ?x ::fs/name) (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}}))
@@ -52,7 +52,6 @@
   (e/server
     (let [xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
                       (nav m ::fs/children (::fs/children m))) ""))]
-
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
         (TableScroll xs! {:row-height 24 :overquery-factor 1})))))
 

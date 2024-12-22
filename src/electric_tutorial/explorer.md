@@ -2,14 +2,10 @@
 
 <div id="nav"></div>
 
-Demo of Electric v3 showcasing performance and abstraction power at the same time.
+Server-streamed virtual scroll in **~50ish LOC**
 
-* **Server-streamed virtual scroll in ~50ish LOC**
 * View grid in <a href="/electric-tutorial.explorer!DirectoryExplorer/">fullscreen mode here</a>
 * Try it on your phone!
-* It's not quite 100% stable - it crashes if you scroll really hard - electric v3 has a few bugs left. But note that this is a production stress test that is pushing electric very hard! Broadly, we think Electric 3 is fine for internal tools today.
-* There may also be userland layout bugs/imperfections (I saw a couple today while writing), please report them and we will get them fixed.
-* Please let us know what the performance is like for you, this is our first public virtual scroll demo in v3.
 
 <div style="margin-bottom: 2em;"></div>
 
@@ -19,71 +15,54 @@ Demo of Electric v3 showcasing performance and abstraction power at the same tim
 
 What's happening
 * File system browser
-* 1000s of records, server streamed as you scroll - database to dom
+* 1000s of records, server streamed as you scroll - file system to dom.
 * Try holding Page Down to "play the tape forward"
 * It's very fast, faster than the v2 datomic browser, with larger viewports, and more complex markup
-* nontrivial row rendering - tree indentation, hyperlinks, custom row markup
+* nontrivial row rendering - hierarchy with indentation, hyperlinks, custom row markup
 * links work (try it) with inline navigation, **browser history, forward/back, page refresh**, etc! Cool
-  * the explorer router even composes seamlessly with the tutorial router
-  * in fact, the explorer (an electric function) literally composes with the tutorial (an electric function)
-  * **"App as a Function"**
+* Optimized DOM write patterns: DOM is only touched at the edges. Open element inspector and see! 
 
-Background
-* In [Talk: Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8), we demonstrated what we hope to be an abstraction safe virtual scroll, which had performance issues at the time of the talk (which was the first preview of Electric v3).
-* We said we think we can bring this performance in line with the performance of the previous Electric v2 datomic browser demo, which had fantastic performance, though it was highly optimized with 60 LOC to implement a special scroll strategy.
-* Here, we revisit this. And behold, the demo from the talk is now fast!
+Maturity
+* **It's not quite 100% stable**—it crashes if you jerk the scroll abruptly—electric v3 has a few crashes left to fix. 
+* But, this demo is pushing electric hard! 
+* Broadly, we think Electric 3 is fine for internal tools today.
+* There are also a few userland layout bugs/imperfections, please report them and we will get them fixed.
+* Please let us know what the performance is like for you, this is our first public virtual scroll demo in v3.
 
-Not merely fast: **it's *faster* than that v2 demo, we've *beaten* it,** in three ways:
-
-* The <a href="/electric-tutorial.explorer!DirectoryExplorer/">fullscreen mode viewport will take the whole screen</a>, it is not fixed to 20 rows like the v2 datomic browser was
-* depsite scaling to 10x more visible rows, the raw performance is *better*
-* the implementation is *far simpler*, boiling down to a simple `e/for`:
-  * `(e/server (e/for [i (IndexRing limit offset)] (Row i (nth xs! i nil))))`
-  * (`IndexRing` is recycling rows instead of rebuilding them, which is a perf trick and also eliminate layout shifts – though it is not strictly necessary here.)
-* So, OMG!!
-
-Perf wise, what's changed since that talk?
-
-* Electric v3 is now, let's say "3x" faster than it was in August 2024, we don't have formal metrics to share today but early optimizations resulted in strong improvements that can be immediately felt in userland.
-* general stability/bugfixes, allowing us to express our ideas without electric bugs getting in the way like they did in the talk
-* Optimized css - optimizing browser layout is just as important as optimizing network for demos at this throughput
-
-Performance notes
-
-* **This is not our fastest demo, this demo is optimized for simple code.**
-* the row-blinking artifacts are caused by what seems to be a spurious round trip, it looks like an Electric issue.
-* It can be worked around here by setting `:overquery-factor` to 3, i.e., loading extra 1 page both above and below the viewport. This almost entirely resolves the row blinking when scrolling sequentially (especially on mobile), at the cost of some page load time in fullscreen mode when the page size is large, which is why we've left it off here.
-* We'll release an even faster demo soon - we have an internal POC that adds a bit of code complexity to achieve hardware accelerated scroll performance – which blew me away when I first experienced it! Very exciting
-
-90 LOC including css
+## Source code overview
 
 !ns-src[electric-tutorial.explorer/DirectoryExplorer]()
 
 * crisp, simple code — both user code, and the scroll helpers
-* differential, server-streamed data loading
-* optimized dom write patterns - rows are bound to a record, DOM is only touched at the edges
-* synchronous row loading as described in the talk: the e/for and the (Row) are same sited, so they run synchronously without any request waterfall. Which is certainly necessary for performance here
-* viewport height automatically determined
 * scroll helpers in [hyperfiddle.electric-scroll0](https://github.com/hyperfiddle/electric/blob/master/src/hyperfiddle/electric_scroll0.cljc)
 * [datafy-fs (filesystem as data)](https://gist.github.com/dustingetz/681dcbf16d104b1496a29f2f08965fc8)
 
-Row renderer can query the server using Electric, see `Row` and `Render-cell` above
+Differential, server-streamed data loading
 
-* no mandatory row markup or inline styles, the `dom/tr` is cosmetic (note it is actually `display:contents` here, i.e. removed from layout entirely)
-* layout is fully under user control - both scroll viewport layout and table/grid layout
+* Take a closer look at `TableScroll` impl on L40.
+* The important bit is the `e/for` on L46, essentially:
+* `(e/server (e/for [i (IndexRing limit offset)] (Row i (nth xs! i nil))))`
+* This is the essence of a server-streamed virtual scroll: 
+  * we use `offset` and `limit` (from the client), 
+  * send them up, spawn or rotate rows on the server, 
+  * `(nth xs! i nil)` looks up the file based on the index *on the server*, 
+  * `(Row x)` enters the `Row` function and continues into `Render-cell`, running all reachable server scopes as far as possible, 
+  * finally broadcasting to the client that `(Row x`) has updated, automatically including all the server state the client is about to need,
+  * ultimately the client runs the client scopes and incrementally maintains the DOM.
 
-Tech specs
-* row count and row height must be known at mount time (used to set scrollbar height for random access)
-* random access, i.e. seek/jump to index (not that important of a feature in real apps actually, but it makes a good perf demo showing what's possible)
-* supports an `overquery-factor` (e.g. 2x) which reduces the loading artifacts (visible blank rows)
-* row layout is NOT quantized (i.e. the rows are NOT snapped to a grid). We can do this with 1 line of CSS but unclear what the perf impact is, it depends on the layout and IO strategy
+Server streams the data that the client needs without being asked, i.e. without request waterfalls
 
-Future work
-* hardware accelerated scroll configuration (which adds some LOC to carefully optimize the DOM write patterns and carefully optimize CSS layout) - we have it already as a POC, todo write it up and publish
-* `; workaround glitch on tutorial navigate (nested router interaction)` - electric v3 has one or two glitch bugs left, active wip
-* `; fixme blinks on switch due to unexplained latency - electric issue?` - we suspect an interaction with an edge case in the network protocol, todo investigate
+* `Row` and `Render-cell` switch between `e/client` and `e/server` to fetch the data they need **inline**!
+* Even with inline `e/server` expressions, the rows load without request waterfalls as described in [Talk: Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8).
+* This is because the `e/for` and `(Row i x)` are same-sited, so they run synchronously: the server enters the Row renderer frame and optimistically sends the data dependencies that it knows the client is about to ask for. Which is certainly necessary for performance here, any waterfall in this code path is very obvious.
 
-## Special Bonus:
+Performance notes
+
+* **This is not our fastest demo, this demo is optimized for simple code.**
+* The hyperlinks blink, this is an artifact caused by what seems to be a spurious round trip. It looks like an Electric issue, we are investigating. There are many workarounds, such as moving the e/for to the client and instead of sending up `offset`, have the client request individual rows. (So, yes, "without waterfalls" is not *quite* true yet due to this issue. But as you can see, we are very close!)
+* Future work: we have an internal POC that adds a bit of code complexity to achieve **hardware accelerated scroll performance** – which blew me away when I first experienced it! Very exciting, we'll try to release a demo of that soon.
+
+## Our goal with Electric: zero-cost abstraction over network
 
 * Did you notice that the code is very nearly generic?
 * Take another look at the code. Notice the composition structure.
