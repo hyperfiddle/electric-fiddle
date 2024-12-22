@@ -2,6 +2,7 @@
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
             #?(:clj clojure.java.io)
+            [contrib.assert :refer [check]]
             [contrib.data :refer [treelister clamp-left]]
             [contrib.str :refer [includes-str?]]
             [contrib.datafy-fs #?(:clj :as :cljs :as-alias) fs]
@@ -63,8 +64,11 @@
       (if-not fs-rel-path
         (router/ReplaceState! ['. ["src"]])
         (router/pop
-          (binding [base-path (e/server (fs/absolute-path "./"))]
-            (Dir (e/server (datafy (clojure.java.io/file base-path fs-rel-path))))))))))
+          (e/server
+            (binding [base-path (fs/absolute-path "./")]
+              (let [x (if-not fs-rel-path ; workaround glitch on tutorial navigate (nested router interaction)
+                        {} (clojure.java.io/file base-path (check fs-rel-path)))]
+                (Dir (datafy x))))))))))
 
 (comment
   (def m (datafy (clojure.java.io/file (fs/absolute-path "./"))))
