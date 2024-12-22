@@ -3,32 +3,29 @@
             [hyperfiddle.electric-dom3 :as dom]))
 
 (declare css)
-(e/defn Typeahead [v-id Options #_OptionLabel] ; & [OptionLabel] -- broken
-  (e/client ; workaround let/drain bug, this shouldn't be needed
+(e/defn Typeahead [v-id Options #_OptionLabel]
+  (e/client
     (dom/div (dom/props {:class "hyperfiddle-typeahead"})
       (dom/style (dom/text css))
       (let [OptionLabel (e/server (or #_OptionLabel (e/fn [x] (pr-str x))))
-            !v-id (e/client (atom v-id)) v-id (e/client (e/watch !v-id))
-            !search (e/client (atom nil)) search (e/client (e/watch !search))
+            !v-id (atom v-id) v-id (e/watch !v-id)
+            !search (atom nil) search (e/watch !search)
 
-            t (e/client
-                (dom/input (dom/props {:placeholder "Filter..."})
-                  (let [[t err] (e/Token (dom/On "focus" identity nil))]
-                    (if t
-                      (reset! !search (dom/On "input" #(-> % .-target .-value) ""))
-                      (dom/props {:value (OptionLabel v-id)}))
-                    t)))] ; controlled only when not focused
+            t (dom/input (dom/props {:placeholder "Filter..."})
+                (let [[t err] (e/Token (dom/On "focus" identity nil))]
+                  (if t
+                    (reset! !search (dom/On "input" #(-> % .-target .-value) ""))
+                    (dom/props {:value (OptionLabel v-id)}))
+                  t))] ; controlled only when not focused
 
-        (e/client ; open and close <ul> instantly (at the cost of site neutrality)
-          (if (some? t) ; this if must be on client, but site neutrality is lost
-            (dom/ul
-              (e/server ; fix sync row load (lost neutrality)
-                (e/for [x (Options search)] ; x server
-                  (dom/li (dom/text (OptionLabel x)) ; sync row load
-                    #_(dom/text search) ; d-glitch
-                    (dom/On "click" (e/client
-                                      (fn [e] (doto e (.stopPropagation) (.preventDefault))
-                                        (reset! !v-id x) (t))) nil)))))))
+        (if (some? t)
+          (dom/ul
+            (e/server
+              (e/for [x (Options search)] ; x server
+                (dom/li (dom/text (OptionLabel x))
+                  (dom/On "click" (e/client ; dom/On will auto-site, but cc/fn doesn't transfer
+                                    (fn [e] (doto e (.stopPropagation) (.preventDefault))
+                                      (reset! !v-id x) (t))) nil))))))
         v-id))))
 
 (def css "
