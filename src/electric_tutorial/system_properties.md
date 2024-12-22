@@ -1,4 +1,6 @@
-# System Properties
+# System Properties <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * A larger example of a HTML table backed by a server-side query.
 * Type into the input and see the query update live.

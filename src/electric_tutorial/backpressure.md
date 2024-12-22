@@ -1,6 +1,8 @@
-# Backpressure and Concurrency
+# Backpressure and Concurrency <span id="title-extra"><span>
 
-"UI is a concurrency problem" — Leo
+<div id="nav"></div>
+
+"UI is a concurrency problem" — Leo Noel
 
 This is just the Two Clocks demo with slight modifications, there is more to learn here.
 

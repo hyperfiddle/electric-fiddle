@@ -1,4 +1,6 @@
-# `Form!` and `Input!` — transactional server forms
+# Transactional server forms <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * server commands
 * latency and failure affordances

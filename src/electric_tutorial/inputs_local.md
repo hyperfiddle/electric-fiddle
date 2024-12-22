@@ -1,4 +1,6 @@
-# `Input` – synchronous, local inputs
+# Inputs <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * Before we discuss forms, we first need to understand Inputs.
 * Electric provides two input patterns – **synchronous local inputs** and **async transactional inputs**, which satisfy two different use cases.

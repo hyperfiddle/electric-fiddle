@@ -1,4 +1,6 @@
-# Todos Simple (WIP)
+# Todos Simple (WIP) <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * Point of this demo is to demonstrate optimistic create-new with failure handling (retry) on all possible states. If you don't care about failure handling, then there is a much better implementation possible (without nesting a form).
 * Unfortunately, we didn't finish implementing the failure states yet (as of October 20 2024).

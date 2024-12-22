@@ -1,4 +1,6 @@
-# e/amb — Temperature Converter
+# e/amb — Temperature Converter <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * Here we demonstrate `e/amb` as a way to efficiently gather state from concurrent processes
 

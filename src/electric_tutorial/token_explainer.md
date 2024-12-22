@@ -1,4 +1,6 @@
-# `e/Token` — model latency, success, failure, retry
+# `e/Token` — model latency, success, failure, retry <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * This demo toggles a boolean on the server, to introduce basic server RPC (remote procedure call) idioms.
 * Big idea: `e/Token` turns *callbacks* into *values*.

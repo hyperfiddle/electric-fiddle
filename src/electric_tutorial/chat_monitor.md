@@ -1,4 +1,6 @@
-# Chat Monitor
+# Simple chat app with optimistic updates <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * A multiplayer chat app with auth and presence, all in one file.
 * When multiple sessions are connected, you can see who else is present.

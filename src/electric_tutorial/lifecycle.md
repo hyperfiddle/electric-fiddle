@@ -1,4 +1,6 @@
-# Lifecycle
+# Lifecycle <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 mount/unmount component lifecycle
 

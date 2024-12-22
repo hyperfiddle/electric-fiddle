@@ -1,4 +1,6 @@
-# Dir Tree
+# Dir Tree <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * Recursive traversal over directory structure on the server, with in-flight rendering to a recursive DOM view on the client, all in one function.
 * This is an example of something that is easy to do in Electric but hard to do with competing technologies.

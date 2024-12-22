@@ -1,4 +1,6 @@
-# FizzBuzz – differential dataflow intro
+# Differential FizzBuzz <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * Electric v3 implements differential dataflow for UI.
 * Goal: start to think about this differential structure.

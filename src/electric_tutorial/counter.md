@@ -1,4 +1,6 @@
-# Counter
+# Counter <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * Demonstrates Electric lambda's powerful upgrades in v3, as well as concurrent event processing in the presence of latency.
 * There is progress, and concurrency. Try mashing the button.

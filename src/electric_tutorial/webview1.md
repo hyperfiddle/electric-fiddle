@@ -1,4 +1,6 @@
-# Webview
+# Webview <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 A database backed webview with reactive updates.
 

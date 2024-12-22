@@ -62,25 +62,27 @@
     (clojure.string/replace "-" "_")))
 (comment (namespace-name `Forms3a-form) := "forms3a_form")
 
-(def tutorial-path "src/electric_tutorial/")
-
 (e/defn Consulting-banner []
   (dom/p (dom/text "Managers of growth stage businesses, hire us! ")
     (dom/a (dom/text "Consulting brochure here") (dom/props {:href "https://gist.github.com/dustingetz/c40cde24a393a686e26bce73391cd20f"}))))
 
-(e/defn Tutorial [essay-index]
+(e/defn Tutorial [essay-config essay-md-folder]
   (e/client
+    (dom/props {:class "Tutorial"})
     (dom/style (dom/text (e/server (some-> (io/resource "electric_tutorial/tutorial.css") slurp-safe))))
     (let [[?essay-filename & _] r/route]
-      (if-not ?essay-filename (r/ReplaceState! ['. ['two_clocks]]) ; "two_clocks.md" encodes to /'two_clocks.md'
+      (if-not ?essay-filename (r/ReplaceState! ['. [(first (second (first essay-config)))]]) ; "two_clocks.md" encodes to /'two_clocks.md'
         (do
           (Consulting-banner)
-          (dom/h1 (dom/text "Tutorial — Electric Clojure v3 ")
-            (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))
-          (Nav essay-index ?essay-filename false)
-          (if-some [md-content (e/server (slurp-safe (str tutorial-path ?essay-filename ".md")))]
+          (binding [dom/node (dom/Await-element dom/node "#title-extra")]
+            (dom/span ; root wrapper div order issue
+              (dom/text "— Electric v3 ")
+              (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"}))))
+          (binding [dom/node (dom/Await-element dom/node "#nav")]
+            (Nav essay-config ?essay-filename false))
+          (if-some [md-content (e/server (slurp-safe (str essay-md-folder ?essay-filename ".md")))]
             (Custom-markdown (Fiddle-markdown-extensions) md-content)
             (do (dom/h1 (dom/text "Tutorial page not found: " ?essay-filename))
                 (dom/p (dom/text "Probably we broke URLs, sorry! ")
                   (r/link ['. []] (dom/text "tutorial index")))))
-          #_(Nav essay-index ?essay-filename true))))))
+          #_(Nav essay-config ?essay-filename true))))))

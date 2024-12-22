@@ -1,4 +1,6 @@
-# Two Clocks
+# Two Clocks <span id="title-extra"><span>
+
+<div id="nav"></div>
 
 * The easiest way to understand Electric is **streaming lexical scope**.
 * Here, the server clock is streamed to the client.

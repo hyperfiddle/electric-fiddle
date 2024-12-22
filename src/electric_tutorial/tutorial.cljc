@@ -42,7 +42,7 @@
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
-            [hf-docs-site.demos.explorer :refer [DirectoryExplorer]]
+            [electric-tutorial.explorer :refer [DirectoryExplorer]]
             datomic-browser.mbrainz-browser
             staffly.staffly
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
@@ -57,7 +57,7 @@
    ["Tables"
     ['webview1 ; diffs, IO encapsulation
      'webview2 ; abstraction, lambda demo
-     'scroll_spool
+     'explorer
      #_'scroll-seek]]
    ["Language"
     ['lifecycle ; components
@@ -80,7 +80,7 @@
      ;`Forms3a-form ; transactional form
      ;`Forms3b-inline-submit ; transactional fields
      ]]
-   ["Datagrids"
+   #_["Datagrids"
     [#_`Typeahead
      #_`VirtualScroll
      #_`Datagrid]]
@@ -88,7 +88,6 @@
    ["Misc"
     ['counter ; on-all, progress, serializable lambda. Oddball demo, todo improve
      #_'temperature
-     #_`DirectoryExplorer
      'svg
 
      #_`ReagentInterop
@@ -96,6 +95,10 @@
      #_`wip.demo-custom-types/CustomTypes ; Custom transit serializers example
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]])
+
+(def demo-index
+  [["Demos"
+    ['explorer]]])
 
 (e/defn TutorialFiddles []
   (merge
@@ -143,14 +146,16 @@
      ; Kitchen Sink
      ;`Timer Timer
      `SVG SVG
+     `DirectoryExplorer DirectoryExplorer
      #_#_`Heroicons Heroicons
      ;`ReagentInterop ReagentInterop
      }))
 
 (e/defn Fiddles []
   (merge
-    {'tutorial (e/Partial Tutorial essay-index)
-     `DirectoryExplorer DirectoryExplorer}
+    {'tutorial (e/Partial Tutorial essay-index "src/electric_tutorial/")
+     ;'demo (e/Partial Tutorial demo-index "src/hf_docs_site/demos/")
+     }
     (TutorialFiddles)
     (datomic-browser.mbrainz-browser/Fiddles)
     (staffly.staffly/Fiddles)))
