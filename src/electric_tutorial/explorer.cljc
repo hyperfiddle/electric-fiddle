@@ -53,7 +53,8 @@
     (let [xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
                       (nav m ::fs/children (::fs/children m))) ""))]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
-        (TableScroll xs! {:row-height 24 :overquery-factor 1})))))
+        (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
+          (TableScroll xs! {:row-height 24 :overquery-factor 1}))))))
 
 (declare css)
 (e/defn DirectoryExplorer []
@@ -84,8 +85,9 @@
 .DirectoryExplorer table td { grid-row: var(--order); }
 
 /* fullscreen, except in tutorial mode */
-.Tutorial > .DirectoryExplorer fieldset.Viewport { height: 30em; } /* max-height doesn't work - fieldset quirk */
-:not(.Tutorial) > .DirectoryExplorer .Viewport { position:fixed; top:0em; bottom:0; left:0; right:0; }
+.Tutorial > .DirectoryExplorer fieldset { height: 30em; } /* max-height doesn't work - fieldset quirk */
+:not(.Tutorial) > .DirectoryExplorer fieldset { position:fixed; top:0em; bottom:0; left:0; right:0; }
+.DirectoryExplorer div.Viewport { height: 100%; }
 
 /* Cosmetic styles */
 .DirectoryExplorer fieldset { padding: 0; padding-left: 0.5em; background-color: white; }
