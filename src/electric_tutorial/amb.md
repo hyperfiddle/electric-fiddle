@@ -89,6 +89,10 @@ Auto-mapping is really about **cartesian products**:
 * Basically since the language is differential, we're automapping over *changesets*. So if we add a `:c` to `(e/amb :a :b)`, we need to incrementally maintain the resulting expression by adding `:c` for each of `(e/amb 1 2 3)`, which is a product over the changeset: `(1 :c) (2 :c) (3 :c)`.
 * This implies that the collections are held in memory so that `1 2 3` can be reconstructed. True! Reactive programming is a time-space tradeoff - you cache more stuff to recompute less stuff.
 
+In the next tutorial (Temperature Converter), we will use `e/amb` in a real world UI to efficiently gather state from concurrent processes.
+
+## Advanced
+
 There's a surprising interaction between product semantics and `if`. Consider:
 ```
 (e/as-vec
@@ -106,5 +110,5 @@ There's a surprising interaction between product semantics and `if`. Consider:
   * `true` branches return `x` - six times
   * `false` branches return `(e/amb)` - three times
   * i.e. something like: `(e/amb (e/amb 1 2 3) (e/amb) (e/amb 1 2 3))`, where the middle `false`/`2` branch has been elided.
-* Conclusion: `if` produces useful results today only when used with singular values. When used with non-singular values, you will get wide products which don't seem useful.
-* We acknowledge the semantics gap here, we're still exploring and figuring out the right semantics. Future work! The current semantics, despite being sometimes surprising, are at least well defined and consistent.
+* Conclusion: `if` produces useful results today only when used with singular values. When used with non-singular values, you will get wide products which don't seem useful. Instead, **use `e/for` to narrow down your tables to individual values**, which is very natural. The cartesian product semantics of the language are not often needed from userland.
+* We acknowledge the semantics gap here, we're still exploring and figuring out the right semantics. [Verse](https://simon.peytonjones.org/assets/pdfs/verse-conf.pdf)'s if operator has more useful semantics, for example. Future work! The current semantics, despite being sometimes surprising, are at least well defined and consistent.
