@@ -4,8 +4,10 @@
 
 Server-streamed virtual scroll in **~50ish LOC**
 
-* View grid in <a href="/electric-tutorial.explorer!DirectoryExplorer/">fullscreen mode here</a>
-* Try it on your phone!
+* View grid in <a href="/electric-tutorial.explorer!DirectoryExplorer/">fullscreen mode here</a>. Try it on your phone!
+* **It's not quite 100% stable**—it crashes if you jerk the scroll abruptly—electric v3 has a few crashes left to fix. But, this demo is a stress test and is pushing electric very hard! Electric is still in private beta, consider this a technical preview.
+* Please let us know what the performance is like for you, this is our first public virtual scroll demo in v3.
+* There are also a few userland layout bugs/imperfections, please report them in the slack thread and we will get them fixed.
 
 <div style="margin-bottom: 2em;"></div>
 
@@ -20,14 +22,7 @@ What's happening
 * It's very fast, faster than the v2 datomic browser, with larger viewports, and more complex markup
 * nontrivial row rendering - hierarchy with indentation, hyperlinks, custom row markup
 * links work (try it) with inline navigation, **browser history, forward/back, page refresh**, etc! Cool
-* Optimized DOM write patterns: DOM is only touched at the edges. Open element inspector and see! 
-
-Maturity
-* **It's not quite 100% stable**—it crashes if you jerk the scroll abruptly—electric v3 has a few crashes left to fix. 
-* But, this demo is pushing electric hard! 
-* Broadly, we think Electric 3 is fine for internal tools today.
-* There are also a few userland layout bugs/imperfections, please report them and we will get them fixed.
-* Please let us know what the performance is like for you, this is our first public virtual scroll demo in v3.
+* Optimized DOM write patterns: DOM is only touched at the edges. Open element inspector and see!
 
 ## Source code overview
 
@@ -48,7 +43,7 @@ Differential, server-streamed data loading
   * `(nth xs! i nil)` looks up the file based on the index *on the server*, 
   * `(Row x)` enters the `Row` function and continues into `Render-cell`, running all reachable server scopes as far as possible, 
   * finally broadcasting to the client that `(Row x`) has updated, automatically including all the server state the client is about to need,
-  * ultimately the client runs the client scopes and incrementally maintains the DOM.
+  * ultimately the client runs the client scopes and incrementally maintains the collection in the DOM.
 
 Server streams the data that the client needs without being asked, i.e. without request waterfalls
 
