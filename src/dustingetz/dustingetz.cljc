@@ -1,5 +1,6 @@
 (ns dustingetz.dustingetz
   (:require [hyperfiddle.electric3 :as e]
+            [dustingetz.aws-browser :refer [DataBrowser]]
             [dustingetz.electric-tree :refer [TreeDemo]]
             [dustingetz.essay :refer [Essay]]
             [dustingetz.explorer :refer [DirectoryExplorer]]
@@ -52,6 +53,7 @@
      `Logic Logic
      `ScrollDemo ScrollDemo
      `Scroll-abc Scroll-abc}
+    {`DataBrowser DataBrowser}
     {`WebviewConcrete WebviewConcrete
      `WebviewGeneric WebviewGeneric
      `WebviewDynamic WebviewDynamic
