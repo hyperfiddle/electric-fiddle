@@ -1,5 +1,5 @@
 (ns dustingetz.london-talk-2024.webview-dynamic
-  (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
+  (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]

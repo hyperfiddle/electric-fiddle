@@ -1,4 +1,4 @@
-(ns models.teeshirt-orders-datascript-dustin
+(ns dustingetz.teeshirt-orders-datascript-dustin
   (:require [datascript.core :as d]
             [datascript.impl.entity :as de]  ; for `entity?` predicate
             [hyperfiddle.rcf :refer [tests % tap]]))

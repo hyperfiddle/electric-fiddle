@@ -5,12 +5,12 @@
             #?(:clj [clojure.java.shell :as shell])
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [contrib.datafy-fs #?(:clj :as, :cljs :as-alias) dfs]
             [datagrid.datafy-renderer :as r]
             [datagrid.datagrid :as dg]
             [datagrid.schema :as schema]
             [datagrid.virtual-scroll :as vs]
             [datagrid.spinner :as spinner]
+            [dustingetz.datafy-fs #?(:clj :as, :cljs :as-alias) dfs]
             [hyperfiddle.electric :as e]
             [hyperfiddle.electric-dom2 :as dom])
   #?(:clj (:import java.io.File)))

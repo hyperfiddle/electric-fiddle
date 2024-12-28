@@ -2,10 +2,10 @@
   (:require #?(:clj [clj-jgit.porcelain :refer [load-repo]])
             [contrib.color]
             [clojure.datafy :refer [datafy]]
-            [datagrid.datafy-git #?(:clj :as, :cljs :as-alias) git]
             [datagrid.datafy-renderer :as r]
             [datagrid.file-explorer :refer [RouterInput]]
             [datagrid.schema :as schema]
+            [dustingetz.datafy-git #?(:clj :as, :cljs :as-alias) git]
             [hyperfiddle.electric :as e]
             [hyperfiddle.electric-css :as css]
             [hyperfiddle.electric-dom2 :as dom]

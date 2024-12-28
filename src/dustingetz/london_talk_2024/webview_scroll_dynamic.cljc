@@ -6,8 +6,8 @@
             [hyperfiddle.electric-forms0 :refer [Input*]]
             [dustingetz.london-talk-2024.webview-scroll :refer [TableScrollFixedCounted]]
             [dustingetz.london-talk-2024.webview-scroll :refer [Genders Shirt-sizes]]
-            #?(:clj [models.teeshirt-orders-datascript-dustin :refer [teeshirt-orders]])
-            #?(:clj [models.teeshirt-orders-datascript-dustin-large :refer [ensure-db!]])))
+            #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [teeshirt-orders]])
+            #?(:clj [dustingetz.teeshirt-orders-datascript-dustin-large :refer [ensure-db!]])))
 
 (e/defn Row [db id]
   (dom/tr

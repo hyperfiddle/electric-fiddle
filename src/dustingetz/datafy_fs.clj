@@ -1,9 +1,10 @@
-(ns contrib.datafy-fs
+(ns dustingetz.datafy-fs
   "nav implementation for java file system traversals"
   (:require [clojure.core.protocols :as ccp :refer [nav]]
             [clojure.datafy :refer [datafy]]
             [clojure.spec.alpha :as s]
             [contrib.assert :refer [check]]
+            [dustingetz.datafy-fs :as fs]
             [hyperfiddle.rcf :refer [tests]]
             [clojure.java.io :as io])
   (:import [java.nio.file Path Paths Files]
@@ -152,15 +153,16 @@
   (type h) := java.io.File
   "(datafy file) returns an EDN-ready data view that is one layer deep"
   (datafy h)
-  := #:contrib.datafy-fs{:name "src-contrib",
-                         :absolute-path _,
-                         :size _,
-                         :modified _,
-                         :created _,
-                         :accessed _,
-                         :kind ::dir,
-                         :children _
-                         :parent ...})
+  := #:dustingetz.datafy-fs
+        {:name "src-contrib",
+         :absolute-path _,
+         :size _,
+         :modified _,
+         :created _,
+         :accessed _,
+         :kind ::dir,
+         :children _
+         :parent ...})
 
 (tests
   "datafy of a directory includes a Clojure coll of children, but child elements are native file
@@ -188,15 +190,15 @@
         (nav % 0 (% 0))
         (datafy %)
         #_(s/conform ::file %))
-  := #:contrib.datafy-fs{:name "contrib",
-                         :absolute-path _,
-                         :size _,
-                         :modified _,
-                         :created _,
-                         :accessed _,
-                         :kind ::dir,
-                         :children _
-                         :parent ...})
+  := {::name "contrib",
+      ::absolute-path _,
+      ::size _,
+      ::modified _,
+      ::created _,
+      ::accessed _,
+      ::kind ::dir,
+      ::children _
+      ::parent ...})
 
 (tests
   "nav into children and back up via parent ref"

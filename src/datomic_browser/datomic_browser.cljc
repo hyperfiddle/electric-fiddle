@@ -112,8 +112,8 @@
            ::Row Format-entity})))))
 
 (comment
-  (def schema (m/? (dx/schema! models.mbrainz/*datomic-db*)))
-  (def xs (m/? (d/pull models.mbrainz/*datomic-db* {:eid 17592186058296 :selector ['*] :compare compare})))
+  (def schema (m/? (dx/schema! dustingetz.mbrainz/*datomic-db*)))
+  (def xs (m/? (d/pull dustingetz.mbrainz/*datomic-db* {:eid 17592186058296 :selector ['*] :compare compare})))
   (def q (treelister (partial dx/entity-tree-entry-children schema) any-matches? xs))
   (q ""))
 

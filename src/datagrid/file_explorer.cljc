@@ -1,9 +1,9 @@
 (ns datagrid.file-explorer
   (:require [clojure.datafy :refer [datafy]]
             #?(:clj [clojure.java.io :as io])
-            [contrib.datafy-fs #?(:clj :as, :cljs :as-alias) dfs]
             [datagrid.datafy-renderer :as r]
             [datagrid.schema :as schema]
+            [dustingetz.datafy-fs #?(:clj :as, :cljs :as-alias) dfs]
             [hyperfiddle.electric :as e]
             [hyperfiddle.electric-css :as css]
             [hyperfiddle.electric-dom2 :as dom]

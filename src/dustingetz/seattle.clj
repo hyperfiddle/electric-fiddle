@@ -1,4 +1,4 @@
-(ns test.seattle
+(ns dustingetz.seattle
   (:require [contrib.data :refer [index-by]]))
 
 (def schema

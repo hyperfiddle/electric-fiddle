@@ -5,7 +5,7 @@
             [contrib.assert :refer [check]]
             [contrib.data :refer [treelister clamp-left]]
             [contrib.str :refer [includes-str?]]
-            [contrib.datafy-fs #?(:clj :as :cljs :as-alias) fs]
+            [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]

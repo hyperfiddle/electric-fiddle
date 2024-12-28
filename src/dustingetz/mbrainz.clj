@@ -1,4 +1,4 @@
-(ns models.mbrainz
+(ns dustingetz.mbrainz
   (:require [clojure.tools.logging :as log]
             [contrib.assert :refer [check]]
             [datomic.api :as d]

@@ -1,5 +1,5 @@
 (ns dustingetz.london-talk-2024.webview-concrete
-  (:require #?(:clj [models.teeshirt-orders-datascript-dustin :refer
+  (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer
                      [ensure-db! teeshirt-orders genders shirt-sizes]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]

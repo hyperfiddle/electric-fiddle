@@ -1,5 +1,5 @@
-(ns models.teeshirt-orders-datascript-dustin-large
-  (:require [models.teeshirt-orders-datascript-dustin :refer
+(ns dustingetz.teeshirt-orders-datascript-dustin-large
+  (:require [dustingetz.teeshirt-orders-datascript-dustin :refer
              [schema genders shirt-sizes fixtures-genders fixtures-shirt-sizes]]
             [datascript.core :as d]))
 

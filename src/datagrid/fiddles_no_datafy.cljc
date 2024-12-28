@@ -6,7 +6,7 @@
       :cljs [cljs.spec.alpha :as s])
    [clojure.string :as str]
    #?(:clj [contrib.str])
-   #?(:clj [contrib.datafy-fs :as dfs])
+   #?(:clj [dustingetz.datafy-fs :as dfs])
    [datagrid.collection-editor :as ce]
    [datagrid.datagrid :as dg]
    [datagrid.spinner :as spinner]

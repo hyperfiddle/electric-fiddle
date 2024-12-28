@@ -2,7 +2,7 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-scroll0 :as scroll]
-            [contrib.datafy-fs #?(:clj :as :cljs :as-alias) fs]
+            [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [dustingetz.explorer :as explorer]))
 
 ;; Absolute index on client, data comes later from server.

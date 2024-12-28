@@ -3,8 +3,8 @@
             [clojure.core.protocols :refer [nav]]
             #?(:clj clojure.java.io)
             [contrib.data :refer [treelister]]
-            [contrib.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [contrib.str :refer [includes-str?]]
+            [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input*]]

@@ -1,8 +1,9 @@
-(ns models.datafy-git
+(ns dustingetz.datafy-git
   (:require [clj-jgit.porcelain :as git]
             [clj-jgit.querying :as git2]
             [clojure.core.protocols :as ccp :refer [nav]]
-            [clojure.datafy :refer [datafy]])
+            [clojure.datafy :refer [datafy]]
+            [dustingetz.datafy-fs :as fs])
   (:import (org.eclipse.jgit.api Git)
            (org.eclipse.jgit.diff DiffFormatter DiffEntry RawTextComparator)
            (org.eclipse.jgit.internal.storage.file FileRepository)
@@ -88,7 +89,7 @@
                (git2/commit-info o rev-walk index (:id commit))))))))
 
 (defn repo-path [o]
-  (-> o datafy :repo datafy :dir datafy :contrib.datafy-fs/absolute-path))
+  (-> o datafy :repo datafy :dir datafy ::fs/absolute-path))
 
 #_(defn remote-ref? [^Ref ref] (.startsWith (.getName ref) Constants/R_REMOTES))
 #_(defn local-ref? [^Ref ref] (.startsWith (.getName ref) Constants/R_HEADS))
@@ -100,7 +101,7 @@
 
 (comment
   (datafy r)
-  (-> r datafy :repo datafy :dir datafy :contrib.datafy-fs/absolute-path)
+  (-> r datafy :repo datafy :dir datafy ::fs/absolute-path)
   (as-> r o
     (datafy o)
     (nav o :log (:log o))

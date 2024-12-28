@@ -1,10 +1,10 @@
 (ns datomic-browser.mbrainz-browser
-  (:require [hyperfiddle.electric3 :as e]
+  (:require [dustingetz.mbrainz #?(:clj :as :cljs :as-alias) model]
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
-            [datomic-browser.datomic-browser :refer [DatomicBrowser]]
-            [models.mbrainz #?(:clj :as :cljs :as-alias) model]))
+            [datomic-browser.datomic-browser :refer [DatomicBrowser]]))
 
 (e/defn Inject [?x #_& {:keys [Busy Failed Ok]}]
   ; todo needs to be a lot more sophisticated to inject many dependencies concurrently and report status in batch

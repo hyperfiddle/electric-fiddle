@@ -1,4 +1,4 @@
-(ns models.teeshirt-orders-datomic
+(ns dustingetz.teeshirt-orders-datomic
   "query functions used in tee-shirt orders demo"
   (:require [clojure.tools.logging :as log]
             [clojure.spec.alpha :as s]
