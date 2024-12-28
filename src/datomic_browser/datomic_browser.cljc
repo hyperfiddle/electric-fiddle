@@ -31,7 +31,7 @@
 
 (e/defn Grid [xs! #_& {::keys [Row] :as props}]
   (dom/div (dom/props {:class (or (::dom/class props) "Viewport")})
-    (let [{::scroll/keys [row-height Offset limit record-count Spool]}
+    (let [{::keys [row-height Offset limit record-count Spool]}
           (Scroll-indexed-headless dom/node xs!
             (assoc props :row-height 24 :overquery-factor 1))]
       (dom/table (dom/props {:style {:top (str (* (Offset) row-height) "px")}})
