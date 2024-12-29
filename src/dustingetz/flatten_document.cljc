@@ -15,8 +15,12 @@
                (let [node {:tab indent :name k}]
                  (cond
                    ;; For maps and sequences, emit parent node and recurse
-                   (or (map? v) (sequential? v))
+                   (map? v)
                    (cons node (flatten-nested v (inc indent)))
+
+                   (sequential? v)
+                   [{:tab indent :name k :value '...}]
+                   #_(cons node (flatten-nested v (inc indent)))
 
                    ;; For nil values, just emit the node
                    (nil? v)
@@ -30,9 +34,12 @@
      ;; Handle sequences
      (sequential? data)
      (mapcat (fn [i v]
-               (if (or (map? v) (sequential? v))
+               (cond
+                 (or (map? v) (sequential? v))
                  (cons {:tab indent :name i}
                    (flatten-nested v (inc indent)))
+
+                 ()
                  [{:tab indent :name i :value v}]))
        (range)
        data)
