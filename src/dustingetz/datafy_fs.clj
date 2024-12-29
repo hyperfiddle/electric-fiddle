@@ -1,7 +1,7 @@
 (ns dustingetz.datafy-fs
   "nav implementation for java file system traversals"
   (:require [clojure.core.protocols :as ccp :refer [nav]]
-            [clojure.datafy :refer [datafy]]
+            [clojure.datafy :refer [datafy]] ; tests only
             [clojure.spec.alpha :as s]
             [contrib.assert :refer [check]]
             [dustingetz.datafy-fs :as fs]
