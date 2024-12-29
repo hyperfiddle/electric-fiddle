@@ -3,8 +3,8 @@
             [clojure.core.protocols :refer [nav]]
             #?(:clj [cognitect.aws.client.api :as awsx])
             [dustingetz.datafy-aws #?(:clj :as :cljs :as-alias) aws]
+            [contrib.assert :refer [check]]
             [contrib.data :refer [index-by clamp-left]]
-            [contrib.str :refer [pprint-str]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as router]
@@ -12,40 +12,37 @@
             [hyperfiddle.electric-forms0 :as forms :refer [Service]]
             [dustingetz.flatten-document :refer [flatten-nested]]))
 
-(e/defn Date_ [x] (dom/text (e/client (.toLocaleDateString x))))
+(e/defn Date_ [x] (dom/text (e/client (some-> x .toLocaleDateString))))
 (e/defn String_ [x] (dom/text x))
 (e/defn Edn [x] (dom/text (some-> x pr-str)))
 
-(e/defn TableScroll [xs! Row]
+(e/defn TableScroll [?xs! Row]
   (e/server
     (dom/props {:class "Viewport"})
-    (let [record-count (count xs!)
+    (let [record-count (count ?xs!)
           row-height 24
           [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
       (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
         (e/for [i (IndexRing limit offset)]
           (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
-            (Row #_(datafy) #_(nav xs! i) (nth xs! i nil)))))
+            (Row (datafy #_(nav ?xs! i) (nth (vec ?xs!) i nil))))))
       (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                   (* row-height (- record-count limit)) 0) "px")}})))))
-
-(e/defn OpsRow [{:keys [name documentation] :as m}]
-  (dom/td (router/link ['.. [(keyword name)]] (dom/text name)))
-  (dom/td (dom/text documentation)))
 
 (e/defn DebugRow [?m] (dom/td (dom/text (some-> ?m pr-str))))
 
 (e/defn AutoRow [?m]
   (e/server
-    (e/for [k (e/diff-by {} (some-> ?m keys))]
-      (dom/td (Edn (some-> ?m k))))))
+    (let [?m (datafy ?m)]
+      (e/for [k (e/diff-by {} (some-> ?m keys))]
+        (dom/td (Edn (some-> ?m k)))))))
 
-(e/defn EntityRow [{:keys [tab name value]}]
-  (dom/td (dom/props {:style {:padding-left (some-> tab (* 15) (str "px"))}})
+(e/defn EntityRow [{:keys [path name value]}]
+  (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
     (dom/text (str name)))
   (dom/td
     (if (= '... value)
-      (router/link ['. [name]] ; name is kw
+      (router/link ['. [(conj path name)]] ; name is kw
         (dom/text (str value)))
       (dom/text value))))
 
@@ -57,41 +54,60 @@
                    (vec (flatten-nested m))
                    EntityRow))))))
 
-(e/defn TwoPaneEntityList [title m Row
-                           title2 xs Row2]
+(defn nav-in [m path]
+  (loop [m m, path path]
+    (if-some [[p & ps] (seq path)]
+      (recur (datafy (nav m p (get m p))) ps)
+      m)))
+
+(comment
+  (nav-in {} []) := {}
+  (nav-in {:a 1} [:a])
+  (nav {:a 1} :a 1)
+  (nav-in {:a {:b 2}} [:a :b]) := 2)
+
+(e/defn TwoPaneEntityFocus [title m Row Row2]
   (dom/fieldset (dom/props {:class "title-record"})
     (dom/legend (dom/text title))
     (dom/div (TableScroll (vec (flatten-nested m)) Row)))
-  (dom/fieldset (dom/props {:class "collection"})
-    (dom/legend (dom/text title2))
-    (dom/div (TableScroll xs Row2))))
+  (let [[?focus] router/route]
+    #_(router/pop)
+    (if (seq ?focus)
+      (let [xs (e/server (nav-in m (seq ?focus)))]
+        (dom/fieldset (dom/props {:class "collection"})
+          (dom/legend (dom/text ?focus " " (e/server (-> xs first keys pr-str))))
+          (dom/div (TableScroll xs Row2)))))))
 
-(e/defn S3-index [x ?focus]
-  (e/server
-    (let [m (datafy x)]
-      (TwoPaneEntityList
-        :index m EntityRow
-        ?focus (if ?focus (nav m ?focus (get m ?focus [])) []) OpsRow #_AutoRow))))
+(e/defn S3-index [x]
+  (TwoPaneEntityFocus :index (e/server (datafy x))
+    EntityRow
+    (e/fn Row [{:keys [name documentation]}]
+      (dom/td (router/link ['.. [(keyword name)]] (dom/text name)))
+      (dom/td (dom/text documentation)))))
 
-(e/defn ListBuckets [x ?focus]
-  (e/server
-    (let [x (awsx/invoke x {:op :ListBuckets})
-          m (datafy x)]
-      (TwoPaneEntityList
-        :ListBuckets m EntityRow
-        ?focus (if ?focus (nav m ?focus (get m ?focus [])) []) AutoRow))))
+(e/defn ListBuckets [s3]
+  (TwoPaneEntityFocus :ListBuckets (e/server (datafy (aws/list-buckets s3)))
+    EntityRow
+    (e/fn Row [{:keys [Name CreationDate]}]
+      (dom/td (router/link ['.. [:ListObjects Name]] (dom/text Name)))
+      (dom/td (Date_ CreationDate)))))
+
+(e/defn ListObjects [s3]
+  (let [[bucket-name] router/route]
+    (router/pop
+      (TwoPaneEntityFocus :ListObjects (e/server (datafy (aws/list-objects s3 bucket-name)))
+        EntityRow AutoRow))))
 
 (e/defn S3 []
-  (let [x (e/server (aws/aws {:api :s3 :region "us-east-1"}))
-        [?op ?focus] router/route]
-    ; S3/index/?focus
-    ; S3/?op/?focus
+  (let [s3 (e/server (aws/aws {:api :s3 :region "us-east-1"}))
+        [?op] router/route]
     (if-not ?op
       (router/ReplaceState! ['. [:index]])
       (router/pop
         (case ?op
-          :index (S3-index x ?focus)
-          :ListBuckets (ListBuckets x ?focus)
+          :index (S3-index s3)
+          :ListBuckets (ListBuckets s3)
+          :ListObjects (ListObjects s3)
           (e/amb))))))
 
 (e/defn Page []
@@ -105,7 +121,6 @@
         (router/pop
           (case page
             :S3 (S3)
-            :S3x (S3x)
             :Edn (Edn-document (e/server (awsx/client {:api :s3 :region "us-east-1"})))
             (e/amb)))))))
 
@@ -115,9 +130,7 @@
     (dom/style (dom/text css))
     (let [[page] router/route]
       (dom/div (dom/props {:class (str "DirectoryExplorer " (some-> page name))})
-        (binding [forms/effects* {}]
-          (Service
-            (Page)))))))
+        (Page)))))
 
 (comment
   (def s3 (awsx/client {:api :s3 :region "us-east-1"}))
@@ -142,8 +155,8 @@
 .DirectoryExplorer table td { grid-row: var(--order); }
 
 /* fullscreen, except in tutorial mode */
-.DirectoryExplorer fieldset.title-record { position:fixed; top:0em; bottom:50vh; left:0; right:0; }
-.DirectoryExplorer fieldset.collection { position:fixed; top:50vh; bottom:0; left:0; right:0; }
+.DirectoryExplorer fieldset.title-record { position:fixed; top:0em; bottom:33vh; left:0; right:0; }
+.DirectoryExplorer fieldset.collection { position:fixed; top:33vh; bottom:0; left:0; right:0; }
 .DirectoryExplorer div.Viewport { height: 100%; }
 
 /* Cosmetic styles */

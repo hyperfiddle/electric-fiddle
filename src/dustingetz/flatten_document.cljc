@@ -1,52 +1,41 @@
 (ns dustingetz.flatten-document)
 
 (defn flatten-nested ; claude generated this
-  "Flattens a nested data structure into a sequence of maps with :tab, :name, and :value keys.
-   For collection items, uses simple index numbers.
-   - data: The nested data structure to flatten
-   - indent: The current indentation level (default: 0)"
-  ([data]
-   (flatten-nested data 0))
-  ([data indent]
+  ([data] (flatten-nested data []))
+  ([data path]
    (cond
-     ;; Handle maps
      (map? data)
      (mapcat (fn [[k v]]
-               (let [node {:tab indent :name k}]
-                 (cond
-                   ;; For maps and sequences, emit parent node and recurse
-                   (map? v)
-                   (cons node (flatten-nested v (inc indent)))
+               (cond
+                 (map? v)
+                 (cons {:path path :name k} (flatten-nested v (conj path k)))
 
-                   (sequential? v)
-                   [{:tab indent :name k :value '...}]
-                   #_(cons node (flatten-nested v (inc indent)))
+                 ; render collections of records as hyperlinks
+                 (and (sequential? v) (map? (first v)))
+                 [{:path path :name k :value '...}]
 
-                   ;; For nil values, just emit the node
-                   (nil? v)
-                   [node]
+                 ; render simple collections inline
+                 (and (sequential? v) (not (map? (first v))))
+                 [{:path path :name k :value v}]
 
-                   ;; For other values, include the value
-                   :else
-                   [(assoc node :value v)])))
+                 #_#_(nil? v) [{:path path :name k}]
+                 () [{:path path :name k :value v}]))
        data)
 
-     ;; Handle sequences
+     ; render simple collections as indexed maps
      (sequential? data)
      (mapcat (fn [i v]
                (cond
                  (or (map? v) (sequential? v))
-                 (cons {:tab indent :name i}
-                   (flatten-nested v (inc indent)))
+                 (cons {:path path :name i}
+                   (flatten-nested v (conj path i)))
 
                  ()
-                 [{:tab indent :name i :value v}]))
-       (range)
-       data)
+                 [{:path path :name i :value v}]))
+       (range) data)
 
-     ;; Handle leaf values (shouldn't normally hit this case)
-     :else
-     [{:tab indent :value data}])))
+     ; what else?
+     () [{:path path :value data}])))
 
 (comment
   (def test-data
