@@ -1,6 +1,7 @@
 (ns dustingetz.dustingetz
   (:require [hyperfiddle.electric3 :as e]
             [dustingetz.aws-browser :refer [DataBrowser]]
+            [dustingetz.edn-viewer :refer [EdnViewer]]
             [dustingetz.electric-tree :refer [TreeDemo]]
             [dustingetz.essay :refer [Essay]]
             [dustingetz.explorer :refer [DirectoryExplorer]]
@@ -44,7 +45,6 @@
      `DemoMetaobject DemoMetaobject
      `Painter Painter
      `FileWatcherDemo FileWatcherDemo
-     `GitBrowser GitBrowser
      `Y-Fac Y-Fac
      `Y-dir Y-dir
      `TreeDemo TreeDemo
@@ -53,7 +53,9 @@
      `Logic Logic
      `ScrollDemo ScrollDemo
      `Scroll-abc Scroll-abc}
-    {`DataBrowser DataBrowser}
+    {`GitBrowser GitBrowser
+     `DataBrowser DataBrowser
+     `EdnViewer EdnViewer}
     {`WebviewConcrete WebviewConcrete
      `WebviewGeneric WebviewGeneric
      `WebviewDynamic WebviewDynamic

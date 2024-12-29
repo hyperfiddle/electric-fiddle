@@ -46,14 +46,6 @@
         (dom/text (str value)))
       (dom/text value))))
 
-(e/defn Edn-document [x]
-  (e/server
-    (let [m (datafy x)]
-      (dom/fieldset (dom/legend (dom/text "(aws/client {:api :s3 :region \"us-east-1\"})"))
-        (dom/div (TableScroll
-                   (vec (flatten-nested m))
-                   EntityRow))))))
-
 (defn nav-in [m path]
   (loop [m m, path path]
     (if-some [[p & ps] (seq path)]
@@ -67,14 +59,14 @@
   (nav-in {:a {:b 2}} [:a :b]) := 2)
 
 (e/defn TwoPaneEntityFocus [title m Row Row2]
-  (dom/fieldset (dom/props {:class "title-record"})
+  (dom/fieldset (dom/props {:class "entity"})
     (dom/legend (dom/text title))
     (dom/div (TableScroll (vec (flatten-nested m)) Row)))
   (let [[?focus] router/route]
     #_(router/pop)
     (if (seq ?focus)
       (let [xs (e/server (nav-in m (seq ?focus)))]
-        (dom/fieldset (dom/props {:class "collection"})
+        (dom/fieldset (dom/props {:class "children"})
           (dom/legend (dom/text ?focus " " (e/server (-> xs first keys pr-str))))
           (dom/div (TableScroll xs Row2)))))))
 
@@ -121,7 +113,6 @@
         (router/pop
           (case page
             :S3 (S3)
-            :Edn (Edn-document (e/server (awsx/client {:api :s3 :region "us-east-1"})))
             (e/amb)))))))
 
 (declare css)
@@ -155,8 +146,8 @@
 .DirectoryExplorer table td { grid-row: var(--order); }
 
 /* fullscreen, except in tutorial mode */
-.DirectoryExplorer fieldset.title-record { position:fixed; top:0em; bottom:33vh; left:0; right:0; }
-.DirectoryExplorer fieldset.collection { position:fixed; top:33vh; bottom:0; left:0; right:0; }
+.DirectoryExplorer fieldset.entity { position:fixed; top:0em; bottom:33vh; left:0; right:0; }
+.DirectoryExplorer fieldset.children { position:fixed; top:33vh; bottom:0; left:0; right:0; }
 .DirectoryExplorer div.Viewport { height: 100%; }
 
 /* Cosmetic styles */
