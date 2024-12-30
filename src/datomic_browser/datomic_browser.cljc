@@ -8,7 +8,7 @@
             #?(:clj [datomic.api :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :as forms :refer [Input! Form! Checkbox]]
+            [hyperfiddle.electric-forms0 :refer [Input! Form! Checkbox]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.router3 :as r]
             [missionary.core :as m]))
@@ -71,9 +71,21 @@
               (m/reduce conj []) e/Task (sort-by :v))
             (e/fn [[e _ v tx op]] ; possible destr glitch
               (dom/td (r/link ['.. [:entity e]] (dom/text e)))
-              (dom/td (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa))
+              (dom/td (dom/text (pr-str a)))
               (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
               (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
+
+#?(:clj (defn ident! "resolve Datomic entity-id to ident for display"
+          [db ?e] (m/via m/blk (or (some->> ?e (d/entity db) :db/ident) ?e))
+          #_
+          (m/sp
+            (if ?e
+              (let [xs (d/query {:args [db ?e]
+                                 :query '[:find ?k :in $ ?e :where [?e :db/ident ?k]]})
+                    ; datomic onprem: #{[:db.excise/beforeT]}
+                    ; datomic cloud: [[:db.excise/beforeT]]
+                    x (ffirst xs)]
+                (or x ?e))))))
 
 (e/defn TxDetail []
   (let [[e _] r/route]
@@ -85,31 +97,35 @@
             (->> (mx/seq-consumer (d/tx-range (d/log conn) e (inc e))) ; global
               (m/eduction (map :data) cat) (m/reduce conj []) e/Task)
             (e/fn [[e aa v tx op]] ; possible destr glitch
-              ; todo dx/ident bad
-              (dom/td (let [e (e/server (e/Task (dx/ident! db e)))] (r/link ['.. [:entity e]] (dom/text e))))
-              (dom/td (let [aa (e/server (e/Task (dx/ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
-              (dom/td (dom/text (pr-str v))) ; when a is ref, render link
+              (dom/td #_(let [e (e/server (e/Task (ident! db e)))]) (r/link ['.. [:entity e]] (dom/text e)))
+              (dom/td (let [aa (e/server (e/Task (ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
+              (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
               (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
 
-#?(:clj (defn easy-attr [schema ?k] ; todo dx/identify bad
-          ((juxt
-             (comp unqualify dx/identify :db/valueType)
-             (comp unqualify dx/identify :db/cardinality))
-           (get schema ?k))))
+#?(:clj (defn identify "infer canonical identity from Datomic entity, in precedence order."
+          [tree] (first (remove nil? ((juxt :db/ident :db/id) tree)))))
 
-(e/defn Format-entity [[?tab [k v :as ?row]]] ; k and v can be nil
-  ;(dom/td (dom/text (pr-str k))) (dom/td (dom/text (pr-str v)))
+#?(:clj (defn easy-attr [db ?k]
+          (when ?k
+            ((juxt
+               (comp unqualify identify :db/valueType)
+               (comp unqualify identify :db/cardinality))
+             (d/entity db ?k)))))
+
+#?(:clj (defn is-attr? [db ?k] (when ?k (some? (:db/valueType (d/entity db ?k))))))
+
+(e/defn Format-entity [[?tab [k v :as ?row]]]
   (e/server ; keep vals on server, row can contain refs
     (when ?row
       (dom/td
         (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}})
         (cond
           (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-          (e/server (contains? schema k)) (r/link ['.. [:attribute k]] (dom/text k))
+          (e/server (is-attr? db k)) (r/link ['.. [:attribute k]] (dom/text k))
           () (dom/text (str k)))) ; str is needed for Long db/id, why?
       (dom/td
         (if-not (coll? v) ; don't render card :many intermediate row
-          (let [[valueType cardinality] (e/server (easy-attr schema k))]
+          (let [[valueType cardinality] (e/server (easy-attr db k))]
             (cond
               (= :db/id k) (r/link ['.. [:entity v]] (dom/text v))
               (= :ref valueType) (r/link ['.. [:entity v]] (dom/text v))
@@ -124,7 +140,7 @@
         (e/server
           (TableScroll
             (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches? ; todo dx bad
-                    (e/Task (m/via m/blk (d/pull db ['*] e #_{:eid e :selector ['*] :compare compare})))) "")) ; TODO inject sort
+                    (e/Task (m/via m/blk (d/pull db ['*] e)))) ""))
             Format-entity #_{::dom/class "Viewport entity-detail"}))))))
 
 (comment
