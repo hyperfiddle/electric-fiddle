@@ -64,11 +64,11 @@
   (let [[a _] r/route]
     #_(r/focus [1]) ; search
     (when a ; router glitch
-      (dom/fieldset (dom/legend (dom/text "Attribute detail: " (pr-str a)))
+      (dom/fieldset (dom/legend (dom/text "Attribute index: " (pr-str a)))
         (e/server
           (TableScroll
             (->> (mx/seq-consumer (d/datoms db :aevt a))
-              (m/reduce conj []) e/Task)
+              (m/reduce conj []) e/Task (sort-by :v))
             (e/fn [[e _ v tx op]] ; possible destr glitch
               (dom/td (r/link ['.. [:entity e]] (dom/text e)))
               (dom/td (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa))
