@@ -48,29 +48,31 @@
 (e/defn AttributeDetail []
   (let [[a _] r/route]
     #_(r/focus [1]) ; search
-    (dom/fieldset (dom/legend (dom/text "Attribute detail: " (pr-str a)))
-      (e/server
-        (TableScroll
-          (->> (d/datoms> db {:index :aevt, :components [a]}) (m/reduce conj []) e/Task)
-          (e/fn [[e _ v tx op]] ; possible destr glitch
-            (dom/td (r/link ['.. [:entity e]] (dom/text e)))
-            (dom/td (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa))
-            (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
-            (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx)))))))))
+    (when a ; router glitch
+      (dom/fieldset (dom/legend (dom/text "Attribute detail: " (pr-str a)))
+        (e/server
+          (TableScroll
+            (->> (d/datoms> db {:index :aevt, :components [a]}) (m/reduce conj []) e/Task)
+            (e/fn [[e _ v tx op]] ; possible destr glitch
+              (dom/td (r/link ['.. [:entity e]] (dom/text e)))
+              (dom/td (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa))
+              (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
+              (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
 
 (e/defn TxDetail []
   (let [[e _] r/route]
     #_(r/focus [1]) ; search
-    (dom/fieldset (dom/legend (dom/text "Tx detail: " e))
-      (e/server
-        (TableScroll
-          (->> (d/tx-range> conn {:start e, :end (inc e)}) ; global
-            (m/eduction (map :data) cat) (m/reduce conj []) e/Task)
-          (e/fn [[e aa v tx op]] ; possible destr glitch
-            (dom/td (let [e (e/server (e/Task (dx/ident! db e)))] (r/link ['.. [:entity e]] (dom/text e))))
-            (dom/td (let [aa (e/server (e/Task (dx/ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
-            (dom/td (dom/text (pr-str v))) ; when a is ref, render link
-            (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx)))))))))
+    (when e ; router glitch
+      (dom/fieldset (dom/legend (dom/text "Tx detail: " e))
+        (e/server
+          (TableScroll
+            (->> (d/tx-range> conn {:start e, :end (inc e)}) ; global
+              (m/eduction (map :data) cat) (m/reduce conj []) e/Task)
+            (e/fn [[e aa v tx op]] ; possible destr glitch
+              (dom/td (let [e (e/server (e/Task (dx/ident! db e)))] (r/link ['.. [:entity e]] (dom/text e))))
+              (dom/td (let [aa (e/server (e/Task (dx/ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
+              (dom/td (dom/text (pr-str v))) ; when a is ref, render link
+              (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
 
 #?(:clj (defn easy-attr [schema ?k]
           ((juxt
@@ -100,12 +102,13 @@
 (e/defn EntityDetail []
   (let [[e _] r/route]
     #_(r/focus [1]) ; search
-    (dom/fieldset (dom/legend (dom/text "Entity detail: " e))
-      (e/server
-        (TableScroll
-          (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches?
-                  (e/Task (d/pull db {:eid e :selector ['*] :compare compare}))) "")) ; TODO inject sort
-          Format-entity #_{::dom/class "Viewport entity-detail"})))))
+    (when e ; glitch
+      (dom/fieldset (dom/legend (dom/text "Entity detail: " e))
+        (e/server
+          (TableScroll
+            (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches?
+                    (e/Task (d/pull db {:eid e :selector ['*] :compare compare}))) "")) ; TODO inject sort
+            Format-entity #_{::dom/class "Viewport entity-detail"}))))))
 
 (comment
   (def schema (m/? (dx/schema! dustingetz.mbrainz/*datomic-db*)))
@@ -128,12 +131,13 @@
 (e/defn EntityHistory []
   (let [[e _] r/route]
     #_(r/focus [1]) ; search
-    (dom/fieldset (dom/legend (dom/text "Entity history: " e))
-      (TableScroll
-        (e/server (->> (dx/entity-history-datoms> db e) (m/reduce conj []) e/Task))
-        Format-history-row
-        #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
-           ::dom/class "Viewport entity-history"}))))
+    (when e ; router glitch
+      (dom/fieldset (dom/legend (dom/text "Entity history: " e))
+        (TableScroll
+          (e/server (->> (dx/entity-history-datoms> db e) (m/reduce conj []) e/Task))
+          Format-history-row
+          #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
+             ::dom/class "Viewport entity-history"})))))
 
 (e/defn DbStats []
   #_(r/focus [0]) ; search
@@ -190,7 +194,9 @@
         :entity (e/amb (EntityDetail) (EntityHistory))
         :db-stats (DbStats)
         :recent-tx (RecentTx)
-        (e/amb)))))
+        (e/amb))
+      (dom/footer (dom/p (dom/text "Stability note: Electric v3 is not quite 100% stable and this demo
+      pushes Electric very hard. If the page breaks please kindly refresh. As you can see, we're very close!"))))))
 
 (e/defn DatomicBrowser [conn]
   (e/client
@@ -218,7 +224,8 @@
 .Explorer div.Viewport { height: 100%; }
 
 /* Userland layout */
-.Explorer fieldset { position:fixed; top:3em; bottom:0; left:0; right:0; }
+.Explorer fieldset { position:fixed; top:3em; bottom:5em; left:0; right:0; }
+.Explorer footer { position: fixed; bottom: 0; max-width: 45em; }
 .Explorer table { grid-template-columns: 20em auto; }
 
 /* Cosmetic */
@@ -231,7 +238,7 @@
 /* Progressive enhancement */
 .Explorer .nav { margin: 0; }
 .Explorer.entity fieldset:nth-of-type(1) { top:3em; bottom:66vh; left:0; right:0; }
-.Explorer.entity fieldset:nth-of-type(2) { top:34vh; bottom:0; left:0; right:0; }
+.Explorer.entity fieldset:nth-of-type(2) { top:34vh; bottom:5em; left:0; right:0; }
 .Explorer.entity fieldset:nth-of-type(1) table { grid-template-columns: 15em auto; }
 .Explorer.entity fieldset:nth-of-type(2) table { grid-template-columns: 5em 10em 15em auto 10em 9em; }
 .Explorer.attributes table { grid-template-columns: auto 6em 4em 4em 4em; }
