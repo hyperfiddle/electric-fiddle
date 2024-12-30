@@ -33,7 +33,7 @@
     seq-consumer (m/eduction (map first))))
 
 (comment
-  (def test-conn (d/connect dustingetz.mbrainz/datomic-uri))
+  (def test-conn (d/connect dustingetz.mbrainz/mbrainz-uri))
   (def test-db (d/db test-conn))
   (->> (attributes-stream test-db [:db/ident]) (m/reduce conj []) m/?) := [...])
 
