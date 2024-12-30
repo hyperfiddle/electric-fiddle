@@ -2,9 +2,10 @@
   (:require [contrib.assert :refer [check]]
             [contrib.clojurex :refer [bindx]]
             [contrib.data :refer [unqualify treelister clamp-left]]
+            [contrib.missionary-contrib :as mx]
             [contrib.str :refer [any-matches?]]
             #?(:clj [contrib.datomic-contrib :as dx])
-            #?(:clj [contrib.datomic-m :as d])
+            #?(:clj [datomic.api :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer [Input! Form! Checkbox]]
@@ -29,13 +30,27 @@
 (e/declare db)
 (e/declare schema)
 
+#?(:clj (defn attributes-stream [db pull]
+          (->> (d/qseq {:args [db pull]
+                        :query '[:find (pull ?e pattern)
+                                 :in $ pattern
+                                 :where [?e :db/valueType _]]})
+            mx/seq-consumer (m/eduction (map first)))))
+
+(comment
+  (def test-conn (d/connect dustingetz.mbrainz/datomic-uri))
+  (def test-db (d/db test-conn))
+  (->> (attributes-stream test-db [:db/ident]) (m/reduce conj []) m/?) := [...])
+
 (e/defn Attributes []
   #_(r/focus [0]) ; search
   (dom/fieldset (dom/legend (dom/text "Attributes"))
     (TableScroll
       (e/server
-        (->> (dx/attributes> db
-               [:db/ident {:db/valueType [:db/ident]} {:db/cardinality [:db/ident]} :db/unique :db/isComponent
+        (->> (attributes-stream (doto db (prn 'db))
+               [:db/ident :db/unique :db/isComponent
+                {:db/valueType [:db/ident]}
+                {:db/cardinality [:db/ident]}
                 #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs])
           (m/reduce conj []) e/Task (sort-by :db/ident)))
       (e/fn [x]
@@ -52,7 +67,8 @@
       (dom/fieldset (dom/legend (dom/text "Attribute detail: " (pr-str a)))
         (e/server
           (TableScroll
-            (->> (d/datoms> db {:index :aevt, :components [a]}) (m/reduce conj []) e/Task)
+            (->> (mx/seq-consumer (d/datoms db :aevt a))
+              (m/reduce conj []) e/Task)
             (e/fn [[e _ v tx op]] ; possible destr glitch
               (dom/td (r/link ['.. [:entity e]] (dom/text e)))
               (dom/td (dom/text (pr-str a)) #_(let [aa (e/server (e/Task (dx/ident! db aa)))] aa))
@@ -66,15 +82,16 @@
       (dom/fieldset (dom/legend (dom/text "Tx detail: " e))
         (e/server
           (TableScroll
-            (->> (d/tx-range> conn {:start e, :end (inc e)}) ; global
+            (->> (mx/seq-consumer (d/tx-range (d/log conn) e (inc e))) ; global
               (m/eduction (map :data) cat) (m/reduce conj []) e/Task)
             (e/fn [[e aa v tx op]] ; possible destr glitch
+              ; todo dx/ident bad
               (dom/td (let [e (e/server (e/Task (dx/ident! db e)))] (r/link ['.. [:entity e]] (dom/text e))))
               (dom/td (let [aa (e/server (e/Task (dx/ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
               (dom/td (dom/text (pr-str v))) ; when a is ref, render link
               (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
 
-#?(:clj (defn easy-attr [schema ?k]
+#?(:clj (defn easy-attr [schema ?k] ; todo dx/identify bad
           ((juxt
              (comp unqualify dx/identify :db/valueType)
              (comp unqualify dx/identify :db/cardinality))
@@ -106,8 +123,8 @@
       (dom/fieldset (dom/legend (dom/text "Entity detail: " e))
         (e/server
           (TableScroll
-            (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches?
-                    (e/Task (d/pull db {:eid e :selector ['*] :compare compare}))) "")) ; TODO inject sort
+            (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches? ; todo dx bad
+                    (e/Task (m/via m/blk (d/pull db ['*] e #_{:eid e :selector ['*] :compare compare})))) "")) ; TODO inject sort
             Format-entity #_{::dom/class "Viewport entity-detail"}))))))
 
 (comment
@@ -121,12 +138,20 @@
     (dom/td (e/client (dom/text (name (case op true :db/add false :db/retract (e/amb))))))
     (dom/td (e/client (r/link ['.. [:entity e]] (dom/text e)))) ; link two levels up because we are under EntityHistory's scope
     (dom/td (if (some? aa)
-              (let [ident (:db/ident (e/Task (d/pull db {:eid aa :selector [:db/ident]})))]
+              (let [ident (:db/ident (e/Task (m/via m/blk (d/pull db [:db/ident] aa))))]
                 (dom/text (pr-str ident)))))
     (dom/td (some-> v pr-str dom/text))
     (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
-    (dom/td (let [x (:db/txInstant (e/Task (d/pull db {:eid tx :selector [:db/txInstant]})))]
+    (dom/td (let [x (:db/txInstant (e/Task (m/via m/blk (d/pull db [:db/txInstant] tx))))]
               (dom/text (e/client (pr-str x)))))))
+
+#?(:clj (defn entity-history-datoms [db & [?e ?a]]
+          (m/ap
+            (let [history (d/history db)
+                  ; (sequence #_(comp (xf-filter-before-date before)))
+                  >fwd-xs (mx/seq-consumer (d/datoms history :eavt ?e ?a))
+                  >rev-xs (mx/seq-consumer (d/datoms history :vaet ?e ?a))]
+              (m/amb= (m/?> >fwd-xs) (m/?> >rev-xs))))))
 
 (e/defn EntityHistory []
   (let [[e _] r/route]
@@ -134,7 +159,7 @@
     (when e ; router glitch
       (dom/fieldset (dom/legend (dom/text "Entity history: " e))
         (TableScroll
-          (e/server (->> (dx/entity-history-datoms> db e) (m/reduce conj []) e/Task))
+          (e/server (->> (entity-history-datoms db e) (m/reduce conj []) e/Task))
           Format-history-row
           #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
              ::dom/class "Viewport entity-history"})))))
@@ -145,7 +170,7 @@
     (TableScroll
       (e/server
         (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil)) any-matches?
-                (e/Task (d/db-stats db))) "")))
+                (e/Task (m/via m/blk (d/db-stats db)))) "")))
       (e/fn [[tab [k v]]] ; thead: [::k ::v]
         (dom/td (dom/text (pr-str k)) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
         (dom/td (cond
@@ -164,7 +189,7 @@
   (dom/fieldset (dom/legend (dom/text "Recent Txs"))
     (e/server
       (TableScroll
-        (->> (d/datoms> db {:index :aevt, :components [:db/txInstant]}) (m/reduce conj ()) e/Task)
+        (->> (d/datoms db :aevt :db/txInstant) mx/seq-consumer (m/reduce conj ()) e/Task)
         (e/fn [[e _ v tx op :as record]]
           ; columns [:db/id :db/txInstant]
           (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
@@ -202,8 +227,8 @@
   (e/client
     (let [fail true #_(dom/div (Checkbox true :label "failure"))
           edits (bindx [conn conn
-                        db (e/server (check (e/Task (d/db conn))))
-                        schema (e/server (check (e/Task (dx/schema! db))))]
+                        db (e/server (check (e/Task (m/via m/blk (d/db conn)))))
+                        schema (e/server (check (e/Task (dx/schema! db))))] ; todo dx
                   (Page))
           edits (e/Filter some? edits)]
       fail
