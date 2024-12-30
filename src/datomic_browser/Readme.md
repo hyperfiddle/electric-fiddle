@@ -25,7 +25,4 @@ clj -M:prod:datomic-browser -m prod
 # prod uberjar
 clojure -X:build:prod:datomic-browser uberjar :hyperfiddle.fiddle-build/fiddle-ns datomic-browser.mbrainz-browser :hyperfiddle.fiddle-build/fiddle-deps-alias datomic-browser :hyperfiddle.fiddle-build/jar-name "app.jar"
 java -cp target/app.jar clojure.main -m prod
-
-# deploy via dockerfile
-fly deploy --remote-only --config src/datomic_browser/fly.toml --dockerfile src/datomic_browser/Dockerfile
 ```
