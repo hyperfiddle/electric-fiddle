@@ -79,15 +79,15 @@
       (e/for [k (e/diff-by {} (some-> ?m keys))]
         (dom/td (Edn (some-> ?m k)))))))
 
-#?(:clj (def >tap (let [!x (atom nil)] ; survive page refresh
-                    (m/signal
-                      (m/relieve {}
-                        (m/observe
-                          (fn [!]
-                            (! @!x)
-                            (let [! (fn [x] (reset! !x x) (! x))]
-                              (add-tap !)
-                              #(remove-tap !)))))))))
+#?(:clj (defonce *tap nil)) ; for repl & survive refresh
+#?(:clj (def >tap (m/signal
+                    (m/relieve {}
+                      (m/observe
+                        (fn [!]
+                          (! *tap)
+                          (let [! (fn [x] (def *tap x) (! x))]
+                            (add-tap !)
+                            #(remove-tap !))))))))
 
 (declare css)
 (e/defn EdnViewer []
@@ -104,6 +104,7 @@
   (require 'dustingetz.datafy-git)
   (tap> (cognitect.aws.client.api/client {:api :s3 :region "us-east-1"}))
   (tap> (dustingetz.datafy-git/load-repo "./"))
+  *tap
   )
 
 (def css "
