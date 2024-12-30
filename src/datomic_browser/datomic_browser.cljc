@@ -1,8 +1,6 @@
 (ns datomic-browser.datomic-browser
   (:require [contrib.assert :refer [check]]
-            [contrib.clojurex :refer [bindx]]
             [contrib.data :refer [treelister clamp-left]]
-            [contrib.str :refer [any-matches?]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer
                      [attributes-stream ident! entity-history-datoms easy-attr
@@ -135,7 +133,7 @@
     (TableScroll
       (e/server
         #_(flatten-nested (e/Task (m/via m/blk (d/db-stats db)))) ; need more control to inline short maps
-        (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil)) any-matches?
+        (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil))
                 (e/Task (m/via m/blk (d/db-stats db)))) "")))
       (e/fn [[tab [k v]]] ; thead: [::k ::v]
         (dom/td (dom/text (pr-str k)) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
@@ -192,7 +190,8 @@
 (e/defn DatomicBrowser [conn]
   (e/client
     (let [fail true #_(dom/div (Checkbox true :label "failure"))
-          edits (bindx [conn conn, db (e/server (check (e/Task (m/via m/blk (d/db conn)))))]
+          edits (binding [db (e/server (check (e/Task (m/via m/blk (d/db conn)))))
+                          conn conn]
                   (Page))
           edits (e/Filter some? edits)]
       fail
