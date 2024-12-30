@@ -1,11 +1,12 @@
 (ns datomic-browser.datomic-browser
   (:require [contrib.assert :refer [check]]
             [contrib.clojurex :refer [bindx]]
-            [contrib.data :refer [unqualify treelister clamp-left]]
-            [contrib.missionary-contrib :as mx]
+            [contrib.data :refer [treelister clamp-left]]
             [contrib.str :refer [any-matches?]]
-            #?(:clj [contrib.datomic-contrib :as dx])
             #?(:clj [datomic.api :as d])
+            #?(:clj [datomic-browser.datomic-model :refer
+                     [attributes-stream ident! entity-history-datoms easy-attr
+                      is-attr? seq-consumer flatten-nested]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input! Form! Checkbox]]
@@ -28,19 +29,6 @@
 
 (e/declare conn)
 (e/declare db)
-(e/declare schema)
-
-#?(:clj (defn attributes-stream [db pull]
-          (->> (d/qseq {:args [db pull]
-                        :query '[:find (pull ?e pattern)
-                                 :in $ pattern
-                                 :where [?e :db/valueType _]]})
-            mx/seq-consumer (m/eduction (map first)))))
-
-(comment
-  (def test-conn (d/connect dustingetz.mbrainz/datomic-uri))
-  (def test-db (d/db test-conn))
-  (->> (attributes-stream test-db [:db/ident]) (m/reduce conj []) m/?) := [...])
 
 (e/defn Attributes []
   #_(r/focus [0]) ; search
@@ -67,25 +55,13 @@
       (dom/fieldset (dom/legend (dom/text "Attribute index: " (pr-str a)))
         (e/server
           (TableScroll
-            (->> (mx/seq-consumer (d/datoms db :aevt a))
+            (->> (seq-consumer (d/datoms db :aevt a))
               (m/reduce conj []) e/Task (sort-by :v))
             (e/fn [[e _ v tx op]] ; possible destr glitch
               (dom/td (r/link ['.. [:entity e]] (dom/text e)))
               (dom/td (dom/text (pr-str a)))
               (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
               (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
-
-#?(:clj (defn ident! "resolve Datomic entity-id to ident for display"
-          [db ?e] (m/via m/blk (or (some->> ?e (d/entity db) :db/ident) ?e))
-          #_
-          (m/sp
-            (if ?e
-              (let [xs (d/query {:args [db ?e]
-                                 :query '[:find ?k :in $ ?e :where [?e :db/ident ?k]]})
-                    ; datomic onprem: #{[:db.excise/beforeT]}
-                    ; datomic cloud: [[:db.excise/beforeT]]
-                    x (ffirst xs)]
-                (or x ?e))))))
 
 (e/defn TxDetail []
   (let [[e _] r/route]
@@ -94,7 +70,7 @@
       (dom/fieldset (dom/legend (dom/text "Tx detail: " e))
         (e/server
           (TableScroll
-            (->> (mx/seq-consumer (d/tx-range (d/log conn) e (inc e))) ; global
+            (->> (seq-consumer (d/tx-range (d/log conn) e (inc e))) ; global
               (m/eduction (map :data) cat) (m/reduce conj []) e/Task)
             (e/fn [[e aa v tx op]] ; possible destr glitch
               (dom/td #_(let [e (e/server (e/Task (ident! db e)))]) (r/link ['.. [:entity e]] (dom/text e)))
@@ -102,35 +78,23 @@
               (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
               (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
 
-#?(:clj (defn identify "infer canonical identity from Datomic entity, in precedence order."
-          [tree] (first (remove nil? ((juxt :db/ident :db/id) tree)))))
-
-#?(:clj (defn easy-attr [db ?k]
-          (when ?k
-            ((juxt
-               (comp unqualify identify :db/valueType)
-               (comp unqualify identify :db/cardinality))
-             (d/entity db ?k)))))
-
-#?(:clj (defn is-attr? [db ?k] (when ?k (some? (:db/valueType (d/entity db ?k))))))
-
-(e/defn Format-entity [[?tab [k v :as ?row]]]
+(e/defn Format-entity [{:keys [path name value] :as ?row}]
   (e/server ; keep vals on server, row can contain refs
-    (when ?row
-      (dom/td
-        (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}})
-        (cond
-          (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-          (e/server (is-attr? db k)) (r/link ['.. [:attribute k]] (dom/text k))
-          () (dom/text (str k)))) ; str is needed for Long db/id, why?
-      (dom/td
-        (if-not (coll? v) ; don't render card :many intermediate row
-          (let [[valueType cardinality] (e/server (easy-attr db k))]
-            (cond
-              (= :db/id k) (r/link ['.. [:entity v]] (dom/text v))
-              (= :ref valueType) (r/link ['.. [:entity v]] (dom/text v))
-              (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
-              () (dom/text (str v)))))))))
+    (let [k name v value]
+      (when ?row
+        (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
+          (cond
+            (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
+            (is-attr? db k) (r/link ['.. [:attribute k]] (dom/text k))
+            () (dom/text (str k)))) ; str is needed for Long db/id, why?
+        (dom/td
+          (if-not (coll? v) ; don't render card :many intermediate row
+            (let [[valueType cardinality] (easy-attr db k)]
+              (cond
+                (= :db/id k) (r/link ['.. [:entity v]] (dom/text v))
+                (= :ref valueType) (r/link ['.. [:entity v]] (dom/text v))
+                (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
+                () (dom/text (str v))))))))))
 
 (e/defn EntityDetail []
   (let [[e _] r/route]
@@ -139,15 +103,8 @@
       (dom/fieldset (dom/legend (dom/text "Entity detail: " e))
         (e/server
           (TableScroll
-            (seq ((treelister (partial dx/entity-tree-entry-children schema) any-matches? ; todo dx bad
-                    (e/Task (m/via m/blk (d/pull db ['*] e)))) ""))
+            (flatten-nested (e/Task (m/via m/blk (d/pull db ['*] e))))
             Format-entity #_{::dom/class "Viewport entity-detail"}))))))
-
-(comment
-  (def schema (m/? (dx/schema! dustingetz.mbrainz/*datomic-db*)))
-  (def xs (m/? (d/pull dustingetz.mbrainz/*datomic-db* {:eid 17592186058296 :selector ['*] :compare compare})))
-  (def q (treelister (partial dx/entity-tree-entry-children schema) any-matches? xs))
-  (q ""))
 
 (e/defn Format-history-row [[e aa v tx op :as ?row]]
   (when ?row ; glitch
@@ -160,14 +117,6 @@
     (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
     (dom/td (let [x (:db/txInstant (e/Task (m/via m/blk (d/pull db [:db/txInstant] tx))))]
               (dom/text (e/client (pr-str x)))))))
-
-#?(:clj (defn entity-history-datoms [db & [?e ?a]]
-          (m/ap
-            (let [history (d/history db)
-                  ; (sequence #_(comp (xf-filter-before-date before)))
-                  >fwd-xs (mx/seq-consumer (d/datoms history :eavt ?e ?a))
-                  >rev-xs (mx/seq-consumer (d/datoms history :vaet ?e ?a))]
-              (m/amb= (m/?> >fwd-xs) (m/?> >rev-xs))))))
 
 (e/defn EntityHistory []
   (let [[e _] r/route]
@@ -185,6 +134,7 @@
   (dom/fieldset (dom/legend (dom/text "Db stats"))
     (TableScroll
       (e/server
+        #_(flatten-nested (e/Task (m/via m/blk (d/db-stats db)))) ; need more control to inline short maps
         (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil)) any-matches?
                 (e/Task (m/via m/blk (d/db-stats db)))) "")))
       (e/fn [[tab [k v]]] ; thead: [::k ::v]
@@ -205,7 +155,7 @@
   (dom/fieldset (dom/legend (dom/text "Recent Txs"))
     (e/server
       (TableScroll
-        (->> (d/datoms db :aevt :db/txInstant) mx/seq-consumer (m/reduce conj ()) e/Task)
+        (->> (d/datoms db :aevt :db/txInstant) seq-consumer (m/reduce conj ()) e/Task)
         (e/fn [[e _ v tx op :as record]]
           ; columns [:db/id :db/txInstant]
           (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
@@ -242,9 +192,7 @@
 (e/defn DatomicBrowser [conn]
   (e/client
     (let [fail true #_(dom/div (Checkbox true :label "failure"))
-          edits (bindx [conn conn
-                        db (e/server (check (e/Task (m/via m/blk (d/db conn)))))
-                        schema (e/server (check (e/Task (dx/schema! db))))] ; todo dx
+          edits (bindx [conn conn, db (e/server (check (e/Task (m/via m/blk (d/db conn)))))]
                   (Page))
           edits (e/Filter some? edits)]
       fail
