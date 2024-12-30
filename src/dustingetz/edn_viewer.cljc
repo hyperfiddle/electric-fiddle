@@ -5,6 +5,7 @@
             [contrib.data :refer [clamp-left]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.electric-forms0 :refer [Checkbox*]]
             [hyperfiddle.router3 :as router]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [dustingetz.flatten-document :refer [flatten-nested]]
@@ -35,6 +36,13 @@
   (nav {:a 1} :a 1)
   (nav-in {:a {:b 2}} [:a :b]) := 2)
 
+(e/defn ColumnPicker [cols]
+  (e/client
+    (let [state (e/for [col (e/diff-by {} cols)]
+                  {col (Checkbox* true :label col)})]
+      (reduce-kv (fn [x k v] (if v (conj x k) x))
+        [] (apply merge (e/as-vec state))))))
+
 (e/defn TwoPaneEntityFocus [title x Row Row2]
   (let [m (e/server (datafy x))]
     (dom/fieldset (dom/props {:class "entity"})
@@ -45,8 +53,9 @@
       (if (seq ?focus)
         (let [xs (e/server (nav-in m (seq ?focus)))]
           (dom/fieldset (dom/props {:class "children"})
-            (dom/legend (dom/text ?focus " " (e/server (some-> xs first keys pr-str))))
-            (TableScroll xs Row2)))))))
+            (let [cols (dom/legend (dom/text ?focus " ") (ColumnPicker (e/server (some-> xs first keys))))
+                  xs (mapv #(select-keys % cols) xs)]
+              (TableScroll xs Row2))))))))
 
 (e/defn EntityRow [{:keys [path name value]}]
   (e/client
@@ -72,12 +81,13 @@
 
 #?(:clj (def >tap (let [!x (atom nil)] ; survive page refresh
                     (m/signal
-                      (m/observe
-                        (fn [!]
-                          (! @!x)
-                          (let [! (fn [x] (reset! !x x) (! x))]
-                            (add-tap !)
-                            #(remove-tap !))))))))
+                      (m/relieve {}
+                        (m/observe
+                          (fn [!]
+                            (! @!x)
+                            (let [! (fn [x] (reset! !x x) (! x))]
+                              (add-tap !)
+                              #(remove-tap !)))))))))
 
 (declare css)
 (e/defn EdnViewer []
