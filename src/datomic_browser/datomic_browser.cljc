@@ -1,12 +1,11 @@
 (ns datomic-browser.datomic-browser
   (:require clojure.string
-            [contrib.assert :refer [check]]
-            [contrib.data :refer [clamp-left]]
-            [contrib.treelister :refer [treelister]]
+            [datomic-browser.contrib :refer
+             [check clamp-left treelister flatten-nested seq-consumer]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer
                      [attributes-stream ident! entity-history-datoms easy-attr
-                      summarize-attr is-attr? seq-consumer flatten-nested]])
+                      summarize-attr is-attr?]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input! Form! Checkbox]]
