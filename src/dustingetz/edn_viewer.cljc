@@ -43,10 +43,13 @@
       (reduce-kv (fn [x k v] (if v (conj x k) x))
         [] (apply merge (e/as-vec state))))))
 
-(e/defn TwoPaneEntityFocus [title x Row Row2]
+#?(:clj (defmulti title (fn [m] (some-> m meta :clojure.datafy/class))))
+#?(:clj (defmethod title :default [m] (some-> m meta :clojure.datafy/class)))
+
+(e/defn TwoPaneEntityFocus [x Row Row2]
   (let [m (e/server (datafy x))]
     (dom/fieldset (dom/props {:class "entity"})
-      (dom/legend (dom/text title))
+      (dom/legend (dom/text (e/server (title m))))
       (TableScroll (e/server (flatten-nested m)) Row))
     (let [[?focus] router/route]
       #_(router/pop)
@@ -95,13 +98,15 @@
     (dom/style (dom/text css))
     (dom/div (dom/props {:class (str "Explorer " #_(some-> page name))})
       (TwoPaneEntityFocus
-        "title" (e/server (e/input >tap))
+        (e/server (e/input >tap))
         EntityRow
         AutoRow))))
 
 (comment
   (require 'cognitect.aws.client.api)
   (require 'dustingetz.datafy-git)
+  #?(:clj (defmethod title 'org.eclipse.jgit.api.Git [m] (dustingetz.datafy-git/repo-path m)))
+  #?(:clj (defmethod title 'cognitect.aws.client.impl.Client [m] (-> m :endpoint :hostname)))
   (tap> (cognitect.aws.client.api/client {:api :s3 :region "us-east-1"}))
   (tap> (dustingetz.datafy-git/load-repo "./"))
   *tap
