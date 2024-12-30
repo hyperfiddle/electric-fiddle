@@ -2,8 +2,8 @@
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
             #?(:clj clojure.java.io)
-            [contrib.data :refer [treelister]]
             [contrib.str :refer [includes-str?]]
+            [contrib.treelister :refer [treelister]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]

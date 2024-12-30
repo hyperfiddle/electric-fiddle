@@ -1,7 +1,8 @@
 (ns datomic-browser.datomic-browser
   (:require clojure.string
             [contrib.assert :refer [check]]
-            [contrib.data :refer [treelister clamp-left]]
+            [contrib.data :refer [clamp-left]]
+            [contrib.treelister :refer [treelister]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer
                      [attributes-stream ident! entity-history-datoms easy-attr
