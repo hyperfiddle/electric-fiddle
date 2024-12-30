@@ -4,11 +4,11 @@
             ))
 
 (def mbrainz-uri "datomic:dev://localhost:4334/mbrainz-1968-1973")
+(def test-conn (delay (d/connect mbrainz-uri)))
+(def test-db (delay (d/db @test-conn)))
 
 (comment
-  (def conn (d/connect mbrainz-uri))
-  (def db (d/db conn))
-  (d/touch (d/entity db 100))
+  (d/touch (d/entity @test-db 100))
   := #:db{:id 100,
           :ident :release/name,
           :valueType :db.type/string,

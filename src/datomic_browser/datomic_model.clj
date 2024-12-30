@@ -3,6 +3,9 @@
             [datomic.api :as d] ; cloud requires facade
             [missionary.core :as m]))
 
+(comment
+  (require '[dustingetz.mbrainz :refer [test-db test-conn]]))
+
 (defn seq-consumer [xs] ; xs is iterable
   (m/ap
     (loop [xs xs]
@@ -16,12 +19,21 @@
 (defn identify "infer canonical identity from Datomic entity, in precedence order."
   [tree] (first (remove nil? ((juxt :db/ident :db/id) tree))))
 
-(defn easy-attr [db ?k]
-  (when ?k
-    ((juxt
-       (comp unqualify identify :db/valueType)
-       (comp unqualify identify :db/cardinality))
-     (d/entity db ?k))))
+(defn easy-attr [db ?a]
+  (when ?a
+    (let [!e (d/entity db ?a)]
+      [(unqualify (:db/valueType !e))
+       (unqualify (:db/cardinality !e))
+       (unqualify (:db/unique !e))
+       (if (:db/isComponent !e) :component)])))
+
+(comment (easy-attr @test-db :db/ident))
+
+(defn summarize-attr [db ?a]
+  (when ?a
+    (remove nil? (easy-attr db ?a))))
+
+(comment (summarize-attr @test-db :db/ident))
 
 (defn is-attr? [db ?k] (when ?k (some? (:db/valueType (d/entity db ?k)))))
 

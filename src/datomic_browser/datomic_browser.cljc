@@ -1,10 +1,11 @@
 (ns datomic-browser.datomic-browser
-  (:require [contrib.assert :refer [check]]
+  (:require clojure.string
+            [contrib.assert :refer [check]]
             [contrib.data :refer [treelister clamp-left]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer
                      [attributes-stream ident! entity-history-datoms easy-attr
-                      is-attr? seq-consumer flatten-nested]])
+                      summarize-attr is-attr? seq-consumer flatten-nested]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input! Form! Checkbox]]
@@ -33,7 +34,7 @@
   (dom/fieldset (dom/legend (dom/text "Attributes"))
     (TableScroll
       (e/server
-        (->> (attributes-stream (doto db (prn 'db))
+        (->> (attributes-stream db
                [:db/ident :db/unique :db/isComponent
                 {:db/valueType [:db/ident]}
                 {:db/cardinality [:db/ident]}
@@ -41,10 +42,7 @@
           (m/reduce conj []) e/Task (sort-by :db/ident)))
       (e/fn [x]
         (dom/td (let [v (:db/ident x)] (r/link ['.. [:attribute v]] (dom/text v))))
-        (dom/td (some-> x :db/valueType :db/ident name dom/text))
-        (dom/td (some-> x :db/cardinality :db/ident name dom/text))
-        (dom/td (some-> x :db/unique :db/ident name dom/text))
-        (dom/td (some-> x :db/isComponent :db/ident name dom/text))))))
+        (dom/td (dom/text (clojure.string/join " " (map name (summarize-attr db (:db/ident x))))))))))
 
 (e/defn AttributeDetail []
   (let [[a _] r/route]
@@ -55,9 +53,9 @@
           (TableScroll
             (->> (seq-consumer (d/datoms db :aevt a))
               (m/reduce conj []) e/Task (sort-by :v))
-            (e/fn [[e _ v tx op]] ; possible destr glitch
+            (e/fn [[e _ v tx op]]
               (dom/td (r/link ['.. [:entity e]] (dom/text e)))
-              (dom/td (dom/text (pr-str a)))
+              #_(dom/td (dom/text (pr-str a))) ; redundant
               (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
               (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
 
@@ -74,7 +72,8 @@
               (dom/td #_(let [e (e/server (e/Task (ident! db e)))]) (r/link ['.. [:entity e]] (dom/text e)))
               (dom/td (let [aa (e/server (e/Task (ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
               (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
-              (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
+              #_(dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))) ; redundant
+              )))))))
 
 (e/defn Format-entity [{:keys [path name value] :as ?row}]
   (e/server ; keep vals on server, row can contain refs
@@ -225,13 +224,13 @@
 
 /* Progressive enhancement */
 .Explorer .nav { margin: 0; }
-.Explorer.entity fieldset:nth-of-type(1) { top:3em; bottom:66vh; left:0; right:0; }
-.Explorer.entity fieldset:nth-of-type(2) { top:34vh; bottom:5em; left:0; right:0; }
+.Explorer.entity fieldset:nth-of-type(1) { top:3em; bottom:40vh; left:0; right:0; }
+.Explorer.entity fieldset:nth-of-type(2) { top:60vh; bottom:5em; left:0; right:0; }
 .Explorer.entity fieldset:nth-of-type(1) table { grid-template-columns: 15em auto; }
 .Explorer.entity fieldset:nth-of-type(2) table { grid-template-columns: 5em 10em 15em auto 10em 9em; }
-.Explorer.attributes table { grid-template-columns: auto 6em 4em 4em 4em; }
-.Explorer.attribute table { grid-template-columns: 15em 15em calc(100% - 15em - 15em - 9em) 9em; }
-.Explorer.tx-detail table { grid-template-columns: 15em 15em calc(100% - 15em - 15em - 9em) 9em; }
+.Explorer.attributes table { grid-template-columns: minmax(14em, 2fr) 1fr; }
+.Explorer.attribute table { grid-template-columns: minmax(0, 1fr) 3fr minmax(0, 1fr); }
+.Explorer.tx-detail table { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2fr; }
 .Explorer.recent-tx table { grid-template-columns: 10em auto; }
 .Explorer.db-stats table { grid-template-columns: 20em auto; }
 ")
