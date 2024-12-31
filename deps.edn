@@ -47,25 +47,13 @@
    :extra-deps {ring/ring-jetty-adapter {:mvn/version "1.11.0"}
                 com.google.javascript/closure-compiler-unshaded {:mvn/version "v20230802"}}} ; deps conflict
 
-  :private
-  {:extra-paths ["src-private"]
-   :override-deps {com.hyperfiddle/electric {:local/root "vendor/electric"}
-                   com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
-                   com.hyperfiddle/rcf      {:local/root "vendor/rcf"}}}
-
   :jetty ; jetty http server, default in :dev and :prod
   {:extra-deps {ring/ring-jetty-adapter {:mvn/version "1.11.0"}}}
 
   :httpkit
   {:extra-deps {http-kit/http-kit {:mvn/version "2.5.1"}}}
 
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;                 Fiddle Aliases                      ;;
-  ;; Add your custom extra deps and configurations below ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  :hello-fiddle {}
+  ;; Userland aliases
 
   :electric-tutorial
   {:extra-deps
@@ -81,37 +69,6 @@
    :override-deps ; uberjar sees only this one alias
    {com.hyperfiddle/electric {:local/root "vendor/electric"}
     com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
-
-  :optimistic-todomvc
-  {:extra-deps
-   {datascript/datascript {:mvn/version "1.6.1"}}}
-
-  :datomic-browser
-  {:extra-deps
-   {com.datomic/peer {:mvn/version "1.0.7075"}}
-   :override-deps ; uberjar sees only this one alias
-   {com.hyperfiddle/electric {:local/root "vendor/electric"}
-    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
-
-  :staffly
-  {:extra-deps
-   {backtick/backtick {:mvn/version "0.3.4"}
-    com.datomic/peer {:mvn/version "1.0.7075"}
-    org.clojure/core.match {:mvn/version "0.3.0-alpha5"}}
-   :override-deps ; uberjar sees only this one alias
-   {com.hyperfiddle/electric {:local/root "vendor/electric"}
-    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
-
-  :xtdb-demo ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-demo:...`
-  {:extra-deps
-   {com.xtdb/xtdb-core {:mvn/version "1.23.0"}
-    com.xtdb/xtdb-rocksdb {:mvn/version "1.23.0"}}
-   :jvm-opts [;; the following option is required for JDK 16 and 17 (https://github.com/xtdb/xtdb/issues/1462)
-              "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED"]}
-
-  :uix-demo
-  {:extra-deps {com.pitch/uix.core {:mvn/version "1.0.1"}
-                com.pitch/uix.dom {:mvn/version "1.0.1"}}}
 
   :dustingetz
   {:extra-deps
@@ -139,6 +96,24 @@
     #_#_markdown-clj/markdown-clj {:mvn/version "1.11.7"}
     #_#_io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}}}
 
+  :staffly
+  {:extra-deps
+   {backtick/backtick {:mvn/version "0.3.4"}
+    com.datomic/peer {:mvn/version "1.0.7075"}
+    org.clojure/core.match {:mvn/version "0.3.0-alpha5"}}
+   :override-deps ; uberjar sees only this one alias
+   {com.hyperfiddle/electric {:local/root "vendor/electric"}
+    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
+
+  :private
+  {:extra-paths ["src-private"]
+   :override-deps {com.hyperfiddle/electric {:local/root "vendor/electric"}
+                   com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
+                   com.hyperfiddle/rcf {:local/root "vendor/rcf"}}
+   :extra-deps
+   {com.pitch/uix.core {:mvn/version "1.0.1"}
+    com.pitch/uix.dom {:mvn/version "1.0.1"}}}
+
   :datagrid
   {:extra-deps
    {com.hyperfiddle/heroicons-electric {:mvn/version "79c4d15" :exclusions [com.hyperfiddle/electric]}
@@ -151,7 +126,13 @@
   :heroicons
   {:extra-deps
    {com.hyperfiddle/heroicons-electric {:mvn/version "0327158"}}}
-  :heroicons-local-deps ; experts only - requires `git submodule update --init --recursive`
+  :heroicons-local-deps
   {:extra-paths ["vendor/heroicons-electric/target/gen"]} ; make sure you run the build script inside the submodule
 
+  :xtdb-demo ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-demo:...`
+  {:extra-deps
+   {com.xtdb/xtdb-core {:mvn/version "1.23.0"}
+    com.xtdb/xtdb-rocksdb {:mvn/version "1.23.0"}}
+   :jvm-opts [;; the following option is required for JDK 16 and 17 (https://github.com/xtdb/xtdb/issues/1462)
+              "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED"]}
   }}
