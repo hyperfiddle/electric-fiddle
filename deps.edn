@@ -47,8 +47,9 @@
    :extra-deps {ring/ring-jetty-adapter {:mvn/version "1.11.0"}
                 com.google.javascript/closure-compiler-unshaded {:mvn/version "v20230802"}}} ; deps conflict
 
-  :local-deps ; experts only - requires `git submodule update --init --recursive`
-  {:override-deps {com.hyperfiddle/electric {:local/root "vendor/electric"}
+  :private
+  {:extra-paths ["src-private"]
+   :override-deps {com.hyperfiddle/electric {:local/root "vendor/electric"}
                    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
                    com.hyperfiddle/rcf      {:local/root "vendor/rcf"}}}
 

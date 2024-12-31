@@ -8,5 +8,6 @@
   #_uix-demo ; requires :uix-demo alias and `npm install`
   #_datagrid
   dustingetz.dustingetz
+  #_dustingetz.dustingetz-private
   staffly.staffly
   #_ui-demo.fiddles]}
