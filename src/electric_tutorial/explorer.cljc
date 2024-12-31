@@ -54,14 +54,13 @@
 (e/defn Dir [m]
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          !n (atom 0) n (e/watch !n)]
+          xs! (vec ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
+                      (nav m ::fs/children (::fs/children m))) search))
+          n (count xs!)]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
-        (let [xs! (vec ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
-                          (nav m ::fs/children (::fs/children m))) search))]
-          (reset! !n (count xs!))
-          (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
-            (TableScroll n xs!)))))))
+        (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
+          (TableScroll n xs!))))))
 
 (declare css)
 (e/defn DirectoryExplorer []
