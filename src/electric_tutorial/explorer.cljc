@@ -9,6 +9,7 @@
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.electric-forms0 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.router3 :as router]))
 
@@ -39,11 +40,11 @@
         (dom/td (Render-cell ?x ::fs/size))
         (dom/td (Render-cell ?x ::fs/kind))))))
 
-(e/defn TableScroll [xs! #_& {:keys [row-height record-count overquery-factor]}]
+(e/defn TableScroll [record-count xs!]
   (e/server
     (dom/props {:class "Viewport"})
-    (let [record-count (e/server (or record-count (count xs!)))
-          [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor overquery-factor})]
+    (let [row-height 24
+          [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
       (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
         (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
           (Row i (e/server (nth xs! i nil)))))
@@ -52,11 +53,15 @@
 
 (e/defn Dir [m]
   (e/server
-    (let [xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
-                      (nav m ::fs/children (::fs/children m))) ""))]
-      (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
-        (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
-          (TableScroll xs! {:row-height 24 :overquery-factor 1}))))))
+    (let [!search (atom "") search (e/watch !search)
+          !n (atom 0) n (e/watch !n)]
+      (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
+                      (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
+        (let [xs! (vec ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
+                          (nav m ::fs/children (::fs/children m))) search))]
+          (reset! !n (count xs!))
+          (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
+            (TableScroll n xs!)))))))
 
 (declare css)
 (e/defn DirectoryExplorer []
@@ -94,6 +99,7 @@
 /* Cosmetic styles */
 .DirectoryExplorer fieldset { padding: 0; padding-left: 0.5em; background-color: white; }
 .DirectoryExplorer legend { margin-left: 1em; font-size: larger; }
+.DirectoryExplorer legend > input[type=text] { vertical-align: middle; }
 .DirectoryExplorer table { grid-template-columns: auto 6em 5em 3em; }
 .DirectoryExplorer table td { height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .DirectoryExplorer table tr:hover td { background-color: #ddd; }
