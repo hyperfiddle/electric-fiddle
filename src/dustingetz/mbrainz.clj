@@ -6,6 +6,7 @@
 (def mbrainz-uri "datomic:dev://localhost:4334/mbrainz-1968-1973")
 (def test-conn (delay (d/connect mbrainz-uri)))
 (def test-db (delay (d/db @test-conn)))
+(def lennon 527765581346058) ; datomic pro
 
 (comment
   (d/touch (d/entity @test-db 100))

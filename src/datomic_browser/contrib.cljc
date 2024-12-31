@@ -1,22 +1,9 @@
 (ns datomic-browser.contrib
+  "Inline copy/pasted contrib namespace for self-contained demo repo"
   #?(:cljs (:require-macros datomic-browser.contrib))
-  (:require [clojure.datafy :refer [datafy]]
-            [hyperfiddle.rcf :refer [tests]]
-            [missionary.core :as m]))
-
-(defn includes-str? [v needle]
-  (clojure.string/includes?
-    (clojure.string/lower-case (str v))
-    (clojure.string/lower-case (str needle))))
-
-(tests
-  (includes-str? "alice" "e") := true
-  (includes-str? "alice" "f") := false
-  (includes-str? "alice" "") := true
-  (includes-str? "alice" nil) := true
-  (includes-str? nil nil) := true
-  (includes-str? nil "") := true
-  (includes-str? "" nil) := true)
+  (:require clojure.string
+            [clojure.datafy :refer [datafy]]
+            [hyperfiddle.rcf :refer [tests]]))
 
 (defn clamp-left [n left] (max n left)) ; when under limit, clamp up to larger
 
@@ -39,24 +26,6 @@
   (unqualify "") :throws #?(:clj AssertionError :cljs js/Error)
   (unqualify nil) := nil)
 
-(defn- error! [pred-expr v-expr v ex-data]
-  (let [msg (str "check failed: (" (pr-str pred-expr) " " (pr-str v-expr) ") for " (pr-str v))]
-    (throw (ex-info msg ex-data)))) ; todo elide top frames
-
-(defn -check [pred-expr pred v-expr v ex-data]
-  (cond
-    (keyword? pred) (when-not (or (= pred v) ; special rule - keyword equality
-                                (pred v))
-                      (error! pred-expr v-expr v ex-data))
-    () (when-not (pred v)
-         (error! pred-expr v-expr v ex-data)))
-  v)
-
-(defmacro check
-  ([v] `(check some? ~v))
-  ([pred v] `(check ~pred ~v {}))
-  ([pred v ex-data] `(-check '~pred ~pred '~v ~v ~ex-data)))
-
 (defn- -tree-list [depth xs children-fn keep? input]
   (eduction (mapcat (fn [x]
                       (let [x (datafy x)]
@@ -66,9 +35,13 @@
                           (cond-> [] (keep? x input) (conj [depth x]))))))
     (datafy xs)))
 
-(defn- any-matches? [coll needle] ; duplicate of contrib.str/any-matches?
-  (let [substr (clojure.string/lower-case (str needle))]
-    (some #(when % (clojure.string/includes? (clojure.string/lower-case (str %)) substr)) coll)))
+(defn includes-str? [v needle]
+  (clojure.string/includes?
+    (clojure.string/lower-case (str v))
+    (clojure.string/lower-case (str needle))))
+
+(defn any-matches? [coll needle]
+  (some #(when % (includes-str? % needle)) coll))
 
 (defn treelister
   ([xs] (treelister (fn [_]) any-matches? xs))
@@ -88,7 +61,6 @@
   ((treelister :children (fn [v needle] (-> v :file #{needle}))
      [{:dir "x" :children [{:file "a"} {:file "b"}]}]) "nope")
   (count (vec *1)) := 0)
-
 
 (defn flatten-nested ; claude generated this
   ([data] (flatten-nested data []))
@@ -144,10 +116,3 @@
          :Permission [:one-of ["FULL_CONTROL" "WRITE" "WRITE_ACP" "READ" "READ_ACP"]]}}}})
   (flatten-nested test-data)
   )
-
-(defn seq-consumer [xs] ; xs is iterable
-  (m/ap
-    (loop [xs xs]
-      (if (m/? (m/via m/blk (seq xs)))
-        (m/amb (m/? (m/via m/blk (first xs))) (recur (rest xs)))
-        (m/amb)))))

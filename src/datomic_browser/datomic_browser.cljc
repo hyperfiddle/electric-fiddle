@@ -1,12 +1,11 @@
 (ns datomic-browser.datomic-browser
   (:require clojure.string
             [datomic-browser.contrib :refer
-             [check clamp-left treelister flatten-nested seq-consumer
-              includes-str?]]
+             [clamp-left treelister flatten-nested includes-str?]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer
-                     [attributes-stream ident! entity-history-datoms easy-attr
-                      summarize-attr is-attr?]])
+                     [attributes-stream ident! entity-history-datoms-stream easy-attr
+                      summarize-attr is-attr? seq-consumer]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input* Input! Form! Checkbox]]
@@ -50,11 +49,11 @@
     (e/fn Query [search]
       (e/server (->> (attributes-stream db attributes-colspec) (m/reduce conj []) e/Task
                   (map #(assoc % ::summary (->> (summarize-attr db (:db/ident %)) (map name) (clojure.string/join " "))))
-                  (filter #(includes-str? ((juxt :db/ident ::summary) %) search))
+                  (filter #(includes-str? ((juxt :db/ident ::summary) %) search)) ; search after summary
                   (sort-by :db/ident))))
     (e/fn Row [x]
       (dom/td (let [v (:db/ident x)] (r/link ['.. [:attribute v]] (dom/text v))))
-      (dom/td (dom/text (::summary x) #_(clojure.string/join " " (map name (summarize-attr db (:db/ident x)))))))))
+      (dom/td (dom/text (::summary x))))))
 
 (e/defn AttributeDetail []
   (let [[a _] r/route]
@@ -137,7 +136,7 @@
     (when e ; router glitch
       (SearchGrid (str "Entity history: " e)
         (e/fn [search]
-          (e/server (->> (entity-history-datoms db e) (m/reduce conj []) e/Task
+          (e/server (->> (entity-history-datoms-stream db e) (m/reduce conj []) e/Task
                       (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search))))) ; todo resolve human attrs
         Format-history-row
         #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
@@ -159,11 +158,13 @@
                   () (dom/text (pr-str v))))))))
 
 (comment
-  {:datoms 800958,
-   :attrs
-   {:release/script {:count 11435},
-    :label/type {:count 870}
-    ... ...}})
+  (require '[dustingetz.mbrainz :refer [test-db test-conn lennon]])
+  (d/db-stats @test-db)
+  := {:datoms 800958
+      :attrs
+      {:release/script {:count 11435}
+       :label/type {:count 870}
+       ... ...}})
 
 (e/defn RecentTx []
   #_(r/focus [0]) ; search
@@ -207,19 +208,9 @@
 
 (e/defn DatomicBrowser [conn]
   (e/client
-    (let [fail true #_(dom/div (Checkbox true :label "failure"))
-          edits (binding [db (e/server (check (e/Task (m/via m/blk (d/db conn)))))
-                          conn conn]
-                  (Page))
-          edits (e/Filter some? edits)]
-      fail
-      (println 'edits (e/Count edits) (e/as-vec edits))
-      (e/for [[t form guess] edits]
-        (let [res (e/server (if fail ::rejected (do (println form) ::ok)))]
-          (case res
-            nil (prn 'res-was-nil-stop!)
-            ::ok (t)
-            (t res)))))))
+    (binding [db (e/server (e/Task (m/via m/blk (d/db conn))))
+              conn conn]
+      (Page))))
 
 (def css "
 /* Scroll machinery */
