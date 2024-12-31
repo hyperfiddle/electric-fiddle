@@ -223,6 +223,7 @@
 
 (def css "
 /* Scroll machinery */
+.Explorer { position: fixed; } /* mobile: don't allow momentum scrolling on page */
 .Explorer .Viewport { overflow-x:hidden; overflow-y:auto; }
 .Explorer table { display: grid; }
 .Explorer table tr { display: contents; visibility: var(--visibility); }
