@@ -1,23 +1,23 @@
 (ns datomic-browser.datomic-browser
   (:require clojure.string
             [datomic-browser.contrib :refer
-             [check clamp-left treelister flatten-nested seq-consumer]]
+             [check clamp-left treelister flatten-nested seq-consumer
+              includes-str?]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer
                      [attributes-stream ident! entity-history-datoms easy-attr
                       summarize-attr is-attr?]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input! Form! Checkbox]]
+            [hyperfiddle.electric-forms0 :refer [Input* Input! Form! Checkbox]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.router3 :as r]
             [missionary.core :as m]))
 
-(e/defn TableScroll [?xs! Row]
+(e/defn TableScroll [record-count ?xs! Row]
   (e/server
     (dom/div (dom/props {:class "Viewport"})
-      (let [record-count (count ?xs!)
-            row-height 24
+      (let [row-height 24
             [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
         (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
           (e/for [i (IndexRing limit offset)]
@@ -29,31 +29,45 @@
 (e/declare conn)
 (e/declare db)
 
-(e/defn Attributes []
+(e/defn SearchGrid [title Query Row]
   #_(r/focus [0]) ; search
-  (dom/fieldset (dom/legend (dom/text "Attributes"))
-    (TableScroll
-      (e/server
-        (->> (attributes-stream db
-               [:db/ident :db/unique :db/isComponent
-                {:db/valueType [:db/ident]}
-                {:db/cardinality [:db/ident]}
-                #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs])
-          (m/reduce conj []) e/Task (sort-by :db/ident)))
-      (e/fn [x]
-        (dom/td (let [v (:db/ident x)] (r/link ['.. [:attribute v]] (dom/text v))))
-        (dom/td (dom/text (clojure.string/join " " (map name (summarize-attr db (:db/ident x))))))))))
+  (let [!search (atom "") search (e/watch !search)
+        xs! (e/server (Query search)) ; wtf
+        n (e/server (count xs!))]
+    (dom/fieldset (dom/legend (dom/text title " ")
+                    (do (reset! !search (e/client (Input* ""))) nil)
+                    (dom/text " (" n " items)"))
+      (TableScroll n xs! Row))))
+
+(def attributes-colspec
+  [:db/ident :db/unique :db/isComponent
+   {:db/valueType [:db/ident]}
+   {:db/cardinality [:db/ident]}
+   #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs])
+
+(e/defn Attributes []
+  (SearchGrid "Attributes"
+    (e/fn Query [search]
+      (e/server (->> (attributes-stream db attributes-colspec) (m/reduce conj []) e/Task
+                  (map #(assoc % ::summary (->> (summarize-attr db (:db/ident %)) (map name) (clojure.string/join " "))))
+                  (filter #(includes-str? ((juxt :db/ident ::summary) %) search))
+                  (sort-by :db/ident))))
+    (e/fn Row [x]
+      (dom/td (let [v (:db/ident x)] (r/link ['.. [:attribute v]] (dom/text v))))
+      (dom/td (dom/text (::summary x) #_(clojure.string/join " " (map name (summarize-attr db (:db/ident x)))))))))
 
 (e/defn AttributeDetail []
   (let [[a _] r/route]
     #_(r/focus [1]) ; search
     (when a ; router glitch
-      (dom/fieldset (dom/legend (dom/text "Attribute index: " (pr-str a)))
-        (e/server
-          (TableScroll
-            (->> (seq-consumer (d/datoms db :aevt a))
-              (m/reduce conj []) e/Task (sort-by :v))
-            (e/fn [[e _ v tx op]]
+      (SearchGrid (str "Attribute index: " (pr-str a))
+        (e/fn Query [search]
+          (e/server (->> (seq-consumer (d/datoms db :aevt a)) (m/reduce conj []) e/Task
+                      (filter #(includes-str? (:v %) search))
+                      (sort-by :v))))
+        (e/fn Row [x]
+          (e/server
+            (let [[e _ v tx op] x]
               (dom/td (r/link ['.. [:entity e]] (dom/text e)))
               #_(dom/td (dom/text (pr-str a))) ; redundant
               (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
@@ -63,17 +77,18 @@
   (let [[e _] r/route]
     #_(r/focus [1]) ; search
     (when e ; router glitch
-      (dom/fieldset (dom/legend (dom/text "Tx detail: " e))
-        (e/server
-          (TableScroll
+      (SearchGrid (str "Tx detail: " e)
+        (e/fn Query [search]
+          (e/server
             (->> (seq-consumer (d/tx-range (d/log conn) e (inc e))) ; global
-              (m/eduction (map :data) cat) (m/reduce conj []) e/Task)
-            (e/fn [[e aa v tx op]] ; possible destr glitch
-              (dom/td #_(let [e (e/server (e/Task (ident! db e)))]) (r/link ['.. [:entity e]] (dom/text e)))
-              (dom/td (let [aa (e/server (e/Task (ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
-              (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
-              #_(dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))) ; redundant
-              )))))))
+              (m/eduction (map :data) cat) (m/reduce conj []) e/Task
+              (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search))))) ; string the datom, todo resolve human attrs
+        (e/fn Row [[e aa v tx op]]
+          (dom/td #_(let [e (e/server (e/Task (ident! db e)))]) (r/link ['.. [:entity e]] (dom/text e)))
+          (dom/td (let [aa (e/server (e/Task (ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
+          (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
+          #_(dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))) ; redundant
+          )))))
 
 (e/defn Format-entity [{:keys [path name value] :as ?row}]
   (e/server ; keep vals on server, row can contain refs
@@ -97,11 +112,12 @@
   (let [[e _] r/route]
     #_(r/focus [1]) ; search
     (when e ; glitch
-      (dom/fieldset (dom/legend (dom/text "Entity detail: " e))
-        (e/server
-          (TableScroll
-            (flatten-nested (e/Task (m/via m/blk (d/pull db ['*] e))))
-            Format-entity #_{::dom/class "Viewport entity-detail"}))))))
+      (SearchGrid (str "Entity detail: " e)
+        (e/fn Query [search]
+          (e/server
+            (->> (flatten-nested (e/Task (m/via m/blk (d/pull db ['*] e))))
+              (filter #(includes-str? (str ((juxt :name :value) %)) search))))) ; string the entries
+        Format-entity))))
 
 (e/defn Format-history-row [[e aa v tx op :as ?row]]
   (when ?row ; glitch
@@ -119,23 +135,25 @@
   (let [[e _] r/route]
     #_(r/focus [1]) ; search
     (when e ; router glitch
-      (dom/fieldset (dom/legend (dom/text "Entity history: " e))
-        (TableScroll
-          (e/server (->> (entity-history-datoms db e) (m/reduce conj []) e/Task))
-          Format-history-row
-          #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
-             ::dom/class "Viewport entity-history"})))))
+      (SearchGrid (str "Entity history: " e)
+        (e/fn [search]
+          (e/server (->> (entity-history-datoms db e) (m/reduce conj []) e/Task
+                      (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search))))) ; todo resolve human attrs
+        Format-history-row
+        #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
+           ::dom/class "Viewport entity-history"}))))
 
 (e/defn DbStats []
   #_(r/focus [0]) ; search
-  (dom/fieldset (dom/legend (dom/text "Db stats"))
-    (TableScroll
+  (SearchGrid (str "Db stats")
+    (e/fn Query [search]
       (e/server
         #_(flatten-nested (e/Task (m/via m/blk (d/db-stats db)))) ; need more control to inline short maps
         (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil))
-                (e/Task (m/via m/blk (d/db-stats db)))) "")))
-      (e/fn [[tab [k v]]] ; thead: [::k ::v]
-        (dom/td (dom/text (pr-str k)) (dom/props {:style {:padding-left (-> tab (* 15) (str "px"))}}))
+                (e/Task (m/via m/blk (d/db-stats db)))) search))))
+    (e/fn Row [[tab [k v] :as ?row]] ; thead: [::k ::v]
+      (when ?row
+        (dom/td (dom/text (pr-str k)) (dom/props {:style {:padding-left (some-> tab (* 15) (str "px"))}}))
         (dom/td (cond
                   (= k :attrs) nil ; print children instead
                   () (dom/text (pr-str v))))))))
@@ -149,14 +167,15 @@
 
 (e/defn RecentTx []
   #_(r/focus [0]) ; search
-  (dom/fieldset (dom/legend (dom/text "Recent Txs"))
-    (e/server
-      (TableScroll
-        (->> (d/datoms db :aevt :db/txInstant) seq-consumer (m/reduce conj ()) e/Task)
-        (e/fn [[e _ v tx op :as record]]
-          ; columns [:db/id :db/txInstant]
-          (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
-          (dom/td (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v)))))))))
+  (SearchGrid (str "Recent Txs")
+    (e/fn Query [search]
+      (e/server (->> (d/datoms db :aevt :db/txInstant) seq-consumer (m/reduce conj ()) e/Task
+                  (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search)))))
+    (e/fn Row [[e _ v tx op :as ?row]]
+      ; columns [:db/id :db/txInstant]
+      (when ?row
+        (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
+        (dom/td (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v))))))))
 
 (e/defn Nav []
   (dom/div (dom/props {:class "nav"})
@@ -218,6 +237,7 @@
 /* Cosmetic */
 .Explorer fieldset { padding: 0; padding-left: 0.5em; background-color: white; }
 .Explorer legend { margin-left: 1em; font-size: larger; }
+.Explorer legend > input[type=text] { vertical-align: middle; }
 .Explorer table td { height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .Explorer table tr[data-row-stripe='0'] td { background-color: #f2f2f2; }
 .Explorer table tr:hover td { background-color: #ddd; }
