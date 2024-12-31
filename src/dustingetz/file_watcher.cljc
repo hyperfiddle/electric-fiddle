@@ -39,7 +39,7 @@
 
 (e/defn FileWatcherDemo []
   (let [{:keys [status forms] :as m}
-        (e/server (e/input (watch-file-edn "src/dustingetz/x.edn")))]
+        (e/server (e/input (watch-file-edn "src/dustingetz/file_watcher.edn")))]
     (case status
       :success
       (dom/pre (dom/text (pr-str forms)))
