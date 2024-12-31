@@ -15,13 +15,13 @@
 (e/defn Teeshirt-orders [db search & [sort-key]]
   (e/server (e/diff-by identity (e/Offload #(teeshirt-orders db search sort-key)))))
 
-(e/defn GenericTable [colspec Query Row]
+(e/defn GenericTable [cols Query Row]
   (let [ids (Query)] ; server query
     (dom/table
       (e/for [id ids]
         (dom/tr
           (let [m (Row id)]
-            (e/for [k colspec]
+            (e/for [k cols]
               (dom/td
                 (e/call (get m k))))))))))
 
@@ -39,14 +39,15 @@
                                   (e/fn Options [search] (Shirt-sizes db gender search))
                                   #_(e/fn OptionLabel [x] (pr-str x))))}))
 
-#?(:cljs (def !colspec (atom [:db/id :order/email :order/gender :order/shirt-size])))
+
 #?(:cljs (def !sort-key (atom [:order/email])))
 
+(declare css)
 (e/defn Webview2 []
-  (dom/props {:class "webview"})
   (e/client
+    (dom/style (dom/text css))
     (let [db (e/server (e/watch (ensure-db!)))
-          colspec (e/diff-by identity (e/watch !colspec))
+          colspec (e/amb :db/id :order/email :order/gender :order/shirt-size) ; reactive tuple
           search (dom/input (dom/On "input" #(-> % .-target .-value) ""))]
       (GenericTable
         colspec
@@ -54,11 +55,11 @@
         (e/Partial Row db)))))
 
 (comment
-  ; todo align grid css to number of columns
-  (reset! !colspec [:db/id])
-  (swap! !colspec conj :order/email)
-  (swap! !colspec conj :order/gender)
-  (swap! !colspec conj :order/shirt-size)
-
   (reset! !sort-key [:db/id])
   (reset! !sort-key [:order/shirt-size :db/ident]))
+
+(def css "
+.user-examples-target table { display: grid; column-gap: 1ch; }
+.user-examples-target tr { display: contents; }
+.user-examples-target table {grid-template-columns: repeat(4, max-content);}
+.user-examples-target { padding-bottom: 5em; /* room for picklist options */}")

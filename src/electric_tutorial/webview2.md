@@ -21,8 +21,12 @@ Discussion of IO patterns
 
 !fn-src[electric-tutorial.typeahead/Typeahead]()
 
-Performance (updated 2024 Dec 22)
-* ~~Yes there's some flicker, v3 is slower than v2 right now~~ 
+Performance notes (updated 2024 Dec 22)
+* ~~Yes there's some flicker, v3 is slower than v2 right now~~
   * flicker is fixed, remaining jank is layout shift due to lazy css coding, todo improve css
-* ~~You might assume we're IO bound – we're not actually, this demo is CPU bound~~ 
+* ~~You might assume we're IO bound – we're not actually, this demo is CPU bound~~
   * flicker is fixed
+
+Here is the datascript model, if you're coding along:
+
+!ns-src[dustingetz.teeshirt-orders-datascript-dustin/schema]()

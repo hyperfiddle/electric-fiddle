@@ -39,7 +39,7 @@ Differential, server-streamed data loading
 * `(e/server (e/for [i (IndexRing limit offset)] (Row i (nth xs! i nil))))`
 * This is the essence of a server-streamed virtual scroll: 
   * we use `offset` and `limit` (from the client), 
-  * send them up, spawn or rotate rows on the server, 
+  * send them up, spawn or rotate rows on the server using `IndexRing` (todo explain), 
   * `(nth xs! i nil)` looks up the file based on the index *on the server*, 
   * `(Row x)` enters the `Row` function and continues into `Render-cell`, running all reachable server scopes as far as possible, 
   * finally broadcasting to the client that `(Row x`) has updated, automatically including all the server state the client is about to need,
@@ -51,13 +51,7 @@ Server streams the data that the client needs without being asked, i.e. without 
 * `Row` and `Render-cell` switch between `e/client` and `e/server` to fetch the data they need **inline**!
 * Even with inline `e/server` expressions, the rows load without request waterfalls as described in [Talk: Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8).
 * This is because the `e/for` and `(Row i x)` are same-sited, so they run synchronously: the server enters the Row renderer frame and optimistically sends the data dependencies that it knows the client is about to ask for. Which is certainly necessary for performance here, any waterfall in this code path is very obvious.
-* In fact, there is a waterfall: the hyperlinks blink (only visible on desktop). This is an artifact caused by what seems to be a spurious round trip. It looks like an Electric issue, we are investigating. There are many workarounds, such as moving the e/for to the client and instead of sending up `offset`, have the client request individual rows. (So, yes, "without waterfalls" is not *quite* true yet due to this issue. But as you can see, we are very close!)
-
-Performance notes
-
-* **This is not our fastest demo, this demo is optimized for simple code.**
-* Last week we built a half dozen internal POCs of various scroll configurations, many which are noticeably faster than this one, however I chose this one for this demonstration because it has the simplest code. 
-* Future work: **hardware acclerated scroll!** One of those POCs adds a bit of code complexity to meticulously orchestrate DOM layout in a way that it is moved to the GPU. The performance blew me away when I first experienced it! Very exciting, we'll try to release a demo of that soon.
+* ~~In fact, there is a waterfall: the hyperlinks blink (only visible on desktop). This is an artifact caused by what seems to be a spurious round trip. It looks like an Electric issue, we are investigating. There are many workarounds, such as moving the e/for to the client and instead of sending up `offset`, have the client request individual rows. (So, yes, "without waterfalls" is not *quite* true yet due to this issue. But as you can see, we are very close!)~~ this is fixed by the updated `Render-cell` impl, todo reduce learning to essay
 
 ## Our goal with Electric: zero-cost abstraction over network
 

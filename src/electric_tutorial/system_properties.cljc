@@ -11,12 +11,13 @@
             (sort-by first))))
 
 (e/defn SystemProperties []
-  (let [!search (atom "") search (e/watch !search)
-        system-props (e/server (e/Offload #(jvm-system-properties search)))]
-    (dom/div (dom/text (e/server (count system-props)) " matches"))
-    (dom/input (dom/props {:type "search", :placeholder "🔎  java.class.path"})
-      (reset! !search (dom/On "input" #(-> % .-target .-value) ""))) ; cycle
-    (dom/table
-      (e/for [[k v] (e/server (e/diff-by key system-props))]
-        (println 'rendering k #_v)
-        (dom/tr (dom/td (dom/text k)) (dom/td (dom/text v)))))))
+  (e/client
+    (let [!search (atom "") search (e/watch !search)
+          system-props (e/server (e/Offload #(jvm-system-properties search)))]
+      (dom/div (dom/text (e/server (count system-props)) " matches"))
+      (dom/input (dom/props {:type "search", :placeholder "🔎  java.class.path"})
+        (reset! !search (dom/On "input" #(-> % .-target .-value) ""))) ; cycle
+      (dom/table
+        (e/for [[k v] (e/server (e/diff-by key system-props))]
+          (println 'rendering k #_v)
+          (dom/tr (dom/td (dom/text k)) (dom/td (dom/text v))))))))
