@@ -42,7 +42,9 @@
       (e/client
         (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
           (e/for [[i [tab x]] (e/server
-                                ((fn [i] [i (update (nth xs! i) 1 dissoc :contrib.datafy-fs/children)])
+                                ((fn [i] [i
+                                          (when-some [x (nth xs! i nil)]
+                                            (update x 1 dissoc :contrib.datafy-fs/children :dustingetz.datafy-fs/children))])
                                  (scroll/IndexRing limit offset)))]
             (Row i x tab))))
       (dom/div (dom/props {:style {:height (str (* row-height (- record-count limit)) "px")}})))))
@@ -59,9 +61,11 @@
 
 (e/defn Dir [x TableScroll]
   (e/server
-    (let [m (datafy x)
+    (let [search (e/client (dom/div (dom/props {:style {:z-index 1 :position "relative"}})
+                             (dom/input (dom/On "input" #(-> % .-target .-value) ""))))
+          m (datafy x)
           xs! (seq ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
-                      (nav m ::fs/children (::fs/children m))) ""))]
+                      (nav m ::fs/children (::fs/children m))) search))]
       (dom/h1 (dom/text (::fs/absolute-path m) " (" (count xs!) " items)"))
       (TableScroll xs! {:row-height 24 :overquery-factor 1 :record-count (count xs!)}))))
 
