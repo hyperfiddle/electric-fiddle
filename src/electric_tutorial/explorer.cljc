@@ -16,14 +16,15 @@
 (e/declare base-path)
 
 (e/defn Render-cell [?m a]
-  (e/server
-    (let [?v (a ?m)
-          dir? (= ::fs/dir (::fs/kind ?m))]
+  (e/client
+    (let [?v (e/server (a ?m))
+          dir? (e/server (= ::fs/dir (::fs/kind ?m)))
+          path (e/server (and dir? (some->> ?m ::fs/absolute-path (fs/relativize-path base-path))))]
+      path ?v dir? ; prefetch initial load - saves a blink
       (case a
-        ::fs/name (if dir? ; fixme blinks on switch due to unexplained latency - electric issue?
-                    (if-some [path (some->> ?m ::fs/absolute-path (fs/relativize-path base-path))] ; guard glitch
-                      (router/link ['.. [path]] (dom/text ?v)))
-                    (dom/text ?v))
+        ::fs/name (if (and dir? path)
+                    (router/link ['.. [path]] (dom/text ?v))
+                    (dom/text (str ?v)))
         ::fs/modified (dom/text (e/client (some-> ?v .toLocaleDateString)))
         ::fs/kind (dom/text (if dir? unicode-folder (some-> ?v name)))
         (dom/text (str ?v))))))
