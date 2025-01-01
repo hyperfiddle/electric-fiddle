@@ -13,7 +13,7 @@ What's happening
 
 Closer look: what's really happening in the `Column Picker` impl?
 
-!fn-src[electric-tutorial.webview-diffs/ColumnPicker]()
+!fn-src[electric-tutorial.webview-column-picker/ColumnPicker]()
 
 reflect on `;reactive ui w/ inline dom!`: this 7 LOC column picker expresses so much in so little code
 * DOM writes - maintain a collection of checkboxes
@@ -46,4 +46,4 @@ Meta theme: **"fake separation of concerns"**
 * Electric-dom says: DOM effects and view logic should be interweaved actually, the business concern is "UX"
 
 
-**"Functional core, imperative shell" is wrong**. The proof is in the pudding: our [TodoMVC implementation](tutorial/todomvc) is 200 LOC *including the backend*. I challenge anyone who disputes these claims to replicate this ColumnPicker demo, or TodoMVC or any other demo, using any technology of their choice. Let's count LOC and see which is easier to understand and maintain. I built the ColumnPicker in 20 minutes, on a whim, because it felt like a cool idea to try. How many LOC is it in your favorite framework, how long will it take to build?
+**"Functional core, imperative shell" is wrong**. The proof is in the pudding: our [TodoMVC implementation](/tutorial/todomvc) is 200 LOC *including the backend*. I challenge anyone who disputes these claims to replicate this ColumnPicker demo, or TodoMVC or any other demo, using any technology of their choice. Let's count LOC and see which is easier to understand and maintain. I built the ColumnPicker in 20 minutes, on a whim, because it felt like a cool idea to try. How many LOC is it in your favorite framework, how long will it take to build?
