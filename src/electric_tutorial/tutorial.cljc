@@ -11,6 +11,7 @@
             [electric-tutorial.fizzbuzz :refer [FizzBuzz]]
             [electric-tutorial.webview1 :refer [Webview1]]
             [electric-tutorial.webview2 :refer [Webview2]]
+            [electric-tutorial.webview-diffs :refer [WebviewDiffs]]
             [electric-tutorial.scroll-spool :refer [WebviewScroll]]
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.backpressure :refer [Backpressure]]
@@ -57,6 +58,7 @@
    ["Tables"
     ['webview1 ; diffs, IO encapsulation
      'webview2 ; abstraction, lambda demo
+     'webview_diffs
      'explorer
      #_'scroll-seek]]
    ["Language"
@@ -108,6 +110,7 @@
      `Lifecycle Lifecycle
      `Webview1 Webview1
      `Webview2 Webview2
+     `WebviewDiffs WebviewDiffs
      `WebviewScroll WebviewScroll
      `FizzBuzz FizzBuzz
      `Counter Counter
