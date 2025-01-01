@@ -29,10 +29,10 @@ Is it "functional core, imperative shell"?
 
 Does that mean it's imperative?
 
-* Is the programmer explicitly coordinating statement order? NO, Electric DAG is doing that, Electric is declarative with respect to statement order, Electric will auto-maximize concurrency at every point, racing everything based on the DAG so you don't have to think about statements.
-* Is the DOM node final location determined by statement order of DOM effects? NO, electric-dom is responsible for *positioning* elements based on natural AST order (top to bottom, left to right). The checkbox element mount effects are racing actually, and concurrently stream into their proper final location in the DOM!
-* Can the system be left in a broken state if an exception occurs? NO, missionary's RAII semantics guarantee that the resource destructor chain is called
-* **Conclusion: No, Electric is not imperative.**
+* Is the programmer explicitly coordinating **statement order?** **NO**, the Electric DAG is doing that, Electric is declarative with respect to statement order, Electric will auto-maximize concurrency at every point, racing everything based on the DAG so you don't have to think about statements.
+* Is the DOM node final location determined by **statement order** of DOM effects? **NO**, electric-dom is responsible for the *positioning and ordering* of elements based on natural AST order (top to bottom, left to right). In other words, the checkbox element mount effects are **concurrent in time and yet ordered in space**, ultimately streaming into their proper final location in the DOM regardless of the time ordering in which the effects ran.
+* Can the system be **left in a broken state** if an exception occurs like other imperative systems? **NO**, missionary's RAII semantics guarantee that the resource destructor chain is called
+* **Conclusion: NO, Electric is not imperative.**
 
 Is the computation pure functional?
 * Classically no, effects are interleaved throughout the entire program, which is a DAG and that DAG contains both pure pipeline stages and effectful stages.
