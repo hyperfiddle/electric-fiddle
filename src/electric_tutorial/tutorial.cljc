@@ -11,6 +11,7 @@
             [electric-tutorial.fizzbuzz :refer [FizzBuzz]]
             [electric-tutorial.webview1 :refer [Webview1]]
             [electric-tutorial.webview2 :refer [Webview2]]
+            [electric-tutorial.webview-column-picker :refer [WebviewColumnPicker]]
             [electric-tutorial.webview-diffs :refer [WebviewDiffs]]
             [electric-tutorial.scroll-spool :refer [WebviewScroll]]
             [electric-tutorial.lifecycle :refer [Lifecycle]]
@@ -58,6 +59,7 @@
    ["Tables"
     ['webview1 ; diffs, IO encapsulation
      'webview2 ; abstraction, lambda demo
+     'webview_column_picker
      'webview_diffs
      'explorer
      #_'scroll-seek]]
@@ -110,6 +112,7 @@
      `Lifecycle Lifecycle
      `Webview1 Webview1
      `Webview2 Webview2
+     `WebviewColumnPicker WebviewColumnPicker
      `WebviewDiffs WebviewDiffs
      `WebviewScroll WebviewScroll
      `FizzBuzz FizzBuzz

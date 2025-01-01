@@ -1,27 +1,19 @@
 (ns electric-tutorial.webview-diffs
   (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
             [electric-tutorial.webview2 :refer [Teeshirt-orders Row]]
+            [electric-tutorial.webview-column-picker :refer [ColumnPicker]]
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Checkbox*]]))
+            [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn GenericTable [cols Query Row]
   (let [ids (Query)]
-    (dom/table (dom/props {:style {:--colcount (e/Count cols)}}) ; css var
-      (e/for [id ids]
+    (dom/table (dom/props {:style {:--colcount (e/Count cols)}})
+      (e/for [id (e/Tap-diffs ids)] ; here -- row diffs
         (dom/tr
           (let [m (Row id)]
             (e/for [k (e/Tap-diffs cols)] ; here -- column diffs
               (dom/td
                 (e/call (get m k))))))))))
-
-(e/defn ColumnPicker [cols]
-  (e/client
-    (->> (e/for [col cols]
-           [col (Checkbox* true :label col)]) ; reactive ui w/ inline dom!
-      e/as-vec ; materialize clojure vector from diffs
-      (filter (fn [[col checked]] checked))
-      (map first) sort (e/diff-by identity)))) ; unmaterialize
 
 (declare css)
 (e/defn WebviewDiffs []
