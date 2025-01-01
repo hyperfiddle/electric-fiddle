@@ -5,9 +5,9 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window Spool]]
-            #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer
+            #?(:clj [dustingetz.teeshirt-orders-datascript :refer
                      [teeshirt-orders genders shirt-sizes]])
-            #?(:clj [dustingetz.teeshirt-orders-datascript-dustin-large :refer [ensure-db!]])))
+            #?(:clj [dustingetz.teeshirt-orders-datascript-xl :refer [ensure-db!]])))
 
 (e/defn Genders [db search]
   (e/server (e/diff-by identity (e/Offload #(genders db search)))))
@@ -67,7 +67,7 @@
 (declare css)
 (e/defn WebviewScroll []
   (dom/style (dom/text css))
-  (let [db (e/server (e/watch (ensure-db!)))
+  (let [db (e/server (ensure-db!))
         search (Input* "")]
     (dom/div (dom/props {:class "UserViewport"})
       (let [xs (e/server (e/Offload #(teeshirt-orders db search [:order/email])))]

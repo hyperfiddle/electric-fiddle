@@ -1,5 +1,5 @@
 (ns electric-tutorial.webview-diffs
-  (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
+  (:require #?(:clj [dustingetz.teeshirt-orders-datascript :refer [ensure-db!]])
             [electric-tutorial.webview2 :refer [Teeshirt-orders Row]]
             [electric-tutorial.webview-column-picker :refer [ColumnPicker]]
             [hyperfiddle.electric3 :as e]

@@ -1,5 +1,5 @@
 (ns electric-tutorial.webview2
-  (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer
+  (:require #?(:clj [dustingetz.teeshirt-orders-datascript :refer
                      [ensure-db! teeshirt-orders genders shirt-sizes]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]

@@ -1,5 +1,5 @@
 (ns dustingetz.london-talk-2024.webview-generic
-  (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
+  (:require #?(:clj [dustingetz.teeshirt-orders-datascript :refer [ensure-db!]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -31,7 +31,7 @@
 
 (e/defn WebviewGeneric []
   (e/server
-    (let [db (e/watch (ensure-db!))
+    (let [db (ensure-db!)
           search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
       (GenericTable
         (e/Partial Teeshirt-orders db search)

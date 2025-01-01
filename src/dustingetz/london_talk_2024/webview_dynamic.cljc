@@ -1,5 +1,5 @@
 (ns dustingetz.london-talk-2024.webview-dynamic
-  (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
+  (:require #?(:clj [dustingetz.teeshirt-orders-datascript :refer [ensure-db!]])
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -37,7 +37,7 @@
 
 (e/defn WebviewDynamic []
   (e/server
-    (let [db (e/watch (ensure-db!))
+    (let [db (ensure-db!)
           colspec (e/client (e/diff-by identity (e/watch !colspec)))
           search (e/client (dom/input (dom/On "input" #(-> % .-target .-value) "")))]
       (GenericTable

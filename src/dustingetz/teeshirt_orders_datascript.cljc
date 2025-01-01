@@ -1,4 +1,4 @@
-(ns dustingetz.teeshirt-orders-datascript-dustin
+(ns dustingetz.teeshirt-orders-datascript
   (:require contrib.str
             [datascript.core :as d]
             [datascript.impl.entity :refer [entity?]]

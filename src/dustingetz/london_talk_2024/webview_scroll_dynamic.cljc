@@ -6,8 +6,8 @@
             [hyperfiddle.electric-forms0 :refer [Input*]]
             [dustingetz.london-talk-2024.webview-scroll :refer [TableScrollFixedCounted]]
             [dustingetz.london-talk-2024.webview-scroll :refer [Genders Shirt-sizes]]
-            #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [teeshirt-orders]])
-            #?(:clj [dustingetz.teeshirt-orders-datascript-dustin-large :refer [ensure-db!]])))
+            #?(:clj [dustingetz.teeshirt-orders-datascript :refer [teeshirt-orders]])
+            #?(:clj [dustingetz.teeshirt-orders-datascript-xl :refer [ensure-db!]])))
 
 (e/defn Row [db id]
   (dom/tr
@@ -33,7 +33,7 @@
 (declare css)
 (e/defn WebviewScrollDynamic []
   (dom/style (dom/text css))
-  (let [db (e/server (e/watch (ensure-db!)))
+  (let [db (e/server (ensure-db!))
         colspec (e/server (e/diff-by identity (e/client (e/watch !colspec))))
         search (Input* "")]
     (dom/div (dom/props {:class "UserViewport"})

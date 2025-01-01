@@ -1,5 +1,5 @@
 (ns electric-tutorial.webview-column-picker
-  (:require #?(:clj [dustingetz.teeshirt-orders-datascript-dustin :refer [ensure-db!]])
+  (:require #?(:clj [dustingetz.teeshirt-orders-datascript :refer [ensure-db!]])
             [electric-tutorial.webview2 :refer [Teeshirt-orders Row]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
