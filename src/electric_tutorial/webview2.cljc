@@ -46,7 +46,7 @@
 (e/defn Webview2 []
   (e/client
     (dom/style (dom/text css))
-    (let [db (e/server (e/watch (ensure-db!)))
+    (let [db (e/server (ensure-db!))
           colspec (e/amb :db/id :order/email :order/gender :order/shirt-size) ; reactive tuple
           search (dom/input (dom/On "input" #(-> % .-target .-value) ""))]
       (GenericTable

@@ -20,7 +20,7 @@
   (e/client
     (dom/style (dom/text css))
     (let [!log (atom [])
-          db (e/server (e/watch (ensure-db!)))
+          db (e/server (ensure-db!))
           colspec (dom/div (ColumnPicker (e/amb :db/id :order/email :order/gender :order/shirt-size)))
           search (dom/input (dom/On "input" #(-> % .-target .-value) ""))]
       (binding [e/Tap-diffs (e/Partial e/Tap-diffs #(swap! !log conj %))]
