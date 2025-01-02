@@ -26,8 +26,6 @@
             [electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.temperature2 :refer [Temperature2]]
             [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
-            electric-tutorial.forms3-crud ; inject conn for Forms
-            [electric-tutorial.forms3a-form :refer [Forms3a-form]]
             [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; form-explainer
             [electric-tutorial.chat-monitor :refer [ChatMonitor]]
             [electric-tutorial.todos :refer [Todos]]
@@ -76,7 +74,6 @@
      'todomvc_composed
 
      ;`Forms2-controlled ; local form, no e/amb
-     ;`Forms3a-form ; transactional form
      ;`Forms3b-inline-submit ; transactional fields
      ]]
    #_["Datagrids"
@@ -127,8 +124,7 @@
      `Temperature Temperature
      `Temperature2 Temperature2
      `Forms2-controlled Forms2-controlled ; obselete
-     `Forms3a-form Forms3a-form
-     `Forms3b-inline-submit Forms3b-inline-submit
+     `Forms3b-inline-submit Forms3b-inline-submit ; form-explainer
      `Todos Todos
      `TodoMVC TodoMVC
      `TodoMVC-composed TodoMVC-composed

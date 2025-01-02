@@ -6,7 +6,7 @@
             [hyperfiddle.electric-forms0 :as cqrs :refer
              [Input! Checkbox! Checkbox* Button!
               Form! Service PendingController try-ok effects*]]
-            [electric-tutorial.forms3a-form :refer [#?(:clj transact-unreliable)]]))
+            [dustingetz.trivial-datascript-form :refer [#?(:clj transact-unreliable)]]))
 
 (defn stable-kf [tempids-rev {:keys [:db/id]}]
   (let [id (if (fn? id) (str (hash id)) id)]

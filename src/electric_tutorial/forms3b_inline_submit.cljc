@@ -1,10 +1,11 @@
 (ns electric-tutorial.forms3b-inline-submit ; used in form_explainer
-  (:require [hyperfiddle.electric3 :as e]
+  (:require #?(:clj [datascript.core :as d])
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer
              [Input! Checkbox! Checkbox* Form! Service try-ok effects*]]
-            [electric-tutorial.forms3a-form :refer
-             [Query-record #?(:clj !conn) #?(:clj transact-unreliable)]]))
+            [dustingetz.trivial-datascript-form :refer
+             [#?(:clj ensure-conn!) #?(:clj transact-unreliable)]]))
 
 (e/declare debug*)
 (e/declare slow*)
@@ -14,7 +15,8 @@
 
 (e/defn UserForm [db id edits]
   (dom/fieldset (dom/legend (dom/text "UserForm"))
-    (let [{:keys [user/str1 user/num1 user/bool1]} (Query-record db id edits)]
+    (let [{:keys [user/str1 user/num1 user/bool1]}
+          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
@@ -44,6 +46,8 @@
                     :show-buttons show-buttons*
                     :debug debug*)))))))
 
+(e/declare !conn)
+
 (e/defn Str1FormSubmit [id v]
   (e/server
     (let [tx [{:db/id id :user/str1 v}]]
@@ -69,7 +73,8 @@
             show-buttons* (or (Checkbox* false :label "show-buttons") ::forms/smart)
             auto-submit* (Checkbox* false :label "auto-submit")]
     debug* fail* slow* auto-submit* show-buttons*
-    (let [db (e/server (e/watch !conn))]
-      (Service
-        (e/with-cycle* first [edits (e/amb)]
-          (UserForm db 42 edits))))))
+    (binding [!conn (e/server (ensure-conn!))]
+      (let [db (e/server (e/watch !conn))]
+        (Service
+          (e/with-cycle* first [edits (e/amb)]
+            (UserForm db 42 edits)))))))
