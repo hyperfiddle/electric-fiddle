@@ -68,7 +68,7 @@
   (dom/div (dom/props {:class "DirectoryExplorer"})
     (let [[fs-rel-path] router/route]
       (if-not fs-rel-path
-        (router/ReplaceState! ['. ["src"]])
+        (router/ReplaceState! ['. [""]])
         (router/pop
           (e/server
             (binding [base-path (fs/absolute-path "./")]
