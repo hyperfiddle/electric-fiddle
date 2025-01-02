@@ -2,7 +2,7 @@
 set -eu -o pipefail
 
 echo "starting Datomic transactor..."
-state/datomic-pro/bin/transactor config/samples/dev-transactor-template.properties >>state/datomic.log 2>&1 &
+state/datomic-pro/bin/transactor -Xmx1g -Xms1g config/samples/dev-transactor-template.properties >>state/datomic.log 2>&1 &
 datomic_transactor_pid=$!
 echo "Datomic transactor PID: $datomic_transactor_pid"
 
