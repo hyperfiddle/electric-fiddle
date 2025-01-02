@@ -20,6 +20,7 @@
             [electric-tutorial.token-explainer :refer [TokenExplainer]]
             [electric-tutorial.form-service :refer [FormsService]]
             [electric-tutorial.forms-inline :refer [Forms-inline]]
+            [electric-tutorial.form-list :refer [FormList]]
 
             ; Part 2
             [electric-tutorial.temperature2 :refer [Temperature2]]
@@ -63,6 +64,7 @@
      'token_explainer ; supersedes Toggle, introduce token and service
      'form_explainer ; forms-from-scratch-form
      'forms_inline ; forms3b-inline-submit
+     'form_list
      'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
      'todos ; create-new, optimistic updates, service
      'todomvc
@@ -107,6 +109,7 @@
      `TokenExplainer TokenExplainer
      `FormsService FormsService
      `Forms-inline Forms-inline
+     `FormList FormList
      }
     {`Temperature2 Temperature2
      `Todos Todos
