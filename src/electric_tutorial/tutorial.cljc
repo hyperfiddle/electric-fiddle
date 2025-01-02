@@ -17,8 +17,6 @@
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.backpressure :refer [Backpressure]]
 
-            [electric-tutorial.counter :refer [Counter]]
-
             [electric-tutorial.inputs-local :refer
              [InputCicruit DemoInputNaive
               DemoInputCircuit-uncontrolled DemoInputCircuit-controlled DemoInputCircuit-amb DemoInputCircuit-cycle
@@ -42,6 +40,7 @@
 
             ; Misc
             ;; #_[electric-tutorial.reagent-interop :refer [ReagentInterop]] ; npm install
+            [electric-tutorial.counter :refer [Counter]]
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
@@ -116,7 +115,6 @@
      `WebviewDiffs WebviewDiffs
      `WebviewScroll WebviewScroll
      `FizzBuzz FizzBuzz
-     `Counter Counter
      `ChatMonitor ChatMonitor
      `Backpressure Backpressure
      }
@@ -151,6 +149,7 @@
 
      ; Kitchen Sink
      ;`Timer Timer
+     `Counter Counter
      `SVG SVG
      `DirectoryExplorer DirectoryExplorer
      #_#_`Heroicons Heroicons
@@ -160,8 +159,7 @@
 (e/defn Fiddles []
   (merge
     {'tutorial (e/Partial Tutorial essay-index "src/electric_tutorial/")
-     ;'demo (e/Partial Tutorial demo-index "src/hf_docs_site/demos/")
-     }
+     #_#_'demo (e/Partial Tutorial demo-index "src/hf_docs_site/demos/")}
     (TutorialFiddles)
     (datomic-browser.mbrainz-browser/Fiddles)
     (staffly.staffly/Fiddles)))
