@@ -13,7 +13,6 @@
             [electric-tutorial.webview2 :refer [Webview2]]
             [electric-tutorial.webview-column-picker :refer [WebviewColumnPicker]]
             [electric-tutorial.webview-diffs :refer [WebviewDiffs]]
-            #_[electric-tutorial.scroll-spool :refer [WebviewScroll]]
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.backpressure :refer [Backpressure]]
 
@@ -21,11 +20,10 @@
             [electric-tutorial.token-explainer :refer [TokenExplainer]]
             [electric-tutorial.form-explainer :refer [FormExplainer]]
             [electric-tutorial.forms-from-scratch-form :refer [DemoFormServer1]]
+            [electric-tutorial.forms-inline :refer [Forms-inline]]
 
             ; Part 2
-            #_[electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.temperature2 :refer [Temperature2]]
-            [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; form-explainer
             [electric-tutorial.chat-monitor :refer [ChatMonitor]]
             [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
@@ -64,9 +62,8 @@
      'amb
      'temperature2
      'token_explainer ; supersedes Toggle, introduce token and service
-     'form_explainer ; forms3b-inline-submit, forms-from-scratch-form
-     ; Inline forms, keyboard
-
+     'form_explainer ; forms-from-scratch-form
+     'forms_inline ; forms3b-inline-submit
      'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
      'todos ; create-new, optimistic updates, service
      'todomvc
@@ -102,35 +99,29 @@
      `Webview2 Webview2
      `WebviewColumnPicker WebviewColumnPicker
      `WebviewDiffs WebviewDiffs
-     #_#_`WebviewScroll WebviewScroll
      `FizzBuzz FizzBuzz
      `ChatMonitor ChatMonitor
      `Backpressure Backpressure
      }
     (electric-tutorial.inputs-local/Fiddles)
-    {
-     ; Interlude
-     ;`FormsFromScratch FormsFromScratch
-     }
-    {`TokenExplainer TokenExplainer
+    {; Forms
+     `TokenExplainer TokenExplainer
      `FormExplainer FormExplainer
-     `DemoFormServer1 DemoFormServer1
-
-     ; Part 2
-     #_#_`Temperature Temperature
-     `Temperature2 Temperature2
-     `Forms3b-inline-submit Forms3b-inline-submit ; form-explainer
+     `DemoFormServer1 DemoFormServer1 ; form-explainer
+     `Forms-inline Forms-inline ; form-explainer
+     }
+    {`Temperature2 Temperature2
      `Todos Todos
      `TodoMVC TodoMVC
      `TodoMVC-composed TodoMVC-composed
-
-     ; Kitchen Sink
-     ;`Timer Timer
+     }
+    {; Kitchen Sink
+     #_#_`Timer Timer
      `Counter Counter
      `SVG SVG
      `DirectoryExplorer DirectoryExplorer
      #_#_`Heroicons Heroicons
-     ;`ReagentInterop ReagentInterop
+     #_#_`ReagentInterop ReagentInterop
      }))
 
 (e/defn Fiddles []

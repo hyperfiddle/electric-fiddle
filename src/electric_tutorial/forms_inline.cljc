@@ -1,4 +1,4 @@
-(ns electric-tutorial.forms3b-inline-submit ; used in form_explainer
+(ns electric-tutorial.forms-inline ; used in form_explainer
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -63,7 +63,7 @@
     (let [tx [{:db/id id :user/bool1 v}]]
       (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
 
-(e/defn Forms3b-inline-submit []
+(e/defn Forms-inline []
   (binding [effects* {`Str1FormSubmit Str1FormSubmit
                       `Num1FormSubmit Num1FormSubmit
                       `Bool1FormSubmit Bool1FormSubmit}
