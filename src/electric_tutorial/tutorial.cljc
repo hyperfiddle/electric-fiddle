@@ -25,7 +25,6 @@
             ; Part 2
             [electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.temperature2 :refer [Temperature2]]
-            [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
             [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; form-explainer
             [electric-tutorial.chat-monitor :refer [ChatMonitor]]
             [electric-tutorial.todos :refer [Todos]]
@@ -72,8 +71,6 @@
      'todos ; create-new, optimistic updates, service
      'todomvc
      'todomvc_composed
-
-     ;`Forms2-controlled ; local form, no e/amb
      ]]
    #_["Datagrids"
     [#_`Typeahead
@@ -122,7 +119,6 @@
      ; Part 2
      `Temperature Temperature
      `Temperature2 Temperature2
-     `Forms2-controlled Forms2-controlled ; obselete
      `Forms3b-inline-submit Forms3b-inline-submit ; form-explainer
      `Todos Todos
      `TodoMVC TodoMVC
