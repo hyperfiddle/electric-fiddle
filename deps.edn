@@ -101,7 +101,7 @@
    {backtick/backtick {:mvn/version "0.3.4"}
     com.datomic/peer {:mvn/version "1.0.7075"}
     org.clojure/core.match {:mvn/version "0.3.0-alpha5"}}
-   :override-deps ; uberjar sees only this one alias
+   #_#_:override-deps ; uberjar sees only this one alias
    {com.hyperfiddle/electric {:local/root "vendor/electric"}
     com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
 
