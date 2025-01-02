@@ -35,3 +35,4 @@ Key ideas
 
 * implies optimistic collection maintenance
 * failure is routed to the optimistic input for retry, it is not handled here!
+* https://clojurians.slack.com/archives/C7Q9GSHFV/p1735567091092959

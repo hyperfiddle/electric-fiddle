@@ -6,7 +6,7 @@
 * Electric provides two input patterns – **synchronous local inputs** and **async transactional inputs**, which satisfy two different use cases.
 * Here we discuss the former, sync local inputs.
 
-### naive low-level DOM input – uncontrolled state
+### naive low-level DOM input – uncontrolled state
 
 Warmup and for reference, the low-level input that you're already familiar with.
 

@@ -43,7 +43,7 @@ Meta theme: **"fake separation of concerns"**
 * React.js says: HTML and JS should be interleaved actually, the business concern is "view"
 * Tailwind says: HTML and CSS should be interleaved actually, the business concern is "layout"
 * Electric says: Frontend and Backend should be interweaved actually, the business concern is "UI"
-* Electric-dom says: DOM effects and view logic should be interweaved actually, the business concern is "UX"
+* Electric-dom says: DOM effects and view logic should be interweaved actually, for a similar authoring experience to that of React but more composable/powerful/expressive, and probably faster in the end too (React has had a decade of optimization work, our implementation is still naive!)
 
 
 **"Functional core, imperative shell" is wrong**. The proof is in the pudding: our [TodoMVC implementation](/tutorial/todomvc) is 200 LOC *including the backend*. I challenge anyone who disputes these claims to replicate this ColumnPicker demo, or TodoMVC or any other demo, using any technology of their choice. Let's count LOC and see which is easier to understand and maintain. I built the ColumnPicker in 20 minutes, on a whim, because it felt like a cool idea to try. How many LOC is it in your favorite framework, how long will it take to build?

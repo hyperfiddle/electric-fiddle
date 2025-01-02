@@ -46,7 +46,7 @@ auth is same as any other web app
 `InputCreateSubmit?!`
 * Read the docstring, study the implentation
 * It uses the dom/On-all concurrent tokens API to support submitting a rapid sequence of messages, clearing the input after each submit, without waiting for each individual message to complete.
-* Note there's no error handling / retry state, which is why this implementation is "dubious" and we marked it as `?!`. You can use it if you want if you don't care about error handling. (What does Slack even do if a message fails? Apple's iMessage handles this corretly, affording a retry state on the optimistic list entry)
+* Note there's no error handling / retry state, which is why this implementation is "dubious" and we marked it as `?!`. It's fine to use if you don't care about error handling. (What does Slack even do if a message fails? Apple's iMessage handles this correctly, affording a retry state on the optimistic list entry.)
 * `dom/node` (used in the Input impl): the live dom node, maintained in dynamic scope for local point writes
 * JavaScript interop (via ClojureScript): everything works as expected, direct DOM manipulation is no problem, and idiomatic
 
