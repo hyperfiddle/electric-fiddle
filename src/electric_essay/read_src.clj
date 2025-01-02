@@ -1,4 +1,4 @@
-(ns electric-fiddle.read-src
+(ns electric-essay.read-src
   (:import (clojure.lang RT) (java.io InputStreamReader LineNumberReader PushbackReader))
   (:require [hyperfiddle.rcf :refer [tests]]
             [clojure.java.io :as io]))

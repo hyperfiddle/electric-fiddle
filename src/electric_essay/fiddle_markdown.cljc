@@ -1,9 +1,9 @@
-(ns electric-fiddle.fiddle-markdown
+(ns electric-essay.fiddle-markdown
   (:refer-clojure :exclude [#?(:cljs Fn)])
   (:require [clojure.string :as str]
             [contrib.electric-codemirror :refer [CodeMirror]] ; extensions only
             [electric-fiddle.fiddle-index :refer [FiddleIndex pages]] ; why
-            #?(:clj [electric-fiddle.read-src :refer [read-ns-src read-src-safe!]])
+            #?(:clj [electric-essay.read-src :refer [read-ns-src read-src-safe!]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r] ; for userland

@@ -2,7 +2,7 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
-            [electric-tutorial.tutorial-app :refer [Tutorial]]
+            [electric-essay.tutorial-app :refer [Tutorial]]
 
             ; Part 1
             [electric-tutorial.two-clocks :refer [TwoClocks]]
