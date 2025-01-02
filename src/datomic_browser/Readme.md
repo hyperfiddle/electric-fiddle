@@ -6,10 +6,10 @@ https://user-images.githubusercontent.com/124158/219978031-939344eb-4489-4b97-af
 
 # Build
 
-* Watch out: the Datomic command works only from the datomic_browser directory precisely. The `transactor` java process will resolve the config file path relative to the java resource path, or something. This is a common gotcha!
+* **Watch out:** the Datomic command works only from the datomic_browser directory precisely. The `transactor` java process will resolve the config file path relative to the java resource path, or something. This is a common gotcha!
+* **Nix users**: user reports, "The transactor and the datomic bash files begin with an invalid shebang that only matters to nix people, see https://www.reddit.com/r/NixOS/comments/k8ja54/nixos_running_scripts_problem/"
 
 ```shell
-
 # get Datomic
 ./datomic_fixtures.sh # get Datomic and also install the mbrainz example data set
 ./state/datomic-pro/bin/transactor config/samples/dev-transactor-template.properties >>state/datomic.log 2>&1 &
