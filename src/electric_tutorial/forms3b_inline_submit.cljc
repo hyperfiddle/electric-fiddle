@@ -1,4 +1,4 @@
-(ns electric-tutorial.forms3b-inline-submit
+(ns electric-tutorial.forms3b-inline-submit ; used in form_explainer
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as forms :refer

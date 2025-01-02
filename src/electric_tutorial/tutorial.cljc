@@ -17,11 +17,7 @@
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.backpressure :refer [Backpressure]]
 
-            [electric-tutorial.inputs-local :refer
-             [InputCicruit DemoInputNaive
-              DemoInputCircuit-uncontrolled DemoInputCircuit-controlled DemoInputCircuit-amb DemoInputCircuit-cycle
-              DemoInputCircuit4 DemoInputCircuit5 DemoInputCircuit6
-              DemoFormSync DemoFormSync-cycle]]
+            electric-tutorial.inputs-local
             [electric-tutorial.token-explainer :refer [TokenExplainer]]
             [electric-tutorial.form-explainer :refer [FormExplainer]]
             [electric-tutorial.forms-from-scratch-form :refer [DemoFormServer1]]
@@ -32,7 +28,7 @@
             [electric-tutorial.forms2-controlled :refer [Forms2-controlled]]
             electric-tutorial.forms3-crud ; inject conn for Forms
             [electric-tutorial.forms3a-form :refer [Forms3a-form]]
-            [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]]
+            [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; form-explainer
             [electric-tutorial.chat-monitor :refer [ChatMonitor]]
             [electric-tutorial.todos :refer [Todos]]
             [electric-tutorial.todomvc :refer [TodoMVC]]
@@ -67,11 +63,11 @@
      'backpressure
      ]]
    ["Forms"
-    ['inputs_local ; supersedes TemperatureConverter or embeds
+    ['inputs_local ; self contained
      'amb
      'temperature2
      'token_explainer ; supersedes Toggle, introduce token and service
-     'form_explainer ; Transactional forms
+     'form_explainer ; forms3b-inline-submit, forms-from-scratch-form
      ; Inline forms, keyboard
 
      'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
@@ -118,20 +114,10 @@
      `ChatMonitor ChatMonitor
      `Backpressure Backpressure
      }
+    (electric-tutorial.inputs-local/Fiddles)
     {
      ; Interlude
      ;`FormsFromScratch FormsFromScratch
-     `InputCicruit InputCicruit
-     `DemoInputNaive DemoInputNaive
-     `DemoInputCircuit-uncontrolled DemoInputCircuit-uncontrolled
-     `DemoInputCircuit-controlled DemoInputCircuit-controlled
-     `DemoInputCircuit-amb DemoInputCircuit-amb
-     `DemoInputCircuit-cycle DemoInputCircuit-cycle
-     `DemoInputCircuit4 DemoInputCircuit4
-     `DemoInputCircuit5 DemoInputCircuit5
-     `DemoInputCircuit6 DemoInputCircuit6
-     `DemoFormSync DemoFormSync
-     `DemoFormSync-cycle DemoFormSync-cycle
      }
     {`TokenExplainer TokenExplainer
      `FormExplainer FormExplainer

@@ -68,3 +68,16 @@
                :user/num1 (-> (Input num1 :type "number") parse-long)
                :user/bool1 (Checkbox bool1)}))]
     (dom/pre (dom/text (pr-str m)))))
+
+(e/defn Fiddles []
+  {`InputCicruit InputCicruit
+   `DemoInputNaive DemoInputNaive
+   `DemoInputCircuit-uncontrolled DemoInputCircuit-uncontrolled
+   `DemoInputCircuit-controlled DemoInputCircuit-controlled
+   `DemoInputCircuit-amb DemoInputCircuit-amb
+   `DemoInputCircuit-cycle DemoInputCircuit-cycle
+   `DemoInputCircuit4 DemoInputCircuit4
+   `DemoInputCircuit5 DemoInputCircuit5
+   `DemoInputCircuit6 DemoInputCircuit6
+   `DemoFormSync DemoFormSync
+   `DemoFormSync-cycle DemoFormSync-cycle})
