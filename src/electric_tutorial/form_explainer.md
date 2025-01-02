@@ -2,51 +2,36 @@
 
 <div id="nav"></div>
 
-* server commands
-* latency and failure affordances
-* dirty states
-* Plan: We're going to build up to this form which has quite a lot going on.
-* prerequisite - RetryToken
+* server commands / transactions / RPC (i.e., "http post")
+* forms with dirty and error states with latency and failure affordances
 
-!ns[electric-tutorial.form-service/DemoFormServer1]()
+!ns[electric-tutorial.form-service/FormsService]()
 
 What's happening
 
 * transactional/RPC form post, with commit/discard buttons
 * controlled state bound to database record
 * dirty fields turn yellow, discard to reset
-* commit button turns yellow while you wait
-* inflight commit can be cancelled - try quickly cancelling an inflight txn before it succeeds (there is a 500ms delay)
-* failed commits turn commit button red
-* failed commits can be retried
-* uncommitted state is never lost
 * uncommitted state is *staged*, you can continue to arrange it until you submit
+* on submit, commit button turns yellow while you wait
+* inflight commit can be cancelled - try quickly cancelling an inflight txn before it succeeds (there is a 500ms delay)
+* failed commits turn commit button red, retaining dirty state (i.e., **uncommitted state is never lost**)
+* failed commits can be retried
 
-### `Input!` - a transactional input w/ server
-
-!fn[electric-tutorial.form-explainer/FormExplainer]()
-
-!fn-src[electric-tutorial.form-explainer/UserFormServer1]()
-
-* fields are named, like the DOM `<input name="foo">`
-* yellow dirty state
-* red failure state, failed edits are not lost
-
-However there are some concerns:
-* How can we only commit when we are ready - we are missing a buffering primitive and submit intent
-* How can we retry a failed edit - again, need a submit intent
-* ... i.e., we need a *Form*
-
-### `Form!` - transactional form with error states
-
-Here's again the same demo as the top of the page:
-
-!fn[electric-tutorial.forms-from-scratch-form/DemoFormServer1]()
-
-* debug
-* in flight cancellation - hit discard while commit is in flight to try to cancel the commit (you are racing the database transaction, it might not work)
+Let's focus just on the form code itself, `UserFormServer`, repeated here:
 
 !fn-src[electric-tutorial.form-service/UserFormServer]()
+
+`(Input! :user/str1 str1)` - a transactional input w/ server awareness
+
+* Inputs are named (here `:user/str1`), as with the DOM: `<input name="foo">`
+* when the form submission fails (submit button turns red), the `Input!` stays yellow, because they still hold uncommitted state!
+
+* How can we delay a commit until we are ready? `Input!` is missing a **buffering** primitive and **submit** intent
+* How can we retry a failed edit? Again, `Input!` is missing a **submit** intent
+* ... i.e., just `Input!` is not enough to model that. We need a **Form**
+
+`Form!` - transactional form with error states
 
 * we use `e/amb` to collect the individual field edits
 * `Form!` - introduces a *buffer* for dirty edits!
@@ -58,6 +43,7 @@ Here's again the same demo as the top of the page:
   * element 0 is a command request
   * element 1 is our local prediction of the outcome of the command, presuming success - used by optimistic updates.
   * Why is the command encoded as data? Because it helps with optimistic updates, this may not be the final factoring.
+* debug flag - todo explain
 
 Here is the command:
 
