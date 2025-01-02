@@ -12,8 +12,24 @@
 (e/declare fail*)
 (e/declare show-buttons*)
 (e/declare auto-submit*)
+(e/declare !conn)
 
-(e/defn UserForm [db id edits]
+(e/defn Str1FormSubmit [id v]
+  (e/server
+    (let [tx [{:db/id id :user/str1 v}]]
+      (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
+
+(e/defn Num1FormSubmit [id v]
+  (e/server
+    (let [tx [{:db/id id :user/num1 v}]]
+      (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
+
+(e/defn Bool1FormSubmit [id v]
+  (e/server
+    (let [tx [{:db/id id :user/bool1 v}]]
+      (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
+
+(e/defn UserForm [db id]
   (dom/fieldset (dom/legend (dom/text "UserForm"))
     (let [{:keys [user/str1 user/num1 user/bool1]}
           (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
@@ -46,23 +62,6 @@
                     :show-buttons show-buttons*
                     :debug debug*)))))))
 
-(e/declare !conn)
-
-(e/defn Str1FormSubmit [id v]
-  (e/server
-    (let [tx [{:db/id id :user/str1 v}]]
-      (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
-
-(e/defn Num1FormSubmit [id v]
-  (e/server
-    (let [tx [{:db/id id :user/num1 v}]]
-      (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
-
-(e/defn Bool1FormSubmit [id v]
-  (e/server
-    (let [tx [{:db/id id :user/bool1 v}]]
-      (e/Offload #(try-ok (transact-unreliable !conn tx :fail fail* :slow slow*))))))
-
 (e/defn Forms-inline []
   (binding [effects* {`Str1FormSubmit Str1FormSubmit
                       `Num1FormSubmit Num1FormSubmit
@@ -76,5 +75,4 @@
     (binding [!conn (e/server (ensure-conn!))]
       (let [db (e/server (e/watch !conn))]
         (Service
-          (e/with-cycle* first [edits (e/amb)]
-            (UserForm db 42 edits)))))))
+          (UserForm db 42))))))
