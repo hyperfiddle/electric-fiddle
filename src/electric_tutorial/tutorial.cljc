@@ -19,7 +19,7 @@
             electric-tutorial.inputs-local
             [electric-tutorial.token-explainer :refer [TokenExplainer]]
             [electric-tutorial.form-explainer :refer [FormExplainer]]
-            [electric-tutorial.forms-from-scratch-form :refer [DemoFormServer1]]
+            [electric-tutorial.form-service :refer [DemoFormServer1]]
             [electric-tutorial.forms-inline :refer [Forms-inline]]
 
             ; Part 2

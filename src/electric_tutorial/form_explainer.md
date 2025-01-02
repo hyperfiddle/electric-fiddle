@@ -8,7 +8,7 @@
 * Plan: We're going to build up to this form which has quite a lot going on.
 * prerequisite - RetryToken
 
-!target[electric-tutorial.forms-from-scratch-form/DemoFormServer1]()
+!ns[electric-tutorial.form-service/DemoFormServer1]()
 
 What's happening
 
@@ -46,7 +46,7 @@ Here's again the same demo as the top of the page:
 * debug
 * in flight cancellation - hit discard while commit is in flight to try to cancel the commit (you are racing the database transaction, it might not work)
 
-!fn-src[electric-tutorial.forms-from-scratch-form/UserFormServer]()
+!fn-src[electric-tutorial.form-service/UserFormServer]()
 
 * we use `e/amb` to collect the individual field edits
 * `Form!` - introduces a *buffer* for dirty edits!
@@ -61,11 +61,11 @@ Here's again the same demo as the top of the page:
 
 Here is the command:
 
-!fn-src[electric-tutorial.forms-from-scratch-form/User-form-submit]()
+!fn-src[electric-tutorial.form-service/User-form-submit]()
 
 Which the service interprets and evaluates:
 
-!fn-src[electric-tutorial.forms-from-scratch-form/UserService]()
+!fn-src[electric-tutorial.form-service/UserService]()
 
 * `guess` is ignored, this is used to implement optimistic updates which we haven't shown yet.
 * **Failure handling with retry affordance** - since the form is buffering the edits, if the commit fails, we just don't clear the buffer!

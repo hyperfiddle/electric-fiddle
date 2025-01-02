@@ -1,10 +1,8 @@
-(ns electric-tutorial.form-explainer
+(ns electric-tutorial.form-explainer ; superseded
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer
              [Input! Checkbox! Checkbox* Form!]]))
-
-(def state0 {:user/str1 "hello" :user/num1 42 :user/bool1 true})
 
 (e/defn UserFormServer1 [{:keys [user/str1 user/num1 user/bool1]}]
   (Form!
@@ -13,6 +11,8 @@
       (Input! :user/num1 num1 :type "number" :parse parse-long)
       (Checkbox! :user/bool1 bool1))
     :commit (fn [dirty-form] [dirty-form nil])))
+
+(def state0 {:user/str1 "hello" :user/num1 42 :user/bool1 true})
 
 (declare css)
 (e/defn FormExplainer []

@@ -1,30 +1,19 @@
-(ns electric-tutorial.forms-from-scratch-form
+(ns electric-tutorial.form-service
   (:require #?(:clj [datascript.core :as d])
+            [dustingetz.trivial-datascript-form :refer
+             [#?(:clj ensure-conn!) #?(:clj transact-unreliable)]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Form! Checkbox* Input! Checkbox!]]))
-
-#?(:clj (defonce !conn (doto (d/create-conn {})
-                         (d/transact! [{:db/id 42 :user/str1 "one"
-                                        :user/num1 1 :user/bool1 true}]))))
-
-#?(:clj (defn transact-unreliable [!conn tx
-                                   & {:keys [slow fail]
-                                      :or {slow false fail false}}]
-          (when (true? slow) (Thread/sleep 1000))
-          (when (true? fail) (throw (ex-info "artificial failure" {})))
-          (d/transact! !conn tx)))
 
 (e/declare debug*)
 (e/declare slow*)
 (e/declare fail*)
 
-(e/defn Query-record [db id]
-  (e/server (e/Offload #(d/pull db [:user/str1 :user/num1 :user/bool1] id))))
-
 (e/defn UserFormServer [db id]
   (dom/fieldset (dom/legend (dom/text "UserFormServer"))
-    (let [{:keys [user/str1 user/num1 user/bool1] :as m} (Query-record db id)]
+    (let [{:keys [user/str1 user/num1 user/bool1] :as m}
+          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
       (Form! ; buffer and batch edits into an atomic form
         (dom/dl
           (e/amb
@@ -37,6 +26,8 @@
                     [[`User-form-submit id str1 num1 bool1] ; command
                      {id m}])) ; prediction
         :debug debug*))))
+
+(e/declare !conn)
 
 (e/defn User-form-submit [id str1 num1 bool1]
   (e/server ; secure, validate command here
@@ -58,11 +49,11 @@
 (declare css)
 (e/defn DemoFormServer1 []
   (dom/style (dom/text css))
-  (binding [debug* (Checkbox* true :label "debug")
+  (binding [!conn (e/server (ensure-conn!))
+            debug* (Checkbox* true :label "debug")
             slow* (Checkbox* true :label "latency")
             fail* (Checkbox* true :label "failure")]
     debug* fail* slow*
-
     (let [db (e/server (e/watch !conn))
           edits (UserFormServer db 42)]
       (UserService edits))))
