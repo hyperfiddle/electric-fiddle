@@ -47,7 +47,7 @@
           (t res)))))) ; feed error back into control to prompt for retry
 
 (declare css)
-(e/defn DemoFormServer1 []
+(e/defn FormsService []
   (dom/style (dom/text css))
   (binding [!conn (e/server (ensure-conn!))
             debug* (Checkbox* true :label "debug")

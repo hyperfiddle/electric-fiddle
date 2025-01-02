@@ -18,8 +18,7 @@
 
             electric-tutorial.inputs-local
             [electric-tutorial.token-explainer :refer [TokenExplainer]]
-            [electric-tutorial.form-explainer :refer [FormExplainer]]
-            [electric-tutorial.form-service :refer [DemoFormServer1]]
+            [electric-tutorial.form-service :refer [FormsService]]
             [electric-tutorial.forms-inline :refer [Forms-inline]]
 
             ; Part 2
@@ -106,9 +105,8 @@
     (electric-tutorial.inputs-local/Fiddles)
     {; Forms
      `TokenExplainer TokenExplainer
-     `FormExplainer FormExplainer
-     `DemoFormServer1 DemoFormServer1 ; form-explainer
-     `Forms-inline Forms-inline ; form-explainer
+     `FormsService FormsService
+     `Forms-inline Forms-inline
      }
     {`Temperature2 Temperature2
      `Todos Todos
