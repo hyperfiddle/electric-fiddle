@@ -74,7 +74,6 @@
      'todomvc_composed
 
      ;`Forms2-controlled ; local form, no e/amb
-     ;`Forms3b-inline-submit ; transactional fields
      ]]
    #_["Datagrids"
     [#_`Typeahead
