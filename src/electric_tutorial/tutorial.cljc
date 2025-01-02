@@ -13,7 +13,7 @@
             [electric-tutorial.webview2 :refer [Webview2]]
             [electric-tutorial.webview-column-picker :refer [WebviewColumnPicker]]
             [electric-tutorial.webview-diffs :refer [WebviewDiffs]]
-            [electric-tutorial.scroll-spool :refer [WebviewScroll]]
+            #_[electric-tutorial.scroll-spool :refer [WebviewScroll]]
             [electric-tutorial.lifecycle :refer [Lifecycle]]
             [electric-tutorial.backpressure :refer [Backpressure]]
 
@@ -23,7 +23,7 @@
             [electric-tutorial.forms-from-scratch-form :refer [DemoFormServer1]]
 
             ; Part 2
-            [electric-tutorial.temperature :refer [Temperature]]
+            #_[electric-tutorial.temperature :refer [Temperature]]
             [electric-tutorial.temperature2 :refer [Temperature2]]
             [electric-tutorial.forms3b-inline-submit :refer [Forms3b-inline-submit]] ; form-explainer
             [electric-tutorial.chat-monitor :refer [ChatMonitor]]
@@ -102,7 +102,7 @@
      `Webview2 Webview2
      `WebviewColumnPicker WebviewColumnPicker
      `WebviewDiffs WebviewDiffs
-     `WebviewScroll WebviewScroll
+     #_#_`WebviewScroll WebviewScroll
      `FizzBuzz FizzBuzz
      `ChatMonitor ChatMonitor
      `Backpressure Backpressure
@@ -117,7 +117,7 @@
      `DemoFormServer1 DemoFormServer1
 
      ; Part 2
-     `Temperature Temperature
+     #_#_`Temperature Temperature
      `Temperature2 Temperature2
      `Forms3b-inline-submit Forms3b-inline-submit ; form-explainer
      `Todos Todos
