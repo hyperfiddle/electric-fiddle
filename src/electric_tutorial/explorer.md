@@ -5,7 +5,7 @@
 Server-streamed virtual scroll in **~50ish LOC**
 
 * View grid in <a href="/electric-tutorial.explorer!DirectoryExplorer/">fullscreen mode here</a>. Try it on your phone!
-* **It's not quite 100% stable**—it crashes if you jerk the scroll abruptly—electric v3 has a few crashes left to fix. But, this demo is a stress test and is pushing electric very hard! Electric is still in private beta, consider this a technical preview.
+* ~~**It's not quite 100% stable**—it crashes if you jerk the scroll abruptly—electric v3 has a few crashes left to fix. But, this demo is a stress test and is pushing electric very hard! Electric is still in private beta, consider this a technical preview.~~ 2025 Jan 3 - now stable for us, please report issues
 * Please let us know what the performance is like for you, this is our first public virtual scroll demo in v3.
 * There are also a few userland layout bugs/imperfections, please report them in the slack thread and we will get them fixed.
 
