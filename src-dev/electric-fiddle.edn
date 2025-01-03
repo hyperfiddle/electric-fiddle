@@ -6,7 +6,7 @@
   datomic-browser.mbrainz-browser ; requires :electric-tutorial alias
   dustingetz.dustingetz ; requires :dustingetz alias
   #_dustingetz.dustingetz-private
-  staffly.staffly
+  #_staffly.staffly
   #_ui-demo.fiddles
   #_xtdb-demo ; requires :xtdb-demo alias
   #_uix-demo ; requires :uix-demo alias and `npm install`
