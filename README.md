@@ -13,9 +13,12 @@ For a minimalist starter example, see https://gitlab.com/hyperfiddle/electric3-s
 npm install
 clj -A:dev:electric-tutorial:dustingetz -X dev/-main
 ...
+[:dev] Compiling ...
+Please sign up or login to activate:  https://hyperfiddle-auth.fly.dev/login?redirect-uri=http%3A%2F%2Flocalhost%3A8081
+...
 INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
 ```
-* note: two aliases, you must include them 
+* note: two deps aliases, you must include them both
 * note: Electric login is required for dev builds
 
 ## "Fiddle" classpath infrastructure (optional)
