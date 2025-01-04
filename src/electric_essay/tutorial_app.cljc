@@ -69,7 +69,7 @@
 (e/defn Tutorial [essay-config essay-md-folder]
   (e/client
     (dom/props {:class "Tutorial"})
-    (dom/style (dom/text (e/server (some-> (io/resource "electric_tutorial/tutorial.css") slurp-safe))))
+    (dom/style (dom/text (e/server (some-> (io/resource "electric_essay/tutorial.css") slurp-safe))))
     (let [[?essay-filename & _] r/route]
       (if-not ?essay-filename (r/ReplaceState! ['. [(first (second (first essay-config)))]]) ; "two_clocks.md" encodes to /'two_clocks.md'
         (do

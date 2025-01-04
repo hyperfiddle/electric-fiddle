@@ -1,8 +1,5 @@
-(ns electric-tutorial.tutorial
+(ns electric-tutorial.tutorial-sitemap
   (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]
-            [electric-fiddle.fiddle-index :refer [FiddleMain]]
-            [electric-essay.tutorial-app :refer [Tutorial]]
 
             ; Part 1
             [electric-tutorial.two-clocks :refer [TwoClocks]]
@@ -35,11 +32,9 @@
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
-            datomic-browser.mbrainz-browser
-            staffly.staffly
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
 
-(def essay-index
+(def tutorial-sitemap
   [["Basics"
     ['two_clocks ; hello world
      'system_properties ; simple query/view topology
@@ -86,10 +81,6 @@
      #_`wip.js-interop/QRCode ; Generate QRCodes with a lazily loaded JS library
      ]]])
 
-(def demo-index
-  [["Demos"
-    ['explorer]]])
-
 (e/defn TutorialFiddles []
   (merge
     {`TwoClocks TwoClocks
@@ -125,15 +116,3 @@
      #_#_`ReagentInterop ReagentInterop
      }))
 
-(e/defn Fiddles []
-  (merge
-    {'tutorial (e/Partial Tutorial essay-index "src/electric_tutorial/")
-     #_#_'demo (e/Partial Tutorial demo-index "src/hf_docs_site/demos/")}
-    (TutorialFiddles)
-    (datomic-browser.mbrainz-browser/Fiddles)
-    (staffly.staffly/Fiddles)))
-
-(e/defn ProdMain [ring-req]
-  ; keep /tutorial/ in the URL
-  (FiddleMain ring-req (Fiddles)
-    :default '(tutorial)))

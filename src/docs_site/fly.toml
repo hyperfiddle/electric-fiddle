@@ -4,7 +4,7 @@ kill_timeout = 5
 primary_region = "ewr"
 
 [build.args]
-  HYPERFIDDLE_FIDDLE_NS="electric-tutorial.tutorial"
+  HYPERFIDDLE_FIDDLE_NS="docs-site.sitemap"
   HYPERFIDDLE_FIDDLE_DEPS_ALIAS="electric-tutorial"
 
 [experimental]
