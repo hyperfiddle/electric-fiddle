@@ -58,7 +58,7 @@
   :electric-tutorial
   {:extra-deps
    {backtick/backtick {:mvn/version "0.3.4"} ; staffly
-    com.datomic/peer {:mvn/version "1.0.7075"}
+    com.datomic/peer {:mvn/version "1.0.7075"} ; staffly, datomic browser
     datascript/datascript     {:mvn/version "1.6.1"}
     reagent/reagent           {:mvn/version "1.2.0"}
     markdown-clj/markdown-clj {:mvn/version "1.11.7"}
@@ -95,15 +95,6 @@
     #_#_cheshire/cheshire {:mvn/version "5.12.0"}
     #_#_markdown-clj/markdown-clj {:mvn/version "1.11.7"}
     #_#_io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}}}
-
-  :staffly
-  {:extra-deps
-   {backtick/backtick {:mvn/version "0.3.4"}
-    com.datomic/peer {:mvn/version "1.0.7075"}
-    org.clojure/core.match {:mvn/version "0.3.0-alpha5"}}
-   #_#_:override-deps ; uberjar sees only this one alias
-   {com.hyperfiddle/electric {:local/root "vendor/electric"}
-    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
 
   :private
   {:extra-paths ["src-private"]
