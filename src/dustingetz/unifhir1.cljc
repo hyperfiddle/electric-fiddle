@@ -65,8 +65,8 @@
         (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
           (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
             (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
-              (when-some [x (nth xs! i nil)]
-                (Row x))))) ; beware glitched nil pass through
+              #_(when-some [x (nth xs! i nil)])
+              (Row (nth xs! i nil))))) ; beware glitched nil pass through
         (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                     (* row-height (- record-count limit)) 0) "px")}}))))))
 
@@ -78,38 +78,43 @@
 (e/defn Row-mm-record [{:keys [is-excluded source-measurement-type source-value-filter system code
                                display unit value min-value max-value omit-value unit-factor
                                override-ehrs used-by-ehrs ehr-format] :as ?x}]
-  (e/client
-    (dom/td (dom/text source-measurement-type))
+  ; rendering nil rows helps with overquery - offscreen rows must have a height even past the end of the list
+  (e/server
+    (dom/td (when ?x (dom/text source-measurement-type)))
 
     (dom/td
-      (let [used-count (count used-by-ehrs)
-            override-count (count override-ehrs)]
-        (dom/div (if (pos? used-count) (dom/text used-count " usage") (dom/text "Unused"))) ; green
-        (dom/div (when (pos? override-count) (dom/text #_", " override-count " custom"))))) ; blue
+      (when ?x
+        (let [used-count (count used-by-ehrs)
+              override-count (count override-ehrs)]
+          (dom/div (if (pos? used-count) (dom/text used-count " usage") (dom/text "Unused"))) ; green
+          (dom/div (when (pos? override-count) (dom/text #_", " override-count " custom")))))) ; blue
 
-    (dom/td (dom/text (if is-excluded unicode-no-entry-sign unicode-long-rightwards-arrow)))
+    (dom/td (when ?x (dom/text (if is-excluded unicode-no-entry-sign unicode-long-rightwards-arrow))))
 
     ; tooltip metadata form
     (dom/td
-      (dom/div (dom/text display))
-      (dom/div (dom/text code) (dom/text " ") (dom/text system)))
+      (when ?x
+        (dom/div (dom/text display))
+        (dom/div (dom/text code) (dom/text " ") (dom/text system))))
     (dom/td
-      (dom/div
-        #_(dom/text "Value: ")
-        (dom/text (cond
-                    omit-value "Omitted" ; text-emerald-600 font-bold
-                    value (str value " (static)") ; text-emerald-600 font-bold
-                    (not= 1 (or unit-factor 1)) (str "\u00D7" unit-factor " (factored)")
-                    :else "Pass-through" ; text-gray-500 dark:text-gray-400 font-bold
-                    ))
-        #_(dom/text ", Unit: ") (when unit (dom/text " (" unit ")")))
-      (dom/div
-        (dom/text "Min: ") (dom/text (or min-value "-"))
-        (dom/text " / Max: ") (dom/text (or max-value "-"))))
+      (when ?x
+        (dom/div
+          #_(dom/text "Value: ")
+          (dom/text (cond
+                      omit-value "Omitted" ; text-emerald-600 font-bold
+                      value (str value " (static)") ; text-emerald-600 font-bold
+                      (not= 1 (or unit-factor 1)) (str "\u00D7" unit-factor " (factored)")
+                      :else "Pass-through" ; text-gray-500 dark:text-gray-400 font-bold
+                      ))
+          #_(dom/text ", Unit: ") (when unit (dom/text " (" unit ")")))
+        (dom/div
+          (dom/text "Min: ") (dom/text (or min-value "-"))
+          (dom/text " / Max: ") (dom/text (or max-value "-")))))
     (dom/td
-      (dom/text unicode-lower-right-pencil)
-      (dom/text unicode-no-entry-sign)
-      (dom/text unicode-wastebasket))))
+      (when ?x
+        (dom/text unicode-lower-right-pencil)
+        (dom/text unicode-no-entry-sign)
+        (dom/text unicode-wastebasket)))))
 
 (e/defn Ehr-type-filters [xs-indexed!]
   (e/client
