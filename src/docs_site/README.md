@@ -18,4 +18,11 @@ docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
 # fly deploy via Dockerfile
 fly deploy --remote-only --config src/docs_site/fly.toml --dockerfile src/docs_site/Dockerfile
+fly status
+fly scale show
+fly scale count 1 --region ewr
+fly scale count 1 --region cdg
+fly scale count 1 --region sjc
+fly scale count 1 --region gru
+fly platform vm-sizes
 ```
