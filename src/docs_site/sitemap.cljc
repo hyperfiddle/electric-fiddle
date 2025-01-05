@@ -5,6 +5,7 @@
 
             datomic-browser.mbrainz-browser
             [dustingetz.unifhir1 :refer [Unifhir1]]
+            [dustingetz.threaddump :refer [ThreadDump]]
             [electric-tutorial.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             staffly.staffly
             ))
@@ -19,7 +20,8 @@
      #_#_'demo (e/Partial Tutorial demo-sitemap "src/docs_site/demos/")}
     (TutorialFiddles)
     (datomic-browser.mbrainz-browser/Fiddles)
-    {`Unifhir1 Unifhir1}
+    {`Unifhir1 Unifhir1
+     `ThreadDump ThreadDump}
     (staffly.staffly/Fiddles)))
 
 (e/defn ProdMain [ring-req]

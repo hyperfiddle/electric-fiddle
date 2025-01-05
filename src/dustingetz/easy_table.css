@@ -4,7 +4,7 @@
 .dustingetz-EasyTable table { display: grid; }
 .dustingetz-EasyTable table tr { display: contents; }
 .dustingetz-EasyTable table td { grid-row: var(--order); }
-/* .dustingetz-EasyTable table td { height: var(--row-height); } */
+.dustingetz-EasyTable table td { height: var(--row-height); } /* support empty rows */
 
 /* standard grid cosmetic (optional) */
 .dustingetz-EasyTable fieldset { padding: 0; padding-left: 0.5em; background-color: white; }

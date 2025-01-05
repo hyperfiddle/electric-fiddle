@@ -13,7 +13,7 @@
   (dom/div (dom/props {:class "Viewport"})
     (let [row-height 24 ; todo parameterize and inject css var
           [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
-      (dom/table (dom/props {:style {:--row-height row-height
+      (dom/table (dom/props {:style {:--row-height (str row-height "px")
                                      :position "relative" :top (str (* offset row-height) "px")}})
         (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
           (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})

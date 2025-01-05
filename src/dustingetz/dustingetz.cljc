@@ -17,12 +17,14 @@
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
             [dustingetz.painter :refer [Painter]]
+            [dustingetz.threaddump :refer [ThreadDump]]
             [dustingetz.y-fac :refer [Y-Fac]]
             [dustingetz.y-dir :refer [Y-dir]]))
 
 (e/defn Fiddles []
   (merge
-    {`DemoEasyTable DemoEasyTable}
+    {`DemoEasyTable DemoEasyTable
+     `ThreadDump ThreadDump}
     {`DirectoryExplorer DirectoryExplorer
      `DirectoryExplorer1 DirectoryExplorer1
      `DirectoryExplorer2 DirectoryExplorer2
