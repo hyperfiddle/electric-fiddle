@@ -1,0 +1,15 @@
+/* Scroll machinery */
+.dustingetz-EasyTable { position: fixed; } /* mobile: don't allow momentum scrolling on page */
+.dustingetz-EasyTable .Viewport { height: 100%; overflow-x:hidden; overflow-y:auto; }
+.dustingetz-EasyTable table { display: grid; }
+.dustingetz-EasyTable table tr { display: contents; }
+.dustingetz-EasyTable table td { grid-row: var(--order); }
+/* .dustingetz-EasyTable table td { height: var(--row-height); } */
+
+/* standard grid cosmetic (optional) */
+.dustingetz-EasyTable fieldset { padding: 0; padding-left: 0.5em; background-color: white; }
+.dustingetz-EasyTable legend { margin-left: 1em; font-size: larger; }
+.dustingetz-EasyTable legend > input[type=text] { vertical-align: middle; }
+.dustingetz-EasyTable table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dustingetz-EasyTable table tr[data-row-stripe='0'] td { background-color: #f2f2f2; }
+.dustingetz-EasyTable table tr:hover td { background-color: #ddd; }

@@ -1,5 +1,6 @@
 (ns dustingetz.dustingetz
   (:require [hyperfiddle.electric3 :as e]
+            [dustingetz.easy-table :refer [DemoEasyTable]]
             [dustingetz.explorer :refer [DirectoryExplorer]]
             [dustingetz.explorer1 :refer [DirectoryExplorer1]]
             [dustingetz.explorer2 :refer [DirectoryExplorer2]]
@@ -21,6 +22,7 @@
 
 (e/defn Fiddles []
   (merge
+    {`DemoEasyTable DemoEasyTable}
     {`DirectoryExplorer DirectoryExplorer
      `DirectoryExplorer1 DirectoryExplorer1
      `DirectoryExplorer2 DirectoryExplorer2
