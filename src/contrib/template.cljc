@@ -1,5 +1,5 @@
 (ns contrib.template
-  #?(:cljs (:require-macros [contrib.template :refer [comptime-resource]]))
+  #?(:cljs (:require-macros [contrib.template :refer [comptime-resource comptime-inline]]))
   (:require clojure.edn
             #?(:clj clojure.java.io)
             clojure.string
@@ -7,6 +7,9 @@
 
 (defmacro comptime-resource [filename]
   (some-> filename clojure.java.io/resource slurp clojure.edn/read-string))
+
+(defmacro comptime-inline [filename]
+  (some-> filename clojure.java.io/resource slurp))
 
 (defn template 
   "In string template `<div>$:foo/bar$</div>`, replace all instances of $key$ 
