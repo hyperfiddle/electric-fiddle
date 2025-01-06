@@ -9,19 +9,19 @@
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]))
 
 (e/defn TableScroll [record-count Row]
-  #_(e/server)
+  #_(e/server) ; user controls site
   (dom/div (dom/props {:class "Viewport"})
     (let [row-height 24 ; todo parameterize and inject css var
-          [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
-      (dom/table (dom/props {:style {:--row-height (str row-height "px")
+          [offset limit] (Scroll-window row-height record-count dom/node {})]
+      (dom/table (dom/props {:style {:--row-height (str row-height "px") ; blank
                                      :position "relative" :top (str (* offset row-height) "px")}})
-        (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
+        (e/for [i (IndexRing limit offset)] ; render all rows even when record-count < limit
           (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
             (Row i))))
       (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                   (* row-height (- record-count limit)) 0) "px")}})))))
 
-(e/defn Load-css [resource-path]
+(e/defn Load-css [resource-path] ; adds latency to css which can jank layout for client-sited tables
   (dom/style (dom/text (e/server (some-> (clojure.java.io/resource resource-path) slurp-safe)))))
 
 (e/defn EasyTable [title query Row]
@@ -40,7 +40,6 @@
             (TableScroll n
               (e/fn [i]
                 (when-some [x (nth xs! i nil)] ; fixme no overscroll
-                  ; beware glitched nil pass through
                   (Row x))))))))))
 
 ;; Example integration
