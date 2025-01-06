@@ -24,9 +24,9 @@
 
 (defn title [m] (name (::id m)))
 
-(e/defn Nav [essay-config cur-page footer?] #_[& [directive alt-text target-s ?wrap :as route]]
+(e/defn Nav [sitemap cur-page footer?] #_[& [directive alt-text target-s ?wrap :as route]]
   (e/client
-    (let [essay-index (index-essay-index essay-config)
+    (let [essay-index (index-essay-index sitemap)
           [prev next] (Get-prev-next essay-index cur-page)]
       #_(println `prev cur-page prev next)
       (dom/div {} (dom/props {:class [(if footer? "user-examples-footer-nav" "user-examples-nav")
@@ -40,7 +40,7 @@
           (svg/svg (dom/props {:viewBox "0 0 20 20"})
             (svg/path (dom/props {:d "M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"})))
           (dom/select
-            (e/for [[group-label entries] (e/diff-by {} essay-config)]
+            (e/for [[group-label entries] (e/diff-by {} sitemap)]
               (dom/optgroup (dom/props {:label group-label})
                 (e/for [page (e/diff-by {} entries)]
                   (let [m (essay-index page)]

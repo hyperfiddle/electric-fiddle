@@ -1,4 +1,4 @@
-(ns electric-tutorial.tutorial-sitemap
+(ns docs-site.tutorial-sitemap
   (:require [hyperfiddle.electric3 :as e]
 
             ; Part 1

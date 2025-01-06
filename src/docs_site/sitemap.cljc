@@ -2,22 +2,23 @@
   (:require [hyperfiddle.electric3 :as e]
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [electric-essay.tutorial-app :refer [Tutorial]]
+            [electric-essay.essay-app :refer [Essay]]
 
             datomic-browser.mbrainz-browser
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [dustingetz.threaddump :refer [ThreadDump]]
-            [electric-tutorial.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
+            [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             staffly.staffly
             ))
 
-(def demo-sitemap
-  [["Demos"
-    ['explorer]]])
+(def blog-sitemap
+  [["Blog"
+    ['hello]]])
 
 (e/defn Fiddles []
   (merge
     {'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
-     #_#_'demo (e/Partial Tutorial demo-sitemap "src/docs_site/demos/")}
+     'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")}
     (TutorialFiddles)
     (datomic-browser.mbrainz-browser/Fiddles)
     {`Unifhir1 Unifhir1
