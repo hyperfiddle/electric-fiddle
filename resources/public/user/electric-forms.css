@@ -190,10 +190,11 @@ form :is(input, button)[type=submit][aria-invalid=true] {
     background-color: pink;
 }
 
-form :is(input, button)[type=submit][data-tx-status=accepted]{
+form :is(input, button)[type=submit][data-tx-status=accepted]:not([aria-disabled])
+/* :not([aria-disabled]) ensures success color reverts as soon as users edit the form again */
+{
     background-color: rgb(34 197 94); /* tw text-green-500 */
 }
-
 
 form input:is([type=checkbox],[type=radio])[aria-busy=true] {
     /* Can't color or background-color native checkboxes
