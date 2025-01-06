@@ -21,7 +21,7 @@
       (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                   (* row-height (- record-count limit)) 0) "px")}})))))
 
-(e/defn Load-css [resource-path] ; adds latency to css which can jank layout for client-sited tables
+(e/defn Load-css [resource-path]
   (dom/style (dom/text (e/server (some-> (clojure.java.io/resource resource-path) slurp-safe)))))
 
 (e/defn EasyTable [title query Row]

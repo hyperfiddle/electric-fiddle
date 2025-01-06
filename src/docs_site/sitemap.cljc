@@ -7,23 +7,35 @@
             datomic-browser.mbrainz-browser
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [dustingetz.threaddump :refer [ThreadDump]]
+            [docs-site.blog.threaddump1 :refer [ThreadDump1]]
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             staffly.staffly
             ))
 
 (def blog-sitemap
   [["Blog"
-    ['hello]]])
+    ['y20250106_threaddump_part1]]])
+
+(e/defn BlogFiddles []
+  {`ThreadDump1 ThreadDump1})
+
+(e/defn Utilities []
+  {`ThreadDump ThreadDump})
+
+(e/defn SecretDemos []
+  (merge
+    (datomic-browser.mbrainz-browser/Fiddles)
+    (staffly.staffly/Fiddles)
+    {`Unifhir1 Unifhir1}))
 
 (e/defn Fiddles []
   (merge
     {'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
      'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")}
     (TutorialFiddles)
-    (datomic-browser.mbrainz-browser/Fiddles)
-    {`Unifhir1 Unifhir1
-     `ThreadDump ThreadDump}
-    (staffly.staffly/Fiddles)))
+    (BlogFiddles)
+    (SecretDemos)
+    (Utilities)))
 
 (e/defn ProdMain [ring-req]
   ; keep /tutorial/ in the URL

@@ -85,7 +85,7 @@
 
 (def css "
 /* Scroll machinery */
-.DirectoryExplorer .Viewport { overflow-x:hidden; overflow-y:auto; }
+.DirectoryExplorer .Viewport { height: 100%; overflow-x:hidden; overflow-y:auto; }
 .DirectoryExplorer table { display: grid; }
 .DirectoryExplorer table tr { display: contents; visibility: var(--visibility); }
 .DirectoryExplorer table td { grid-row: var(--order); }
@@ -93,7 +93,6 @@
 /* fullscreen, except in tutorial mode */
 .Tutorial > .DirectoryExplorer fieldset { height: 30em; } /* max-height doesn't work - fieldset quirk */
 :not(.Tutorial) > .DirectoryExplorer fieldset { position:fixed; top:0em; bottom:0; left:0; right:0; }
-.DirectoryExplorer div.Viewport { height: 100%; }
 
 /* Cosmetic styles */
 .DirectoryExplorer fieldset { padding: 0; padding-left: 0.5em; background-color: white; }

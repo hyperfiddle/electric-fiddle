@@ -1,13 +1,12 @@
 (ns dustingetz.threaddump
   #?(:clj (:import [java.lang.management ManagementFactory]))
-  (:require clojure.core.protocols
-            clojure.string
+  (:require clojure.string
             [contrib.str :refer [includes-str?]]
             [dustingetz.easy-table :refer [EasyTable]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
-#?(:clj (defn get-thread-dump []
+#?(:clj (defn get-thread-dump [] ; thanks claude
           (let [thread-bean (ManagementFactory/getThreadMXBean)
                 thread-infos (.dumpAllThreads thread-bean true true)]
             (apply str
@@ -16,34 +15,32 @@
 
 (declare css)
 (e/defn ThreadDump []
-  (e/client (dom/props {:class "ThreadDump"}) (dom/style (dom/text css))
-    (EasyTable "Thread Dumper"
-      (e/server (fn query [search]
-                  (let [dump-str (get-thread-dump)]
-                    (->> (clojure.string/split-lines dump-str)
-                      (filter #(includes-str? % search))
-                      vec))))
-      (e/fn Row [x] (dom/td (dom/text (or x ".")))))))
+  (e/client
+    (dom/div
+      (dom/props {:class "ThreadDump"}) (dom/style (dom/text css))
+      (EasyTable "Thread Dumper"
+        (e/server (fn query [search]
+                    (let [dump-str (get-thread-dump)]
+                      (->> (clojure.string/split-lines dump-str)
+                        (filter #(includes-str? % search))
+                        vec))))
+        (e/fn Row [x] (dom/td (dom/text (or x "."))))))))
 
 (def css "
-.ThreadDump fieldset { position:fixed; top:0em; bottom:0; left:0; right:0; }
-.ThreadDump table { grid-template-columns: auto; }
-")
+.ThreadDump > fieldset { position:fixed; top:0em; bottom:0; left:0; right:0; }
+.ThreadDump table { grid-template-columns: 1fr; }")
 
-(comment
-  (let [dump-str (get-thread-dump)]
-    (->> (clojure.string/split-lines dump-str)
-      #_(filter #(includes-str? % search))
-      vec))
-  )
+
 
 (comment
   (require '[clojure.datafy :refer [datafy]])
   (def x (ManagementFactory/getThreadMXBean))
+  (tap> x)
   (datafy (type x))
   (datafy com.sun.management.ThreadMXBean)
   (datafy java.lang.management.ThreadMXBean)
-  (datafy sun.management.ThreadImpl)
+  (tap> sun.management.ThreadImpl)
+  com.sun.management.internal.HotSpotThreadImpl
   (type x)
   (def y (.dumpAllThreads x true true))
   (type y)
