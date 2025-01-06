@@ -150,6 +150,10 @@ form dd :is([role=radiogroup], input)[data-errormessage]{
     --error-message: attr(data-errormessage);
 }
 
+form :is([role=radiogroup]) dd:has(:invalid)::after{
+    --error-message: ""; /* Silence radio-level error message. Message already rendered at the radiogroup level. */
+}
+
 /* Form-level error message */
 form:has([type=submit]:is([aria-invalid=true], [aria-busy=true])) /* form is invalid or committing */
         > [data-role=errormessage]
