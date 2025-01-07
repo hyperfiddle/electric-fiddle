@@ -4,8 +4,11 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :as cqrs :refer
+             [#_Input! #_Checkbox! #_Checkbox* #_Button!
+              #_Form! Service PendingController try-ok effects*]]
+            [hyperfiddle.electric-forms3 :as cqrs3 :refer
              [Input! Checkbox! Checkbox* Button!
-              Form! Service PendingController try-ok effects*]]
+              Form! #_#_#_#_Service PendingController try-ok effects*]]
             [dustingetz.trivial-datascript-form :refer [#?(:clj transact-unreliable)]]))
 
 (defn stable-kf [tempids-rev {:keys [:db/id]}]
@@ -48,7 +51,7 @@
 
 (e/defn TodoCreate []
   (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
-    :genesis true ; immediately consume form, ready for next submit
+    #_#_:genesis true ; immediately consume form, ready for next submit
     :commit (fn [{v ::create :as dirty-form} tempid]
               (prn 'TodoCreate-commit dirty-form)
               [[`Create-todo tempid v] {tempid {:db/id tempid :task/description v :task/status :active}}])
@@ -69,7 +72,7 @@
                                                {id (assoc m :task/description v)}])
           :show-buttons show-buttons*
           :debug debug*)
-        (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
+        (Form! (Button! :label "X" :class "destroy" :disabled (some? pending))
           :auto-submit (not show-buttons*) :show-buttons show-buttons*
           :name ::destroy
           :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))
