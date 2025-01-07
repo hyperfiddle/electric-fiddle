@@ -6,7 +6,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
-#?(:clj (defn get-thread-dump []
+#?(:clj (defn get-thread-dump [] ; claude
           (let [thread-bean (ManagementFactory/getThreadMXBean)
                 thread-infos (.dumpAllThreads thread-bean true true)]
             (apply str
