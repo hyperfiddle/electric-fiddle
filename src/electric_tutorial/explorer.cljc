@@ -33,7 +33,7 @@
 (e/defn Row [i ?x]
   (e/client
     (let [?tab (e/server (some-> ?x (nth 0))) ; destructure on server, todo electric can auto-site this
-          ?x (e/server (some-> ?x (nth 1)))]
+          ?x (e/server (some-> ?x (nth 1) datafy))]
       (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
         (dom/td (Render-cell ?x ::fs/name) (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}}))
         (dom/td (Render-cell ?x ::fs/modified))
@@ -54,7 +54,7 @@
 (e/defn Dir [m]
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          xs! (vec ((treelister ::fs/children #(includes-str? (::fs/name %) %2)
+          xs! (vec ((treelister (comp ::fs/children datafy) #(includes-str? (::fs/name %) %2)
                       (nav m ::fs/children (::fs/children m))) search))
           n (count xs!)]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
@@ -81,7 +81,8 @@
   (def xs (nav m ::fs/children (::fs/children m)))
   (def xs ((treelister ::fs/children #(includes-str? (::fs/name %) %2) xs) ""))
   (count (seq xs))
-  (def qs (take 10 xs)))
+  (def qs (take 10 xs))
+  (first qs))
 
 (def css "
 /* Scroll machinery */
