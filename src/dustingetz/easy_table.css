@@ -1,7 +1,7 @@
 /* Scroll machinery */
 .dustingetz-EasyTable { position: fixed; } /* mobile: don't allow momentum scrolling on page */
 .dustingetz-EasyTable .Viewport { height: 100%; overflow-x:hidden; overflow-y:auto; }
-.dustingetz-EasyTable table { display: grid; }
+.dustingetz-EasyTable table { position: relative; display: grid; }
 .dustingetz-EasyTable table tr {
   height: var(--row-height); grid-row: var(--order);
   display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }

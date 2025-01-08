@@ -9,21 +9,23 @@
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]))
 
 (e/defn TableScroll [record-count Row]
-  #_(e/server) ; user controls site
-  (dom/div (dom/props {:class "Viewport"})
-    (let [row-height 24 ; todo parameterize and inject css var
-          [offset limit] (Scroll-window row-height record-count dom/node {})]
-      (dom/table (dom/props {:style {:--row-height (str row-height "px") ; blank
-                                     :position "relative" :top (str (* offset row-height) "px")}})
-        (let [selected (dom/On "focusin" (fn [event] (-> event .-target (aget "tablescroll-row-id"))) nil)]
-          (e/for [i (IndexRing limit offset)] ; render all rows even when record-count < limit
-            (dom/tr (Row i) ; site neutral row
-              (e/client
-                (aset dom/node "tablescroll-row-id" i)
-                (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)
-                            :tabindex "0" :aria-selected (e/client (= i selected))}))))))
-      (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
-                                                  (* row-height (- record-count limit)) 0) "px")}})))))
+  (e/client
+    (dom/div (dom/props {:class "Viewport"})
+      (let [row-height 24 ; todo parameterize
+            [offset limit] (Scroll-window row-height record-count dom/node {})]
+        (e/amb
+          (dom/table (dom/props {:style {:--row-height (str row-height "px") :top (str (* offset row-height) "px")}})
+            (let [selected (dom/On "focusin" (fn [event] (-> event .-target (aget "tablescroll-row-id"))) nil)]
+              (e/server
+                (e/for [i (IndexRing limit offset)] ; render all rows even when record-count < limit
+                  (e/client
+                    (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)
+                                        :tabindex "0" :aria-selected (= i selected)})
+                      (aset dom/node "tablescroll-row-id" i) ; Number
+                      (e/server (Row i))))))
+              selected))
+          (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
+                                                      (* row-height (- record-count limit)) 0) "px")}})))))))
 
 (e/defn Load-css [resource-path]
   (dom/style (dom/text (e/server (some-> (clojure.java.io/resource resource-path) slurp-safe)))))
@@ -32,19 +34,19 @@
   (e/client
     (dom/props {:class "dustingetz-EasyTable"})
     (Load-css "dustingetz/easy_table.css")
-    (let [!search (atom "") search (e/watch !search)]
-      (let [xs! (e/server (query search))
-            n (e/server (count xs!))]
-        (dom/fieldset
-          (dom/legend
-            (dom/text title " ")
-            (do (reset! !search (Input* "")) (e/amb))
-            (dom/text " (" n " items) "))
-          (e/server ; user controls TableScroll e/for site
-            (TableScroll n
-              (e/fn [i]
-                (when-some [x (nth xs! i nil)] ; fixme no overscroll
-                  (Row x))))))))))
+    (let [!search (atom "") search (e/watch !search)
+          xs! (e/server (query search))
+          n (e/server (count xs!))]
+      (dom/fieldset
+        (dom/legend
+          (dom/text title " ")
+          (do (reset! !search (Input* "")) (e/amb))
+          (dom/text " (" n " items) "))
+        (TableScroll n
+          (e/fn [i]
+            (e/server
+              (when-some [x (nth xs! i nil)] ; fixme no overscroll
+                (Row x)))))))))
 
 ;; Example integration
 
