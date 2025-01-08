@@ -146,14 +146,13 @@
 .Explorer { position: fixed; } /* mobile: don't allow momentum scrolling on page */
 .Explorer .Viewport { height: 100%; overflow-x:hidden; overflow-y:auto; }
 .Explorer table { display: grid; }
-.Explorer table tr { display: contents; visibility: var(--visibility); }
-.Explorer table td { grid-row: var(--order); }
+.Explorer table tr { height: 48px; grid-row: var(--order); display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
 
 /* Cosmetic grid standard */
 .Explorer fieldset { padding: 0; padding-left: 0.5em; background-color: white; }
 .Explorer legend { margin-left: 1em; font-size: larger; }
 .Explorer legend > input[type=text] { vertical-align: middle; }
-.Explorer table td { height: 48px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.Explorer table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .Explorer table tr[data-row-stripe='0'] td { background-color: #f2f2f2; }
 .Explorer table tr:hover td { background-color: #ddd; }
 
