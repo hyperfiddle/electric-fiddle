@@ -15,9 +15,13 @@
           [offset limit] (Scroll-window row-height record-count dom/node {})]
       (dom/table (dom/props {:style {:--row-height (str row-height "px") ; blank
                                      :position "relative" :top (str (* offset row-height) "px")}})
-        (e/for [i (IndexRing limit offset)] ; render all rows even when record-count < limit
-          (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
-            (Row i))))
+        (let [selected (dom/On "focusin" (fn [event] (-> event .-target (aget "tablescroll-row-id"))) nil)]
+          (e/for [i (IndexRing limit offset)] ; render all rows even when record-count < limit
+            (dom/tr (Row i) ; site neutral row
+              (e/client
+                (aset dom/node "tablescroll-row-id" i)
+                (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)
+                            :tabindex "0" :aria-selected (e/client (= i selected))}))))))
       (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                   (* row-height (- record-count limit)) 0) "px")}})))))
 
