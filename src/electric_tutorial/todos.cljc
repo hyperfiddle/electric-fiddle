@@ -3,8 +3,9 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :as cqrs :refer  [Service PendingController try-ok effects*]]
-            [hyperfiddle.electric-forms3 :as cqrs3 :refer [Input! Checkbox! Checkbox* Button! Form!]]
+            [hyperfiddle.electric-forms3 :as cqrs
+             :refer [Input! Checkbox! Checkbox* Button! Form!
+                     Service PendingController try-ok effects*]]
             [dustingetz.trivial-datascript-form :refer [#?(:clj transact-unreliable)]]))
 
 (defn stable-kf [tempids-rev {:keys [:db/id]}]
