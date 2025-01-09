@@ -164,7 +164,7 @@
               debug* (Checkbox* false :label "debug")
               slow* (Checkbox* true :label "latency")
               fail* (Checkbox* false :label "failure" :disabled true)
-              show-buttons* (Checkbox* false :label "show-buttons" :disabled false)
+              show-buttons* (Checkbox* false :label "show-buttons")
               !tx-report (e/server (atom {:db-after @!conn}))]
       debug* slow* fail* show-buttons*
 
