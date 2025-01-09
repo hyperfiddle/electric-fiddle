@@ -7,6 +7,13 @@
     /* padding: 0.2rem; */ /* so we can see background-color */
 }
 
+/* forms3 with field and form validation injects a <p data-role="errormessage"> next to form controls.
+   Silence it for current tutorials. Enable it if needed.
+*/
+.user-examples-target form [data-role=errormessage] {
+    display: none;
+}
+
 /* Toggle, TemperatureConverter, TodoMVC */
 .user-examples-target dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
 .user-examples-target dt { grid-column: 1; font-weight: 700; }

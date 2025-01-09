@@ -3,12 +3,8 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :as cqrs :refer
-             [#_Input! #_Checkbox! #_Checkbox* #_Button!
-              #_Form! Service PendingController try-ok effects*]]
-            [hyperfiddle.electric-forms3 :as cqrs3 :refer
-             [Input! Checkbox! Checkbox* Button!
-              Form! #_#_#_#_Service PendingController try-ok effects*]]
+            [hyperfiddle.electric-forms0 :as cqrs :refer  [Service PendingController try-ok effects*]]
+            [hyperfiddle.electric-forms3 :as cqrs3 :refer [Input! Checkbox! Checkbox* Button! Form!]]
             [dustingetz.trivial-datascript-form :refer [#?(:clj transact-unreliable)]]))
 
 (defn stable-kf [tempids-rev {:keys [:db/id]}]
@@ -51,7 +47,7 @@
 
 (e/defn TodoCreate []
   (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
-    #_#_:genesis true ; immediately consume form, ready for next submit
+    :genesis true ; immediately consume form, ready for next submit
     :commit (fn [{v ::create :as dirty-form} tempid]
               (prn 'TodoCreate-commit dirty-form)
               [[`Create-todo tempid v] {tempid {:db/id tempid :task/description v :task/status :active}}])
@@ -168,7 +164,7 @@
               debug* (Checkbox* false :label "debug")
               slow* (Checkbox* true :label "latency")
               fail* (Checkbox* false :label "failure" :disabled true)
-              show-buttons* (Checkbox* false :label "show-buttons" :disabled true)
+              show-buttons* (Checkbox* false :label "show-buttons" :disabled false)
               !tx-report (e/server (atom {:db-after @!conn}))]
       debug* slow* fail* show-buttons*
 

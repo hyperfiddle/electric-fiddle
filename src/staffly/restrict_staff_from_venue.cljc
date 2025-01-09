@@ -83,7 +83,7 @@
         :debug false ; true | false | :verbose
         :commit ; map fields to a command
         (fn [{::keys [venue block-reason block-mode penalize]}] ; fields addressed by name
-          [`Restrict-staff-from-venue e (:venue/id venue) (:db/ident block-reason) block-mode penalize]) ; command as a value, to be interpreted later
+          [[`Restrict-staff-from-venue e (:venue/id venue) (:db/ident block-reason) block-mode penalize]]) ; command as a value, to be interpreted later
         :Validate ValidateFormCommand
         :Accepted (e/fn [] ; Redirect to entity page 2s after accepted transaction
                     (r/Navigate! ['.. [:staff e]] 2000))))))
