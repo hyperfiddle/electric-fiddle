@@ -183,14 +183,19 @@ form :where(:is([type=submit], [type=reset]):not(:disabled):hover){
     background-color: whitesmoke;
 }
 
-form [aria-busy=true] {background-color: yellow;}
+form [aria-busy=true]
+, button[aria-busy=true]
+{background-color: yellow;}
 
 /* tx-status on commit button */
-form :is(input, button)[type=submit][aria-invalid=true] {
+form :is(input, button)[type=submit][aria-invalid=true]
+, button[aria-invalid=true]
+{
     background-color: pink;
 }
 
 form :is(input, button)[type=submit][data-tx-status=accepted]:not([aria-disabled])
+, button[data-tx-status=accepted]:not([aria-disabled])
 /* :not([aria-disabled]) ensures success color reverts as soon as users edit the form again */
 {
     background-color: rgb(34 197 94); /* tw text-green-500 */

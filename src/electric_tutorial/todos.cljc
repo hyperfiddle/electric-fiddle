@@ -68,7 +68,7 @@
                                                {id (assoc m :task/description v)}])
           :show-buttons show-buttons*
           :debug debug*)
-        (Form! (Button! :label "X" :class "destroy" :disabled (some? pending))
+        (Form! (Button! nil :label "X" :class "destroy" :disabled (some? pending))
           :auto-submit (not show-buttons*) :show-buttons show-buttons*
           :name ::destroy
           :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))

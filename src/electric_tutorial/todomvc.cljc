@@ -3,9 +3,9 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :as cqrs :refer
-             [Input! Input Checkbox! Button! Form! Service]]
-            [hyperfiddle.input-zoo0 :refer [InputSubmitCreate!]]))
+            [hyperfiddle.electric-forms0 :as cqrs :refer [#_#_#_#_#_Input! Input Checkbox! Button! Form! Service]]
+            [hyperfiddle.electric-forms3 #_#_:as cqrs :refer [Input! Input Checkbox! Button! Form! #_Service]]
+            ))
 
 #?(:clj
    (defn query-todos [db filter]
@@ -45,10 +45,7 @@
             (dom/li (Filter-control (::filter state) :done "Completed"))))
 
         (when (pos? done)
-          (dom/button (dom/props {:class "clear-completed"})
-            (dom/text "Clear completed " done)
-            (e/for [[t _] (dom/On-all "click" (constantly true))]
-              [t [`Clear-completed] {}])))))))
+          (Button! [`Clear-completed] :class "clear-completed", :label "Clear completed"))))))
 
 (e/defn TodoItem [db state id]
   (let [!e (e/server (d/entity db id))
@@ -76,7 +73,7 @@
               :commit (fn [{v :task/description}] [[`Edit-todo-desc id v] {id {:task/description v}}])
               :discard `[[Cancel-todo-edit-desc] {id {}}] ; todo guess :retractEntity
               :show-buttons false)))
-        (Button! [`Delete-todo id] :class "destroy"))))) ; missing prediction
+        (Button! [`Delete-todo id] :class "destroy"))))) ; missing prediction ; should Button! be wrapped in (Form! …) ?
 
 (e/defn Query-todos [db filter edits]
   (e/server (e/diff-by identity (sort (query-todos db filter)))))
@@ -101,10 +98,11 @@
 
 (e/defn CreateTodo []
   (dom/span (dom/props {:class "input-load-mask"})
-    #_(Form :show-buttons false) ; todo?
-    (e/for [[t v] (InputSubmitCreate! :class "new-todo input-load-mask"
-                    :placeholder "What needs to be done?")]
-      [t [`Create-todo v] {t {:task/description v, :task/status :active}}])))
+    (Form! (Input! :task/description "" :placeholder "What needs to be done?" :class "new-todo input-load-mask")
+      :genesis true
+      :commit (fn [{:keys [task/description]}]
+                [[`Create-todo description] {:task/description description, :task/status :active}])
+      :show-buttons false)))
 
 (e/defn TodoMVC-UI [db state edits]
   (dom/section (dom/props {:class "todoapp"})
