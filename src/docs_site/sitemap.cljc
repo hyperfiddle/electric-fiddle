@@ -5,6 +5,7 @@
             [electric-essay.essay-app :refer [Essay]]
 
             datomic-browser.mbrainz-browser
+            [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [dustingetz.threaddump :refer [ThreadDump]]
             [docs-site.blog.threaddump1 :refer [ThreadDump1]]
@@ -14,10 +15,13 @@
 
 (def blog-sitemap
   [["Blog"
-    ['y20250106_threaddump_part1]]])
+    ['index
+     'y20250106_threaddump_part1
+     'y20250109_datafy]]])
 
 (e/defn BlogFiddles []
-  {`ThreadDump1 ThreadDump1})
+  {`BlogIndex (e/Partial BlogIndex blog-sitemap)
+   `ThreadDump1 ThreadDump1})
 
 (e/defn Utilities []
   {`ThreadDump ThreadDump})
