@@ -65,6 +65,7 @@
     io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}
     org.clojure/core.match {:mvn/version "1.1.0"} ; staffly, todos
     org.apache.tika/tika-core {:mvn/version "1.24"} ; explorer: datafy-fs
+    clj-jgit/clj-jgit {:mvn/version "1.0.2"} ; blog
     }
    #_#_:override-deps ; uberjar sees only this one alias
    {com.hyperfiddle/electric {:local/root "vendor/electric"}
