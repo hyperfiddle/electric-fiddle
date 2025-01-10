@@ -35,9 +35,12 @@ RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
     :hyperfiddle.fiddle-build/fiddle-deps-alias $HYPERFIDDLE_FIDDLE_DEPS_ALIAS \
     :hyperfiddle.fiddle-build/jar-name app.jar
 
+RUN mv .git git # bypass security
+
 FROM amazoncorretto:11 AS app
 WORKDIR /app
 #RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends netcat
+COPY --from=build /app/git .git
 COPY --from=build /app/target/app.jar app.jar
 COPY --from=datomic-fixtures /app/state state
 COPY src/datomic_browser/prod.sh prod.sh

@@ -10,6 +10,8 @@
             [hyperfiddle.router3 :as r]
             [dustingetz.edn-viewer0 :refer [EdnViewer0]]))
 
+#?(:clj (def !git (delay (dustingetz.datafy-git/load-repo "./"))))
+
 (e/defn ThreadDump2 []
   (e/client
     (let [!selected (atom :thread) selected (e/watch !selected)]
@@ -24,6 +26,6 @@
           (case selected
             :thread (ManagementFactory/getThreadMXBean)
             :thread-meta java.lang.management.ThreadMXBean
-            :git (dustingetz.datafy-git/load-repo "./")
+            :git @!git
             :git-meta org.eclipse.jgit.api.Git
             (e/amb)))))))
