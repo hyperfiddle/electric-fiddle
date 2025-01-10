@@ -1,7 +1,7 @@
 (ns electric-tutorial.form-list ; superseded
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer
+            [hyperfiddle.electric-forms3 :refer
              [Input! Checkbox! Checkbox* Form!]]))
 
 (e/defn UserFormServer1 [{:keys [user/str1 user/num1 user/bool1]}]
