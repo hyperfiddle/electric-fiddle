@@ -68,23 +68,22 @@
         (dom/legend (dom/text (if ns? target (namespace target))))
         (CodeMirror {:parent dom/node :readonly true} identity identity src)))))
 
-(e/defn Src+Target [target ?wrap & {:keys [ns?]}]
-  #_(dom/pre (dom/text target " " ?wrap " " src))
-  #_(dom/pre (dom/text (pr-str props)))
-  (dom/div (dom/props {:class "user-examples"})
-    (Src* target :ns? ns?)
-    (Target* target ?wrap)))
-
 ; todo standardize args
 (e/defn Fn [& [target-s el-selector ?wrap]] ; todo hide code
   (e/client
-    (Src+Target (symbol target-s) (some-> ?wrap symbol)
-      :ns? false)))
+    (let [target-Fn (symbol target-s)
+          ?wrap (some-> ?wrap symbol)]
+      (dom/div (dom/props {:class "user-examples"})
+        (Src* target-Fn :ns? false)
+        (Target* target-Fn ?wrap)))))
 
 (e/defn Ns [& [target-s el-selector ?wrap]]
   (e/client
-    (Src+Target (symbol target-s) (some-> ?wrap symbol)
-      :ns? true)))
+    (let [target-Fn (symbol target-s)
+          ?wrap (some-> ?wrap symbol)]
+      (dom/div (dom/props {:class "user-examples"})
+        (Src* (symbol (namespace target-Fn)) :ns? true)
+        (Target* target-Fn ?wrap)))))
 
 (e/defn Fn-src [& [target-s el-selector ?wrap]]
   (e/client
