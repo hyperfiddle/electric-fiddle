@@ -1,6 +1,6 @@
 # Internal tools and Electric Clojure, Part 1 <span id="title-extra"><span>
 
-*by Dustin Getz, 2025 Jan 6*
+*by Dustin Getz, 2025 Jan 7*
 
 <style>
 .Tutorial .user-examples-code { max-height: 25em; }
