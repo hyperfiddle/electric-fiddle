@@ -1,7 +1,7 @@
 (ns electric-tutorial.inputs-local
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer
+            [hyperfiddle.electric-forms3 :refer
              [Input Input* Input!
              Checkbox Checkbox* Checkbox!]]))
 
