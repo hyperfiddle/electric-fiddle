@@ -3,9 +3,9 @@
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :as cqrs :refer
-             [Input! Checkbox! Checkbox* Button!
-              Form! Service PendingController try-ok effects*]]
+            [hyperfiddle.electric-forms3 :as cqrs
+             :refer [Input! Checkbox! Checkbox* Button! Form!
+                     Service PendingController try-ok effects*]]
             [dustingetz.trivial-datascript-form :refer [#?(:clj transact-unreliable)]]))
 
 (defn stable-kf [tempids-rev {:keys [:db/id]}]
@@ -69,7 +69,7 @@
                                                {id (assoc m :task/description v)}])
           :show-buttons show-buttons*
           :debug debug*)
-        (Form! (Button! {} :label "X" :class "destroy" :disabled (some? pending))
+        (Form! (Button! nil :label "X" :class "destroy" :disabled (some? pending))
           :auto-submit (not show-buttons*) :show-buttons show-buttons*
           :name ::destroy
           :commit (fn [_] [[`Delete-todo id] {id ::cqrs/retract}]))
@@ -165,7 +165,7 @@
               debug* (Checkbox* false :label "debug")
               slow* (Checkbox* true :label "latency")
               fail* (Checkbox* false :label "failure" :disabled true)
-              show-buttons* (Checkbox* false :label "show-buttons" :disabled true)
+              show-buttons* (Checkbox* false :label "show-buttons")
               !tx-report (e/server (atom {:db-after @!conn}))]
       debug* slow* fail* show-buttons*
 

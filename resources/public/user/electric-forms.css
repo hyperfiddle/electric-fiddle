@@ -183,23 +183,33 @@ form :where(:is([type=submit], [type=reset]):not(:disabled):hover){
     background-color: whitesmoke;
 }
 
-form [aria-busy=true] {background-color: yellow;}
+form [aria-busy=true]
+, button[aria-busy=true]
+{background-color: yellow;}
 
 /* tx-status on commit button */
-form :is(input, button)[type=submit][aria-invalid=true] {
+form :is(input, button)[type=submit][aria-invalid=true]
+, button[aria-invalid=true]
+{
     background-color: pink;
 }
 
 form :is(input, button)[type=submit][data-tx-status=accepted]:not([aria-disabled])
+, button[data-tx-status=accepted]:not([aria-disabled])
 /* :not([aria-disabled]) ensures success color reverts as soon as users edit the form again */
 {
     background-color: rgb(34 197 94); /* tw text-green-500 */
 }
 
-form input:is([type=checkbox],[type=radio])[aria-busy=true] {
-    /* Can't color or background-color native checkboxes
-       border and outline are tricky to get right without messing up keyboard nav */
+form input:is([type=checkbox],[type=radio])[aria-busy=true]{
+    /* Can't color or background-color native checkboxes border and outline are
+       tricky to get right without messing up keyboard nav. Not supported on safari.
+   */
     box-shadow: 0 0 0.2rem 0.2rem yellow; /* simulate a border */
     outline: none;
 }
 
+_::-webkit-full-page-media, _:future, :root /* Safari detector – selector on next line only applies to Safari https://stackoverflow.com/a/25975282 */
+form input:is([type=checkbox],[type=radio])[aria-busy=true] {
+    outline: 3px yellow solid;
+}

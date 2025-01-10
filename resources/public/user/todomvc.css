@@ -28,6 +28,11 @@
 	  appearance: none;
 }
 
+:where(.hyperfiddle .todomvc button) /* default, easy to override from other stylesheets */
+{
+	  background: none;
+}
+
 .hyperfiddle .todomvc button,
 .hyperfiddle .todomvc input[type="checkbox"] {
   outline: none;
@@ -342,6 +347,7 @@
 	margin: 2px;
 	text-decoration: none;
 	cursor: pointer; /* present like anchor */
+  background: none;
 }
 
 .hyperfiddle .todomvc .filters li button.selected {
@@ -353,14 +359,17 @@
 	position: relative;
 	line-height: 20px;
 	text-decoration: none;
-	background: rgba(0, 0, 0, 0.1);
 	font-size: 11px;
 	padding: 0 10px;
 	border-radius: 3px;
 	box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.2);
 }
 
-.hyperfiddle .todomvc .clear-completed:hover {
+.hyperfiddle .todomvc .clear-completed:not([aria-busy=true]){
+	  background: rgba(0, 0, 0, 0.1);
+}
+
+.hyperfiddle .todomvc .clear-completed:not([aria-busy=true]):hover {
 	background: rgba(0, 0, 0, 0.15);
 	box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.3);
 }
