@@ -4,7 +4,7 @@
              [clamp-left treelister includes-str?]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input*]]
+            [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.router3 :as r]
             [hyperfiddle.rcf :refer [tests]]))
