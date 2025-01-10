@@ -1,7 +1,7 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Form! Input!]]))
+            [hyperfiddle.electric-forms3 :refer [Form! Input!]]))
 
 (e/defn Login [username]
   (dom/div
