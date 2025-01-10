@@ -9,6 +9,7 @@
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [dustingetz.threaddump :refer [ThreadDump]]
             [docs-site.blog.threaddump1 :refer [ThreadDump1]]
+            [docs-site.blog.threaddump2 :refer [ThreadDump2]]
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             staffly.staffly
             ))
@@ -21,7 +22,8 @@
 
 (e/defn BlogFiddles []
   {`BlogIndex (e/Partial BlogIndex blog-sitemap)
-   `ThreadDump1 ThreadDump1})
+   `ThreadDump1 ThreadDump1
+   `ThreadDump2 ThreadDump2})
 
 (e/defn Utilities []
   {`ThreadDump ThreadDump})

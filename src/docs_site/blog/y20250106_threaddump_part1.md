@@ -30,7 +30,7 @@ How many lines of code do you think to do this? Let's count:
 
 Okay, maybe you think I'm cheating. What's that `EasyTable` thing?
 
-Well first of all, do you code your infinite scroll components by hand? No, you use some heavy React.js library from NPM that has 2000 LOC, 50 lines of JSON configuration, six wrapper divs, a bunch of css constraints to debug, and two REST APIs. Or, you use ✨ClojureScript✨, worse is better here so every enterprise table uses a *pagination bar* like it's 2009.
+Well first of all, do you code your virtual scroll components by hand? No, you use some heavy React.js library from NPM that has 2000 LOC, 50 lines of JSON configuration, six wrapper divs, a bunch of css constraints to debug, and two REST APIs. Or, you use ✨ClojureScript✨, worse is better here so every enterprise table uses a *pagination bar* like it's 2009.
 
 But still it's a fair ask to see the dependency, so let's take a look:
 
