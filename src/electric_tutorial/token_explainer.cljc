@@ -1,7 +1,7 @@
 (ns electric-tutorial.token-explainer
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Checkbox*]]))
+            [hyperfiddle.electric-forms3 :refer [Checkbox*]]))
 
 (declare css)
 (e/defn TokenExplainer []
