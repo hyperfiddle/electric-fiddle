@@ -9,7 +9,7 @@
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input*]]
+            [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.router3 :as router]))
 
@@ -54,7 +54,7 @@
 (e/defn Dir [m]
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          xs! (vec ((treelister (comp ::fs/children datafy) #(includes-str? (::fs/name %) %2)
+          xs! (vec ((treelister (comp ::fs/children datafy) #(includes-str? (::fs/name %) %2) ; FIXME ::fs/name is nil because file hasn't been datafied.
                       (nav m ::fs/children (::fs/children m))) search))
           n (count xs!)]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
