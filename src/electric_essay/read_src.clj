@@ -1,9 +1,10 @@
 (ns electric-essay.read-src
   (:import (clojure.lang RT) (java.io InputStreamReader LineNumberReader PushbackReader))
-  (:require [hyperfiddle.rcf :refer [tests]]
+  (:require [hyperfiddle.rcf :as rcf]
+            [hyperfiddle.rcf :refer [tests]]
             [clojure.java.io :as io]))
 
-(defn read-src
+(defn read-var-src
   "Returns a string of the source code for the given symbol, if it can find it. 
 This requires that the symbol resolve to a Var defined in a namespace for which 
 the .clj/cljs/cljc is in the classpath. Returns nil if it can't find the source.  
@@ -29,11 +30,11 @@ Example: (source-fn 'filter)"
               (read read-opts (PushbackReader. pbr))) ; read until form closes to infer end of fn src
             (str text)))))))
 
-(defn read-src-safe! [target] (try (read-src target) (catch Exception e (str e))))
+(defn read-var-src-safe [target] (try (read-var-src target) (catch Exception e (str e))))
 
 (tests
-  #_(read-src `electric-tutorial.input-zoo/Input*) ; works
-  (read-src `first)
+  #_(read-var-src `electric-tutorial.input-zoo/Input*) ; works
+  (read-var-src `first)
   := "(def
  ^{:arglists '([coll])
    :doc \"Returns the first item in the collection. Calls seq on its
@@ -41,16 +42,38 @@ Example: (source-fn 'filter)"
    :added \"1.0\"
    :static true}
  first (fn ^:static first [coll] (. clojure.lang.RT (first coll))))"
-  #_(read-src 'electric-tutorial.forms3-crud/expand-tx-effects))
+  #_(read-var-src 'electric-tutorial.forms3-crud/expand-tx-effects))
 
 (defn resolve-var-or-ns [sym]
+  ; careful, at times i've thought this impl unreliable but was usually user error related to REPL
   (if (qualified-symbol? sym)
     (resolve sym) (find-ns sym)))
 
-(defn read-ns-src [sym]
-  (some-> (resolve-var-or-ns sym) meta :file io/resource slurp))
+(tests
+  (-> (resolve-var-or-ns 'dev) meta :file) := "dev.cljc"
+  (some? (-> (resolve-var-or-ns 'electric-essay.read-src/read-var-src) meta :file)) := true
+  ; unreliable output?
+  ; := "electric_essay/read_src.clj" "/Users/dustin/src/hf/electric-fiddle/src/electric_essay/read_src.clj"
+  )
 
-(comment
-  (resolve-var-or-ns 'electric-fiddle.read-src/read-src)
-  (-> *1 meta :file)
-  (read-ns-src 'electric-fiddle.read-src))
+(defn -ns-resource-path [ns-sym extension] ; no cljc or cljs
+  (-> ns-sym str (.replace \. \/) (.replace \- \_) (str extension)))
+
+(tests
+  (-ns-resource-path 'dev ".clj") := "dev.clj"
+  (-ns-resource-path 'electric-essay.read-src ".clj") := "electric_essay/read_src.clj")
+
+(defn read-ns-src-unreliable [ns-sym] ; careful - meta cannot always be relied on but seems preferable
+  ; REPL namespaces don't have compiler meta
+  ; iiuc, namespaces loaded by the electric shadow hook lose file metadata
+  (let [?r (or
+             (some-> ns-sym find-ns meta :file io/resource) ; 'dev
+             (.getResource (clojure.lang.RT/baseLoader) (-ns-resource-path ns-sym ".clj"))
+             (.getResource (clojure.lang.RT/baseLoader) (-ns-resource-path ns-sym ".cljc"))
+             (.getResource (clojure.lang.RT/baseLoader) (-ns-resource-path ns-sym ".cljs")))]
+    (some-> ?r slurp)))
+
+(tests
+  (-> (read-ns-src-unreliable 'dev) (subs 0 3)) := "(ns" ; first case
+  (-> (read-ns-src-unreliable 'electric-essay.read-src) (subs 0 3)) := "(ns" ; second case
+  )

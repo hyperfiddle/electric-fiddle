@@ -3,7 +3,7 @@
   (:require [clojure.string :as str]
             [contrib.electric-codemirror :refer [CodeMirror]] ; extensions only
             [electric-fiddle.fiddle-index :refer [FiddleIndex pages]] ; why
-            #?(:clj [electric-essay.read-src :refer [read-ns-src read-src-safe!]])
+            #?(:clj [electric-essay.read-src :refer [read-ns-src-unreliable read-var-src-safe]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router3 :as r] ; for userland
@@ -61,11 +61,11 @@
 (e/defn Src* [target & {:keys [ns?]
                         :or {ns? false}}]
   (e/client
-    (let [src (e/server (if ns? (read-ns-src target)
-                          (read-src-safe! target)))]
+    (let [src (e/server (if ns? (read-ns-src-unreliable target)
+                          (read-var-src-safe target)))]
       (dom/fieldset
         (dom/props {:class "user-examples-code"})
-        (dom/legend (dom/text (namespace target)))
+        (dom/legend (dom/text (if ns? target (namespace target))))
         (CodeMirror {:parent dom/node :readonly true} identity identity src)))))
 
 (e/defn Src+Target [target ?wrap & {:keys [ns?]}]

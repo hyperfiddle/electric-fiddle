@@ -24,7 +24,7 @@ To cut to the chase, the answer is: **zero hours. Like 20 minutes.** Here it is:
 
 How many lines of code do you think to do this? Let's count:
 
-!ns-src[docs-site.blog.threaddump1/ThreadDump1]()
+!ns-src[docs-site.blog.threaddump1]()
 
 31 lines. Including the imports. Including the CSS. 31 lines of code to get a JVM thread dump util into prod. And that's because I wanted to do better than a pre with a 10,000 line string, I wanted to be able to filter it.
 
@@ -34,7 +34,7 @@ Well first of all, do you code your infinite scroll components by hand? No, you 
 
 But still it's a fair ask to see the dependency, so let's take a look:
 
-!ns-src[dustingetz.easy-table/EasyTable]()
+!ns-src[dustingetz.easy-table]()
 
 43 LOC, plus a bit more for an example of how to use it. Including requires, and my incredibly lazy-coded `Load-css` helper (L24) which *loads css through the freaking electric websocket* because that one-liner to talk to the server is *far* easier than spending a day (week?) futzing around with symlinks and classpaths and jar files just to figure out how to get component-local css on the page for this throwaway blog post.
 
