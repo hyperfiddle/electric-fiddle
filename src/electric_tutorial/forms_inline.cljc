@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :as forms :refer
+            [hyperfiddle.electric-forms3 :as forms :refer
              [Input! Checkbox! Checkbox* Form! Service try-ok effects*]]
             [dustingetz.trivial-datascript-form :refer
              [#?(:clj ensure-conn!) #?(:clj transact-unreliable)]]))
