@@ -4,7 +4,7 @@
              [#?(:clj ensure-conn!) #?(:clj transact-unreliable)]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Form! Checkbox* Input! Checkbox!]]))
+            [hyperfiddle.electric-forms3 :refer [Form! Checkbox* Input! Checkbox!]]))
 
 (e/declare debug*)
 (e/declare slow*)
