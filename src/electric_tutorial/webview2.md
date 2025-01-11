@@ -29,4 +29,4 @@ Performance notes (updated 2024 Dec 22)
 
 Here is the datascript model, if you're coding along:
 
-!ns-src[dustingetz.teeshirt-orders-datascript-dustin/schema]()
+!ns-src[dustingetz.teeshirt-orders-datascript-dustin]()

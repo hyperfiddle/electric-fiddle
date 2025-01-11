@@ -26,7 +26,7 @@ What's happening
 
 ## Source code overview
 
-!ns-src[electric-tutorial.explorer/DirectoryExplorer]()
+!ns-src[electric-tutorial.explorer]()
 
 * crisp, simple code — both user code, and the scroll helpers
 * scroll helpers in [hyperfiddle.electric-scroll0](https://github.com/hyperfiddle/electric/blob/master/src/hyperfiddle/electric_scroll0.cljc)
