@@ -1,19 +1,21 @@
 (ns contrib.treelister
   (:require contrib.str
+            [clojure.datafy :refer [datafy]]
             [hyperfiddle.rcf :refer [tests]]))
 
 (defn- -tree-list [depth xs children-fn keep? input]
   (eduction
     (mapcat (fn [x]
-              (if-let [children (children-fn x)]
-                (when-let [rows (seq (-tree-list (inc depth) children children-fn keep? input))]
-                  (into [[depth x]] rows))
+              (let [x (datafy x)] ; ?
+                (if-let [children (children-fn x)]
+                  (when-let [rows (seq (-tree-list (inc depth) children children-fn keep? input))]
+                    (into [[depth x]] rows))
 
-                ; leaf
-                (let [q []]
-                  (if (keep? (doto x #_(prn 'keep-leaf?)) input)
-                    (conj q [depth x])
-                    q)))))
+                  ; leaf
+                  (let [q []]
+                    (if (keep? (doto x #_(prn 'keep-leaf?)) input)
+                      (conj q [depth x])
+                      q))))))
     xs))
 
 (def any-matches? contrib.str/any-matches?) ; re-export for user convenience

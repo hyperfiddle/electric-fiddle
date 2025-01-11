@@ -16,6 +16,7 @@
 
 ; spec the data, not the object
 (s/def ::name string?)
+(s/def ::hidden boolean?)
 (s/def ::absolute-path string?)
 (s/def ::modified inst?)
 (s/def ::created inst?)
@@ -119,6 +120,7 @@
           n (.getName f)
           mime-type (detect-mime-type-no-access n)]
       (as-> {::name n
+             ::hidden (= (subs n 0 1) ".")
              ::kind (cond (.isDirectory attrs) ::dir
                           (.isSymbolicLink attrs) ::symlink
                           (.isOther attrs) ::other

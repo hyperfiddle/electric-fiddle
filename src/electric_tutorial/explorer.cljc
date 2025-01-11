@@ -8,10 +8,12 @@
             [contrib.treelister :refer [treelister]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
-            [hyperfiddle.router3 :as router]))
+            [hyperfiddle.router3 :as router]
+            [missionary.core :as m]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 (e/declare base-path)
@@ -51,11 +53,20 @@
       (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                   (* row-height (- record-count limit)) 0) "px")}})))))
 
-(e/defn Dir [m]
+(e/defn Dir [x]
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          xs! (vec ((treelister (comp ::fs/children datafy) #(includes-str? (::fs/name %) %2) ; FIXME ::fs/name is nil because file hasn't been datafied.
-                      (nav m ::fs/children (::fs/children m))) search))
+          m (datafy x)
+          xs! #_(e/Task (m/via m/blk)) #_(ex/Offload (fn []))
+          (vec ((treelister
+                  ; search/filtering is too slow over >10k records, optimize by removing .git and node_modules
+                  (fn [%] (if (and (not (::fs/hidden %))
+                                (not= "node_modules" (::fs/name %)))
+                            (::fs/children %)))
+                  (fn [% %2] (and (not (::fs/hidden %))
+                               (not= "node_modules" (::fs/name %))
+                               (includes-str? (::fs/name %) %2)))
+                  (::fs/children m)) search))
           n (count xs!)]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
@@ -74,7 +85,7 @@
             (binding [base-path (fs/absolute-path "./")]
               (let [x (if-not fs-rel-path ; workaround glitch on tutorial navigate (nested router interaction)
                         {} (clojure.java.io/file base-path (check fs-rel-path)))]
-                (Dir (datafy x))))))))))
+                (Dir x)))))))))
 
 (comment
   (def m (datafy (clojure.java.io/file (fs/absolute-path "./"))))
