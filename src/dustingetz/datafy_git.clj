@@ -84,7 +84,7 @@
         index    (git2/build-commit-map o rev-walk) ; pre-compute for fast ref resolve
         branches (branch-list o)]
     (->> (git/git-log o :until branch)
-      (map (fn [commit]
+      #_(map (fn [commit]
              (with-datafy o branches
                (git2/commit-info o rev-walk index (:id commit))))))))
 
