@@ -53,7 +53,7 @@
 (e/defn TreeBlock [p m p-next]
   (e/client
     (dom/fieldset (dom/props {:class "entity"})
-      (dom/legend (dom/text (e/server (title m))))
+      (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
       (let [xs! (e/server (flatten-nested m))
             selected-i (e/server (->> xs! ; slow, but the documents are small
                                    (map-indexed vector)

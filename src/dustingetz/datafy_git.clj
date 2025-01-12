@@ -117,7 +117,7 @@
          ;:branches #(vec (branch-list o)) ; crashes
          :branches #(vec (git/git-branch-list o ; arraylist
                            :jgit? true :list-mode :all))
-         :log #(better-log o "HEAD")}
+         :log #(vec (better-log o "HEAD"))}
       #_(with-meta
         {`ccp/nav (fn rec [x k v
                            & {:keys [branch]
