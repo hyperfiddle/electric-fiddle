@@ -10,6 +10,7 @@
             [dustingetz.threaddump :refer [ThreadDump]]
             [docs-site.blog.threaddump1 :refer [ThreadDump1]]
             [docs-site.blog.threaddump2 :refer [ThreadDump2]]
+            [docs-site.blog.threaddump3 :refer [ThreadDump3]]
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             staffly.staffly
             ))
@@ -18,12 +19,14 @@
   [["Blog"
     ['index
      'y20250106_threaddump_part1
-     'y20250109_datafy]]])
+     'y20250109_datafy
+     'part3]]])
 
 (e/defn BlogFiddles []
   {`BlogIndex (e/Partial BlogIndex blog-sitemap)
    `ThreadDump1 ThreadDump1
-   `ThreadDump2 ThreadDump2})
+   `ThreadDump2 ThreadDump2
+   #_#_`ThreadDump3 ThreadDump3})
 
 (e/defn Utilities []
   {`ThreadDump ThreadDump})

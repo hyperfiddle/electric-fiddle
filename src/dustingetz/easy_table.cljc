@@ -8,14 +8,14 @@
             [hyperfiddle.electric-forms0 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]))
 
-(e/defn TableScroll [record-count Row]
+(e/defn TableScroll [record-count Row & [selected]]
   (e/client
     (dom/div (dom/props {:class "Viewport"})
       (let [row-height 24 ; todo parameterize
             [offset limit] (Scroll-window row-height record-count dom/node {})]
         (e/amb ; client
           (dom/table (e/server (dom/props {:style {:--row-height (str row-height "px") :top (str (* offset row-height) "px")}}))
-            (let [selected (dom/On "focusin" (fn [event] (-> event .-target (aget "tablescroll-row-id"))) nil)]
+            (let [selected (dom/On "focusin" (fn [event] (-> event .-target (aget "tablescroll-row-id"))) selected)]
               (e/server
                 (e/for [i (IndexRing limit offset)] ; render all rows even when record-count < limit
                   (dom/tr

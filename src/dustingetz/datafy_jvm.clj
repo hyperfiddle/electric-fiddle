@@ -1,7 +1,17 @@
 (ns dustingetz.datafy-jvm
-  (:import java.lang.management.ThreadInfo
+  (:import [java.lang.management ManagementFactory]
+           java.lang.management.ThreadInfo
            com.sun.management.ThreadMXBean)
   (:require clojure.core.protocols))
+
+(defn resolve-thread [id]
+  (apply com.sun.management.ThreadMXBean/.getThreadInfo
+    (ManagementFactory/getThreadMXBean) [id]))
+
+(defn resolve-thread-manager []
+  (ManagementFactory/getThreadMXBean))
+
+(comment (resolve-thread 1))
 
 (extend-protocol clojure.core.protocols/Datafiable
   com.sun.management.ThreadMXBean
@@ -17,11 +27,11 @@
     {::name (.getThreadName x)
      ::thread-id (.getThreadId x)
      ::state (str (.getThreadState x))
-     ::stack-trace (.getStackTrace x)
+     ::stack-trace #(vec (.getStackTrace x))
      ::blocked-time (.getBlockedTime x)
      ::waited-time (.getWaitedTime x)
      ;::toString (.toString x) ; visualvm dump
      ::lock-info (.getLockInfo x)})
 
-  #_#_java.lang.management.ThreadInfo/1 (datafy [x] {})
-  #_#_java.lang.StackTraceElement (datafy [x] {}))
+  java.lang.management.ThreadInfo/1 (datafy [x] (vec x))
+  java.lang.StackTraceElement (datafy [x] {::toString (.toString x)}))

@@ -155,7 +155,7 @@
 
   ObjectId
   (datafy [^ObjectId o]
-    {})
+    {::toString (.toString o)})
 
   RevCommit
   (datafy [^RevCommit o]
