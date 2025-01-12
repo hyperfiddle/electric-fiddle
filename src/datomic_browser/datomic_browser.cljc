@@ -202,9 +202,7 @@
         :entity (e/amb (EntityDetail) (EntityHistory))
         :db-stats (DbStats)
         :recent-tx (RecentTx)
-        (e/amb))
-      (dom/footer (dom/p (dom/text "Stability note: Electric v3 is not quite 100% stable and this demo
-      pushes Electric very hard. If the page breaks please kindly refresh. As you can see, we're very close!"))))))
+        (e/amb)))))
 
 (e/defn DatomicBrowser [conn]
   (e/client
@@ -222,8 +220,7 @@
 .Explorer div.Viewport { height: 100%; }
 
 /* Userland layout */
-.Explorer fieldset { position:fixed; top:3em; bottom:5em; left:0; right:0; }
-.Explorer footer { position: fixed; bottom: 0; max-width: 45em; }
+.Explorer fieldset { position:fixed; top:3em; bottom:0; left:0; right:0; }
 .Explorer table { grid-template-columns: 20em auto; }
 
 /* Cosmetic */
