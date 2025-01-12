@@ -89,8 +89,6 @@
                            selected-i)]
           (if (contains? xs! ?sel) [?sel])))))) ; [i]
 
-; object view: a tree, two column kv layout
-; collection view: a table, dynamic columns with column picker
 (e/defn Block [p-here x p-next]
   (e/client
     (e/client (prn 'Block p-here))
@@ -101,17 +99,16 @@
         (TreeBlock p-here x p-next)))))
 
 (e/defn BrowsePath [p-here x ps]
-  #_(case #_(prn 'browse-path p-here #_(type x) hint ps router/route) (e/server (prn 'browse-path p-here (type x) hint ps)))
   (e/client
     (router/pop
       (if-some [?sel (Block p-here x (first ps))]
         (router/Navigate! ['. [?sel]])
         #_(router/Navigate! ['. []])) ; unstable, circuit effect bad
-      (when-some [[p & ps] (doto (seq ps) (prn 'ps))]
+      (when-some [[p & ps] (seq ps)]
         (let [x (e/server (nav-in x p))]
           (BrowsePath p x ps))))))
 
-(e/defn Resolve [[tag id]]) ; userland should override
+(e/defn Resolve [[tag id]]) ; inject
 
 (declare css)
 (e/defn EntityBrowser0 [uri & args]

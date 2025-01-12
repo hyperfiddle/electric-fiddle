@@ -20,13 +20,13 @@
     ['index
      'y20250106_threaddump_part1
      'y20250109_datafy
-     'part3]]])
+     'y20250112_data_browser]]])
 
 (e/defn BlogFiddles []
   {`BlogIndex (e/Partial BlogIndex blog-sitemap)
    `ThreadDump1 ThreadDump1
    `ThreadDump2 ThreadDump2
-   #_#_`ThreadDump3 ThreadDump3})
+   `ThreadDump3 ThreadDump3})
 
 (e/defn Utilities []
   {`ThreadDump ThreadDump})
