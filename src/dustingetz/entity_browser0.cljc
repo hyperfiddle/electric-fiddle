@@ -42,7 +42,8 @@
   (e/client
     (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
       (dom/span (dom/props {:class "dustingetz-tooltip"}) ; hover anchor
-        (dom/text (unqualify name)) ; label
+        (dom/text (if (keyword? name) ; glitch
+                    (unqualify name) (str name))) ; label
         (dom/span (dom/text (pr-str name)))))
     (dom/td
       (let [v-str (e/server (pr-str value))]
