@@ -27,8 +27,10 @@
     (e/for [[tag e :as ref] (e/amb [:thread-mx] [:thread-meta] [:git "./"] [:git-meta])]
       (r/link ['. [ref]] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))
 
-    (binding [dustingetz.entity-browser0/Resolve UserResolve]
-      (r/Apply EntityBrowser0 [[:thread-mx]]))))
+    (if-not (seq r/route)
+      (r/ReplaceState! ['. [[:thread-mx]]])
+      (binding [dustingetz.entity-browser0/Resolve UserResolve]
+        (e/Apply EntityBrowser0 r/route)))))
 
 (def css "
 .ThreadDump3 > a + a { margin-left: .5em; }
