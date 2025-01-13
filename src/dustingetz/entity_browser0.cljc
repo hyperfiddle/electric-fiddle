@@ -10,7 +10,7 @@
             [hyperfiddle.router3 :as router]
             [hyperfiddle.rcf :refer [tests]]))
 
-(defn nav-in [m path]
+(defn nav-in [m path] #_(prn 'nav-in path m)
   (loop [m m, path path]
     (if-some [[p & ps] (seq path)]
       (let [v (get m p)
@@ -107,9 +107,9 @@
     (router/pop
       (if-some [?sel (Block p-here x (first ps))]
         (router/Navigate! ['. `[~?sel ~@(rest ps)]])
-        #_(router/Navigate! ['. []])) ; unstable, circuit effect bad
+        (router/Navigate! ['. []])) ; unstable, circuit effect bad
       (when-some [[p & ps] (seq ps)]
-        (let [x (e/server (nav-in x p))]
+        (let [x (e/server (some-> x (nav-in p)))] ; glitch ?
           (BrowsePath p x ps))))))
 
 (e/defn Resolve [[tag id]]) ; inject
