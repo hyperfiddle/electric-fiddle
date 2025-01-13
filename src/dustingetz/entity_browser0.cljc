@@ -90,13 +90,16 @@
           (if (contains? xs! ?sel) [?sel])))))) ; [i]
 
 (e/defn Block [p-here x p-next]
-  (e/client
-    (e/client (prn 'Block p-here))
-    (e/server (prn 'Block p-here (type x)))
-    (if (e/server (sequential? x))
-      (TableBlock p-here x p-next)
-      (let [x (e/server (cond (nil? x) x (map? x) x () {::v x}))] ; scalars must have a column
-        (TreeBlock p-here x p-next)))))
+  (e/client ; server causes reboot on first select?
+    (let [[tree? table? debug] (e/server [(map? x)
+                                          (or (sequential? x) (set? x))
+                                          (str (type x))])]
+      (e/client (prn 'Block p-here 'table? table? 'debug debug))
+      (e/server (prn 'Block p-here 'table? table? 'debug debug))
+      (cond ; client, don't lag selection on the way out
+        tree? (TreeBlock p-here x p-next)
+        table? (TableBlock p-here x p-next)
+        () nil)))) ; elide scalars
 
 (e/defn BrowsePath [p-here x ps]
   (e/client
