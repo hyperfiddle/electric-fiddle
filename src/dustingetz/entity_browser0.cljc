@@ -105,7 +105,7 @@
   (e/client
     (router/pop
       (if-some [?sel (Block p-here x (first ps))]
-        (router/Navigate! ['. [?sel]])
+        (router/Navigate! ['. `[~?sel ~@(rest ps)]])
         #_(router/Navigate! ['. []])) ; unstable, circuit effect bad
       (when-some [[p & ps] (seq ps)]
         (let [x (e/server (nav-in x p))]
