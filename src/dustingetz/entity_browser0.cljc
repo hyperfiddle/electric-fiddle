@@ -54,7 +54,7 @@
   (e/client
     (dom/fieldset (dom/props {:class "entity"})
       (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
-      (let [xs! (e/server (flatten-nested m))
+      (let [xs! (e/server ((fn [] (try (flatten-nested m) (catch Exception _ {}))))) ; glitch
             selected-i (e/server (->> xs! ; slow, but the documents are small
                                    (map-indexed vector)
                                    (filter (fn [[i {:keys [path name]}]] (= p-next (conj path name))))
@@ -77,7 +77,7 @@
 (e/defn TableBlock [p xs! p-next]
   (e/server
     (dom/fieldset (dom/props {:class "entity-children"})
-      (let [xs! (vec xs!)
+      (let [xs! ((fn [] (try (vec xs!) (catch Exception _ [])))) ; glitch
             selected-i (first p-next) ; [0]
             colspec (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
                       (ColumnPicker (some-> xs! first datafy keys)))
