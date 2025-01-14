@@ -62,17 +62,15 @@
                                    (filter (fn [[i {:keys [path name]}]] (= p-next (conj path name))))
                                    (mapv first) first))]
         ;; ugly token mapping
-        (if-let [[t [_ index]] (doto (forms3/TablePicker! ::selection (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
-                                       (e/server (count xs!))
-                                       (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
-                                                             (TreeRow x))))
-                                       :edit-monoid vector)
-                      (prn "table-picker"))]
+        (if-let [[t [k sel]] (forms3/TablePicker! ::select (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
+                                 (e/server (count xs!))
+                                 (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
+                                                       (TreeRow x))))
+                                 :edit-monoid vector)]
           [t (e/server
-              (if-some [{:keys [path name value]} (nth xs! index nil)]
+              (if-some [{:keys [path name value]} (nth xs! sel nil)]
                 [::select (conj path name)]
-                [::select nil]
-                ))]
+                [::select nil]))]
           (e/amb))))))
 
 
@@ -83,19 +81,21 @@
         (dom/td (some-> ?m k pr-str dom/text))))))
 
 (e/defn TableBlock [p xs! p-next]
-  (e/server
+  (e/client
     (dom/fieldset (dom/props {:class "entity-children"})
-      (let [xs! ((fn [] (try (vec xs!) (catch Exception _ [])))) ; glitch
+      (let [xs! (e/server ((fn [] (try (vec xs!) (catch Exception _ []))))) ; glitch
             selected-i (first p-next) ; [0]
             colspec (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
-                      (ColumnPicker (some-> xs! first datafy keys)))
+                      (ColumnPicker (e/server (some-> xs! first datafy keys))))
             cols (e/diff-by {} colspec)]
         (dom/props {:style {:--col-count (count colspec)}})
-        (when-some [?sel (TableScroll (count xs!)
-                           (e/fn Row [i] (when-some [x (nth xs! i nil)]
-                                           (CollectionRow cols x)))
-                           selected-i)]
-          (if (contains? xs! ?sel) [?sel])))))) ; [i]
+        (if-let [[t [k sel]] (forms3/TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
+                               (e/server (count xs!))
+                               (e/fn Row [i] (e/server (when-some [x (nth xs! i nil)]
+                                                         (CollectionRow cols x))))
+                               :edit-monoid vector)]
+          [t [k [(e/server (if (contains? xs! sel) sel))]]] ; [i]
+          (e/amb))))))
 
 (e/defn Block [p-here x p-next]
   (e/client ; server causes reboot on first select?
