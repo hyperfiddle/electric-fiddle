@@ -39,7 +39,7 @@ RUN mv .git git # bypass security
 
 FROM amazoncorretto:11 AS app
 WORKDIR /app
-#RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends netcat
+RUN yum update -y && yum install -y procps
 COPY --from=build /app/git .git
 COPY --from=build /app/target/app.jar app.jar
 COPY --from=datomic-fixtures /app/state state
