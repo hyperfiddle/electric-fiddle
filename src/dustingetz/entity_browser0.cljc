@@ -8,7 +8,8 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Checkbox*]]
             [hyperfiddle.router3 :as router]
-            [hyperfiddle.rcf :refer [tests]]))
+            [hyperfiddle.rcf :refer [tests]]
+            [hyperfiddle.electric-forms3 :as forms3]))
 
 (defn nav-in [m path] #_(prn 'nav-in path m)
   (loop [m m, path path]
@@ -60,14 +61,20 @@
                                    (map-indexed vector)
                                    (filter (fn [[i {:keys [path name]}]] (= p-next (conj path name))))
                                    (mapv first) first))]
-        (when-some [?sel (TableScroll (e/server (count xs!))
-                          (e/fn Row [i] (e/server (when-some [x (nth xs! i nil)]
-                                                    (TreeRow x))))
-                           selected-i)]
+        ;; ugly token mapping
+        (if-let [[t [_ index]] (doto (forms3/TablePicker! ::selection (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
+                                       (e/server (count xs!))
+                                       (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
+                                                             (TreeRow x))))
+                                       :edit-monoid vector)
+                      (prn "table-picker"))]
+          [t (e/server
+              (if-some [{:keys [path name value]} (nth xs! index nil)]
+                [::select (conj path name)]
+                [::select nil]
+                ))]
+          (e/amb))))))
 
-          (e/server
-            (if-some [{:keys [path name value]} (nth xs! ?sel nil)]
-              (conj path name))))))))
 
 (e/defn CollectionRow [cols ?x]
   (e/server
@@ -105,11 +112,16 @@
 (e/defn BrowsePath [p-here x ps]
   (e/client
     (router/pop
-      (if-some [?sel (Block p-here x (first ps))]
-        (router/Navigate! ['. `[~?sel ~@(rest ps)]])
-        (router/Navigate! ['. []])) ; unstable, circuit effect bad
+      (forms3/Interpreter {::select (e/fn [path]
+                                        (if path
+                                          (router/Navigate! ['. [path]])
+                                          (router/Navigate! ['. []])) ::forms3/ok)}
+        (Block p-here x (first ps)))
+      #_(if-some [?sel (Block p-here x (first ps))]
+          (router/Navigate! ['. [?sel]])
+          #_(router/Navigate! ['. []])) ; unstable, circuit effect bad
       (when-some [[p & ps] (seq ps)]
-        (let [x (e/server (some-> x (nav-in p)))] ; glitch ?
+        (let [x (e/server (nav-in x p))]
           (BrowsePath p x ps))))))
 
 (e/defn Resolve [[tag id]]) ; inject

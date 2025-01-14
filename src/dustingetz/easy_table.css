@@ -13,5 +13,5 @@
 .dustingetz-EasyTable table { padding-left: 0.5em; }
 .dustingetz-EasyTable table :where(tr[data-row-stripe='0']) { background-color: #f2f2f2; }
 .dustingetz-EasyTable table tr:hover:has(*) { background-color: #ddd; }
-.dustingetz-EasyTable table tr[aria-selected=true]:has(*) { color: white; background-color: #0064e1; /* finder color */ }
+.dustingetz-EasyTable table tr:is([aria-selected=true],[aria-checked=true]):has(*) { color: white; background-color: #0064e1; /* finder color */ }
 .dustingetz-EasyTable table td:not(:has(*)) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
