@@ -21,7 +21,7 @@
 #_(defn local-ref? [^Ref ref] (.startsWith (.getName ref) Constants/R_HEADS))
 (defn ref-type [^Ref ref] (if (.startsWith (.getName ref) "refs/remotes/") :remote :local))
 
-(extend-protocol ccp/Datafiable
+(extend-protocol clojure.core.protocols/Datafiable
   Git
   (datafy [^Git o]
     {:status (git/git-status o)
