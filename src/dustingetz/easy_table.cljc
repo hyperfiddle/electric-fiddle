@@ -18,14 +18,12 @@
             (let [selected (dom/On "focusin" (fn [event] (-> event .-target (aget "tablescroll-row-id"))) selected)]
               (e/server
                 (e/for [i (IndexRing limit offset)] ; render all rows even when record-count < limit
-                  (dom/tr
+                  (dom/tr (Row i)
                     (dom/props (e/server {:style {:--order (inc i)} :data-row-stripe (mod i 2)}))
                     (dom/props (e/client {:tabindex "0" :aria-selected (= i selected)}))
-                    (e/client (aset dom/node "tablescroll-row-id" i))
-                    (Row i))))
+                    (e/client (aset dom/node "tablescroll-row-id" i)))))
               selected))
-          (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
-                                                      (* row-height (- record-count limit)) 0) "px")}})))))))
+          (dom/div (dom/props {:style {:height (str (clamp-left (* row-height (- record-count limit)) 0) "px")}})))))))
 
 (e/defn Load-css [resource-path]
   (dom/style (dom/text (e/server (some-> (clojure.java.io/resource resource-path) slurp-safe)))))
@@ -35,18 +33,14 @@
     (dom/props {:class "dustingetz-EasyTable"})
     (Load-css "dustingetz/easy_table.css")
     (let [!search (atom "") search (e/watch !search)
-          xs! (e/server (query search))
-          n (e/server (count xs!))]
+          xs! (e/server (query search)), n (e/server (count xs!))]
       (dom/fieldset
-        (dom/legend
-          (dom/text title " ")
+        (dom/legend (dom/text title " ")
           (do (reset! !search (Input* "")) (e/amb))
           (dom/text " (" n " items) "))
         (TableScroll n
-          (e/fn [i]
-            (e/server
-              (when-some [x (nth xs! i nil)] ; fixme no overscroll
-                (Row x)))))))))
+          (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
+                                (Row x)))))))))
 
 ;; Example integration
 
