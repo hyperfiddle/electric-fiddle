@@ -115,7 +115,8 @@
       (forms3/Interpreter {::select (e/fn [path]
                                         (if path
                                           (router/Navigate! ['. [path]])
-                                          (router/Navigate! ['. []])) ::forms3/ok)}
+                                          (router/Navigate! ['. []]))
+                                      :hyperfiddle.electric-forms3/ok)}
         (Block p-here x (first ps)))
       #_(if-some [?sel (Block p-here x (first ps))]
           (router/Navigate! ['. [?sel]])

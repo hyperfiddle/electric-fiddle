@@ -6,16 +6,16 @@
 .Tutorial .user-examples-code { max-height: 50em; }
 </style>
 
-In this blog series, we're building a thread dumper tool with Electric Clojure. 
+This is part 3 of a short series about building internal tools with [Electric Clojure](https://github.com/hyperfiddle/electric).
 
-In this post we demonstrate a actual structured object browser, built on Saturday morning (yesterday) using the primitives we built up in [Part 1](/blog/y20250106_threaddump_part1) and [Part 2](/blog/y20250109_datafy).
+* In part 1 of this blog series, we built a [crude observability tool in 31 LOC](/blog/y20250106_threaddump_part1). 
+* In part 2, we prototyped a [structured data viewer in 99 LOC](/blog/y20250109_datafy), that can browse not just Java threads, but also a **live git repository** via `clojure.datafy`.
+* Now, here in part 3, we demonstrate a production-ready **object browser with navigation**, built on Saturday morning (yesterday) using the primitives we built up in parts 1 & 2.
 
-And, here it is!
-
-Release notes:
-* The router is very unstable due to having several bugs (basically it's not finished).
-* You will need to refresh when the page breaks, and may even need to manually reset the route
-* Sorry – the router is *super* experimental, but also very very cool as you are about to see!
+And, here it is! Instructions:
+* Select a target object – we give you a java management object, a git repo, and some classes.
+* Collections are collapsed under `...`, select the row to navigate and drill down.
+* See how deep you can get! Try: `:git > :log > 0 > :id`
 
 <div style="margin-bottom: 2em;"></div>
 
@@ -23,27 +23,22 @@ Release notes:
 
 <div style="margin-bottom: 2em;"></div>
 
-What's happening
-* General object browser
-* select target object - git repo, or java thread management bean (warning, the hyperfiddle router is unstable due to being unfinished, refresh if/when it crashes)
-* click any row to select it, which opens the selection in a new block below
-* See how deep you can get! Try: `:git > :log > 0 > :id`
+Some technical notes: 
+* navigation breadcrumbs are stored in the URL
+* we consume the URL recursively, to render the stack of table blocks
+* each table has virtual scroll, each collection can be large
 
 As before we're interested in:
 * How many lines of code?
-* How many hours to build do you think?
+* How many hours to build?
 
-Why don't you pause and guess? (For reference, the EdnViewer0 namespace from part 2 was 99 LOC.)
+Why not take a moment to guess?
 
 ## Code
 
-!ns-src[docs-site.blog.threaddump3]()
-
-All this is doing is building hyperlinks to store target object in the URL, and binding the Electric app function to the live URL. Note we're encoding routes simple "EDN" values, e.g. `[[:git "./"]]`.
-
-I'll skip the datafy implementations, you've seen them, they're unchanged.
-
-Finally, here's the [entity browser code](https://gist.github.com/dustingetz/5dafea5fab3b6480383114b0364f7bbc) (as a gist, for easier review). I'll let you go check the line count.
+* [entity browser code](https://gist.github.com/dustingetz/5dafea5fab3b6480383114b0364f7bbc) as a gist for easy review, I'll let you go check the line count.
+* datafy implementations
+* app entrypoint
 
 What's changed in the entity browser since Part 2?
 * row selection is stored in the URL
@@ -76,7 +71,7 @@ What this post actually demonstrates is that Electric has **raised the abstracti
 
 This is not mere development velocity. This is an ability to build applications that were **not in reach without this technology,** because how can we even hold their computational structure in our mind with all the incidental framework/architecture *crap* getting in the way? And now, with Electric, I can not only *think* this very interesting computational structure, but I can *actualize it*. It *actually works*!
 
-And even on a Saturday morning, knowing I wanted to ship the final app quickly so I can get on with my weekend, I could not resist the *pure indulgence* of using every bit of abstraction power available to me, in order to make an even better demo than I had originally planned to do. And it's not just a structured thread browser for investigating deadlocks, like I originally intended. It's fully generalized, it works without modification on git repositories, class objects and *literally any other Clojure or Java object* for which you can build a `clojure.datafy` wrapper. AWS S3 browser anyone? [I have that!](https://x.com/dustingetz/status/1873463506861007226)
+And even on a Saturday morning, knowing I wanted to ship the final app quickly so I can get on with my weekend, I could not resist the *pure indulgence* of using every bit of abstraction power available to me, in order to make an even better demo than I had originally planned to do. And it's not just a structured thread browser for investigating deadlocks, like I originally intended. It's fully generalized, it works without modification on git repositories, class objects and *literally any other Clojure or Java object* for which you can build a `clojure.datafy` wrapper. AWS S3 browser anyone? [We have that!](https://x.com/dustingetz/status/1873463506861007226)
 
 Consulting plug – DM me `@dustingetz` if you have a commercial use case for this stuff. Remember, this blog series has a time axis, I did all this in a week. **Unleash us on your growth stage business tooling and see what happens: we're going to blow you away.**
 
