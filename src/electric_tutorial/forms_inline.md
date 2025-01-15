@@ -18,5 +18,3 @@
 * But - you're actually used to that! We use tab to navigate a form, and we use enter to submit it at the end.
 * These are in fact the native browser semantics being exposed, i.e. we didn't implement this behavior! We just setup the DOM properly. I believe the only think we implemented is to submit when buttons are hidden, i.e. there is no `<button type="submit">` in the form.
 * If you want to prevent premature submit, add validation.
-
-### Next up - optimistic updates

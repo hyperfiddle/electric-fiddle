@@ -16,7 +16,7 @@
                       (dom/props {:aria-busy (some? t)
                                   :disabled (some? t)
                                   :aria-invalid (some? err)})
-                      t))] ; encapsulate error
+                      t))]
       (let [res (e/server
                   (e/Offload
                     (fn []

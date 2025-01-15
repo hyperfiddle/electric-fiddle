@@ -17,7 +17,7 @@ In this demo, we use `e/amb` to accumulate user interaction state and propagate 
 * On L20, `e/amb` collects values from the two Inputs (which return singular states i.e. `(e/amb 0)` (degrees celcius)) and the two dom/texts (which return Nothing, i.e. `(e/amb)`)
 * resulting in `(e/amb (e/amb) (e/amb 0) (e/amb) (e/amb 0))` = `(e/amb 0 0)`, the state of the two inputs, multiplexed
 * In effect, collecting *concurrent* states from the DOM and propagating them back up to the app root via return path.
-* `(dom/dd)` returns the last child (the macroexpansion puts the children in an implicit `do` - which we may replace with e/amb, to remove boilerplate from e.g. this demo!)
+* `(dom/dd)` returns the last child (recall the dom containers wrap children in implicit `do`)
 * similarly, `dom/dt` returns it's last child (the text), and `(dom/text "Celcius")` returns `(e/amb)`
 
 FAQ: Why not use `[]` to collect DOM states instead of `e/amb`?

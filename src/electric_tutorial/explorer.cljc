@@ -53,19 +53,17 @@
       (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                   (* row-height (- record-count limit)) 0) "px")}})))))
 
+(defn hidden-or-node-modules [m] (or (::fs/hidden m) (= "node_modules" (::fs/name m))))
+
 (e/defn Dir [x]
   (e/server
     (let [!search (atom "") search (e/watch !search)
           m (datafy x)
           xs! #_(e/Task (m/via m/blk)) #_(ex/Offload (fn []))
           (vec ((treelister
-                  ; search/filtering is too slow over >10k records, optimize by removing .git and node_modules
-                  (fn [%] (if (and (not (::fs/hidden %))
-                                (not= "node_modules" (::fs/name %)))
-                            (::fs/children %)))
-                  (fn [% %2] (and (not (::fs/hidden %))
-                               (not= "node_modules" (::fs/name %))
-                               (includes-str? (::fs/name %) %2)))
+                  ; search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
+                  (fn children [m] (if (not (hidden-or-node-modules m)) (::fs/children m)))
+                  (fn keep? [m search] (and (not (hidden-or-node-modules m)) (includes-str? (::fs/name m) search)))
                   (::fs/children m)) search))
           n (count xs!)]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")

@@ -2,12 +2,9 @@
 
 <div id="nav"></div>
 
-Server-streamed virtual scroll in **~50ish LOC**
-
-* View grid in <a href="/electric-tutorial.explorer!DirectoryExplorer/">fullscreen mode here</a>. Try it on your phone!
-* ~~**It's not quite 100% stable**—it crashes if you jerk the scroll abruptly—electric v3 has a few crashes left to fix. But, this demo is a stress test and is pushing electric very hard! Electric is still in private beta, consider this a technical preview.~~ 2025 Jan 3 - now stable for us, please report issues
-* Please let us know what the performance is like for you, this is our first public virtual scroll demo in v3.
-* There are also a few userland layout bugs/imperfections, please report them in the slack thread and we will get them fixed.
+* Server-streamed virtual scroll in **~50ish LOC**
+* View grid in <a href="/electric-tutorial.explorer!DirectoryExplorer/">fullscreen mode here</a>. 
+* Try it on your phone!
 
 <div style="margin-bottom: 2em;"></div>
 
@@ -51,7 +48,6 @@ Server streams the data that the client needs without being asked, i.e. without 
 * `Row` and `Render-cell` switch between `e/client` and `e/server` to fetch the data they need **inline**!
 * Even with inline `e/server` expressions, the rows load without request waterfalls as described in [Talk: Electric Clojure v3: Differential Dataflow for UI (Getz 2024)](https://hyperfiddle-docs.notion.site/Talk-Electric-Clojure-v3-Differential-Dataflow-for-UI-Getz-2024-2e611cebd73f45dc8cc97c499b3aa8b8).
 * This is because the `e/for` and `(Row i x)` are same-sited, so they run synchronously: the server enters the Row renderer frame and optimistically sends the data dependencies that it knows the client is about to ask for. Which is certainly necessary for performance here, any waterfall in this code path is very obvious.
-* ~~In fact, there is a waterfall: the hyperlinks blink (only visible on desktop). This is an artifact caused by what seems to be a spurious round trip. It looks like an Electric issue, we are investigating. There are many workarounds, such as moving the e/for to the client and instead of sending up `offset`, have the client request individual rows. (So, yes, "without waterfalls" is not *quite* true yet due to this issue. But as you can see, we are very close!)~~ this is fixed by the updated `Render-cell` impl, todo reduce learning to essay
 
 ## Our goal with Electric: zero-cost abstraction over network
 
