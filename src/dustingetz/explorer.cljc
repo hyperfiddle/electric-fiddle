@@ -9,7 +9,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :as scroll]
-            [hyperfiddle.router3 :as r]))
+            [hyperfiddle.router4 :as r]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 

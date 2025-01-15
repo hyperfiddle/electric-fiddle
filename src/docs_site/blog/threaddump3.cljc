@@ -5,7 +5,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :refer [Tap]]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [dustingetz.entity-browser0 :refer [EntityBrowser0]]
             #?(:clj dustingetz.datafy-git)
             #?(:clj dustingetz.datafy-jvm)))

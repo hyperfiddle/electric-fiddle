@@ -7,7 +7,7 @@
             #?(:clj dustingetz.datafy-git)
             #?(:clj dustingetz.datafy-jvm)
             [hyperfiddle.electric-forms0 :refer [Checkbox]]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [dustingetz.edn-viewer0 :refer [EdnViewer0]]))
 
 #?(:clj (def !git (delay (dustingetz.datafy-git/load-repo "./"))))

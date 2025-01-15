@@ -6,7 +6,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [hyperfiddle.rcf :refer [tests]]))
 
 (defn ns-segments [ns-name-str] (clojure.string/split ns-name-str #"\."))

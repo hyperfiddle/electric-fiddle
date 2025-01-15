@@ -10,7 +10,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input* Input! Form! Checkbox]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [missionary.core :as m]))
 
 (e/defn TableScroll [record-count ?xs! Row]

@@ -1,7 +1,7 @@
 (ns docs-site.blog.index
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [electric-essay.tutorial-app :as t :refer [index-essay-index title]]))
 
 (e/defn BlogIndex [sitemap]

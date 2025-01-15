@@ -7,7 +7,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Input* Checkbox* Checkbox]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
-            [hyperfiddle.router3 :as router]
+            [hyperfiddle.router4 :as router]
             [missionary.core :as m]))
 
 #?(:clj (def data (comptime-resource "dustingetz/unifhir.edn")))

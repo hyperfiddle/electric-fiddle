@@ -5,7 +5,7 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
             [staffly.staff-detail :refer [StaffDetail]]

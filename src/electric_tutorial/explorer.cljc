@@ -12,7 +12,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
-            [hyperfiddle.router3 :as router]
+            [hyperfiddle.router4 :as router]
             [missionary.core :as m]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂

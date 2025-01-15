@@ -7,7 +7,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer
              [Form! Checkbox!]]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [staffly.staffly-model :as model]))
 
 #?(:clj (defn staff-detail [e]

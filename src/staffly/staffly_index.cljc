@@ -10,7 +10,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input]]
             [hyperfiddle.ui.typeahead :refer [Typeahead]]
-            [hyperfiddle.router3 :as r]
+            [hyperfiddle.router4 :as r]
             [staffly.staffly-model :as model]))
 
 (defn entity-type [m]
