@@ -36,22 +36,23 @@
 
   Ref #_ObjectIdRef ; including ObjectIdRef$PeeledNonTag
   (datafy [^ObjectIdRef o]
-    {:ref-name (.getName o) ; refs/remotes/origin/agent-network, refs/heads/wip/hot-md
+    {#_#_:ref-name (.getName o) ; refs/remotes/origin/agent-network, refs/heads/wip/hot-md
      :ref-name-short (Repository/shortenRefName (.getName o))
      :commit (-> o .getObjectId .getName) ; "88a97ef20b1fe5392a6025eca4170c80ad3479ce"
      :commit-short (-> o .getObjectId .getName short-commit-id)
-     :symbolic (-> o .isSymbolic)
-     :peeled (-> o .isPeeled)
-     :ref-type (-> o ref-type)
+     #_#_:symbolic (-> o .isSymbolic)
+     #_#_:peeled (-> o .isPeeled)
+     :ref-type (-> o ref-type) ; #{:local :remote}
      :object-id (.getObjectId o)}) ; #object[org.eclipse.jgit.lib.ObjectId
 
   ObjectId
   (datafy [^ObjectId o]
-    {::toString (.toString o)})
+    {:toString (.toString o)
+     :name (.getName o)})
 
   RevCommit
   (datafy [^RevCommit o]
     {:name (.getName o)
-     :short-name (-> o .getName short-commit-id)}))
+     :commit-short-name (-> o .getName short-commit-id)}))
 
 (defn repo-path [o] (-> o datafy :repo datafy :dir datafy ::fs/absolute-path))
