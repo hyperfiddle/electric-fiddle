@@ -27,8 +27,8 @@
     {:status (git/git-status o)
      :repo (.getRepository o)
      :branch-current (git/git-branch-current o)
-     :branches #(vec (branch-list o :jgit? true :list-mode :all)) ; arraylist
-     :log #(vec (log o :until "HEAD"))})
+     :branches (memoize #(vec (branch-list o :jgit? true :list-mode :all))) ; arraylist
+     :log (memoize #(vec (log o :until "HEAD")))})
 
   FileRepository
   (datafy [^FileRepository o]
