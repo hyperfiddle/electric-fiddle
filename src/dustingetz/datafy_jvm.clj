@@ -4,14 +4,10 @@
            com.sun.management.ThreadMXBean)
   (:require clojure.core.protocols))
 
-(defn resolve-thread [id]
-  (apply com.sun.management.ThreadMXBean/.getThreadInfo
-    (ManagementFactory/getThreadMXBean) [id]))
+(defn resolve-thread [id] (apply com.sun.management.ThreadMXBean/.getThreadInfo
+                            (ManagementFactory/getThreadMXBean) [id]))
 
-(defn resolve-thread-manager []
-  (ManagementFactory/getThreadMXBean))
-
-(comment (resolve-thread 1))
+(defn resolve-thread-manager [] (ManagementFactory/getThreadMXBean))
 
 (extend-protocol clojure.core.protocols/Datafiable
   com.sun.management.ThreadMXBean
