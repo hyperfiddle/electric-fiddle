@@ -80,7 +80,7 @@
 
 (e/defn EdnViewer0
   ([] (EdnViewer0 (e/server (Tap)))) ; default to clojure tap> inspector
-  ([x] (e/client (router/Apply (e/Partial EntityBrowser x) [nil])))) ; x is not route-bound
+  ([x] (e/client (e/Apply EntityBrowser x (or (seq router/route) [nil])))))
 
 (def css "
 .Browser fieldset.entity          { position:fixed; top:0;   bottom:50%; left:0; right:0; }
