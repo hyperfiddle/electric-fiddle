@@ -2,7 +2,7 @@
   (:require #?(:clj [clojure.tools.logging :as log])
             [contrib.assert :refer [check]]
             #?(:clj datomic.api)
-            [datomic-browser.datomic-browser :refer [DatomicBrowser]]
+            datomic-browser.datomic-browser
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [hyperfiddle.electric3 :as e]
@@ -27,11 +27,12 @@
                  (dom/pre (dom/text (pr-str err))))
        :Ok F})))
 
-(e/defn DatomicBrowser*
-  ([] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser))))
+(e/defn DatomicBrowser
+  ([] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri
+                datomic-browser.datomic-browser/DatomicBrowser))))
 
 (e/defn Fiddles []
-  {`DatomicBrowser DatomicBrowser*})
+  {`DatomicBrowser DatomicBrowser})
 
 (e/defn ProdMain [ring-req]
   (FiddleMain ring-req (Fiddles)
