@@ -11,7 +11,7 @@
            (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef ObjectIdRef$PeeledNonTag Ref Repository)))
 
 ; re-export wrappers for convenience - one API not two
-(def load-repo git/load-repo)
+(def load-repo (memoize git/load-repo))
 (def log git/git-log)
 (def branch-list git/git-branch-list)
 

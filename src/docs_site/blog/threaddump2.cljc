@@ -10,15 +10,13 @@
             [hyperfiddle.router4 :as r]
             [dustingetz.edn-viewer0 :refer [EdnViewer0]]))
 
-#?(:clj (def !git (delay (dustingetz.datafy-git/load-repo "./"))))
-
 (e/defn ThreadDump2 []
   (e/client
-    (let [!selected (atom :thread) selected (e/watch !selected)]
+    (let [!selected (atom :thread), selected (e/watch !selected)]
       (dom/text "Target: ")
       (e/for [x (e/amb :thread :thread-meta :git :git-meta)]
         (when (Checkbox (= selected x) :label (str x) :type "radio")
-          (case (r/ReplaceState! ['. [nil]]) ; hack - clear route first, child paths not valid
+          (case (r/ReplaceState! ['. [nil]]) ; clear route first, child paths now invalid
             (reset! !selected x))))
 
       (EdnViewer0
@@ -26,6 +24,6 @@
           (case selected
             :thread (ManagementFactory/getThreadMXBean)
             :thread-meta java.lang.management.ThreadMXBean
-            :git @!git
+            :git (dustingetz.datafy-git/load-repo "./")
             :git-meta org.eclipse.jgit.api.Git
             (e/amb)))))))
