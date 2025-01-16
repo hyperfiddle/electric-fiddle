@@ -135,42 +135,44 @@
              ::size (.size attrs)
              ::mime-type mime-type} %
             (merge % (if (= ::dir (::kind %))
-                       {::children (lazy-seq (sort (.listFiles f)))
-                        ::parent `...}))
-            (with-meta % {`ccp/nav
+                       {::children #(vec (sort (.listFiles f))) ; fns are hyperlinks - experiment
+                        ::parent #(-> f file-path .getParent .toFile)}))
+        (with-meta % {`ccp/nav
                           (fn [xs k v]
                             (case k
                               ; reverse data back to object, to be datafied again by caller
                               ::modified (.lastModifiedTime attrs)
                               ::created (.creationTime attrs)
                               ::accessed (.lastAccessTime attrs)
-                              ::children (some-> v vec)
-                              ::parent (-> f file-path .getParent .toFile)
+                              ::children v #_(if v (v))
+                              ::parent v #_(if v (v))
                               ::content (datafy-file-content f)
                               v))})))))
 
 (tests
-                                        ; careful, calling seq loses metas on the underlying
-  (def h (clojure.java.io/file "src-contrib/"))
+  ; careful, calling seq loses metas on the underlying
+  (def h (clojure.java.io/file "src"))
   (type h) := java.io.File
   "(datafy file) returns an EDN-ready data view that is one layer deep"
   (datafy h)
   := #:dustingetz.datafy-fs
-        {:name "src-contrib",
+        {:name "src",
          :absolute-path _,
+         :mime-type _,
+         :hidden _,
          :size _,
          :modified _,
          :created _,
          :accessed _,
          :kind ::dir,
          :children _
-         :parent ...})
+         :parent _})
 
 (tests
   "datafy of a directory includes a Clojure coll of children, but child elements are native file
   objects"
   (as-> (datafy h) %
-        (nav % ::children (::children %))
+        (nav % ::children ((::children %)))
         (datafy %)
         (take 2 (map type %)))
   := [java.io.File java.io.File]
@@ -185,36 +187,31 @@
 
 (tests
   (as-> (datafy h) %
-        (nav % ::children (::children %))
+        (nav % ::children ((::children %))) ; fn - weird
         (datafy %) ; can skip - simple data
         (map datafy %)
         (vec (filter #(= (::name %) "contrib") %)) ; stabilize test
         (nav % 0 (% 0))
         (datafy %)
-        #_(s/conform ::file %))
+        #_(s/conform ::file %)
+        (select-keys % [::name ::kind ::children]))
   := {::name "contrib",
-      ::absolute-path _,
-      ::size _,
-      ::modified _,
-      ::created _,
-      ::accessed _,
       ::kind ::dir,
-      ::children _
-      ::parent ...})
+      ::children _})
 
 (tests
   "nav into children and back up via parent ref"
   (def m (datafy h))
-  (::name m) := "src-contrib"
+  (::name m) := "src"
   (as-> m %
-        (nav % ::children (::children %))
-        (datafy %) ; dir
-        (nav % 0 (get % 0)) ; first file in dir
-        (datafy %)
-        (nav % ::parent (::parent %)) ; dir (skip level on way up)
-        (datafy %)
-        (::name %))
-  := "src-contrib")
+    (nav % ::children ((::children %)))
+    (datafy %) ; dir
+    (nav % 1 (get % 1)) ; first file in dir (skip .DS_Store it is not a dir!)
+    (datafy %)
+    (nav % ::parent ((::parent %))) ; dir (skip level on way up)
+    (datafy %)
+    (::name %))
+  := "src")
 
 (defn absolute-path [^String path-str & more]
   (-> (java.nio.file.Path/of ^String path-str (into-array String more))
