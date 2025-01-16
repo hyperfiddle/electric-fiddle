@@ -1,6 +1,6 @@
 (ns docs-site.sitemap
   (:require [hyperfiddle.electric3 :as e]
-            [electric-fiddle.fiddle-index :refer [FiddleMain]]
+            [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
             [electric-essay.tutorial-app :refer [Tutorial]]
             [electric-essay.essay-app :refer [Essay]]
 
@@ -40,7 +40,8 @@
 (e/defn Fiddles []
   (merge
     {'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
-     'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")}
+     'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")
+     'fiddles FiddleIndex}
     (TutorialFiddles)
     (BlogFiddles)
     (SecretDemos)
