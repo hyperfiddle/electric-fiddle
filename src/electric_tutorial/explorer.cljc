@@ -58,7 +58,7 @@
   (e/server
     (let [!search (atom "") search (e/watch !search)
           m (datafy x)
-          xs! #_(e/Task (m/via m/blk)) #_(ex/Offload (fn []))
+          xs! #_((fn [] (apply nil [])))
           (vec ((treelister
                   ; search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
                   (fn children [m] (if (not (hidden-or-node-modules m)) (nav m ::fs/children (::fs/children m))))
