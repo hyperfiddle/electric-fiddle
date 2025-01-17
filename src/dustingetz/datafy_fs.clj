@@ -136,7 +136,7 @@
              ::mime-type mime-type} %
             (merge % (if (= ::dir (::kind %))
                        {::children #(vec (sort (.listFiles f))) ; fns are hyperlinks - experiment
-                        ::parent #(-> f file-path .getParent .toFile)}))
+                        ::parent (-> f file-path .getParent .toFile)}))
         (with-meta % {`ccp/nav
                           (fn [xs k v]
                             (case k
@@ -144,8 +144,7 @@
                               ::modified (.lastModifiedTime attrs)
                               ::created (.creationTime attrs)
                               ::accessed (.lastAccessTime attrs)
-                              ::children v #_(if v (v))
-                              ::parent v #_(if v (v))
+                              ::children (if v (v)) ; weird and bad, nav is intended to enrich not resolve
                               ::content (datafy-file-content f)
                               v))})))))
 

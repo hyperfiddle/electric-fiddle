@@ -62,9 +62,9 @@
           xs! #_(e/Task (m/via m/blk)) #_(ex/Offload (fn []))
           (vec ((treelister
                   ; search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
-                  (fn children [m] (if (not (hidden-or-node-modules m)) (if-some [z (::fs/children m)] (z))))
+                  (fn children [m] (if (not (hidden-or-node-modules m)) (nav m ::fs/children (::fs/children m))))
                   (fn keep? [m search] (and (not (hidden-or-node-modules m)) (includes-str? (::fs/name m) search)))
-                  (nav m ::fs/children ((::fs/children m)))) search))
+                  (nav m ::fs/children (::fs/children m))) search))
           n (count xs!)]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))

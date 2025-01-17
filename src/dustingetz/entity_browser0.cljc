@@ -14,8 +14,7 @@
 (defn nav-in [m path] #_(prn 'nav-in path m)
   (loop [m m, path path]
     (if-some [[p & ps] (seq path)]
-      (let [v (get m p)
-            v (if (fn? v) (v) v)] ; hyperlink == fn
+      (let [v (get m p)]
         (recur (datafy (nav m p v)) ps)) ; todo revisit
       m)))
 
