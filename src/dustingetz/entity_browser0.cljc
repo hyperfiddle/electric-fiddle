@@ -27,10 +27,9 @@
 
 (e/defn ColumnPicker [cols]
   (e/client
-    (let [state (e/for [col (e/diff-by {} cols)]
-                  {col (Checkbox* true :label (unqualify col))})]
-      (reduce-kv (fn [x k v] (if v (conj x k) x))
-        [] (apply merge (e/as-vec state))))))
+    (e/for [col (e/diff-by {} cols)]
+      (if (Checkbox* true :label (unqualify col))
+        col (e/amb)))))
 
 #?(:clj (defmulti title (fn [m] (some-> m meta :clojure.datafy/class))))
 #?(:clj (defmethod title :default [m] (some-> m meta :clojure.datafy/class)))
@@ -84,10 +83,9 @@
     (dom/fieldset (dom/props {:class "entity-children"})
       (let [xs! (e/server ((fn [] (try (vec xs!) (catch Exception _ []))))) ; glitch
             selected-i (first p-next) ; [0]
-            colspec (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
-                      (ColumnPicker (e/server (some-> xs! first datafy keys))))
-            cols (e/diff-by {} colspec)]
-        (dom/props {:style {:--col-count (count colspec)}})
+            cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
+                   (ColumnPicker (e/server (some-> xs! first datafy keys #_sort #_reverse))))] ; unstable
+        (dom/props {:style {:--col-count (e/Count cols)}})
         (if-let [[t [k sel]] (forms3/TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
                                (e/server (count xs!))
                                (e/fn Row [i] (e/server (when-some [x (nth xs! i nil)]
