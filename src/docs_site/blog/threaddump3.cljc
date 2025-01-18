@@ -11,14 +11,16 @@
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj dustingetz.datafy-fs)))
 
+#?(:clj (defn resolve-class [whiteset qs]
+          (try (some-> (whiteset qs) resolve) (catch Exception e nil))))
+
 (e/defn UserResolve [[tag id]]
   (case tag
-    :tap (Tap)
+    :tap (e/server (Tap))
     :thread-mx (e/server (dustingetz.datafy-jvm/resolve-thread-manager))
     :thread (e/server (dustingetz.datafy-jvm/resolve-thread id))
     :git (e/server (dustingetz.datafy-git/load-repo id))
-    :thread-meta (e/server java.lang.management.ThreadMXBean)
-    :git-meta (e/server org.eclipse.jgit.api.Git)
+    :class (e/server (resolve-class #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean} id))
     :file (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path id)))
     (e/amb)))
 
@@ -26,7 +28,9 @@
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
     (dom/text "Target: ")
-    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git "./"] [:file "./"] [:git-meta] [:thread-meta])]
+    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git "./"] [:file "./"] #_[:tap]
+                              [:class 'org.eclipse.jgit.api.Git]
+                              [:class 'java.lang.management.ThreadMXBean])]
       (r/link ['. [ref]] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))
 
     (if-not (seq r/route)
