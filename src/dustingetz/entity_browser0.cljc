@@ -7,6 +7,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms0 :refer [Checkbox*]]
+            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]
             [hyperfiddle.electric-forms3 :as forms3]))
@@ -74,7 +75,7 @@
 
 (e/defn CollectionRow [cols ?x]
   (e/server
-    (let [?m (datafy ?x)] ; only visible rows
+    (let [?m (ex/Offload-reset #(datafy ?x))] ; only visible rows
       (e/for [k cols]
         (dom/td (some-> ?m k pr-str dom/text))))))
 
@@ -84,7 +85,7 @@
       (let [xs! (e/server ((fn [] (try (vec xs!) (catch Exception _ []))))) ; glitch
             selected-i (first p-next) ; [0]
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
-                   (ColumnPicker (e/server (some-> xs! first datafy keys #_sort #_reverse))))] ; unstable
+                   (ColumnPicker (e/server (ex/Offload-reset #(some-> xs! first datafy keys #_sort #_reverse)))))] ; unstable
         (dom/props {:style {:--col-count (e/Count cols)}})
         (if-let [[t [k sel]] (forms3/TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
                                (e/server (count xs!))
@@ -125,7 +126,8 @@
 (e/defn EntityBrowser0 [uri & args]
   (e/client (dom/style (dom/text css)) (Load-css "dustingetz/easy_table.css")
     (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
-      (let [x (e/server (datafy (Resolve uri)))]
+      (let [x (e/server (Resolve uri))
+            x (e/server (ex/Offload-latch #(datafy x)))]
         (BrowsePath uri x args)))))
 
 (def css "
