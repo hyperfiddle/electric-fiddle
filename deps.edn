@@ -90,7 +90,7 @@
     hawk/hawk {:mvn/version "0.2.11"}
     org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
     clj-jgit/clj-jgit {:mvn/version "1.0.2"}
-    #_#_clj-http/clj-http {:mvn/version "3.12.3"}
+    clj-http/clj-http {:mvn/version "3.12.3"}
     #_#_com.datomic/peer {:mvn/version "1.0.7075"}
     #_#_com.hyperfiddle/hfql {:local/root "vendor/hfql"}
     #_#_cheshire/cheshire {:mvn/version "5.12.0"}
