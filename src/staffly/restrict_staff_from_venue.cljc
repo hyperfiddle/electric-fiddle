@@ -53,10 +53,10 @@
       #(try (restrict-staff-from-venue! model/datomic-conn staff venue-id block-reason block-mode penalize)
          :staffly.staffly/ok (catch Throwable t (ex-message t))))))
 
-(defmacro Field [Control! name value & {::keys [label] :as props}]
+(e/defn Field [Control! name value & {::keys [label] :as props}]
   (let [control-id (random-uuid)]
-    `(e/amb (dom/dt (dom/label (dom/props {:for ~control-id}) (dom/text ~label)))
-       (dom/dd (e/call ~Control! ~name ~value (-> (assoc ~props :id ~control-id) (dissoc ::label)))))))
+    (e/amb (dom/dt (dom/label (dom/props {:for control-id}) (dom/text label)))
+      (dom/dd (Control! name value (-> (assoc props :id control-id) (dissoc ::label)))))))
 
 (e/defn RestrictStaffFromVenueForm []
   (e/client
