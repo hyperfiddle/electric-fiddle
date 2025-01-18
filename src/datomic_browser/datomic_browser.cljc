@@ -234,7 +234,7 @@
 /* Progressive enhancement */
 .Explorer .nav { margin: 0; }
 .Explorer.entity fieldset:nth-of-type(1) { top:3em; bottom:40vh; left:0; right:0; }
-.Explorer.entity fieldset:nth-of-type(2) { top:60vh; bottom:5em; left:0; right:0; }
+.Explorer.entity fieldset:nth-of-type(2) { top:60vh; bottom:0; left:0; right:0; }
 .Explorer.entity fieldset:nth-of-type(1) table { grid-template-columns: 15em auto; }
 .Explorer.entity fieldset:nth-of-type(2) table { grid-template-columns: 5em 10em 15em auto 10em 9em; }
 .Explorer.attributes table { grid-template-columns: minmax(14em, 2fr) 1fr; }
