@@ -75,7 +75,7 @@
 
 (e/defn CollectionRow [cols ?x]
   (e/server
-    (let [?m (ex/Offload-reset #(datafy ?x))] ; only visible rows
+    (let [?m (ex/Offload-latch #(datafy ?x))] ; only visible rows
       (e/for [k cols]
         (dom/td (some-> ?m k pr-str dom/text))))))
 
