@@ -47,16 +47,16 @@
                                                              (.add java.util.Calendar/MONTH 6)))}])))
 
 
-(e/defn Restrict-staff-from-venue [staff venue-id block-reason block-mode penalize]
+(e/defn Restrict-staff-from-venue! [staff venue-id block-reason block-mode penalize]
   (e/server
     (e/Offload
       #(try (restrict-staff-from-venue! model/datomic-conn staff venue-id block-reason block-mode penalize)
          :staffly.staffly/ok (catch Throwable t (ex-message t))))))
 
-(e/defn Field [Control! name value & {::keys [label] :as props}]
+(e/defn Field [name value Control! & {::keys [label] :as props}]
   (let [control-id (random-uuid)]
-    (e/amb (dom/dt (dom/label (dom/props {:for control-id}) (dom/text label)))
-      (dom/dd (Control! name value (-> (assoc props :id control-id) (dissoc ::label)))))))
+    (dom/dt (dom/label (dom/props {:for control-id}) (dom/text label)))
+    (dom/dd (Control! name value (-> (assoc props :id control-id) (dissoc ::label))))))
 
 (e/defn RestrictStaffFromVenueForm []
   (e/client
@@ -66,21 +66,21 @@
       (Form!
         (dom/dl
           (e/amb
-            (Field Input! ::staff, e, :disabled true, :required true, ::label "staff")
-            (Field Typeahead! ::venue, nil, ::label "venue", :required true, :Options Venue-picklist, :option-label :venue/name)
-            (Field Typeahead! ::block-reason, nil, ::label "block-reason", :required true, :Options Block-reason-picklist, :option-label #(some-> % :db/ident name))
-            (Field Checkbox! ::penalize, false, ::label "penalize?", :label (constantly "Penalize the staff for any last-minute cancellations"))
-            (Field Radio! ::block-mode, nil, ::label "block-mode", :required true,
-              :Options (e/fn [] (e/amb :force-cancel :leave-commitments)),
+            (Field ::staff e Input! :disabled true, :required true, ::label "staff")
+            (Field ::venue nil Typeahead! ::label "venue", :required true, :Options Venue-picklist, :option-label :venue/name)
+            (Field ::block-reason nil Typeahead! ::label "block-reason", :required true,
+              :Options Block-reason-picklist
+              :option-label #(some-> % :db/ident name))
+            (Field ::penalize false Checkbox! ::label "penalize?", :label (constantly "Penalize the staff for any last-minute cancellations"))
+            (Field ::block-mode nil Radio! ::label "block-mode", :required true,
+              :Options (e/fn [] (e/amb :force-cancel :leave-commitments))
               :option-label #(case %
                                :force-cancel "Cancel all the staff's existing commitment at this venue"
-                               :leave-commitments "Don't cancel staff's existing commitments"),
-              :Validate (e/fn [x] (when (nil? x) "Please pick one")) ; custom field-level validation
-              )))
+                               :leave-commitments "Don't cancel staff's existing commitments")
+              :Validate (e/fn [x] (when (nil? x) "Please pick one"))))) ; custom field-level validation
         :debug false ; true | false | :verbose
-        :commit ; map fields to a command
-        (fn [{::keys [venue block-reason block-mode penalize]}] ; fields addressed by name
-          [[`Restrict-staff-from-venue e (:venue/id venue) (:db/ident block-reason) block-mode penalize]]) ; command as a value, to be interpreted later
+        :commit (fn [{::keys [venue block-reason block-mode penalize]}]
+                  [[`Restrict-staff-from-venue! e (:venue/id venue) (:db/ident block-reason) block-mode penalize]])
         :Validate ValidateFormCommand
         :Accepted (e/fn [] ; Redirect to entity page 2s after accepted transaction
                     (r/Navigate! ['.. [:staff e]] 2000))))))

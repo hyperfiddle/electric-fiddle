@@ -9,9 +9,8 @@
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
             [staffly.staff-detail :refer [StaffDetail]]
-            [staffly.restrict-staff-from-venue :refer [RestrictStaffFromVenueForm]]))
-
-(e/declare *effects) ; to be bound to `{`Cmd-sym Cmd-efn}
+            [staffly.restrict-staff-from-venue :refer
+             [RestrictStaffFromVenueForm Restrict-staff-from-venue!]]))
 
 (e/defn Nav []
   (dom/div (dom/text "Nav: ")
@@ -31,8 +30,7 @@
         :restrict-staff-from-venue (RestrictStaffFromVenueForm)
         (dom/text "page not found")))))
 
-#_(e/defn Service [edits]
-  (e/drain edits))
+(e/declare *effects)
 
 (e/defn Service [edits]
   (e/client
@@ -63,7 +61,7 @@
      (bindx [model/datomic-conn (check datomic-conn)
              model/db (check model/*db*)
              model/schema (check model/*schema*)
-             *effects {`staffly.restrict-staff-from-venue/Restrict-staff-from-venue staffly.restrict-staff-from-venue/Restrict-staff-from-venue}]
+             *effects {`Restrict-staff-from-venue! Restrict-staff-from-venue!}]
        (e/client
          (Service
            (Page)))))))
