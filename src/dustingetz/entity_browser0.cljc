@@ -99,8 +99,8 @@
     (let [[tree? table? debug] (e/server [(map? x)
                                           (or (sequential? x) (set? x))
                                           (str (type x))])]
-      (e/client (prn 'Block p-here 'table? table? 'debug debug))
-      (e/server (prn 'Block p-here 'table? table? 'debug debug))
+      #_(e/client (prn 'Block p-here 'table? table? 'debug debug))
+      #_(e/server (prn 'Block p-here 'table? table? 'debug debug))
       (cond ; client, don't lag selection on the way out
         tree? (TreeBlock p-here x p-next)
         table? (TableBlock p-here x p-next)
@@ -115,9 +115,6 @@
                                           (router/Navigate! ['. []]))
                                       :hyperfiddle.electric-forms3/ok)}
         (Block p-here x (first ps)))
-      #_(if-some [?sel (Block p-here x (first ps))]
-          (router/Navigate! ['. [?sel]])
-          #_(router/Navigate! ['. []])) ; unstable, circuit effect bad
       (when-some [[p & ps] (seq ps)]
         (let [x (e/server (nav-in x p))]
           (BrowsePath p x ps))))))
