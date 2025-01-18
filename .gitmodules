@@ -16,3 +16,6 @@
 [submodule "src-private"]
 	path = src-private
 	url = git@gitlab.com:hyperfiddle/scratch.git
+[submodule "vendor/electric3-starter-app"]
+	path = vendor/electric3-starter-app
+	url = git@gitlab.com:hyperfiddle/electric3-starter-app.git
