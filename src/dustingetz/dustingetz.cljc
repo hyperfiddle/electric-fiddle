@@ -2,10 +2,6 @@
   (:require [hyperfiddle.electric3 :as e]
             [dustingetz.easy-table :refer [DemoEasyTable]]
             [dustingetz.edn-viewer0 :refer [EdnViewer0]]
-            [dustingetz.explorer :refer [DirectoryExplorer]]
-            [dustingetz.explorer1 :refer [DirectoryExplorer1]]
-            [dustingetz.explorer2 :refer [DirectoryExplorer2]]
-            [dustingetz.explorer3 :refer [DirectoryExplorer3]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.logic :refer [Logic]]
             [dustingetz.london-talk-2024.webview-concrete :refer [WebviewConcrete]]
@@ -27,11 +23,7 @@
     {`DemoEasyTable DemoEasyTable
      `ThreadDump ThreadDump
      `EdnViewer0 EdnViewer0}
-    {`DirectoryExplorer DirectoryExplorer
-     `DirectoryExplorer1 DirectoryExplorer1
-     `DirectoryExplorer2 DirectoryExplorer2
-     `DirectoryExplorer3 DirectoryExplorer3
-     `DemoMetaobject DemoMetaobject
+    {`DemoMetaobject DemoMetaobject
      `Painter Painter
      `FileWatcherDemo FileWatcherDemo
      `Y-Fac Y-Fac
