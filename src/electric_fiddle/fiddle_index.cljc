@@ -72,7 +72,7 @@
     (SearchGrid (str `FiddleIndex)
       (e/fn [search] (vec ((treelister
                              (fn children [[k v]] (if (map? v) (into (sorted-map) v) nil))
-                             (fn search [[k v] s] (includes-str? k s))
+                             (fn search [[k v] s] (or (includes-str? k s) (includes-str? v s)))
                              (fiddles-by-ns-segments pages)) search)))
       (e/fn Row [i [?tab [k v :as ?x]]]
         (when ?x
