@@ -39,16 +39,17 @@
 #?(:clj (defmethod identify :default [x] nil))
 
 (e/defn TreeRow [{:keys [path name value]}]
+  #_(e/server (prn 'Q path name value)) ; all can be unserializable
   (e/client
-    (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
+    (dom/td (dom/props {:style {:padding-left (e/server (some-> path count (* 15) (str "px")))}})
       (dom/span (dom/props {:class "dustingetz-tooltip"}) ; hover anchor
-        (dom/text (if (keyword? name) ; glitch
-                    (unqualify name) (str name))) ; label
-        (dom/span (dom/text (pr-str name)))))
+        (dom/text (e/server (if (keyword? name) ; glitch
+                              (unqualify name) (str name)))) ; label
+        (dom/span (dom/text (e/server (pr-str name))))))
     (dom/td
       (let [v-str (e/server (pr-str value))]
         (if (e/server (fn? value)) ; fns encode hyperlinks (on the server!)
-          #_(router/link ['. [(conj path name)]]) (dom/text "...")
+          #_(router/link ['. [(conj path (e/server name))]]) (dom/text "...")
           (dom/text v-str))))))
 
 (e/defn TreeBlock [p m p-next]
