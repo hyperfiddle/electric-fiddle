@@ -5,12 +5,12 @@
             [dustingetz.easy-table :refer [TableScroll Load-css]]
             [dustingetz.flatten-document :refer [flatten-nested]]
             [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Checkbox*]]
+            [hyperfiddle.electric-forms3 :as forms3 :refer [Checkbox* TablePicker!]]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.router4 :as router]
-            [hyperfiddle.rcf :refer [tests]]
-            [hyperfiddle.electric-forms3 :as forms3]))
+            [hyperfiddle.rcf :refer [tests]]))
 
 (defn nav-in [m path] #_(prn 'nav-in path m)
   (loop [m m, path path]
@@ -61,7 +61,7 @@
                                    (filter (fn [[i {:keys [path name]}]] (= p-next (conj path name))))
                                    (mapv first) first))]
         ;; ugly token mapping
-        (if-let [[t [k sel]] (forms3/TablePicker! ::select (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
+        (if-let [[t [k sel]] (TablePicker! ::select (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
                                  (e/server (count xs!))
                                  (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
                                                        (TreeRow x))))
@@ -87,7 +87,7 @@
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
                    (ColumnPicker (e/server (ex/Offload-reset #(some-> xs! first datafy keys #_sort #_reverse)))))] ; unstable
         (dom/props {:style {:--col-count (e/Count cols)}})
-        (if-let [[t [k sel]] (forms3/TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
+        (if-let [[t [k sel]] (TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
                                (e/server (count xs!))
                                (e/fn Row [i] (e/server (when-some [x (nth xs! i nil)]
                                                          (CollectionRow cols x))))
