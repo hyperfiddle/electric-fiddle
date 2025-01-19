@@ -7,7 +7,7 @@
      (map? data)
      (mapcat (fn [[k v]]
                (cond
-                 (map? v)
+                 (or (map? v) (set? v))
                  (cons {:path path :name k} (flatten-nested v (conj path k)))
 
                  ; render collections of records as hyperlinks
@@ -23,7 +23,7 @@
        data)
 
      ; render simple collections as indexed maps
-     (sequential? data)
+     (or (sequential? data) (set? data))
      (mapcat (fn [i v]
                (cond
                  (or (map? v) (sequential? v))
