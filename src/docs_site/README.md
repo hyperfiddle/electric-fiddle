@@ -24,5 +24,6 @@ fly scale count 1 --region ewr
 fly scale count 1 --region cdg
 fly scale count 1 --region sjc
 fly scale count 1 --region gru
+fly scale count 1 --region hkg
 fly platform vm-sizes
 ```
