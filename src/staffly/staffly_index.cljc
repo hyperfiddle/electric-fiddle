@@ -109,6 +109,6 @@ html:has(.staffly.dustingetz-EasyTable){height:100%; box-sizing: border-box;}
 .staffly.dustingetz-EasyTable{ position:relative; height:100%; }
 
 .staffly.dustingetz-EasyTable fieldset:has(> .Viewport) {flex: 1; max-height: 22rem;}
-.staffly.dustingetz-EasyTable .Viewport {height: 100%}
+.staffly.dustingetz-EasyTable .Viewport {height: 22rem}
 .staffly.dustingetz-EasyTable fieldset .Viewport table {grid-template-columns: 1fr 1fr;}
 ")
