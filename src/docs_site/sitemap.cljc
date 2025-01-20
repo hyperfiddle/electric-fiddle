@@ -8,6 +8,7 @@
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [dustingetz.threaddump :refer [ThreadDump]]
+            [dustingetz.wave :as wave]
             [docs-site.blog.threaddump1 :refer [ThreadDump1]]
             [docs-site.blog.threaddump2 :refer [ThreadDump2]]
             [docs-site.blog.threaddump3 :refer [ThreadDump3]]
@@ -41,6 +42,7 @@
   {`DatomicBrowser DatomicBrowser
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
+   `wave/Wave wave/Wave
    `DirectoryExplorer DirectoryExplorer})
 
 (e/defn Fiddles []
