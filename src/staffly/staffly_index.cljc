@@ -5,7 +5,7 @@
             [contrib.data :refer [unqualify]]
             contrib.str
             #?(:clj [datomic.api :as d])
-            [dustingetz.gridsheet3 :refer [Explorer3]]
+            [dustingetz.easy-table :refer [EasyTable]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input]]
@@ -77,26 +77,38 @@
   `(do (dom/dt (dom/text ~name_))
      (dom/dd ~@body)))
 
+(declare css)
+
 (e/defn Index []
   (e/client
+    (dom/style (dom/text css))
     (dom/h1 (dom/text (dom/text "Staffly Index")))
     (r/focus [0]
-      (let [[search type_] (dom/dl
-                             [(Field "search" (Input "" :placeholder "Name, email or request shortcode" :disabled true))
-                              (Field "type" (Typeahead ::staff ; initial value for fast load
-                                              :Options (e/fn [s] (e/server (e/diff-by identity (entity-type-options s))))
-                                              :option-label (fn [x] (some-> x name))))])
-            cols [:db/id ::entity-type]]
+      (let [type_ (dom/dl
+                    (Field "type" (Typeahead ::staff ; initial value for fast load
+                                    :Options (e/fn [s] (e/server (e/diff-by identity (entity-type-options s))))
+                                    :option-label (fn [x] (some-> x name)))))]
         #_(e/server (prn 'q search type_)) ; search is too slow, todo filter in memory w/ treelister
-        (Explorer3
-          (e/server (e/Offload #(index search type_ :limit nil)))
-          {:page-size 15 :row-height 24 :columns cols :grid-template-columns "1fr 1fr"
-           :Format
-           (e/fn [x a]
-             (e/client
-               (let [v (e/server (a x))
-                     type_ (e/server (some-> x entity-type))]
-                 (case a
-                   :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
-                   ::entity-type (dom/text (e/server (some-> type_ name)))
-                   (dom/text (pr-str v))))))})))))
+        (e/server
+          (EasyTable "Index"
+            (fn query [search] (index search type_ :limit nil))
+            (e/fn [e]
+              (e/server
+                (let [type_ (e/server (some-> e entity-type))]
+                  (e/for [a (e/diff-by {} [:db/id ::entity-type])]
+                    (let [v (a e)]
+                      (dom/td
+                        (case a
+                          :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
+                          ::entity-type (dom/text (some-> type_ name))
+                          (dom/text (pr-str v)))))))))))))))
+
+
+(def css "
+html:has(.staffly.dustingetz-EasyTable){height:100%; box-sizing: border-box;}
+.staffly.dustingetz-EasyTable{ position:relative; height:100%; }
+
+.staffly.dustingetz-EasyTable fieldset:has(> .Viewport) {flex: 1; max-height: 22rem;}
+.staffly.dustingetz-EasyTable .Viewport {height: 100%}
+.staffly.dustingetz-EasyTable fieldset .Viewport table {grid-template-columns: 1fr 1fr;}
+")

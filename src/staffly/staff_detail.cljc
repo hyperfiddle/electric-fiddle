@@ -1,6 +1,6 @@
 (ns staffly.staff-detail
   (:require #?(:clj [datomic.api :as d])
-            [dustingetz.gridsheet3 :refer [Explorer3]]
+            [dustingetz.easy-table :refer [EasyTable]]
             [dustingetz.ui :refer
              [Text EasyForm TagPickerReadOnly Debug]]
             [hyperfiddle.electric3 :as e]
@@ -62,9 +62,12 @@
    :staff/restrictions
    :staff/shifts])
 
+(declare css)
+
 (e/defn StaffDetail []
   (e/client
     (let [[e _] r/route, e (or e model/staff-sarah)]
+      (dom/style (dom/text css))
       (dom/h1 (dom/text (str "Staff · " (pr-str e))))
       (dom/dl
         (dom/dt #_(dom/text "links"))
@@ -80,46 +83,56 @@
                             (mapv (partial hash-map :db/ident) x)))
 
            :staff/documents (e/fn [x]
-                              (Explorer3 x
-                                :columns [:document/type :document/name :document/expiry :document/status]
-                                :grid-template-columns "2fr 3fr 2fr 1fr"
-                                :Format (e/fn [x a]
-                                          (let [v (e/server (get x a nil))]
-                                            (dom/text
-                                              (case a
-                                                :document/expiry (some-> v .toLocaleDateString)
-                                                v))))))
+                              (e/server
+                                (EasyTable "documents" ; :grid-template-columns "2fr 3fr 2fr 1fr"
+                                  (constantly x)
+                                  (e/fn [e]
+                                    (e/for [a (e/diff-by {} [:document/type :document/name :document/expiry :document/status])]
+                                      (let [v (a e)]
+                                        (dom/td
+                                          (dom/text
+                                            (case a
+                                              :document/expiry (e/client (some-> v .toLocaleDateString))
+                                              v)))))))))
 
            :staff/restrictions (e/fn [x]
-                                 (Explorer3 x
-                                   :columns [:restriction/venue :restriction/reason
-                                             :restriction/scope :restriction/expires-at]
-                                   :grid-template-columns "2fr 2fr 2fr 2fr"
-                                   :page-size 8
-                                   :Format (e/fn [x a]
-                                             (let [v (e/server (get x a nil))]
-                                               (dom/text
-                                                 (case a
-                                                   :restriction/expires-at (some-> v .toLocaleDateString)
-                                                   :restriction/venue (:venue/name v)
-                                                   v))))))
-
+                                 (e/server
+                                   (EasyTable "restrictions" ; :grid-template-columns "2fr 2fr 2fr 2fr"
+                                     (constantly x)
+                                     (e/fn [e]
+                                       (e/for [a (e/diff-by {} [:restriction/venue :restriction/reason :restriction/scope :restriction/expires-at])]
+                                         (let [v (a e)]
+                                           (dom/td
+                                             (dom/text
+                                               (case a
+                                                 :restriction/expires-at (e/client (some-> v .toLocaleDateString))
+                                                 :restriction/venue (:venue/name v) v)))))))))
            :staff/shifts (e/fn [x]
-                           (Explorer3 x
-                             :columns [:shift/date :shift/venue :shift/role :shift/rating]
-                             :grid-template-columns "2fr 2fr 2fr 1fr"
-                             :page-size 8
-                             :Format (e/fn [x a]
-                                       (let [v (e/server (get x a nil))]
-                                         (dom/text
-                                           (case a
-                                             :shift/date (some-> v .toLocaleDateString)
-                                             :shift/venue (:venue/name v)
-                                             :shift/role (some-> v :db/ident name)
-                                             v))))))
+                           (e/server
+                             (EasyTable "shifts" ; :grid-template-columns "2fr 2fr 2fr 1fr"
+                               (constantly x)
+                               (e/fn [e]
+                                 (e/for [a (e/diff-by {} [:shift/date :shift/venue :shift/role :shift/rating])]
+                                   (let [v (a e)]
+                                     (dom/td
+                                       (dom/text
+                                         (case a
+                                           :shift/date (e/client (some-> v .toLocaleDateString))
+                                           :shift/venue (:venue/name v)
+                                           :shift/role (e/client (some-> v :db/ident name)) v)))))))))
 
            :sub/phone-confirmed (e/fn [x] (Form! (Checkbox! ::change-phone-confirmed x)
                                             :commit (fn [{::keys []}] [])
                                             :show-buttons :smart))
            }))
         #_(Debug x))))
+
+
+(def css "
+html:has(.staffly dd.dustingetz-EasyTable){height:100%; box-sizing: border-box;}
+.staffly dd.dustingetz-EasyTable{ position:relative; height:100%; }
+
+.staffly dd.dustingetz-EasyTable fieldset:has(> .Viewport) {height: 100%; max-height: 22rem;}
+.staffly dd.dustingetz-EasyTable .Viewport {height: 10rem; position: relative;}
+.staffly dd.dustingetz-EasyTable fieldset .Viewport table {grid-template-columns: 1fr 1fr 1fr 1fr;}
+")
