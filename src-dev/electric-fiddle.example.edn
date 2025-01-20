@@ -1,0 +1,5 @@
+; default dev classpath namespace loader
+; to override, copy and rename to electric-fiddle.edn
+{:hyperfiddle/fiddles
+ [docs-site.sitemap ; requires :electric-tutorial alias
+  hello-fiddle.hello-fiddle]}

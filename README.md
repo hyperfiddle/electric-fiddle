@@ -25,7 +25,7 @@ INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
 
 This repo is structured to allow multiple "fiddles" (little apps) to share common dev infrastructure (e.g. routing, databases). During dev, these classpaths are merged, but prod classpaths are isolated so that each fiddle can deployed individually.
 
-* **local dev**: the [dev entrypoint](src-dev/dev.cljc#L10) uses a [clever reader trick](src-dev/load_dev_fiddles!.cljc#L6) to drive Clojure/Script namespace `:require` directives dynamically from a config file, [`electric-fiddle.edn`](src-dev/electric-fiddle.edn). If you modify this file, remember to restart your REPL (including any clojure or npm dependencies).
+* **local dev**: the [dev entrypoint](src-dev/dev.cljc#L10) uses a [clever reader trick](src-dev/load_dev_fiddles!.cljc#L6) to drive Clojure/Script namespace `:require` directives dynamically from a config file, [`electric-fiddle.edn`](src-dev/electric-fiddle.example.edn). Clone the example file to override it locally, and remember to restart your REPL.
 
 * **prod**: the [prod entrypoint](src-prod/prod.cljc) runs only one fiddle at a time, with an isolated classpath. Prod has a mandatory [build](src-build/hyperfiddle/fiddle_build.clj), which bakes the Electric application client program. At compile time, both the Electric program hash (derived from git) and the fiddle entrypoint namespace are known statically, and built into both the client assets and also the server asset `resources/electric-manifest.edn` which is used to ensure that the client & server agree about the baked Electric program hash. At runtime, the prod entrypoint uses the reader trick to lookup the name of the entrypoint to run.
 
