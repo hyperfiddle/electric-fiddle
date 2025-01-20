@@ -3,7 +3,7 @@
             [electric-tutorial.typeahead :refer [Typeahead]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input*]]
+            [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window Spool]]
             #?(:clj [dustingetz.teeshirt-orders-datascript :refer
                      [teeshirt-orders genders shirt-sizes]])

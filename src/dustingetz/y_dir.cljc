@@ -2,7 +2,7 @@
   (:require [contrib.str :refer [includes-str?]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input*]]))
+            [hyperfiddle.electric-forms3 :refer [Input*]]))
 
 (e/defn Y [Gen]
   (e/call

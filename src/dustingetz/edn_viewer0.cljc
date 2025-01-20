@@ -7,7 +7,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :refer [Tap]]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Checkbox*]]
+            [hyperfiddle.electric-forms3 :refer [Checkbox*]]
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]))
 

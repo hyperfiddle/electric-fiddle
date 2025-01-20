@@ -6,7 +6,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             #?(:clj dustingetz.datafy-git)
             #?(:clj dustingetz.datafy-jvm)
-            [hyperfiddle.electric-forms0 :refer [Checkbox]]
+            [hyperfiddle.electric-forms3 :refer [Checkbox]]
             [hyperfiddle.router4 :as r]
             [dustingetz.edn-viewer0 :refer [EdnViewer0]]))
 

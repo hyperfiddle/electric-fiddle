@@ -5,7 +5,7 @@
              [Text EasyForm TagPickerReadOnly Debug]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer
+            [hyperfiddle.electric-forms3 :refer
              [Form! Checkbox!]]
             [hyperfiddle.router4 :as r]
             [staffly.staffly-model :as model]))

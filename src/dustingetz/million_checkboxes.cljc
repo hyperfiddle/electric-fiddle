@@ -4,7 +4,7 @@
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-dom3-props :refer [#?(:cljs set-property!)]]
-            [hyperfiddle.electric-forms0 :refer [Input*]]
+            [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.incseq :as i]
             [missionary.core :as m]))
 

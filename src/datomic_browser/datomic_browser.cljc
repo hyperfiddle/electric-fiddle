@@ -8,7 +8,7 @@
                       summarize-attr is-attr? seq-consumer]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Input* Input! Form! Checkbox]]
+            [hyperfiddle.electric-forms3 :refer [Input* Input! Form!]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.router4 :as r]
             [missionary.core :as m]))

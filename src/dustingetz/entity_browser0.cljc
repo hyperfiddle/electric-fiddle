@@ -6,7 +6,7 @@
             [dustingetz.flatten-document :refer [flatten-nested]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms0 :refer [Checkbox*]]
+            [hyperfiddle.electric-forms3 :refer [Checkbox*]]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]
