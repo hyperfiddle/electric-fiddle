@@ -66,6 +66,16 @@
               (dom/props {:x x, :y 25, :font-size "12px", :text-anchor "middle"})
               (dom/text (i->v-str i)))))))))
 
+(e/defn Selector [viewbox-x bar-gap]
+  (let [mouse-x (+ viewbox-x
+                  (dom/On "mousemove" #(- (.-clientX %) (-> (.-currentTarget %) .getBoundingClientRect .-left)) 0))]
+    (svg/rect
+      (dom/props {:width 1, :height "100%" :fill "red", :opacity 0.8, :x mouse-x}))
+    (math/floor (/ mouse-x bar-gap))))
+
+(e/defn RecordViewer [record]
+  (dom/pre (dom/text (pr-str record))))
+
 (e/defn Wave []
   (dom/div
     (dom/props {:style {:display "flex", :flex-direction "column"}})
@@ -76,20 +86,25 @@
           [_height width] (e/input (scroll/resize-observer dom/node))
           size      (math/round (* (/ width 15) zoom))
           bar-width (/ 10 zoom)
-          bar-gap   (/ 15 zoom)]
-      playing? hz zoom offset                       ; sample, order
+          bar-gap   (/ 15 zoom)
+          viewbox-x (* bar-gap offset)
+          !record (atom nil), record (e/watch !record)]
+      playing? hz zoom offset           ; sample, order
       (svg/svg
-        (dom/props {:style {:border "1px solid gray"}, :height 600 :viewBox (str (* bar-gap offset) " 0 " width " 600")})
-        (Ruler size offset 2 identity bar-gap bar-width #(zero? (mod % 10)))
-        (svg/g
-          (dom/props {:transform "translate(0, 150)"})
-          (e/for [i (scroll/IndexRing size offset)]
-            (let [{:keys [sin cos]} (e/server {:sin (math/sin (/ i 13)) :cos (math/cos (/ i 7))})]
-              (svg/rect
-                (dom/props {:width bar-width :fill "#2ecc71" :opacity 0.8 :x (* bar-gap i)
-                            :height (* (abs cos) 100)
-                            :y (when (pos? cos) (- (* cos 100)))}))
-              (svg/rect
-                (dom/props {:width bar-width :fill "#2ecc71" :opacity 0.8 :x (* bar-gap i)
-                            :height (* (abs sin) 100)
-                            :y (+ 300 (if (pos? sin) (- (* sin 100)) 0))})))))))))
+        (let [selected (Selector viewbox-x bar-gap)]
+          (dom/props {:style {:border "1px solid gray"}, :height 600 :viewBox (str viewbox-x " 0 " width " 600")})
+          (Ruler size offset 2 identity bar-gap bar-width #(zero? (mod % 10)))
+          (svg/g
+            (dom/props {:transform "translate(0, 150)"})
+            (e/for [i (scroll/IndexRing size offset)]
+              (let [{:keys [sin cos] :as v} (e/server {:sin (math/sin (/ i 13)) :cos (math/cos (/ i 7))})]
+                (when (= i selected) (reset! !record v))
+                (svg/rect
+                  (dom/props {:width bar-width :fill "#2ecc71" :opacity 0.8 :x (* bar-gap i)
+                              :height (* (abs cos) 100)
+                              :y (when (pos? cos) (- (* cos 100)))}))
+                (svg/rect
+                  (dom/props {:width bar-width :fill "#2ecc71" :opacity 0.8 :x (* bar-gap i)
+                              :height (* (abs sin) 100)
+                              :y (+ 300 (if (pos? sin) (- (* sin 100)) 0))})))))))
+      (RecordViewer record))))
