@@ -3,47 +3,80 @@
     [hyperfiddle.electric3 :as e]
     [hyperfiddle.electric-svg3 :as svg]
     [hyperfiddle.electric-scroll0 :as scroll]
+    [hyperfiddle.token-zoo0 :as tok]
     [hyperfiddle.electric-dom3 :as dom]
     [clojure.math :as math]
+    [contrib.debug :as dbg]
+    [contrib.data :refer [->box]]
     [missionary.core :as m]))
 
 (defn now-ms []
   #?(:clj (System/currentTimeMillis)
      :cljs (js/Date.now)))
 
-(defn hz> [hz clock]
-  (let [gap (/ 1000 hz)]
-    (m/ap (let [!prev-ms (atom 0)
-                _ (m/?> clock)
-                t (- (now-ms) @!prev-ms)]
-            (when (< t gap) (m/? (m/sleep (- gap t))))
-            (reset! !prev-ms (now-ms))))))
+(letfn [(wait [gap t0]
+          (m/sp
+            (let [t (- (now-ms) t0)]
+              (when (< t gap) (m/? (m/sleep (- gap t))))
+              (now-ms))))]
+  (e/defn Clock [hz]
+    (let [hz (abs hz)]
+      (e/When (not= 0 hz)
+        (let [gap (/ 1000 hz)
+              [spend t0] (tok/WithDataSlot (tok/CyclicToken (e/DOMVisible?) true?) (now-ms))]
+          (e/When spend
+            (spend (e/Task (wait gap t0)))))))))
+
+(defn ->toggler []
+  (let [<b> (->box false)]
+    (fn [_] (-> (<b>) not (<b>)))))
+
+(e/defn PlayButton []
+  (dom/button
+    (dom/props {:style {:width "8rem"}})
+    (let [playing? (dom/On "click" (->toggler) false)]
+      (dom/text (if playing? "pause" "play"))
+      playing?)))
+
+(e/defn HzRange []
+  (let [hz (dom/input
+             (dom/props {:id "hz" :type "range", :min -60, :max 60, :value 20, :style {:width "600px"}})
+             (dom/On "input" #(-> % .-target .-value parse-long) 20))]
+    (dom/label (dom/props {:for "hz"}) (dom/text (str hz " Hz")))
+    hz))
+
+(e/defn Tick [playing? hz]
+  (let [!offset (atom 0)]
+    (when playing?
+      ((fn [_ hz] (cond (pos? hz) (swap! !offset inc)
+                        (zero? hz) nil
+                        :else (swap! !offset dec)))
+       (Clock hz) hz))
+    (e/watch !offset))
+  ;; alternate token impl
+  #_(let [[t offset] (tok/WithDataSlot (tok/TokenNofail (Clock hz)) 0)]
+    (when (and playing? t)
+      (t ((cond (pos? hz) inc (zero? hz) identity (neg? hz) dec) offset)))
+    offset))
 
 (e/defn Wave []
-  (let [!offset (atom 0), offset (e/watch !offset)
-        !playing? (atom false), playing? (e/watch !playing?)
-        !viewbox-x (atom 0), viewbox-x (e/watch !viewbox-x)]
-    (dom/div
-      (dom/props {:style {:display "flex", :flex-direction "column"}})
-      (dom/button
-        (dom/text (if playing? "pause" "play"))
-        (dom/props {:style {:width "8rem"}})
-        (dom/On "click" (fn [_] (swap! !playing? not)) nil))
-      (let [hz (dom/input
-                 (dom/props {:id "hz" :type "range", :min 1, :max 60, :value 20, :style {:width "600px"}})
-                 (dom/On "input" #(-> % .-target .-value parse-long) 20))]
-        (dom/label (dom/props {:for "hz"}) (dom/text (str hz " Hz")))
-        (when playing?                  ; reuse system clock which stops on window blur
-          ((fn [_] (swap! !offset inc)) (e/input (hz> hz (e/pure (e/System-time-ms))))))
-        (svg/svg
-          (dom/props {:style {:border "1px solid gray"}, :width 600 :height 300 :viewBox (str viewbox-x " 0 600 300")})
-          (svg/g
-            (dom/props {:transform "translate(0, 150)"})
-            (e/for [i (scroll/IndexRing 40 offset)]
-              (let [[i v] (e/server [i (math/cos (/ i 3))])] ; synchronize `i` with `v` so the repaint is in sync
-                (when (>= i 40)                              ; don't run on load
-                  ((fn [_] (swap! !viewbox-x + 15)) v))      ; delay update until `v` arrives so paint is in sync
-                (svg/rect
-                  (dom/props {:width 10 :fill "#2ecc71" :opacity 0.8 :x (* 15 i)
-                              :height (* (abs v) 100)
-                              :y (when (pos? v) (- (* v 100)))}))))))))))
+  (dom/div
+    (dom/props {:style {:display "flex", :flex-direction "column"}})
+    (let [playing? (PlayButton)
+          hz       (HzRange)
+          offset   (Tick playing? hz)]
+      playing? hz offset                       ; sample, order
+      (svg/svg
+        (dom/props {:style {:border "1px solid gray"}, :width 600 :height 600 :viewBox (str (* 15 offset) " 0 600 600")})
+        (svg/g
+          (dom/props {:transform "translate(0, 150)"})
+          (e/for [i (scroll/IndexRing 40 offset)]
+            (let [{:keys [sin cos]} (e/server {:sin (math/sin (/ i 13)) :cos (math/cos (/ i 7))})]
+              (svg/rect
+                (dom/props {:width 10 :fill "#2ecc71" :opacity 0.8 :x (* 15 i)
+                            :height (* (abs cos) 100)
+                            :y (when (pos? cos) (- (* cos 100)))}))
+              (svg/rect
+                (dom/props {:width 10 :fill "#2ecc71" :opacity 0.8 :x (* 15 i)
+                            :height (* (abs sin) 100)
+                            :y (+ 300 (if (pos? sin) (- (* sin 100)) 0))})))))))))
