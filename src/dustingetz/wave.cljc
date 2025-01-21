@@ -61,12 +61,13 @@
           hz        (HzRange)
           offset    (Tick playing? hz)
           zoom      (/ (ZoomPercentRange) 100)
-          size      (* 40 zoom)
+          [_height width] (e/input (scroll/resize-observer dom/node))
+          size      (math/round (* (/ width 15) zoom))
           bar-width (/ 10 zoom)
           bar-gap   (/ 15 zoom)]
       playing? hz zoom offset                       ; sample, order
       (svg/svg
-        (dom/props {:style {:border "1px solid gray"}, :width 600 :height 600 :viewBox (str (* bar-gap offset) " 0 600 600")})
+        (dom/props {:style {:border "1px solid gray"}, :height 600 :viewBox (str (* bar-gap offset) " 0 " width " 600")})
         (svg/g
           (dom/props {:transform "translate(0, 150)"})
           (e/for [i (scroll/IndexRing size offset)]
