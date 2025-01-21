@@ -1,6 +1,7 @@
 (ns dustingetz.wave
   (:require
     [hyperfiddle.electric3 :as e]
+    [hyperfiddle.electric3-contrib :as ex]
     [hyperfiddle.electric-svg3 :as svg]
     [hyperfiddle.electric-scroll0 :as scroll]
     [hyperfiddle.token-zoo0 :as tok]
@@ -26,10 +27,10 @@
       (dom/text (if playing? "pause" "play"))
       playing?)))
 
-(e/defn HzRange []
+(e/defn HzRange [v]
   (let [hz (dom/input
-             (dom/props {:id "hz" :type "range", :min -60, :max 60, :value 20, :style {:width "600px"}})
-             (dom/On "input" #(-> % .-target .-value parse-long) 20))]
+             (dom/props {:id "hz" :type "range", :min -60, :max 60, :value v, :style {:width "600px"}})
+             (dom/On "input" #(-> % .-target .-value parse-long) v))]
     (dom/label (dom/props {:for "hz"}) (dom/text (str hz " Hz")))
     hz))
 
@@ -67,20 +68,22 @@
               (dom/text (i->v-str i)))))))))
 
 (e/defn Selector [viewbox-x bar-gap]
-  (let [mouse-x (+ viewbox-x
-                  (dom/On "mousemove" #(- (.-clientX %) (-> (.-currentTarget %) .getBoundingClientRect .-left)) 0))]
-    (svg/rect
-      (dom/props {:width 1, :height "100%" :fill "red", :opacity 0.8, :x mouse-x}))
-    (math/floor (/ mouse-x bar-gap))))
+  (let [mouse-x (+ viewbox-x (dom/On "mousemove" #(- (.-clientX %) (-> (.-currentTarget %) .getBoundingClientRect .-left)) 0))]
+    (svg/rect (dom/props {:width 1, :height "100%" :fill "red", :opacity 0.8, :x mouse-x}))
+    (math/floor (/ (ex/Throttle 16 mouse-x) bar-gap))))
 
-(e/defn RecordViewer [record]
-  (dom/pre (dom/text (pr-str record))))
+(e/defn RecordViewer [{:keys [sin cos]}]
+  (dom/dl
+    (dom/dt (dom/text "cos")) (dom/dd (dom/text (some-> cos (.toPrecision 2))))
+    (dom/dt (dom/text "sin")) (dom/dd (dom/text (some-> sin (.toPrecision 2))))))
 
+(declare css)
 (e/defn Wave []
+  (dom/style (dom/text css))
   (dom/div
     (dom/props {:style {:display "flex", :flex-direction "column"}})
     (let [playing?  (PlayButton)
-          hz        (HzRange)
+          hz        (HzRange 60)
           offset    (Tick playing? hz)
           zoom      (/ (ZoomPercentRange) 100)
           [_height width] (e/input (scroll/resize-observer dom/node))
@@ -108,3 +111,9 @@
                               :height (* (abs sin) 100)
                               :y (+ 300 (if (pos? sin) (- (* sin 100)) 0))})))))))
       (RecordViewer record))))
+
+(def css "
+dl { margin: 0; display: grid; grid-template-columns: max-content auto; }
+dt { grid-column: 1; }
+dd { grid-column: 2; margin-left: 1em; margin-bottom: .5em; }
+")
