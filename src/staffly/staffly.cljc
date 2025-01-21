@@ -6,6 +6,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
+            [hyperfiddle.electric-forms4 :as forms]
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
             [staffly.staff-detail :refer [StaffDetail]]
@@ -60,10 +61,9 @@
    (e/server
      (bindx [model/datomic-conn (check datomic-conn)
              model/db (check model/*db*)
-             model/schema (check model/*schema*)
-             *effects {`Restrict-staff-from-venue! Restrict-staff-from-venue!}]
-       (e/client
-         (Service
+             model/schema (check model/*schema*)]
+       (forms/Interpreter {`Restrict-staff-from-venue! Restrict-staff-from-venue!}
+         (e/client
            (Page)))))))
 
 (e/defn Fiddles []
