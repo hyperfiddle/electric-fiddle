@@ -59,24 +59,35 @@
       (t ((cond (pos? hz) inc (zero? hz) identity (neg? hz) dec) offset)))
     offset))
 
+(e/defn ZoomPercentRange []
+  (let [p (dom/input
+             (dom/props {:id "p" :type "range", :min 10, :max 300, :value 100, :step 10, :style {:width "600px"}})
+             (dom/On "input" #(-> % .-target .-value parse-long) 100))]
+    (dom/label (dom/props {:for "p"}) (dom/text (str p "%")))
+    p))
+
 (e/defn Wave []
   (dom/div
     (dom/props {:style {:display "flex", :flex-direction "column"}})
-    (let [playing? (PlayButton)
-          hz       (HzRange)
-          offset   (Tick playing? hz)]
-      playing? hz offset                       ; sample, order
+    (let [playing?  (PlayButton)
+          hz        (HzRange)
+          offset    (Tick playing? hz)
+          zoom      (/ (ZoomPercentRange) 100)
+          size      (* 40 zoom)
+          bar-width (/ 10 zoom)
+          bar-gap   (/ 15 zoom)]
+      playing? hz zoom offset                       ; sample, order
       (svg/svg
-        (dom/props {:style {:border "1px solid gray"}, :width 600 :height 600 :viewBox (str (* 15 offset) " 0 600 600")})
+        (dom/props {:style {:border "1px solid gray"}, :width 600 :height 600 :viewBox (str (* bar-gap offset) " 0 600 600")})
         (svg/g
           (dom/props {:transform "translate(0, 150)"})
-          (e/for [i (scroll/IndexRing 40 offset)]
+          (e/for [i (scroll/IndexRing size offset)]
             (let [{:keys [sin cos]} (e/server {:sin (math/sin (/ i 13)) :cos (math/cos (/ i 7))})]
               (svg/rect
-                (dom/props {:width 10 :fill "#2ecc71" :opacity 0.8 :x (* 15 i)
+                (dom/props {:width bar-width :fill "#2ecc71" :opacity 0.8 :x (* bar-gap i)
                             :height (* (abs cos) 100)
                             :y (when (pos? cos) (- (* cos 100)))}))
               (svg/rect
-                (dom/props {:width 10 :fill "#2ecc71" :opacity 0.8 :x (* 15 i)
+                (dom/props {:width bar-width :fill "#2ecc71" :opacity 0.8 :x (* bar-gap i)
                             :height (* (abs sin) 100)
                             :y (+ 300 (if (pos? sin) (- (* sin 100)) 0))})))))))))
