@@ -7,7 +7,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [dustingetz.entity-browser0 :refer [EntityBrowser0]]
-            #?(:clj dustingetz.datafy-git)
+            #?(:clj dustingetz.datafy-git2)
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj dustingetz.datafy-fs)))
 
