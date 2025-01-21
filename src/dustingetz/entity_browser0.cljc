@@ -7,7 +7,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :as forms3 :refer [Checkbox* TablePicker!]]
+            [hyperfiddle.electric-forms4 :as forms :refer [Checkbox* TablePicker!]]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]))
@@ -60,18 +60,16 @@
             selected-i (e/server (->> xs! ; slow, but the documents are small
                                    (map-indexed vector)
                                    (filter (fn [[i {:keys [path name]}]] (= p-next (conj path name))))
-                                   (mapv first) first))]
-        ;; ugly token mapping
-        (if-let [[t [k sel]] (TablePicker! ::select (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
-                                 (e/server (count xs!))
-                                 (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
-                                                       (TreeRow x))))
-                                 :edit-monoid vector)]
-          [t (e/server
-              (if-some [{:keys [path name value]} (nth xs! sel nil)]
-                [::select (conj path name)]
-                [::select nil]))]
-          (e/amb))))))
+                                   (mapv first) first))
+            ;; ugly token mapping
+            {:keys [::forms/value] :as selection}
+            (TablePicker! ::select (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
+              (e/server (count xs!))
+              (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
+                                    (TreeRow x)))))]
+        (assoc selection ::forms/value (e/server
+                                         (when-some [{:keys [path name value]} (nth xs! value nil)]
+                                           (conj path name))))))))
 
 
 (e/defn CollectionRow [cols ?x]
@@ -88,13 +86,12 @@
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
                    (ColumnPicker (e/server (ex/Offload-reset #(some-> xs! first datafy keys #_sort #_reverse)))))] ; unstable
         (dom/props {:style {:--col-count (e/Count cols)}})
-        (if-let [[t [k sel]] (TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
-                               (e/server (count xs!))
-                               (e/fn Row [i] (e/server (when-some [x (nth xs! i nil)]
-                                                         (CollectionRow cols x))))
-                               :edit-monoid vector)]
-          [t [k [(e/server (if (contains? xs! sel) sel))]]] ; [i]
-          (e/amb))))))
+        (let [{:keys [::forms/value] :as selection}
+              (TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
+                (e/server (count xs!))
+                (e/fn Row [i] (e/server (when-some [x (nth xs! i nil)]
+                                          (CollectionRow cols x)))))]
+          (assoc selection ::forms/value [(e/server (when (contains? xs! value) value))]))))))
 
 (e/defn Block [p-here x p-next]
   (e/client ; server causes reboot on first select?
@@ -111,11 +108,11 @@
 (e/defn BrowsePath [p-here x ps]
   (e/client
     (router/pop
-      (forms3/Interpreter {::select (e/fn [path]
-                                        (if path
-                                          (router/Navigate! ['. [path]])
-                                          (router/Navigate! ['. []]))
-                                      :hyperfiddle.electric-forms3/ok)}
+      (forms/Interpreter {::select (e/fn [path]
+                                     (if path
+                                       (router/Navigate! ['. [path]])
+                                       (router/Navigate! ['. []]))
+                                     [::forms/ok])}
         (Block p-here x (first ps)))
       (when-some [[p & ps] (seq ps)]
         (let [x (e/server (nav-in x p))]
