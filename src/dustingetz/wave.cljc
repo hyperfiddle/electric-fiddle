@@ -10,22 +10,10 @@
     [contrib.data :refer [->box]]
     [missionary.core :as m]))
 
-(defn now-ms []
-  #?(:clj (System/currentTimeMillis)
-     :cljs (js/Date.now)))
-
-(letfn [(wait [gap t0]
-          (m/sp
-            (let [t (- (now-ms) t0)]
-              (when (< t gap) (m/? (m/sleep (- gap t))))
-              (now-ms))))]
-  (e/defn Clock [hz]
-    (let [hz (abs hz)]
-      (e/When (not= 0 hz)
-        (let [gap (/ 1000 hz)
-              [spend t0] (tok/WithDataSlot (tok/CyclicToken (e/DOMVisible?) true?) (now-ms))]
-          (e/When spend
-            (spend (e/Task (wait gap t0)))))))))
+(e/defn Clock [hz]
+  (let [hz (abs hz)]
+    (e/When (not= 0 hz)
+      (math/round (-> (e/System-time-ms) (* hz) (/ 1000))))))
 
 (defn ->toggler []
   (let [<b> (->box false)]
