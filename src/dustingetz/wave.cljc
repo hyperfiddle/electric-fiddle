@@ -54,6 +54,18 @@
     (dom/label (dom/props {:for "p"}) (dom/text (str p "%")))
     p))
 
+(e/defn Ruler [size offset step i->v-str bar-gap bar-width major?]
+  (let [size (-> size (quot step) (* (inc step)))] ; size has to be multiple of step
+    (svg/g
+      (e/for [i (scroll/Ring size offset step)]
+        (let [x (+ (* bar-gap i) (/ bar-width 2))] ; center ruler to bar's center
+          (svg/rect
+            (dom/props {:stroke "black", :opacity 0.8 :x x, :y 0, :height (if (major? i) 10 5), :width 1}))
+          (when (major? i)
+            (svg/text
+              (dom/props {:x x, :y 25, :font-size "12px", :text-anchor "middle"})
+              (dom/text (i->v-str i)))))))))
+
 (e/defn Wave []
   (dom/div
     (dom/props {:style {:display "flex", :flex-direction "column"}})
@@ -68,6 +80,7 @@
       playing? hz zoom offset                       ; sample, order
       (svg/svg
         (dom/props {:style {:border "1px solid gray"}, :height 600 :viewBox (str (* bar-gap offset) " 0 " width " 600")})
+        (Ruler size offset 2 identity bar-gap bar-width #(zero? (mod % 10)))
         (svg/g
           (dom/props {:transform "translate(0, 150)"})
           (e/for [i (scroll/IndexRing size offset)]
