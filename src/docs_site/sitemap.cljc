@@ -23,7 +23,7 @@
      'y20250106_threaddump_part1
      'y20250109_datafy
      'y20250112_data_browser
-     'y2025_waveform]]])
+     'y20250123_waveform]]])
 
 (e/defn BlogFiddles []
   {`BlogIndex (e/Partial BlogIndex blog-sitemap)
