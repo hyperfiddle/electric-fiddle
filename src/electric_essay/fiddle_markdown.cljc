@@ -55,7 +55,7 @@
   (e/client
     (dom/fieldset
       (dom/props {:class ["user-examples-target" (some-> target name)]})
-      (dom/legend (dom/text "Result"))
+      (dom/legend (dom/text (some-> target name)))
       (Target-nochrome* target ?wrap))))
 
 (e/defn Src* [target & {:keys [ns?]
