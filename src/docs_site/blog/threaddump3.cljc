@@ -9,7 +9,8 @@
             [dustingetz.entity-browser0 :refer [EntityBrowser0]]
             #?(:clj dustingetz.datafy-git2)
             #?(:clj dustingetz.datafy-jvm2)
-            #?(:clj dustingetz.datafy-fs)))
+            #?(:clj dustingetz.datafy-fs)
+            #?(:clj dustingetz.datafy-clj)))
 
 #?(:clj (defn resolve-class [whiteset qs]
           (try (some-> (whiteset qs) resolve) (catch Exception e nil))))
@@ -28,7 +29,7 @@
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
     (dom/text "Target: ")
-    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git "./"] [:file "./"] #_[:tap]
+    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git "./"] [:file "./"] [:tap]
                               [:class 'org.eclipse.jgit.api.Git]
                               [:class 'java.lang.management.ThreadMXBean])]
       (r/link ['. [ref]] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))

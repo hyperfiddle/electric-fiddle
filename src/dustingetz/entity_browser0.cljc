@@ -93,17 +93,23 @@
                                           (CollectionRow cols x)))))]
           (assoc selection ::forms/value [(e/server (when (contains? xs! value) value))]))))))
 
+(defn infer-block-type [x]
+  (let [q (cond
+            (map? x) :tree
+            (or (sequential? x) (set? x)) :table
+            () :scalar)]
+    (prn 'q q (type x) (pr-str x))
+    q))
+
 (e/defn Block [p-here x p-next]
   (e/client ; server causes reboot on first select?
-    (let [[tree? table? debug] (e/server [(map? x)
-                                          (or (sequential? x) (set? x))
-                                          (str (type x))])]
-      #_(e/client (prn 'Block p-here 'table? table? 'debug debug))
-      #_(e/server (prn 'Block p-here 'table? table? 'debug debug))
-      (cond ; client, don't lag selection on the way out
-        tree? (TreeBlock p-here x p-next)
-        table? (TableBlock p-here x p-next)
-        () nil)))) ; elide scalars
+    (let [btype (e/server (infer-block-type x))]
+      (e/client (prn 'Block p-here btype))
+      (e/server (prn 'Block p-here btype))
+      (case btype ; client, don't lag selection on the way out
+        :tree (TreeBlock p-here x p-next)
+        :table (TableBlock p-here x p-next)
+        :scalar nil))))
 
 (e/defn BrowsePath [p-here x ps]
   (e/client
