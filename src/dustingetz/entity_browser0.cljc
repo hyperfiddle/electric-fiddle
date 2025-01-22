@@ -3,7 +3,7 @@
             [clojure.core.protocols :refer [nav]]
             [contrib.data :refer [unqualify]]
             [dustingetz.easy-table :refer [TableScroll Load-css]]
-            [dustingetz.flatten-document :refer [flatten-nested]]
+            [dustingetz.flatten-document :refer [flatten-nested explorer-seq]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
@@ -38,28 +38,29 @@
 #?(:clj (defmulti identify (fn [x])))
 #?(:clj (defmethod identify :default [x] nil))
 
-(e/defn TreeRow [{:keys [path name value]}]
+(e/defn TreeRow [[path value branch?]]
   #_(e/server (prn 'Q path name value)) ; all can be unserializable
-  (e/client
-    (dom/td (dom/props {:style {:padding-left (e/server (some-> path count (* 15) (str "px")))}})
-      (dom/span (dom/props {:class "dustingetz-tooltip"}) ; hover anchor
-        (dom/text (e/server (if (keyword? name) ; glitch
-                              (unqualify name) (str name)))) ; label
-        (dom/span (dom/text (e/server (pr-str name))))))
-    (dom/td
-      (let [v-str (e/server (pr-str value))]
-        (if (e/server (fn? value)) ; fns encode hyperlinks (on the server!)
-          #_(router/link ['. [(conj path (e/server name))]]) (dom/text "...")
-          (dom/text v-str))))))
+  (let [name (e/server (peek path))] ; O(1)
+    (e/client
+      (dom/td (dom/props {:style {:padding-left (e/server (some-> path count dec (* 15) (str "px")))}})
+              (dom/span (dom/props {:class "dustingetz-tooltip"}) ; hover anchor
+                        (dom/text (e/server (if (keyword? name) ; glitch
+                                              (unqualify name) (str name)))) ; label
+                        (dom/span (dom/text (e/server (pr-str name))))))
+      (dom/td
+        (let [v-str (e/server (pr-str value))]
+          (if (e/server (fn? value)) ; fns encode hyperlinks (on the server!)
+            #_(router/link ['. [(conj path (e/server name))]]) (dom/text "...")
+            (dom/text (#(when-not branch? %) v-str))))))))
 
 (e/defn TreeBlock [p m p-next]
   (e/client
     (dom/fieldset (dom/props {:class "entity"})
       (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
-      (let [xs! (e/server ((fn [] (try (flatten-nested m) (catch Exception _ {}))))) ; glitch
+      (let [xs! (e/server ((fn [] (try (explorer-seq m) (catch Exception _ {}))))) ; glitch
             selected-i (e/server (->> xs! ; slow, but the documents are small
                                    (map-indexed vector)
-                                   (filter (fn [[i {:keys [path name]}]] (= p-next (conj path name))))
+                                   (filter (fn [[i [path value]]] (= p-next path)))
                                    (mapv first) first))
             ;; ugly token mapping
             {:keys [::forms/value] :as selection}
@@ -68,8 +69,8 @@
               (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
                                     (TreeRow x)))))]
         (assoc selection ::forms/value (e/server
-                                         (when-some [{:keys [path name value]} (nth xs! value nil)]
-                                           (conj path name))))))))
+                                         (when-some [[path value] (nth xs! value nil)]
+                                           path)))))))
 
 
 (e/defn CollectionRow [cols ?x]
