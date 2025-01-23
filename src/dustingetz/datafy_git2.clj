@@ -62,3 +62,16 @@
      :commit-short-name (-> o .getName short-commit-id)}))
 
 (defn repo-path [o] (-> o datafy :repo datafy :dir datafy ::fs/absolute-path))
+
+(comment
+  (as-> (load-repo "./") x
+    (datafy x)
+    (nav x :log (:log x)))
+
+  (as-> (load-repo "./") x
+    (datafy x)
+    (nav x :branches (:branches x))
+    (datafy x)
+    (nav x 0 (nth x 0))
+    (datafy x))
+  )
