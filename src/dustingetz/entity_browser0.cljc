@@ -1,7 +1,7 @@
 (ns dustingetz.entity-browser0
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
-            [contrib.data :refer [unqualify]]
+            [contrib.data :refer [unqualify index-of]]
             [dustingetz.easy-table :refer [TableScroll Load-css]]
             [dustingetz.flatten-document :refer [flatten-nested explorer-seq]]
             [hyperfiddle.electric3 :as e]
@@ -40,7 +40,7 @@
 
 (e/defn TreeRow [[path value branch?]]
   #_(e/server (prn 'Q path name value)) ; all can be unserializable
-  (let [name (e/server (peek path))] ; O(1)
+  (let [name (e/server (peek path))]
     (e/client
       (dom/td (dom/props {:style {:padding-left (e/server (some-> path count dec (* 15) (str "px")))}})
               (dom/span (dom/props {:class "dustingetz-tooltip"}) ; hover anchor
@@ -57,21 +57,13 @@
   (e/client
     (dom/fieldset (dom/props {:class "entity"})
       (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
-      (let [xs! (e/server ((fn [] (try (explorer-seq m) (catch Exception _ {}))))) ; glitch
-            selected-i (e/server (->> xs! ; slow, but the documents are small
-                                   (map-indexed vector)
-                                   (filter (fn [[i [path value]]] (= p-next path)))
-                                   (mapv first) first))
-            ;; ugly token mapping
-            {:keys [::forms/value] :as selection}
-            (TablePicker! ::select (identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
-              (e/server (count xs!))
-              (e/fn [i] (e/server (when-some [x (nth xs! i nil)]
-                                    (TreeRow x)))))]
-        (assoc selection ::forms/value (e/server
-                                         (when-some [[path value] (nth xs! value nil)]
-                                           path)))))))
-
+      (let [xs! (e/server (explorer-seq m))
+            selected-x (e/server (first (filter (fn [[path _ _]] (= p-next path)) xs!)))] ; slow, but the documents are small
+        (forms/Intercept (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
+                                         (e/fn [index] (e/server (some-> (nth xs! index nil) TreeRow)))))
+          selected-x
+          (e/fn Unparse [x] (e/server (index-of xs! x)))
+          (e/fn Parse [index] (e/server (first (nth xs! index nil))))))))) ; keep path, drop value
 
 (e/defn CollectionRow [cols ?x]
   (e/server
@@ -83,16 +75,15 @@
   (e/client
     (dom/fieldset (dom/props {:class "entity-children"})
       (let [xs! (e/server ((fn [] (try (vec xs!) (catch Exception _ []))))) ; glitch
-            selected-i (first p-next) ; [0]
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
                    (ColumnPicker (e/server (ex/Offload-reset #(some-> xs! first datafy keys #_sort #_reverse)))))] ; unstable
         (dom/props {:style {:--col-count (e/Count cols)}})
-        (let [{:keys [::forms/value] :as selection}
-              (TablePicker! ::select selected-i #_(identity selected-i) ; force selected-i to be client-sited – bypass deep bug in Picker! for (e/snapshot (e/server …))
-                (e/server (count xs!))
-                (e/fn Row [i] (e/server (when-some [x (nth xs! i nil)]
-                                          (CollectionRow cols x)))))]
-          (assoc selection ::forms/value [(e/server (when (contains? xs! value) value))]))))))
+        (forms/Intercept
+          (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
+                          (e/fn Row [index] (e/server (some->> (nth xs! index nil) (CollectionRow cols))))))
+          p-next
+          (e/fn Unparse [p-next] (first p-next))
+          (e/fn Parse [index] [(e/server (when (contains? xs! index) index))]))))))
 
 (defn infer-block-type [x]
   (let [q (cond
