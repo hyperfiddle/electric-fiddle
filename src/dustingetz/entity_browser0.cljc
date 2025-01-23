@@ -7,7 +7,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms4 :as forms :refer [Checkbox* TablePicker!]]
+            [hyperfiddle.electric-forms4 :refer [Intercept Interpreter Checkbox* TablePicker!]]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]))
@@ -59,8 +59,8 @@
       (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
       (let [xs! (e/server (explorer-seq m))
             selected-x (e/server (first (filter (fn [[path _ _]] (= p-next path)) xs!)))] ; slow, but the documents are small
-        (forms/Intercept (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
-                                         (e/fn [index] (e/server (some-> (nth xs! index nil) TreeRow)))))
+        (Intercept (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
+                                   (e/fn [index] (e/server (some-> (nth xs! index nil) TreeRow)))))
           selected-x
           (e/fn Unparse [x] (e/server (index-of xs! x)))
           (e/fn Parse [index] (e/server (first (nth xs! index nil))))))))) ; keep path, drop value
@@ -78,7 +78,7 @@
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
                    (ColumnPicker (e/server (ex/Offload-reset #(some-> xs! first datafy keys #_sort #_reverse)))))] ; unstable
         (dom/props {:style {:--col-count (e/Count cols)}})
-        (forms/Intercept
+        (Intercept
           (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
                           (e/fn Row [index] (e/server (some->> (nth xs! index nil) (CollectionRow cols))))))
           p-next
@@ -106,11 +106,11 @@
 (e/defn BrowsePath [p-here x ps]
   (e/client
     (router/pop
-      (forms/Interpreter {::select (e/fn [path]
-                                     (if path
-                                       (router/Navigate! ['. [path]])
-                                       (router/Navigate! ['. []]))
-                                     [::forms/ok])}
+      (Interpreter {::select (e/fn [path]
+                               (if path
+                                 (router/Navigate! ['. [path]])
+                                 (router/Navigate! ['. []]))
+                               [:hyperfiddle.electric-forms4/ok])}
         (Block p-here x (first ps)))
       (when-some [[p & ps] (seq ps)]
         (let [x (e/server (nav-in x p))]
