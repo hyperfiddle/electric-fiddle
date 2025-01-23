@@ -15,20 +15,20 @@ Code wise, there's not much to see. It's just another rendering of a virtual scr
 
 !ns-src[docs-site.blog.waveform0]()
 
-A learning that surprised us, is that we built Electric originally for the internal tools use case, but what we found is that the state space of a typical CRUD app is actually *larger* than a typical visual tool. Consider, your typical business application — with all its picklists, it is dynamic dependencies and all its intertwined queries and server actions, and all its failure states and all its constantly shifting network topologies as the user interacts. Plus all those DOM effects, maybe you're hitting microservices, you're weaving together async data streams from different data sources and different latency/failure characteristics. It's just a huge state space that these apps have, which is why they take so many LOC and team years to build, and even then they break all the time because anything/everything can fail. The failure state space grows polynomially - which is faster than the engineering org can keep up with.
+A learning that surprised us, is that we built Electric originally for the internal tools use case, but what we found is that the state space of a typical CRUD app is actually *larger* than a typical visual tool. Consider, your typical business application — with all its picklists, it is dynamic dependencies and all its intertwined queries and server actions, and all its failure states and all its constantly shifting network topologies as the user interacts. Plus all those DOM effects, maybe you're hitting microservices, you're weaving together async data streams from different data sources and different latency/failure characteristics. It's just a huge state space that these apps have, which is why they take so many LOC and team years to build, and even then they break all the time because anything/everything can fail. The failure state space grows polynomially with each component - which is faster than the log-curve productivity you get with a hierarchically managed engineering org.
 
 Compare this to e.g. a Studio UI for editing audio/video — that's actually not very dynamic at all! There's a time axis, the buffer is a pure function, there's hardly any control flow at all. So we were shocked to realize that the state space of a real-time UI like this one is actually quantifiably smaller than the state space of a business application.
 
 Ok, but how can we objectively measure to find out if this is true? Well, an easy and straightforward way to quantify this is by counting the LOC needed to express these apps in Electric. Let's break it down in this demo:
 
 **48 total LOC** =
-* 9 empty lines
-* 7 lines of imports
-* **2 lines of control flow** (one `e/for` and one `if`)
-* 2 lines for the two waves - cos and sin
-* 28 lines of HTML & SVG presentation to draw the wave with a bit of math
+* 9 empty lines (19%)
+* 7 lines of imports (15%)
+* **2 lines of control flow** (one `e/for` and one `if`) (4%)
+* 2 lines for the two waves - cos and sin (4%)
+* 28 lines of HTML & SVG presentation to draw the wave with a bit of math (58%)
 
-But what about the client/server logic? This is a server-streamed web app, so where is the IO complexity? How many lines of client/server crap? Go try to find it! **THERE ISN'T ANY!!**
+But what about the client/server logic? This is a server-streamed web app, so where is the IO complexity? How many lines of client/server crap? Go try to find it! 0%! **THERE ISN'T ANY!!** 
 
 --
 
