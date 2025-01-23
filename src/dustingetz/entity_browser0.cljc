@@ -3,7 +3,7 @@
             [clojure.core.protocols :refer [nav]]
             [contrib.data :refer [unqualify index-of]]
             [dustingetz.easy-table :refer [TableScroll Load-css]]
-            [dustingetz.flatten-document :refer [flatten-nested explorer-seq records-coll?]]
+            [dustingetz.flatten-document :refer [flatten-nested explorer-seq]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
@@ -88,8 +88,7 @@
 (defn infer-block-type [x]
   (let [q (cond
             (map? x) :tree
-            (records-coll? x) :table
-            (or (sequential? x) (set? x)) :tree
+            (or (sequential? x) (set? x)) :table
             () :scalar)]
     (prn 'q q (type x) (pr-str x))
     q))
