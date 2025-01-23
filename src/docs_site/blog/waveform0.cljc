@@ -29,20 +29,20 @@
   (svg/rect (dom/props {:fill "red" :width 1 :height "100%" :opacity 0.8 :x x})))
 
 (e/defn Timeline [offset]
-  (let [[height width] (e/input (resize-observer dom/node))
-        limit-n (math/round (* (/ width bar-gap) zoom))
-        locus-n (+ offset (/ limit-n 2))]
-    (svg/svg (dom/props {:style {:border "1px solid gray"}
-                         :height height :viewBox (str (* bar-gap offset) " 0 " width " " height)})
-      (Track A offset limit-n 80)
-      (Track B offset limit-n (+ 80 (* 2.5 scale)))
-      (Cursor (* locus-n bar-gap)))
-    locus-n))
+  (dom/div (dom/props {:style {:height "300px"}})
+    (let [[height width] (e/input (resize-observer dom/node))
+          limit-n (math/round (* (/ width bar-gap) zoom))
+          locus-n (+ offset (/ limit-n 2))]
+      (svg/svg (dom/props {:style {:border "1px solid gray"}
+                           :height height :viewBox (str (* bar-gap offset) " 0 " width " " height)})
+        (Track A offset limit-n 80)
+        (Track B offset limit-n (+ 80 (* 2.5 scale)))
+        (Cursor (* locus-n bar-gap)))
+      locus-n)))
 
 (e/defn RecordDebug [m] (dom/pre (dom/text (-> m (update-vals #(.toPrecision % 3)) pr-str))))
 
 (e/defn Waveform0 []
-  (dom/props {:style {:height "300px"}})
   (let [offset-n (-> (Timer) (* 60) (/ 1000) math/round)
         locus (Timeline offset-n)]
     (RecordDebug {:a (A locus) :b (B locus)})))
