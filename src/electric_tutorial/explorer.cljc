@@ -57,14 +57,14 @@
 (e/defn Dir [x]
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          m (datafy x)
-          xs! #_((fn [] (apply nil [])))
-          (vec ((treelister
-                  ; search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
-                  (fn children [m] (if (not (hidden-or-node-modules m)) (nav m ::fs/children (::fs/children m))))
-                  (fn keep? [m search] (and (not (hidden-or-node-modules m)) (includes-str? (::fs/name m) search)))
-                  (nav m ::fs/children (::fs/children m))) search))
-          n (count xs!)]
+          m (ex/Offload-latch #(datafy x))
+          xs! (ex/Offload-latch
+                #(vec ((treelister
+                         ; linear search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
+                         (fn children [m] (if (not (hidden-or-node-modules m)) (nav m ::fs/children (::fs/children m))))
+                         (fn keep? [m search] (and (not (hidden-or-node-modules m)) (includes-str? (::fs/name m) search)))
+                         (nav m ::fs/children (::fs/children m))) search)))
+          n (ex/Offload-latch #(count xs!))]
       (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
         (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
