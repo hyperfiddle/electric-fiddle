@@ -13,7 +13,7 @@
 
 (def scale 50)
 (def bar-gap 15)
-(def overscroll 8)
+(def overscroll 16) ; slight over-fetch to conceal artifacts caused by latency
 (def zoom 1)
 
 (e/defn Bar [i v y-offset]

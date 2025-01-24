@@ -1,8 +1,12 @@
-# Waveform demo — Electric Clojure
+# On the state space of CRUD apps vs visual tools — Electric Clojure
 
 *by Dustin Getz, 2025 Jan 22*
 
-Server-streamed waveform demo in [Electric Clojure](https://github.com/hyperfiddle/electric). Not bad for <50 LOC!
+We're going to use this Server-streamed waveform demo to explore three connected topics.
+
+1. The implementation with [Electric Clojure](https://github.com/hyperfiddle/electric). Not bad for <50 LOC!
+2. A surprising learning about the state space of CRUD apps as compared to visual tools 
+3. Efficient virtual scroll with differential dataflow
 
 !target[docs-site.blog.waveform0/Waveform0]()
 
@@ -11,11 +15,15 @@ What's happening
 * the cosine function is on the server, of course
 * the center record (under the red cursor) is printed below the wave in the debug string 
 
-Code wise, there's not much to see. It's just another rendering of a virtual scroll table, using the exact same `IndexRing` trick we use in the [Explorer example](/tutorial/explorer/), except render to svg/rect instead of table/tr. Everything else is just some css and a clock. We draw two of them for fun.
+## Implementation
+
+Code wise, there's not much to see. It's just another rendering of a virtual scroll table, using the exact same `IndexRing` trick we use in the [Explorer example](/tutorial/explorer/), except render to svg/rect instead of table/tr. Everything else is just some css and a clock. We draw two of them for fun. (Keep reading for the interesting part!)
 
 !ns-src[docs-site.blog.waveform0]()
 
+---
 
+## On the state space of CRUD apps
 
 A learning that surprised us, is that "cool visual tools apps" like this are actually *simpler* than CRUD apps. We designed Electric specifically for the business application use case, but we found that early adopters quickly started building interesting visual tool prototypes, while only a few companies are building traditional CRUD apps with enterprise forms and such. We were all caught off guard – how can this be?
 
@@ -36,6 +44,6 @@ That's 58% presentation, 33% whitespace and imports, leaving only 9% for the act
 
 Speaking of client/server logic, where is it? This is a server-streamed web app, so where is the IO complexity, how many LOC of client/server crap? Go try to find it! The answer is 0%! **THERE ISN'T ANY!!**
 
---
+## Efficient virtual scroll with differential dataflow
 
-P.S. This demo is a great explainer for `IndexRing`, which is manipulating the diffs to cause the tape striping pattern in the DOM (open the dev tools and see). It is recycling elements in a ring, which we ended up at because it is the most optimal dom layout strategy that results in the fewest possible touches. So, instead of issuing `:grow` and `:shrink` diffs at the two ends (i.e. mount and unmount in classic React terms - to destroy and rebuild the elements), IndexRing is issuing `:update` diffs in a specific pattern. In some cases, if the userland row renderer is careful, that means the total set of dom touches may be precisely text nodes only (i.e. inside the row but not the row itself), which means the layout engine can treat the rows as fixed boxes and perform the reordering and repainting exclusively on the GPU, which just feels incredibly lightweight and fast. That is not what is happening here, but we'll clean that POC up and publish it at some point.
+This demo is a great explainer for `IndexRing`, which is manipulating the [Electric diffs](/tutorial/webview_diffs) —recall Electric v3 is powered by differential dataflow under the hood!—to cause the tape striping pattern in the DOM (open the dev tools and see). It is recycling elements in a ring, which we ended up at because it is the most optimal dom layout strategy that results in the fewest possible touches. So, instead of issuing `:grow` and `:shrink` diffs at the two ends (i.e. mount and unmount in classic React terms - to destroy and rebuild the elements), IndexRing is issuing `:update` diffs in a specific pattern. In some cases, if the userland row renderer is careful, that means the total set of dom touches may be precisely text nodes only (i.e. inside the row but not the row itself), which means the layout engine can treat the rows as fixed boxes and perform the reordering and repainting exclusively on the GPU, which just feels incredibly lightweight and fast. That is not what is happening here, but we'll clean that POC up and publish it at some point.
