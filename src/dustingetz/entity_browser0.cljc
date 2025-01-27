@@ -88,6 +88,7 @@
 (defn infer-block-type [x]
   (cond
     (map? x) :tree
+    (set? x) :tree ; align with explorer-seq which indexes sets
     (or (sequential? x) (set? x)) :table
     () :scalar))
 
