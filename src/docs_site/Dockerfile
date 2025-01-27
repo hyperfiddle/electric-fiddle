@@ -41,6 +41,7 @@ FROM amazoncorretto:11 AS app
 WORKDIR /app
 RUN yum update -y && yum install -y procps
 COPY --from=build /app/git .git
+RUN echo "/state/" > .gitignore
 COPY --from=build /app/target/app.jar app.jar
 COPY --from=datomic-fixtures /app/state state
 COPY src/datomic_browser/prod.sh prod.sh
