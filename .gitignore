@@ -24,3 +24,5 @@ data
 /src-dev/electric-fiddle.edn
 /.dir-locals.el
 /resources/public/user/ui_demo.css
+# state is present in prod which uses the git repo as a demo
+/state/
