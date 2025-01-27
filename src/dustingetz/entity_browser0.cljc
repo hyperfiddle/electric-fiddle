@@ -12,7 +12,7 @@
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]))
 
-(defn nav-in [m path] #_(prn 'nav-in path m)
+(defn nav-in [m path]
   (loop [m m, path path]
     (if-some [[p & ps] (seq path)]
       (let [v (get m p)]
@@ -33,7 +33,7 @@
         col (e/amb)))))
 
 #?(:clj (defmulti title (fn [m] (some-> m meta :clojure.datafy/class))))
-#?(:clj (defmethod title :default [m] (some-> m meta :clojure.datafy/class)))
+#?(:clj (defmethod title :default [m] (some-> m meta :clojure.datafy/class str)))
 
 #?(:clj (defmulti identify (fn [x])))
 #?(:clj (defmethod identify :default [x] nil))
@@ -74,9 +74,9 @@
 (e/defn TableBlock [p xs! p-next]
   (e/client
     (dom/fieldset (dom/props {:class "entity-children"})
-      (let [xs! (e/server ((fn [] (try (vec xs!) (catch Exception _ []))))) ; glitch
+      (let [xs! (e/server (vec xs!))
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
-                   (ColumnPicker (e/server (ex/Offload-reset #(some-> xs! first datafy keys #_sort #_reverse)))))] ; unstable
+                   (ColumnPicker (e/server (ex/Offload-reset #(-> xs! first datafy keys #_sort #_reverse)))))]
         (dom/props {:style {:--col-count (e/Count cols)}})
         (Intercept
           (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
@@ -86,22 +86,16 @@
           (e/fn Parse [index] [(e/server (when (contains? xs! index) index))]))))))
 
 (defn infer-block-type [x]
-  (let [q (cond
-            (map? x) :tree
-            (or (sequential? x) (set? x)) :table
-            () :scalar)]
-    (prn 'q q (type x) (pr-str x))
-    q))
+  (cond
+    (map? x) :tree
+    (or (sequential? x) (set? x)) :table
+    () :scalar))
 
 (e/defn Block [p-here x p-next]
-  (e/client ; server causes reboot on first select?
-    (let [btype (e/server (infer-block-type x))]
-      (e/client (prn 'Block p-here btype))
-      (e/server (prn 'Block p-here btype))
-      (case btype ; client, don't lag selection on the way out
-        :tree (TreeBlock p-here x p-next)
-        :table (TableBlock p-here x p-next)
-        :scalar nil))))
+  (e/client
+    #_(e/for [p-here (e/diff-by identity (e/as-vec p-here))]) ; reboot
+    (when-some [F (e/server (case (infer-block-type x) :tree TreeBlock :table TableBlock :scalar nil nil))]
+      (F p-here x p-next))))
 
 (e/defn BrowsePath [p-here x ps]
   (e/client
@@ -113,8 +107,9 @@
                                [:hyperfiddle.electric-forms4/ok])}
         (Block p-here x (first ps)))
       (when-some [[p & ps] (seq ps)]
-        (let [x (e/server (nav-in x p))]
-          (BrowsePath p x ps))))))
+        (e/for [p (e/diff-by identity (e/as-vec p))] ; reboot
+          (let [x (e/server (nav-in x p))]
+            (BrowsePath p x ps)))))))
 
 (e/defn Resolve [[tag id]]) ; inject
 
@@ -122,9 +117,10 @@
 (e/defn EntityBrowser0 [uri & args]
   (e/client (dom/style (dom/text css)) (Load-css "dustingetz/easy_table.css")
     (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
-      (let [x (e/server (Resolve uri))
-            x (e/server (ex/Offload-latch #(datafy x)))]
-        (BrowsePath uri x args)))))
+      (e/for [uri (e/diff-by identity (e/as-vec uri))] ; reboot
+        (let [x (e/server (Resolve uri))
+              x (e/server (ex/Offload-latch #(datafy x)))]
+          (BrowsePath uri x args))))))
 
 (def css "
 .Browser fieldset { position: relative; height: 25em; }
