@@ -34,7 +34,7 @@
 (e/defn Row [i ?x]
   (e/client
     (let [?tab (e/server (some-> ?x (nth 0))) ; destructure on server, todo electric can auto-site this
-          ?x (e/server (some-> ?x (nth 1) datafy))]
+          ?x (e/server (ex/Offload-latch #(some-> ?x (nth 1) datafy)))]
       (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
         (dom/td (Render-cell ?x ::fs/name) (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}}))
         (dom/td (Render-cell ?x ::fs/modified))
@@ -42,7 +42,7 @@
         (dom/td (Render-cell ?x ::fs/kind))))))
 
 (e/defn TableScroll [record-count xs!]
-  (e/server
+  (e/client
     (dom/props {:class "Viewport"})
     (let [row-height 24
           [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
