@@ -15,12 +15,14 @@
 #?(:clj (defn resolve-class [whiteset qs]
           (try (some-> (whiteset qs) resolve) (catch Exception e nil))))
 
+#?(:clj (dustingetz.datafy-git/load-repo "./")) ; warm memo cache on startup - optimize blog perf
+
 (e/defn UserResolve [[tag id]]
   (case tag
     :tap (e/server (Tap))
     :thread-mx (e/server (dustingetz.datafy-jvm/resolve-thread-manager))
     :thread (e/server (dustingetz.datafy-jvm/resolve-thread id))
-    :git (e/server (dustingetz.datafy-git/load-repo id))
+    :git (e/server (dustingetz.datafy-git/load-repo "./"))
     :class (e/server (resolve-class #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean} id))
     :file (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path id)))
     (e/amb)))
@@ -29,7 +31,7 @@
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
     (dom/text "Target: ")
-    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git "./"] [:file "./"] [:tap]
+    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git] [:file "./"] [:tap]
                               [:class 'org.eclipse.jgit.api.Git]
                               [:class 'java.lang.management.ThreadMXBean])]
       (r/link ['. [ref]] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))
