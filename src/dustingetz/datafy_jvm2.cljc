@@ -19,14 +19,15 @@
                              vec)
          ::getAllThreadIds #(->> (.getAllThreadIds x) (mapv (partial hash-map ::thread-id)))
          ::deadlocked-threads (vec (.findDeadlockedThreads x))
-         ::isThreadCpuTimeSupported (.isThreadCpuTimeSupported x)
-         ::setThreadCpuTimeEnabled #(.setThreadCpuTimeEnabled x true)}
+         #_#_::isThreadCpuTimeSupported (.isThreadCpuTimeSupported x)
+         #_#_::setThreadCpuTimeEnabled #(.setThreadCpuTimeEnabled x true)}
       (with-meta
         {`clojure.core.protocols/nav
          (fn [o k v]
            (case k
              ::dumpAllThreads (if v (v))
              ::getAllThreadIds (if v (v))
+             #_#_::setThreadCpuTimeEnabled (if v (v))
              v))})))
 
   java.lang.management.ThreadInfo
