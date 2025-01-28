@@ -25,7 +25,7 @@
   Git
   (datafy [^Git o]
     (->
-      {:status (git/git-status o)
+      {#_#_:status (git/git-status o) ; keep :log above the fold in blog3 demo
        :repo (.getRepository o)
        :branch-current (git/git-branch-current o)
        :branches (memoize #(vec (branch-list o :jgit? true :list-mode :all))) ; arraylist
