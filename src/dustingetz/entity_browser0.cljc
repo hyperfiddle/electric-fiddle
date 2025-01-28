@@ -58,9 +58,13 @@
     (dom/fieldset (dom/props {:class "entity"})
       (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
       (let [xs! (e/server (explorer-seq m))
+            row-count (e/server (count xs!))
+            row-height 24
             selected-x (e/server (first (filter (fn [[path _ _]] (= p-next path)) xs!)))] ; slow, but the documents are small
-        (Intercept (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
-                                   (e/fn [index] (e/server (some-> (nth xs! index nil) TreeRow)))))
+        (dom/props {:style {:--col-count 2 :--row-height row-height}})
+        (Intercept (e/fn [index] (TablePicker! ::select index row-count
+                                   (e/fn [index] (e/server (some-> (nth xs! index nil) TreeRow)))
+                                   :row-height row-height))
           selected-x
           (e/fn Unparse [x] (e/server (index-of xs! x)))
           (e/fn Parse [index] (e/server (first (nth xs! index nil))))))))) ; keep path, drop value
@@ -75,12 +79,15 @@
   (e/client
     (dom/fieldset (dom/props {:class "entity-children"})
       (let [xs! (e/server (vec xs!))
+            row-count (e/server (count xs!))
+            row-height 24
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
                    (ColumnPicker (e/server (ex/Offload-reset #(-> xs! first datafy keys #_sort #_reverse)))))]
-        (dom/props {:style {:--col-count (e/Count cols)}})
+        (dom/props {:style {:--col-count (e/Count cols) :--row-height row-height}})
         (Intercept
-          (e/fn [index] (TablePicker! ::select index (e/server (count xs!))
-                          (e/fn Row [index] (e/server (some->> (nth xs! index nil) (CollectionRow cols))))))
+          (e/fn [index] (TablePicker! ::select index row-count
+                          (e/fn Row [index] (e/server (some->> (nth xs! index nil) (CollectionRow cols))))
+                          :row-height row-height))
           p-next
           (e/fn Unparse [p-next] (first p-next))
           (e/fn Parse [index] [(e/server (when (contains? xs! index) index))]))))))
@@ -124,7 +131,8 @@
           (BrowsePath uri x args))))))
 
 (def css "
-.Browser fieldset { position: relative; height: 25em; }
+.Browser fieldset { position: relative; }
+.Browser fieldset > .Viewport { height: calc(var(--row-height) * 10 * 1px); }
 .Browser fieldset.entity          table { grid-template-columns: 15em auto; }
 .Browser fieldset.entity-children table { grid-template-columns: repeat(var(--col-count), 1fr); }
 .Browser fieldset table td a { font-weight: 600; }
