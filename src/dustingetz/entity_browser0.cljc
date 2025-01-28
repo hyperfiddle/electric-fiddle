@@ -43,10 +43,11 @@
   (let [name (e/server (peek path))]
     (e/client
       (dom/td (dom/props {:style {:padding-left (e/server (some-> path count dec (* 15) (str "px")))}})
-              (dom/span (dom/props {:class "dustingetz-tooltip"}) ; hover anchor
-                        (dom/text (e/server (if (keyword? name) ; glitch
-                                              (unqualify name) (str name)))) ; label
-                        (dom/span (dom/text (e/server (pr-str name))))))
+        (dom/span (dom/props {:class "dustingetz-tooltip"}) ; hover anchor
+          (dom/text (e/server (if (keyword? name) ; glitch
+                                (unqualify name) (str name)))) ; label
+          ; fixme tooltip bumps scrollHeight at bottom boundary by 4px, glitching scroll math
+          #_(dom/span (dom/text (e/server (pr-str name))))))
       (dom/td
         (let [v-str (e/server (pr-str value))]
           (if (e/server (fn? value)) ; fns encode hyperlinks (on the server!)
