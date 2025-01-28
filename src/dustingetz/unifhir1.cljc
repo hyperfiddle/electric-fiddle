@@ -58,7 +58,7 @@
 
 
 (e/defn TableScroll [record-count xs! Row]
-  (e/server
+  (e/client
     (dom/div (dom/props {:class "Viewport"})
       (let [row-height 48
             [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
@@ -66,7 +66,7 @@
           (e/for [i (IndexRing limit offset)] ; render all rows even with fewer elements
             (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
               #_(when-some [x (nth xs! i nil)])
-              (Row (nth xs! i nil))))) ; beware glitched nil pass through
+              (Row (e/server (nth xs! i nil)))))) ; beware glitched nil pass through
         (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                     (* row-height (- record-count limit)) 0) "px")}}))))))
 
