@@ -58,7 +58,7 @@
   (e/client
     (dom/fieldset (dom/props {:class "entity"})
       (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
-      (let [xs! (e/server (explorer-seq m))
+      (let [xs! (e/server (ex/Offload-reset #(explorer-seq m)))
             row-count (e/server (count xs!))
             row-height 24
             selected-x (e/server (first (filter (fn [[path _ _]] (= p-next path)) xs!)))] ; slow, but the documents are small
@@ -117,7 +117,7 @@
         (Block p-here x (first ps)))
       (when-some [[p & ps] (seq ps)]
         (e/for [p (e/diff-by identity (e/as-vec p))] ; reboot
-          (let [x (e/server (nav-in x p))]
+          (let [x (e/server (ex/Offload-reset #(nav-in x p)))] ; offload
             (BrowsePath p x ps)))))))
 
 (e/defn Resolve [[tag id]]) ; inject
@@ -126,9 +126,9 @@
 (e/defn EntityBrowser0 [uri & args]
   (e/client (dom/style (dom/text css)) (Load-css "dustingetz/easy_table.css")
     (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
-      (e/for [uri (e/diff-by identity (e/as-vec uri))] ; reboot
-        (let [x (e/server (Resolve uri))
-              x (e/server (ex/Offload-latch #(datafy x)))]
+      (let [x (e/server (Resolve uri))
+            x (e/server (ex/Offload-reset #(datafy x)))]
+        (e/for [uri (e/diff-by identity (e/as-vec uri))] ; reboot
           (BrowsePath uri x args))))))
 
 (def css "
