@@ -133,7 +133,7 @@
 
 (def css "
 .Browser fieldset { position: relative; }
-.Browser fieldset > .Viewport { height: calc(var(--row-height) * 10 * 1px); }
+.Browser fieldset > .Viewport { height: calc(var(--row-height) * 15 * 1px); }
 .Browser fieldset.entity          table { grid-template-columns: 15em auto; }
 .Browser fieldset.entity-children table { grid-template-columns: repeat(var(--col-count), 1fr); }
 .Browser fieldset table td a { font-weight: 600; }
