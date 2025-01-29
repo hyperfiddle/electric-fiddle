@@ -25,13 +25,16 @@
     :git (e/server (dustingetz.datafy-git/load-repo "./"))
     :class (e/server (resolve-class #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean} id))
     :file (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path id)))
+    :var (e/server (resolve id))
+    :ns (e/server (find-ns id))
     (e/amb)))
 
 (declare css)
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
     (dom/text "Target: ")
-    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git] [:file "./"] [:tap]
+    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git] [:file "./"]
+                              [:var 'clojure.core/inc] [:ns 'clojure.core] [:tap]
                               [:class 'org.eclipse.jgit.api.Git]
                               [:class 'java.lang.management.ThreadMXBean])]
       (r/link ['. [ref]] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))
