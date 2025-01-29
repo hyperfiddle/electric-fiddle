@@ -1,48 +1,19 @@
 (ns docs-site.blog.threaddump3
-  #?(:clj (:import org.eclipse.jgit.api.Git
-                   java.lang.management.ThreadMXBean))
-  (:require [contrib.data :refer [unqualify]]
-            [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric3-contrib :refer [Tap]]
+  #?(:clj (:import org.eclipse.jgit.api.Git))
+  (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [dustingetz.entity-browser0 :refer [EntityBrowser0]]
             #?(:clj dustingetz.datafy-git2)
-            #?(:clj dustingetz.datafy-jvm2)
-            #?(:clj dustingetz.datafy-fs)
-            #?(:clj dustingetz.datafy-clj)))
-
-#?(:clj (defn resolve-class [whiteset qs]
-          (try (some-> (whiteset qs) resolve) (catch Exception e nil))))
+            #?(:clj dustingetz.datafy-fs)))
 
 #?(:clj (dustingetz.datafy-git/load-repo "./")) ; warm memo cache on startup - optimize blog perf
-
-(e/defn UserResolve [[tag id]]
-  (case tag
-    :tap (e/server (Tap))
-    :thread-mx (e/server (dustingetz.datafy-jvm/resolve-thread-manager))
-    :thread (e/server (dustingetz.datafy-jvm/resolve-thread id))
-    :git (e/server (dustingetz.datafy-git/load-repo "./"))
-    :class (e/server (resolve-class #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean} id))
-    :file (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path id)))
-    :var (e/server (resolve id))
-    :ns (e/server (find-ns id))
-    (e/amb)))
 
 (declare css)
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
-    (dom/text "Target: ")
-    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git] [:file "./"]
-                              [:var 'clojure.core/inc] [:ns 'clojure.core] [:tap]
-                              [:class 'org.eclipse.jgit.api.Git]
-                              [:class 'java.lang.management.ThreadMXBean])]
-      (r/link ['. [ref]] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))
-
-    (if-not (seq r/route)
-      (r/ReplaceState! ['. [[:thread-mx]]])
-      (binding [dustingetz.entity-browser0/Resolve UserResolve]
-        (e/Apply EntityBrowser0 r/route)))))
+    (let [x (e/server (dustingetz.datafy-git/load-repo "./"))]
+      (e/Apply EntityBrowser0 x r/route))))
 
 (def css "
 .ThreadDump3 > a + a { margin-left: .5em; }

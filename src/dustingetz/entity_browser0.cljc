@@ -108,28 +108,24 @@
 
 (e/defn BrowsePath [p-here x ps]
   (e/client
-    (router/pop
-      (Interpreter {::select (e/fn [path]
-                               (if path
-                                 (router/Navigate! ['. [path]])
-                                 (router/Navigate! ['. []]))
-                               [:hyperfiddle.electric-forms4/ok])}
-        (Block p-here x (first ps)))
-      (when-some [[p & ps] (seq ps)]
+    (Interpreter {::select (e/fn [path]
+                             (if path
+                               (router/Navigate! ['. [path]])
+                               (router/Navigate! ['. []]))
+                             [:hyperfiddle.electric-forms4/ok])}
+      (Block p-here x (first ps)))
+    (when-some [[p & ps] (seq ps)]
+      (router/pop
         (e/for [p (e/diff-by identity (e/as-vec p))] ; reboot
           (let [x (e/server (ex/Offload-reset #(nav-in x p)))] ; offload
             (BrowsePath p x ps)))))))
 
-(e/defn Resolve [[tag id]]) ; inject
-
 (declare css)
-(e/defn EntityBrowser0 [uri & args]
+(e/defn EntityBrowser0 [x & args]
   (e/client (dom/style (dom/text css)) (Load-css "dustingetz/easy_table.css")
     (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
-      (let [x (e/server (Resolve uri))
-            x (e/server (ex/Offload-reset #(datafy x)))]
-        (e/for [uri (e/diff-by identity (e/as-vec uri))] ; reboot
-          (BrowsePath uri x args))))))
+      (let [x (e/server (ex/Offload-reset #(datafy x)))]
+        (BrowsePath nil x args)))))
 
 (def css "
 .Browser fieldset { position: relative; }
