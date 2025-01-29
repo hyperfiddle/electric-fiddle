@@ -41,15 +41,15 @@ Lets take a quick look, the most interesting thing here, IMO, is that we're **st
 
 !fn-src[dustingetz.entity-browser0/BrowsePath]()
 
-(The recursive call is on L13.)
+Lets focus on the recursion (the recursive call is on L13).
 
-* `Block` renders the table picker at the current level, returning the table's current selection state as a reactive value (a ::select directive) and passing it to `Interpreter` (i.e. *command* interpreter) to dispatch side effects.
-* `Interpreter` is mapping the selection directives to `router/Navigate!` side effects (in effect, storing the stack of selection breadcrumbs in the URL).
-* `router/pop` makes it so as we descend the stack, we can think about URLs/links relative to the current layer of the stack, i.e., at each layer, a block can push another layer, or close itself. (The router contains a lens implementation) 
+* `Block` renders the table picker at the current level, returning the table's current selection state. 
+* `TablePicker!` is not just a virtual scroll table — it is also a *form control*, like `Input!`, `Checkbox!` and implements the same idioms described in the [form explainer tutorial](/tutorial/form_explainer). Therefore it returns form payloads (so to speak) and passes them into `Interpreter`, which maps the form state (selections) to `router/Navigate!` side effects (in effect, storing the stack of selection breadcrumbs in the URL).
 * `when-some` is the recursion guard; when more breadcrumbs are added to the URL then we will recur deeper and this is reactive!
+* `router/pop` makes it so as we descend the stack, we can think about URLs/links relative to the current layer of the stack, i.e., at each layer, a block can push another layer, or close itself, without knowing how deep we are in the stack. (The router contains a lens implementation)
 * As we descend, we maintain the java object at that locus *on the server*, right in the middle of the recursion! No problem!
 
-There are many more interesting things happening in this 140 LOC, such as - communicating selection state out of the picker component via the electric function return channel instead of callbacks (!! functional programming!), but that's a topic for another day.
+There are many more interesting things to discuss in this demo but this is probably not the right medium - perhaps a talk. The big insight is that, with Electric, **we can now use elementary algorithms & data structures techniques such as recursion and stacks, to model and build richly interactive UIs, for pretty much the first time ever**.
 
 ## Time cost to build this
 
@@ -61,14 +61,18 @@ The delta from Part 2 to Part 3 was **4 hours** for the coding bits. I write thi
 * fixed a bug in the datafy-git implementation, and
 * debugged some CSS.
 
-(Jan 25 editor's note: we delayed publication of this demo for two weeks in order to fix a crash, as well as stabilize jGit which is not thread safe. The demo was feature-complete on Jan 11.)
+(Jan 29 editor's note: we delayed publication of this demo for two weeks in order to fix a crash, as well as stabilize jGit which is not thread safe. The demo was feature-complete on Jan 11.)
 
-## Conclusion
+## Raising the abstraction ceiling in web development
 
 In the previous posts, I highlighted how Electric increases **development speed**, and I had planned to write more about that here. But I realized, that merely speed is not the most interesting point. 
 
 What this post actually demonstrates is that Electric has **raised the abstraction ceiling**. I was able to use recursion over the route, to descend a native Java object representing a *git repository*, building up a *stack* of *virtual scroll tables*, that have *intricate client/server topology*, with nuanced frontend and backend processes choreographed in a high performance dance, while retaining the *actual native java object* on the server at all times as I descend—it never escapes to the client—*weaving the reference into and out of each table* and the *rows* of each table as you *scroll*! **As an expression! With *functions*!**
 
-This is not mere development velocity. This is an ability to now build applications that were **not in reach before** because how can we even hold their computational structure in our mind with all the incidental framework/architecture *crap* getting in the way? And now, with Electric, I can not only *think* this recursive computational structure interweaving client and server, but I can *actualize it*. It *works*! And it's fully generalized!, thanks to `clojure.datafy`! AWS S3 browser anyone? [We have that!](https://x.com/dustingetz/status/1873463506861007226)
+This is not mere development velocity. This is an ability to now build applications that were **not in reach before** because how can we even hold their computational structure in our mind with all the incidental framework/architecture *crap* getting in the way? And now, with Electric, I can not only *think* this recursive computational structure interweaving client and server, but I can *actualize it*. It *works*! And it's fully generalized!, thanks to `clojure.datafy`! AWS S3 browser anyone? [We have that!](https://x.com/dustingetz/status/1873463506861007226) Or, how about [the world's worst Hacker News client](https://x.com/dustingetz/status/1880662258457665555), resolving content from CDN as you scroll! Or, should we build an [actual git client](https://x.com/dustingetz/status/1879903815648080099)? Maybe a [git branch deleter tool](https://x.com/dustingetz/status/1869840759949799512)? How about [clojure.tap](https://x.com/dustingetz/status/1873119581419782225)?
 
-Consulting plug – DM me `@dustingetz` if you have a commercial use case for this stuff. Remember, this blog series has a time axis, I did all this in a week. **Unleash us on your growth stage business tooling and see what happens: we're going to blow you away.**
+## What's Next
+
+For the next month, we're going to see how far we can push these ideas. We'll add editable forms, type metadata reflection, column configurations, better data sources (such as JDBC), see where it takes us. 
+
+Consulting plug – DM me `@dustingetz` if you have a commercial use case for observability tools like this. Remember, this blog series has a time axis: I built this datafy browser in a week. **Unleash us on your growth stage business tooling and see what happens: we're going to blow you away.**
