@@ -73,6 +73,6 @@ This is not mere development velocity. This is an ability to now build applicati
 
 ## What's Next
 
-For the next month, we're going to see how far we can push these ideas. We'll add editable forms, type metadata reflection, column configurations, better data sources (such as JDBC), see where it takes us. 
+For the next month, we're going to see how far we can push these ideas. We'll add editable forms, type metadata reflection, column configurations, better data sources (such as JDBC), and see where it takes us. 
 
 Consulting plug – DM me `@dustingetz` if you have a commercial use case for observability tools like this. Remember, this blog series has a time axis: I built this datafy browser in a week. **Unleash us on your growth stage business tooling and see what happens: we're going to blow you away.**
