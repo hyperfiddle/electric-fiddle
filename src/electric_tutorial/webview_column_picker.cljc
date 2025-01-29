@@ -16,19 +16,16 @@
                 (e/call (get m k))))))))))
 
 (e/defn ColumnPicker [cols]
-  (e/client
-    (->> (e/for [col cols]
-           [col (Checkbox* true :label col)]) ; reactive ui w/ inline dom!
-      e/as-vec ; materialize clojure vector from diffs
-      (filter (fn [[col checked]] checked))
-      (map first) sort (e/diff-by identity)))) ; unmaterialize
+  (e/for [col (e/diff-by {} cols)]
+    (if (Checkbox* true :label (str col))
+      col (e/amb))))
 
 (declare css)
 (e/defn WebviewColumnPicker []
   (e/client
     (dom/style (dom/text css))
     (let [db (e/server (ensure-db!))
-          colspec (dom/div (ColumnPicker (e/amb :db/id :order/email :order/gender :order/shirt-size)))
+          colspec (dom/div (ColumnPicker [:db/id :order/email :order/gender :order/shirt-size]))
           search (dom/input (dom/On "input" #(-> % .-target .-value) ""))]
       (GenericTable
         colspec
