@@ -8,7 +8,6 @@
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms4 :refer [Intercept Interpreter Checkbox* TablePicker!]]
-            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]))
 
@@ -51,7 +50,7 @@
       (dom/td
         (let [v-str (e/server (pr-str value))]
           (if (e/server (fn? value)) ; fns encode hyperlinks (on the server!)
-            #_(router/link ['. [(conj path (e/server name))]]) (dom/text "...")
+            (dom/text "...")
             (dom/text (#(when-not branch? %) v-str))))))))
 
 (e/defn TreeBlock [p m p-next]
@@ -59,8 +58,7 @@
     (dom/fieldset (dom/props {:class "entity"})
       (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
       (let [xs! (e/server (ex/Offload-reset #(explorer-seq m)))
-            row-count (e/server (count xs!))
-            row-height 24
+            row-count (e/server (count xs!)), row-height 24
             selected-x (e/server (first (filter (fn [[path _ _]] (= p-next path)) xs!)))] ; slow, but the documents are small
         (dom/props {:style {:--col-count 2 :--row-height row-height}})
         (Intercept (e/fn [index] (TablePicker! ::select index row-count
@@ -79,9 +77,7 @@
 (e/defn TableBlock [p xs! p-next]
   (e/client
     (dom/fieldset (dom/props {:class "entity-children"})
-      (let [xs! (e/server (vec xs!))
-            row-count (e/server (count xs!))
-            row-height 24
+      (let [xs! (e/server (vec xs!)), row-count (e/server (count xs!)), row-height 24
             cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
                    (ColumnPicker (e/server (ex/Offload-reset #(-> xs! first datafy keys #_sort #_reverse)))))]
         (dom/props {:style {:--col-count (e/Count cols) :--row-height row-height}})
@@ -102,22 +98,18 @@
 
 (e/defn Block [p-here x p-next]
   (e/client
-    #_(e/for [p-here (e/diff-by identity (e/as-vec p-here))]) ; reboot
     (when-some [F (e/server (case (infer-block-type x) :tree TreeBlock :table TableBlock :scalar nil nil))]
       (F p-here x p-next))))
 
 (e/defn BrowsePath [p-here x ps]
   (e/client
-    (Interpreter {::select (e/fn [path]
-                             (if path
-                               (router/Navigate! ['. [path]])
-                               (router/Navigate! ['. []]))
+    (Interpreter {::select (e/fn [path] (router/Navigate! ['. (if path [path] [])])
                              [:hyperfiddle.electric-forms4/ok])}
       (Block p-here x (first ps)))
     (when-some [[p & ps] (seq ps)]
       (router/pop
-        (e/for [p (e/diff-by identity (e/as-vec p))] ; reboot
-          (let [x (e/server (ex/Offload-reset #(nav-in x p)))] ; offload
+        (e/for [p (e/diff-by identity (e/as-vec p))] ; don't recycle DOM/IO frames across different objects
+          (let [x (e/server (ex/Offload-reset #(nav-in x p)))]
             (BrowsePath p x ps)))))))
 
 (declare css)

@@ -1,14 +1,12 @@
 (ns dustingetz.datafy-git2
   (:require [clj-jgit.porcelain :as git]
-            [clj-jgit.querying :as git2]
             [clojure.core.protocols :refer [nav]]
             [clojure.datafy :refer [datafy]]
             [dustingetz.datafy-fs :as fs])
   (:import (org.eclipse.jgit.api Git)
-           (org.eclipse.jgit.diff DiffFormatter DiffEntry RawTextComparator)
            (org.eclipse.jgit.internal.storage.file FileRepository)
-           (org.eclipse.jgit.revwalk RevWalk RevCommit RevCommitList)
-           (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef ObjectIdRef$PeeledNonTag Ref Repository)))
+           (org.eclipse.jgit.revwalk RevCommit)
+           (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository)))
 
 ; re-export wrappers for convenience - one API not two
 (def load-repo (memoize git/load-repo))
