@@ -1,15 +1,69 @@
 (ns dustingetz.edn-viewer0
+  "used in /blog/y20250109_datafy"
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
             [contrib.data :refer [unqualify]]
             [dustingetz.easy-table :refer [TableScroll Load-css]]
-            [dustingetz.flatten-document :refer [flatten-nested]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :refer [Tap]]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Checkbox*]]
             [hyperfiddle.router4 :as router]
             [hyperfiddle.rcf :refer [tests]]))
+
+(defn flatten-nested ; claude generated this trash, now superseded
+  ([data] (flatten-nested data []))
+  ([data path]
+   (cond
+     (map? data)
+     (mapcat (fn [[k v]]
+               (cond
+                 (or (map? v) (set? v))
+                 (cons {:path path :name k} (flatten-nested v (conj path k)))
+
+                 ; render collections of records as hyperlinks
+                 (and (sequential? v) (map? (first v)))
+                 [{:path path :name k :value (constantly v)}] ; lift
+
+                 ; render simple collections inline
+                 (and (sequential? v) (not (map? (first v))))
+                 [{:path path :name k :value v}]
+
+                 #_#_(nil? v) [{:path path :name k}]
+                 () [{:path path :name k :value v}]))
+       data)
+
+     ; render simple collections as indexed maps – only if simple collection is the root value
+     (or (sequential? data) (set? data))
+     (mapcat (fn [i v]
+               (cond
+                 (or (map? v) (sequential? v))
+                 (cons {:path path :name i}
+                   (flatten-nested v (conj path i)))
+
+                 ()
+                 [{:path path :name i :value v}]))
+       (range) data)
+
+     ; what else?
+     () [{:path path :value data}])))
+
+(comment
+  (def test-data
+    '{:response
+      {:Owner
+       {:DisplayName string
+        :ID string}
+       :Grants
+       {:seq-of
+        {:Grantee
+         {:DisplayName string
+          :EmailAddress string
+          :ID string
+          :Type [:one-of ["CanonicalUser" "AmazonCustomerByEmail" "Group"]]
+          :URI string}
+         :Permission [:one-of ["FULL_CONTROL" "WRITE" "WRITE_ACP" "READ" "READ_ACP"]]}}}})
+  (flatten-nested test-data))
 
 (defn nav-in [m path]
   (loop [m m, path path]
