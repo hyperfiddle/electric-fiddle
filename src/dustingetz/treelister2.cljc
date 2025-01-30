@@ -27,7 +27,7 @@
 
 (defn render-value [value]
   (cond (map-entry? value) (render-value (val value))
-        (records-coll? value) (constantly value)
+        (records-coll? value) (constantly value) ; <<<<<<<< thunk record cols (bad)
         () value))
 
 (defn node-val [node] (when-not (zip/branch? node) (render-value (zip/node node))))
