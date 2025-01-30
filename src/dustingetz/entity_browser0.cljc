@@ -3,7 +3,7 @@
             [clojure.core.protocols :refer [nav]]
             [contrib.data :refer [unqualify index-of]]
             [dustingetz.easy-table :refer [Load-css]]
-            [dustingetz.flatten-document :refer [explorer-seq]]
+            [dustingetz.treelister2 :refer [explorer-seq]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
