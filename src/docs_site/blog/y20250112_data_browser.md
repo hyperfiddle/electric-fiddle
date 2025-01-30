@@ -1,6 +1,6 @@
 # Object Browser demo — Internal Tools with Electric Clojure, Part 3
 
-*by Dustin Getz, 2025 Jan 12*
+*by Dustin Getz, 2025 Jan 29*
 
 <style>
 .Tutorial .user-examples-code { max-height: 50em; }
@@ -53,7 +53,7 @@ There are many more interesting things to discuss in this demo but this is proba
 
 ## Time cost to build this
 
-The delta from Part 2 to Part 3 was **4 hours** for the coding bits. I write this now on Sunday (Jan 12) after building the app yesterday morning. In those four hours I touched about **50 LOC**:
+The delta from Part 2 to Part 3 was **4 hours** for the coding bits, which I did on Saturday morning, Jan 11. In those four hours I touched about **50 LOC**:
 
 * clarified the Tree vs Table blocks to appropriately render the focused value at each level,
 * used table row selection to drive routes (upgrading the TableScroll component's row selection feature), 
@@ -61,7 +61,7 @@ The delta from Part 2 to Part 3 was **4 hours** for the coding bits. I write thi
 * fixed a bug in the datafy-git implementation, and
 * debugged some CSS.
 
-(Jan 29 editor's note: we delayed publication of this demo for two weeks in order to fix a crash, as well as stabilize jGit which is not thread safe. The demo was feature-complete on Jan 11.)
+(Editor's note: timing wise, we delayed publication of this demo by a few weeks in order to fix an Electric bug that was causing a crash. The demo was feature-complete on Jan 11.)
 
 ## Raising the abstraction ceiling in web development
 
