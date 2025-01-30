@@ -109,6 +109,8 @@
 (defmethod datafy-file-content "text/plain" [^File f] (line-seq (io/reader f)))
 (defmethod datafy-file-content :default [^File f] (io/reader f))
 
+(defn hidden? [x] (= "." (subs (.getName x) 0 1)))
+
 (extend-protocol ccp/Datafiable
   java.io.File
   (datafy [^File f]
@@ -120,7 +122,7 @@
           n (.getName f)
           mime-type (detect-mime-type-no-access n)]
       (as-> {::name n
-             ::hidden (= (subs n 0 1) ".")
+             ::hidden (hidden? f)
              ::kind (cond (.isDirectory attrs) ::dir
                           (.isSymbolicLink attrs) ::symlink
                           (.isOther attrs) ::other
