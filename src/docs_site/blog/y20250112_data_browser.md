@@ -41,15 +41,15 @@ Lets take a quick look, the most interesting thing here, IMO, is that we're **st
 
 !fn-src[dustingetz.entity-browser0/BrowsePath]()
 
-Lets focus on the recursion (the recursive call is on L13).
+Lets focus on the recursion (the recursive call is on L8).
 
-* `Block` renders the table picker at the current level, returning the table's current selection state. 
-* `TablePicker!` is not just a virtual scroll table — it is also a *form control*, like `Input!`, `Checkbox!` and implements the same idioms described in the [form explainer tutorial](/tutorial/form_explainer). Therefore it returns form payloads (so to speak) and passes them into `Interpreter`, which maps the form state (selections) to `router/Navigate!` side effects (in effect, storing the stack of selection breadcrumbs in the URL).
-* `when-some` is the recursion guard; when more breadcrumbs are added to the URL then we will recur deeper and this is reactive!
-* `router/pop` makes it so as we descend the stack, we can think about URLs/links relative to the current layer of the stack, i.e., at each layer, a block can push another layer, or close itself, without knowing how deep we are in the stack. (The router contains a lens implementation)
-* As we descend, we maintain the java object at that locus *on the server*, right in the middle of the recursion! No problem!
+* `Block` renders the table picker at the current level ("locus" means - focused place)
+* `when-some` is the recursion guard, the stack we're traversing is stored in the URL
+* `router/pop` makes it so as we descend the stack, each `Block` can think about hyperlinks/navigation relative to its current place in the stack, without knowing how deep it is in the stack
+* As we descend, on L7, we maintain the java object at that locus *on the server*, right in the middle of the recursion! No problem!
+* The hack on L6 is basically the same as using a React.js key to force a component to be rebuilt if its key changes. Here I'm doing it to force each table to be rebuilt (and reload network) if the underlying target object changes. This made a consistency glitch go away, todo investigate.
 
-There are many more interesting things to discuss in this demo but this is probably not the right medium - perhaps a talk. The big insight is that, with Electric, **we can now use elementary algorithms & data structures techniques such as recursion and stacks, to model and build richly interactive UIs, for pretty much the first time ever**.
+There are many more interesting things to discuss in this demo but this is probably not the right medium - perhaps a talk. The big insight is that, with Electric, **we can now use elementary algorithms & data structures techniques such as recursion and stacks, to model and build richly interactive UIs, for pretty much the first time ever**. What other technology can express this recursive structure?
 
 ## Time cost to build this
 

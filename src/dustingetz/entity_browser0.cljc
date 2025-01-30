@@ -53,10 +53,10 @@
             (dom/text "...")
             (dom/text (#(when-not branch? %) v-str))))))))
 
-(e/defn TreeBlock [p m p-next]
+(e/defn TreeBlock [title m p-next]
   (e/client
     (dom/fieldset (dom/props {:class "entity"})
-      (dom/legend (dom/text (e/server (or (title m) (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " "))))
+      (dom/legend (dom/text title))
       (let [xs! (e/server (ex/Offload-reset #(explorer-seq m)))
             row-count (e/server (count xs!)), row-height 24
             selected-x (e/server (first (filter (fn [[path _ _]] (= p-next path)) xs!)))] ; slow, but the documents are small
@@ -74,18 +74,18 @@
       (e/for [k cols]
         (dom/td (some-> ?m k pr-str dom/text))))))
 
-(e/defn TableBlock [p xs! p-next]
+(e/defn TableBlock [title xs! selected]
   (e/client
     (dom/fieldset (dom/props {:class "entity-children"})
       (let [xs! (e/server (vec xs!)), row-count (e/server (count xs!)), row-height 24
-            cols (dom/legend (dom/text (pr-str (mapv #(if (keyword? %) (unqualify %) %) p)) " ")
+            cols (dom/legend (dom/text title)
                    (ColumnPicker (e/server (ex/Offload-reset #(-> xs! first datafy keys #_sort #_reverse)))))]
         (dom/props {:style {:--col-count (e/Count cols) :--row-height row-height}})
         (Intercept
           (e/fn [index] (TablePicker! ::select index row-count
                           (e/fn Row [index] (e/server (some->> (nth xs! index nil) (CollectionRow cols))))
                           :row-height row-height))
-          p-next
+          selected
           (e/fn Unparse [p-next] (first p-next))
           (e/fn Parse [index] [(e/server (when (contains? xs! index) index))]))))))
 
@@ -96,28 +96,30 @@
     (or (sequential? x) (set? x)) :table
     () :scalar))
 
-(e/defn Block [p-here x p-next]
+(e/defn Block [locus x]
   (e/client
     (when-some [F (e/server (case (infer-block-type x) :tree TreeBlock :table TableBlock :scalar nil nil))]
-      (F p-here x p-next))))
+      (Interpreter {::select (e/fn [path] (router/Navigate! ['. (if path [path] [])])
+                               [:hyperfiddle.electric-forms4/ok])}
+        (let [title (e/server (or (title x) (pr-str (mapv #(if (keyword? %) (unqualify %) %) locus)) " "))
+              locus (first router/route)]
+          (F title x locus))))))
 
-(e/defn BrowsePath [p-here x ps]
+(e/defn BrowsePath [locus x]
   (e/client
-    (Interpreter {::select (e/fn [path] (router/Navigate! ['. (if path [path] [])])
-                             [:hyperfiddle.electric-forms4/ok])}
-      (Block p-here x (first ps)))
-    (when-some [[p & ps] (seq ps)]
+    (Block locus x)
+    (when-some [locus (first router/route)]
       (router/pop
-        (e/for [p (e/diff-by identity (e/as-vec p))] ; don't recycle DOM/IO frames across different objects
-          (let [x (e/server (ex/Offload-reset #(nav-in x p)))]
-            (BrowsePath p x ps)))))))
+        (e/for [locus (e/diff-by identity (e/as-vec locus))] ; don't reuse DOM/IO frames across different objects
+          (let [x (e/server (ex/Offload-reset #(nav-in x locus)))]
+            (BrowsePath locus x)))))))
 
 (declare css)
-(e/defn EntityBrowser0 [x & args]
+(e/defn EntityBrowser0 [x]
   (e/client (dom/style (dom/text css)) (Load-css "dustingetz/easy_table.css")
     (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
       (let [x (e/server (ex/Offload-reset #(datafy x)))]
-        (BrowsePath nil x args)))))
+        (BrowsePath nil x)))))
 
 (def css "
 .Browser fieldset { position: relative; }

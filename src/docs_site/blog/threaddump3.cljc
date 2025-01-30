@@ -13,7 +13,7 @@
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
     (let [x (e/server (dustingetz.datafy-git/load-repo "./"))]
-      (e/Apply EntityBrowser0 x r/route))))
+      (EntityBrowser0 x))))
 
 (def css "
 .ThreadDump3 > a + a { margin-left: .5em; }
