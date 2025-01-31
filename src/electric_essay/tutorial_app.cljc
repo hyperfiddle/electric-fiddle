@@ -74,12 +74,14 @@
       (if-not ?essay-filename (r/ReplaceState! ['. [(first (second (first essay-config)))]]) ; "two_clocks.md" encodes to /'two_clocks.md'
         (do
           (Consulting-banner)
-          (binding [dom/node (dom/Await-element dom/node "#title-extra")]
-            (dom/span ; root wrapper div order issue
-              (dom/text "— Electric v3 ")
-              (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"}))))
-          (binding [dom/node (dom/Await-element dom/node "#nav")]
-            (Nav essay-config ?essay-filename false))
+          (when-some [e (dom/Await-element dom/node "#title-extra")]
+            (binding [dom/node e]
+              (dom/span                                     ; root wrapper div order issue
+                (dom/text "— Electric v3 ")
+                (dom/a (dom/text "(github)") (dom/props {:href "https://github.com/hyperfiddle/electric"})))))
+          (when-some [e (dom/Await-element dom/node "#nav")]
+            (binding [dom/node e]
+              (Nav essay-config ?essay-filename false)))
           (if-some [md-content (e/server (slurp-safe (str essay-md-folder ?essay-filename ".md")))]
             (Custom-markdown (Fiddle-markdown-extensions) md-content)
             (do (dom/h1 (dom/text "Tutorial page not found: " ?essay-filename))

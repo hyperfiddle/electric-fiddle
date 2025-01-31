@@ -87,17 +87,19 @@
 
 (e/defn Fn-src [& [target-s el-selector ?wrap]]
   (e/client
-    (binding [dom/node (if-some [s (not-empty el-selector)]
-                         (dom/Await-element js/document.body s) dom/node)]
-      (dom/div (dom/props {:class "user-examples"})
-        (Src* (symbol target-s) :ns? false)))))
+    (when-some [e (if-some [s (not-empty el-selector)]
+                    (dom/Await-element js/document.body s) dom/node)]
+      (binding [dom/node e]
+        (dom/div (dom/props {:class "user-examples"})
+          (Src* (symbol target-s) :ns? false))))))
 
 (e/defn Ns-src [& [target-s el-selector ?wrap]]
   (e/client
-    (binding [dom/node (if-some [s (not-empty el-selector)]
-                         (dom/Await-element js/document.body s) dom/node)]
-      (dom/div (dom/props {:class "user-examples"})
-        (Src* (symbol target-s) :ns? true)))))
+    (when-some [e (if-some [s (not-empty el-selector)]
+                    (dom/Await-element js/document.body s) dom/node)]
+      (binding [dom/node e]
+        (dom/div (dom/props {:class "user-examples"})
+          (Src* (symbol target-s) :ns? true))))))
 
 (e/defn Fiddle [& [target-s el-selector ?wrap :as route]] ; direct fiddle link http://localhost:8080/electric-fiddle.fiddle!Fiddle/dustingetz.y-fib!Y-fib
   (if (nil? (seq route)) (FiddleIndex)
@@ -105,16 +107,18 @@
 
 (e/defn Target [& [target-s el-selector ?wrap-s]]
   (e/client
-    (binding [dom/node (if-some [s (not-empty el-selector)]
-                         (dom/Await-element js/document.body s) dom/node)]
-      (dom/div (dom/props {:class "user-examples"})
-        (Target* (symbol target-s) (some-> ?wrap-s symbol))))))
+    (when-some [e (if-some [s (not-empty el-selector)]
+                    (dom/Await-element js/document.body s) dom/node)]
+      (binding [dom/node e]
+        (dom/div (dom/props {:class "user-examples"})
+          (Target* (symbol target-s) (some-> ?wrap-s symbol)))))))
 
 (e/defn Target-nochrome [& [target-s el-selector ?wrap-s]]
   (e/client
-    (binding [dom/node (if-some [s (not-empty el-selector)]
-                         (dom/Await-element js/document.body s) dom/node)]
-      (Target-nochrome* (symbol target-s) (some-> ?wrap-s symbol)))))
+    (when-some [e (if-some [s (not-empty el-selector)]
+                    (dom/Await-element js/document.body s) dom/node)]
+      (binding [dom/node e]
+        (Target-nochrome* (symbol target-s) (some-> ?wrap-s symbol))))))
 
 #_(e/defn Link [& [label target-s _]]
   (r/link ['. [(symbol target-s)]] (dom/text label)))
