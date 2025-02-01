@@ -73,7 +73,7 @@
     (let [[?essay-filename & _] r/route]
       (if-not ?essay-filename (r/ReplaceState! ['. [(first (second (first essay-config)))]]) ; "two_clocks.md" encodes to /'two_clocks.md'
         (do
-          (Consulting-banner)
+          #_(Consulting-banner)
           (when-some [e (dom/Await-element dom/node "#title-extra")]
             (binding [dom/node e]
               (dom/span                                     ; root wrapper div order issue
