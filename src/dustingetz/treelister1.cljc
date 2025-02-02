@@ -1,4 +1,4 @@
-(ns contrib.treelister "
+(ns dustingetz.treelister1 "
 treeseq recursion scheme which supports ergonomic search, i.e. retaining intermediate path nodes
 for any matching leaves"
   (:require contrib.str
