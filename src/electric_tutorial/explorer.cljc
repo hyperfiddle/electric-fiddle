@@ -5,8 +5,8 @@
             [contrib.assert :refer [check]]
             [contrib.data :refer [clamp-left]]
             [contrib.str :refer [includes-str?]]
-            [contrib.treelister :refer [treelister]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
+            [dustingetz.treelister1 :refer [treelister]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
@@ -52,20 +52,21 @@
       (dom/div (dom/props {:style {:height (str (clamp-left ; row count can exceed record count
                                                   (* row-height (- record-count limit)) 0) "px")}})))))
 
-(defn hidden-or-node-modules [m] (or (::fs/hidden m) (= "node_modules" (::fs/name m))))
+#?(:clj (defn hidden-or-node-modules [x] (or (fs/file-hidden? x) (= "node_modules" (.getName x)))))
+
+#?(:clj (defn fs-tree-seq [x search]
+          ; linear search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
+          (->> (fs/dir-list x)
+            (treelister
+              (fn children [x] (if (not (hidden-or-node-modules x)) (fs/dir-list x)))
+              (fn keep? [x] (and (not (hidden-or-node-modules x)) (includes-str? (.getName x) search)))))))
 
 (e/defn Dir [x]
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          m (ex/Offload-latch #(datafy x))
-          xs! (ex/Offload-latch
-                #(vec ((treelister
-                         ; linear search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
-                         (fn children [m] (if (not (hidden-or-node-modules m)) (nav m ::fs/children (::fs/children m))))
-                         (fn keep? [m search] (and (not (hidden-or-node-modules m)) (includes-str? (::fs/name m) search)))
-                         (nav m ::fs/children (::fs/children m))) search)))
+          xs! (ex/Offload-latch #(vec (fs-tree-seq x search)))
           n (ex/Offload-latch #(count xs!))]
-      (dom/fieldset (dom/legend (dom/text (::fs/absolute-path m) " ")
+      (dom/fieldset (dom/legend (dom/text (fs/file-absolute-path x) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
         (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
           (TableScroll n xs!))))))

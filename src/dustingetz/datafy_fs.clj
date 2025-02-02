@@ -109,7 +109,10 @@
 (defmethod datafy-file-content "text/plain" [^File f] (line-seq (io/reader f)))
 (defmethod datafy-file-content :default [^File f] (io/reader f))
 
-(defn hidden? [x] (= "." (subs (.getName x) 0 1)))
+(defn file-hidden? [^File x] (= "." (subs (.getName x) 0 1)))
+(defn file-absolute-path [^File x] (-> x .toPath .normalize .toAbsolutePath str))
+(defn file-order-compare [^File x] [(not (.isDirectory x)) (.getName x)])
+(defn dir-list [^File x] (some->> x .listFiles (sort-by file-order-compare)))
 
 (extend-protocol ccp/Datafiable
   java.io.File
@@ -122,7 +125,7 @@
           n (.getName f)
           mime-type (detect-mime-type-no-access n)]
       (as-> {::name n
-             ::hidden (hidden? f)
+             ::hidden (file-hidden? f)
              ::kind (cond (.isDirectory attrs) ::dir
                           (.isSymbolicLink attrs) ::symlink
                           (.isOther attrs) ::other
@@ -130,14 +133,14 @@
                                                    (keyword (namespace ::foo) s)
                                                    ::unknown-kind)
                           () ::unknown-kind)
-             ::absolute-path (-> f .toPath .normalize .toAbsolutePath str)
+             ::absolute-path (file-absolute-path f)
              ::created (-> attrs .creationTime .toInstant java.util.Date/from)
              ::accessed (-> attrs .lastAccessTime .toInstant java.util.Date/from)
              ::modified (-> attrs .lastModifiedTime .toInstant java.util.Date/from)
              ::size (.size attrs)
              ::mime-type mime-type} %
             (merge % (if (= ::dir (::kind %))
-                       {::children #(vec (sort (.listFiles f))) ; fns are hyperlinks - experiment
+                       {::children #(vec (dir-list f)) ; fns are hyperlinks - experiment
                         ::parent (-> f file-path .getParent .toFile)}))
         (with-meta % {`ccp/nav
                           (fn [xs k v]
