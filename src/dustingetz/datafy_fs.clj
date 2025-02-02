@@ -247,13 +247,3 @@
   (relativize-path "/fake/" (absolute-path "./src")) := nil
   (relativize-path (absolute-path "./") "/fake/") := nil
   (relativize-path (absolute-path "./") "fake") := nil)
-
-(s/fdef list-files :args (s/cat :file any?) :ret (s/coll-of any?))
-(defn list-files [^String path-str]
-  (try (let [m (datafy (clojure.java.io/file path-str))]
-         (nav m ::children (::children m)))
-       (catch java.nio.file.NoSuchFileException _)))
-
-(comment
-  (list-files (absolute-path "./"))
-  (list-files (absolute-path "node_modules")))
