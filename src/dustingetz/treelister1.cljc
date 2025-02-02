@@ -9,7 +9,7 @@ for any matching leaves"
     (mapcat (fn [x]
               (if-let [children (children-fn x)]
                 (when-let [rows (seq (-tree-list (inc depth) children children-fn keep?))]
-                  (into [[depth x]] rows))
+                  (into [[depth x]] rows)) ; bug - accidentally elides empty folders
 
                 ; leaf
                 (let [q []]

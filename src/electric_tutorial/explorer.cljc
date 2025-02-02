@@ -56,8 +56,8 @@
 
 #?(:clj (defn fs-tree-seq [x search]
           ; linear search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
-          (->> (fs/dir-list x)
-            (treelister
+          (->> (fs/dir-list x) ; todo start at root
+            (treelister ; bug - elides empty folders (which you want only when search is not "")
               (fn children [x] (if (not (hidden-or-node-modules x)) (fs/dir-list x)))
               (fn keep? [x] (and (not (hidden-or-node-modules x)) (includes-str? (.getName x) search)))))))
 
