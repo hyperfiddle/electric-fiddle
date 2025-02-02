@@ -1,43 +1,49 @@
-(ns contrib.treelister
+(ns contrib.treelister "
+treeseq recursion scheme which supports ergonomic search, i.e. retaining intermediate path nodes
+for any matching leaves"
   (:require contrib.str
-            [clojure.datafy :refer [datafy]]
             [hyperfiddle.rcf :refer [tests]]))
 
-(defn- -tree-list [depth xs children-fn keep? input]
+(defn- -tree-list [depth xs children-fn keep?]
   (eduction
     (mapcat (fn [x]
-              (let [x (datafy x)] ; ?
-                (if-let [children (children-fn x)]
-                  (when-let [rows (seq (-tree-list (inc depth) children children-fn keep? input))]
-                    (into [[depth x]] rows))
+              (if-let [children (children-fn x)]
+                (when-let [rows (seq (-tree-list (inc depth) children children-fn keep?))]
+                  (into [[depth x]] rows))
 
-                  ; leaf
-                  (let [q []]
-                    (if (keep? (doto x #_(prn 'keep-leaf?)) input)
-                      (conj q [depth x])
-                      q))))))
+                ; leaf
+                (let [q []]
+                  (if (keep? (doto x #_(prn 'keep-leaf?)))
+                    (conj q [depth x])
+                    q)))))
     xs))
 
 (def any-matches? contrib.str/any-matches?) ; re-export for user convenience
 (def includes-str? contrib.str/includes-str?)
 
 (defn treelister
-  ([xs] (treelister (fn [_]) contrib.str/includes-str? xs))
-  ([children-fn xs] (treelister children-fn contrib.str/includes-str? xs)) ; don't make user :refer any-matches
-  ([children-fn keep? xs] (fn [input] (-tree-list 0 xs children-fn keep? input))))
+  ([xs] (treelister (fn [_]) (constantly true) xs)) ; wtf
+  ([children-fn xs] (treelister children-fn (constantly true) xs))
+  ([children-fn keep? xs] (-tree-list 0 xs children-fn keep?)))
 
 (tests
-  (vec ((treelister #(when (vector? %) %) (fn [v _] (odd? v))
-          [1 2 [3 4] [5 [6 [7]]]]) nil))
-  := [[0 1] [0 [3 4]] [1 3] [0 [5 [6 [7]]]] [1 5] [1 [6 [7]]] [2 [7]] [3 7]]
+  (vec (treelister #(when (vector? %) %) odd? [1 2 [3 4] [5 [6 [7]]]]))
+  := [[0 1]
+      [0 [3 4]]
+      [1 3]
+      [0 [5 [6 [7]]]]
+      [1 5]
+      [1 [6 [7]]]
+      [2 [7]]
+      [3 7]]
 
-  ((treelister :children (fn [v needle] (-> v :file #{needle}))
-     [{:dir "x" :children [{:file "a"} {:file "b"}]}]) "a")
+  (treelister :children (fn [v] (-> v :file #{"a"}))
+    [{:dir "x" :children [{:file "a"} {:file "b"}]}])
   (count (vec *1)) := 2
 
   "directory is omitted if there are no children matching keep?"
-  ((treelister :children (fn [v needle] (-> v :file #{needle}))
-     [{:dir "x" :children [{:file "a"} {:file "b"}]}]) "nope")
+  (treelister :children (fn [v] (-> v :file #{"nope"}))
+    [{:dir "x" :children [{:file "a"} {:file "b"}]}])
   (count (vec *1)) := 0)
 
 (defn simple-data-children [x]
@@ -70,11 +76,8 @@
 
 (comment
   (require '[clojure.datafy :refer [datafy]])
-  ((treelister
-     simple-data-children
-     contrib.str/includes-str?
-     (datafy com.sun.management.ThreadMXBean)
-     ) nil)
+  (treelister simple-data-children (constantly true)
+    (datafy com.sun.management.ThreadMXBean))
 
   (def x (first (:members (datafy Object))))
   (type (second x))
@@ -83,9 +86,8 @@
           :flags #{:public}
           :methods {'clone [{:name 'clone}]}
           :name 'java.lang.Object})
-  ((treelister simple-data-children contrib.str/includes-str? x) nil)
+  (treelister simple-data-children x)
 
-  ((treelister {:a nil}) nil)
-
-  #_(any-matches? :a "") ; die
+  "no children?"
+  (treelister {:a nil}) := [[0 [:a nil]]] ; why
   )
