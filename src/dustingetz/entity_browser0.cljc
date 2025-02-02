@@ -57,7 +57,7 @@
   (e/client
     (dom/fieldset (dom/props {:class "entity"})
       (dom/legend (dom/text title))
-      (let [xs! (e/server (ex/Offload-reset #(explorer-seq m)))
+      (let [xs! (e/server (ex/Offload-reset #(drop 1 (explorer-seq m))))
             row-count (e/server (count xs!)), row-height 24
             selected-x (e/server (first (filter (fn [[path _ _]] (= p-next path)) xs!)))] ; slow, but the documents are small
         (dom/props {:style {:--col-count 2 :--row-height row-height}})
