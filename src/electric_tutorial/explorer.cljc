@@ -85,14 +85,6 @@
                         {} (clojure.java.io/file base-path (check fs-rel-path)))]
                 (Dir x)))))))))
 
-(comment
-  (def m (datafy (clojure.java.io/file (fs/absolute-path "./"))))
-  (def xs (nav m ::fs/children ((::fs/children m))))
-  (def xs2 ((treelister (fn [m] (::fs/children m)) #(includes-str? (::fs/name %) %2) xs) ""))
-  (count (seq xs))
-  (def qs (take 10 xs))
-  (first qs))
-
 (def css "
 /* Scroll machinery */
 .DirectoryExplorer .Viewport { height: 100%; overflow-x:hidden; overflow-y:auto; }
