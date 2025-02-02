@@ -6,7 +6,7 @@
             [hyperfiddle.electric3-contrib :refer [Tap]]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
-            [dustingetz.entity-browser0 :refer [EntityBrowser0]]
+            [dustingetz.entity-browser2 :refer [EntityBrowser2]]
             #?(:clj dustingetz.datafy-git2)
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj dustingetz.datafy-fs)
@@ -42,7 +42,13 @@
       (r/pop
         (e/for [uri (e/diff-by identity (e/as-vec uri))] ; workaround glitch (Leo, please explain?)
           (let [x (e/server (UserResolve uri))]
-            (EntityBrowser0 x)))))))
+            (EntityBrowser2 x)))))))
+
+(comment
+  (require '[clojure.datafy :refer [datafy]])
+  (def x (find-ns 'clojure.core))
+  (datafy x)
+  )
 
 (def css "
 .ThreadDump3 > a + a { margin-left: .5em; }

@@ -1,4 +1,5 @@
 (ns dustingetz.entity-browser0
+  "no major/breaking changes changes - used in the blog"
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
             [contrib.data :refer [unqualify index-of]]
