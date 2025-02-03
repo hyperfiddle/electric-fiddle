@@ -34,7 +34,7 @@
 (e/defn Row [i ?x]
   (e/client
     (let [?tab (e/server (some-> ?x (nth 0))) ; destructure on server, todo electric can auto-site this
-          ?x (e/server (ex/Offload-latch #(some-> ?x (nth 1) datafy)))]
+          ?x (e/server (some-> ?x (nth 1) datafy))] ; should be offloaded
       (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
         (dom/td (Render-cell ?x ::fs/name) (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}}))
         (dom/td (Render-cell ?x ::fs/modified))
@@ -64,8 +64,8 @@
 (e/defn Dir [x]
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          xs! (ex/Offload-latch #(vec (fs-tree-seq x search)))
-          n (ex/Offload-latch #(count xs!))]
+          xs! (ex/Offload-latch #(vec (fs-tree-seq x search))) ; CSS layout messed up on FF after 9999 rows - will fix
+          n (count xs!)]
       (dom/fieldset (dom/legend (dom/text (fs/file-absolute-path x) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
         (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
