@@ -34,7 +34,7 @@
            entrypoint (check (ensure-resolved! (symbol (name user-ns) "ProdMain")))] ; magic name
        ; todo use fiddle-index by default in prod to eliminate userland boilerplate
        ; (or #_(ensure-resolved! (symbol electric-fiddle.fiddle-index/DevMain)))
-       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#))))
+       (start-server! (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#)))) ; inject server-only ring-request - symmetric with e/boot-client
          config))))
 
 (defmacro inject-user-main [] (symbol (name prod-fiddle-config/*comptime-prod-fiddle-ns*) "ProdMain"))
@@ -44,7 +44,7 @@
      (defonce reactor nil)
 
      (defn ^:dev/after-load ^:export start! []
-       (set! reactor ((e/boot-client {} (inject-user-main) (e/server nil))
+       (set! reactor ((e/boot-client {} (inject-user-main) (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request
                       #(js/console.log "Reactor success:" %)
                       #(js/console.error "Reactor failure:" %))))
 
