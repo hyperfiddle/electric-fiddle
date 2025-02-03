@@ -36,16 +36,15 @@ This is all done in a rather tiny amount of LOC, so we feel it is reasonable to 
 ```shell
 # fiddle prod build
 npm install
-clojure -X:build:prod:electric-tutorial build-client :hyperfiddle.fiddle-build/fiddle-ns electric-tutorial.tutorial :debug false :verbose false :optimize true
+clojure -X:build:prod:electric-tutorial build-client :hyperfiddle.fiddle-build/fiddle-ns docs-site.sitemap :debug false :verbose false :optimize true
 clj -M:prod:electric-tutorial -m prod
 
 # fiddle uberjar
-clojure -X:build:prod:electric-tutorial uberjar :hyperfiddle.fiddle-build/fiddle-ns electric-tutorial.tutorial :hyperfiddle.fiddle-build/fiddle-deps-alias electric-tutorial :hyperfiddle.fiddle-build/jar-name "app.jar"
+clojure -X:build:prod:electric-tutorial uberjar :hyperfiddle.fiddle-build/fiddle-ns docs-site.sitemap :hyperfiddle.fiddle-build/fiddle-deps-alias electric-tutorial :hyperfiddle.fiddle-build/jar-name "app.jar"
 java -cp target/app.jar clojure.main -m prod
 
 # fiddle docker
-HYPERFIDDLE_FIDDLE_NS=electric-tutorial.tutorial
-HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial
-docker build -t electric-tutorial:latest .
+docker build -t electric-tutorial:latest . --build-arg HYPERFIDDLE_FIDDLE_NS=docs-site.sitemap --build-arg HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial
 docker run --rm -it -p 8080:8080 electric-tutorial:latest
+
 ```
