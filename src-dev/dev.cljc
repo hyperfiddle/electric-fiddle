@@ -31,7 +31,7 @@
 
        (def server (jetty/start-server!
                      (fn [ring-request]
-                       (e/boot-server {} electric-starter-app.main/Main (e/server ring-request)))
+                       (e/boot-server {} electric-starter-app.main/Main (e/server ring-request))) ; inject server-only ring-request - symmetric with e/boot-client
                      config))
        (comment
          (.stop server) ; jetty
@@ -44,7 +44,7 @@
      (defonce reactor nil)
 
      (defn ^:dev/after-load ^:export start! []
-       (set! reactor ((e/boot-client {} electric-starter-app.main/Main (e/server nil))
+       (set! reactor ((e/boot-client {} electric-starter-app.main/Main (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request
                        #(js/console.log "Reactor success:" %)
                        #(js/console.error "Reactor failure:" %))))
 
