@@ -1,5 +1,6 @@
 (ns datomic-browser.datomic-browser
   (:require clojure.string
+            [contrib.assert :refer [check]]
             [datomic-browser.contrib :refer
              [clamp-left treelister flatten-nested includes-str?]]
             #?(:clj [datomic.api :as d])
@@ -7,6 +8,7 @@
                      [attributes-stream ident! entity-history-datoms-stream easy-attr
                       summarize-attr is-attr? seq-consumer]])
             [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input* Input! Form!]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
@@ -209,6 +211,23 @@
     (binding [db (e/server (e/Task (m/via m/blk (d/db conn))))
               conn conn]
       (Page))))
+
+(e/defn Inject [?x #_& {:keys [Busy Failed Ok]}]
+  ; todo needs to be a lot more sophisticated to inject many dependencies concurrently and report status in batch
+  (cond
+    (ex/None? ?x) Busy
+    (or (some? (ex-message ?x)) (nil? ?x)) (Failed ?x)
+    () (e/Partial Ok ?x)))
+
+(e/defn Inject-datomic [datomic-uri F]
+  (e/server
+    (Inject (e/Task (m/via m/blk
+                      (try (check (datomic.api/connect datomic-uri))
+                           (catch Exception e #_(log/error e) e))))
+      {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
+       :Failed (e/fn [err] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
+                 (dom/pre (dom/text (pr-str err))))
+       :Ok F})))
 
 (def css "
 /* Scroll machinery */

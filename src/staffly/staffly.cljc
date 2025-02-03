@@ -1,7 +1,7 @@
 (ns staffly.staffly
   (:require [contrib.assert :refer [check]]
             [contrib.clojurex :refer [bindx]]
-            [datomic-browser.mbrainz-browser :refer [Inject]]
+            [datomic-browser.datomic-browser :refer [Inject]]
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
