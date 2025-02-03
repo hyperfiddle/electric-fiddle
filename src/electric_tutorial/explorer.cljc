@@ -7,6 +7,7 @@
             [contrib.str :refer [includes-str?]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [dustingetz.treelister1 :refer [treelister]]
+            [dustingetz.treelister3 :as tl3]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
@@ -33,7 +34,7 @@
 
 (e/defn Row [i ?x]
   (e/client
-    (let [?tab (e/server (some-> ?x (nth 0))) ; destructure on server, todo electric can auto-site this
+    (let [?tab (e/server (some-> ?x (nth 0) count)) ; destructure on server, todo electric can auto-site this
           ?x (e/server (some-> ?x (nth 1) datafy))] ; should be offloaded
       (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
         (dom/td (Render-cell ?x ::fs/name) (dom/props {:style {:padding-left (some-> ?tab (* 15) (str "px"))}}))
@@ -56,9 +57,9 @@
 
 #?(:clj (defn fs-tree-seq [x search]
           ; linear search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
-          (->> (fs/dir-list x) ; todo start at root
-            (treelister ; bug - elides empty folders (which you want only when search is not "")
-              (fn children [x] (if (not (hidden-or-node-modules x)) (fs/dir-list x)))
+          (->> x
+            (tl3/treelist ; bug - elides empty folders (which you want only when search is not "")
+              (fn children [x] (when-not (hidden-or-node-modules x) (map-indexed vector (fs/dir-list x))))
               (fn keep? [x] (and (not (hidden-or-node-modules x)) (includes-str? (.getName x) search)))))))
 
 (e/defn Dir [x]
