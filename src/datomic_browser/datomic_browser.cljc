@@ -77,19 +77,19 @@
 (e/defn TxDetail []
   (let [[e _] r/route]
     #_(r/focus [1]) ; search
-    (when e ; router glitch
-      (SearchGrid (str "Tx detail: " e)
-        (e/fn Query [search]
-          (e/server
+    (SearchGrid (str "Tx detail: " e)
+      (e/fn Query [search]
+        (e/server
+          (when e ; glitch
             (->> (seq-consumer (d/tx-range (d/log conn) e (inc e))) ; global
               (m/eduction (map :data) cat) (m/reduce conj []) e/Task
-              (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search))))) ; string the datom, todo resolve human attrs
-        (e/fn Row [[e aa v tx op]]
-          (dom/td #_(let [e (e/server (e/Task (ident! db e)))]) (r/link ['.. [:entity e]] (dom/text e)))
-          (dom/td (let [aa (e/server (e/Task (ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
-          (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
-          #_(dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))) ; redundant
-          )))))
+              (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search)))))) ; string the datom, todo resolve human attrs
+      (e/fn Row [[e aa v tx op]]
+        (dom/td #_(let [e (e/server (e/Task (ident! db e)))]) (r/link ['.. [:entity e]] (dom/text e)))
+        (dom/td (let [aa (e/server (e/Task (ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
+        (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
+        #_(dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))) ; redundant
+        ))))
 
 (e/defn Format-entity [{:keys [path name value] :as ?row}]
   (e/server ; keep vals on server, row can contain refs
