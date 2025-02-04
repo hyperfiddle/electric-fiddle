@@ -57,17 +57,18 @@
 
 #?(:clj (defn fs-tree-seq [x search]
           ; linear search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
-          (->> x
+          (->> (check x)
             (tl3/treelist ; bug - elides empty folders (which you want only when search is not "")
-              (fn children [x] (when-not (hidden-or-node-modules x) (map-indexed vector (fs/dir-list x))))
+              (fn children [x]
+                (when-not (hidden-or-node-modules x) (map-indexed vector (fs/dir-list x))))
               (fn keep? [x] (and (not (hidden-or-node-modules x)) (includes-str? (.getName x) search)))))))
 
-(e/defn Dir [x]
+(e/defn Dir [?x] ; glitch
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          xs! (ex/Offload-latch #(vec (fs-tree-seq x search))) ; CSS layout messed up on FF after 9999 rows - will fix
-          n (count xs!)]
-      (dom/fieldset (dom/legend (dom/text (fs/file-absolute-path x) " ")
+          xs! (ex/Offload-latch #(vec (when ?x (fs-tree-seq ?x search)))) ; glitch
+          n (count xs!)] ; bug: CSS layout breaks on FF when n > 9999 - todo
+      (dom/fieldset (dom/legend (dom/text (fs/file-absolute-path ?x) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
         (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
           (TableScroll n xs!))))))
@@ -82,9 +83,8 @@
         (router/pop
           (e/server
             (binding [base-path (fs/absolute-path "./")]
-              (let [x (if-not fs-rel-path ; workaround glitch on tutorial navigate (nested router interaction)
-                        {} (clojure.java.io/file base-path (check fs-rel-path)))]
-                (Dir x)))))))))
+              (Dir (when (some? fs-rel-path) ; glitch on navigate
+                     (clojure.java.io/file base-path (check fs-rel-path)))))))))))
 
 (def css "
 /* Scroll machinery */
