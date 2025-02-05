@@ -1,11 +1,8 @@
-(ns contrib.protocols
-  (:require
-    [clojure.string :as str]
-    [contrib.debug :as dbg]))
+(ns dustingetz.identify)
 
 (defprotocol Identifiable (-identify [o]))
 
-(defn identify [o] (str (-identify o)))
+(defn identify [o] (-identify o))
 
 #?(:clj
    (extend-protocol Identifiable
