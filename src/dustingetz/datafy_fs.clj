@@ -1,10 +1,9 @@
 (ns dustingetz.datafy-fs
   "nav implementation for java file system traversals"
-  (:require [clojure.core.protocols :as ccp :refer [nav]]
-            [clojure.datafy :refer [datafy]] ; tests only
+  (:require [clojure.core.protocols :refer [nav Datafiable]]
             [clojure.spec.alpha :as s]
             [contrib.assert :refer [check]]
-            [dustingetz.datafy-fs :as fs]
+            [dustingetz.identify :refer [Identifiable]]
             [hyperfiddle.rcf :refer [tests]]
             [clojure.java.io :as io])
   (:import [java.nio.file Path Paths Files]
@@ -95,9 +94,9 @@
 
 (def ... `...) ; define a value for easy test assertions
 
-(extend-protocol ccp/Datafiable
-  java.nio.file.attribute.FileTime
-  (datafy [o] (-> o .toInstant java.util.Date/from)))
+(extend-type java.nio.file.attribute.FileTime
+  Identifiable (-identify [o] (-> o .toInstant java.util.Date/from)) ; value semantics
+  Datafiable (datafy [o] (-> o .toInstant java.util.Date/from)))
 
 (defonce TIKA (org.apache.tika.Tika.))
 
@@ -114,8 +113,9 @@
 (defn file-order-compare [^File x] [(not (.isDirectory x)) (.getName x)])
 (defn dir-list [^File x] (some->> x .listFiles (sort-by file-order-compare)))
 
-(extend-protocol ccp/Datafiable
-  java.io.File
+(extend-type java.io.File
+  Identifiable (-identify [^File x] (.getName x)) ; locally unique in its folder
+  Datafiable
   (datafy [^File f]
     ; represent object's top layer as EDN-ready value records, for display
     ; datafy is partial display view of an object as value records
@@ -142,7 +142,7 @@
             (merge % (if (= ::dir (::kind %))
                        {::children #(vec (dir-list f)) ; fns are hyperlinks - experiment
                         ::parent (-> f file-path .getParent .toFile)}))
-        (with-meta % {`ccp/nav
+        (with-meta % {`nav
                           (fn [xs k v]
                             (case k
                               ; reverse data back to object, to be datafied again by caller
@@ -154,6 +154,7 @@
                               v))})))))
 
 (tests
+  (require '[clojure.datafy :refer [datafy]])
   ; careful, calling seq loses metas on the underlying
   (def h (clojure.java.io/file "src"))
   (type h) := java.io.File
