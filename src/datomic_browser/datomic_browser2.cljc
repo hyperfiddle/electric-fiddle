@@ -110,6 +110,15 @@
     (revert-attribute attr)
     attr))
 
+(e/defn EntityTooltip [e]
+  (e/client
+    (dom/pre (dom/props {:class "entity-tooltip"}) (dom/text (contrib.str/pprint-str (e/server (d/pull db ['*] e)))))))
+
+(e/defn EntityLink [e]
+  (e/When e
+    (r/link ['.. [:entity e]] (dom/text e))
+    (EntityTooltip e)))
+
 (e/defn Format-entity [e {:keys [path name value] :as ?row}]
   (e/server ; keep vals on server, row can contain refs
     (let [k name v value]
@@ -126,8 +135,8 @@
           (if-not (coll? v) ; don't render card :many intermediate row
             (let [[valueType cardinality] (easy-attr db k)]
               (cond
-                (= :db/id k) (r/link ['.. '.. [:entity v]] (dom/text v))
-                (= :ref valueType) (r/link ['.. '.. [:entity v]] (dom/text v))
+                (= :db/id k) (EntityLink v)
+                (= :ref valueType) (EntityLink v)
                 (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
                 () (dom/text (str v))))
             (cond
@@ -293,4 +302,16 @@
 .Explorer.tx-detail table { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2fr; }
 .Explorer.recent-tx table { grid-template-columns: 10em auto; }
 .Explorer.db-stats table { grid-template-columns: 20em auto; }
+.Explorer :has(+ .entity-tooltip):hover + .entity-tooltip { visibility: visible; }
+.Explorer .entity-tooltip {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  border: 1px whitesmoke solid;
+  background-color: white;
+  padding: 0.5rem 1rem;
+  margin: 0;
+  box-shadow: 0 0 1rem lightgray;
+  border-radius: .25rem;
+}
 ")
