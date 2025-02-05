@@ -21,6 +21,21 @@ for any matching leaves"
   (data-children [:a :b :c]) := [[0 :a] [1 :b] [2 :c]]
   (into #{} (map first) (data-children #{:a :b :c})) := #{0 1 2}) ; set order not guaranteed, bad
 
+(defn records-coll? [?coll] (and (sequential? ?coll) (map? (first ?coll))))
+
+(defn shallow-data-children [x] ; avoid descending large or weird collections (heuristic)
+  (cond (map? x) (seq x)
+        (map-entry? x) (when-some [v* (data-children (val x))]
+                         (let [k (key x)]
+                           (mapv (fn [[p v]] [[k p] v]) v*)))
+        #_#_(coll? x) (into [] (map-indexed vector) x) ; just don't descend nested colls at all, seems to work out
+        :else nil))
+
+(comment
+  (-> #'* meta :arglists) := '([] [x] [x y] [x y & more]) ; weird collection
+  (-> (clojure.datafy/datafy Integer) :members) := _ ; large collection
+  )
+
 (defn -tree-list [path x children-fn keep?]
   (if-some [c* (seq (children-fn x))]
     (when-some [v* (seq (into [] (mapcat (fn [[p v]] (-tree-list (conj path p) v children-fn keep?))) c*))]

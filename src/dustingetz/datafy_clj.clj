@@ -17,6 +17,7 @@
 (comment
   (require '[clojure.datafy :refer [datafy nav]] '[dustingetz.identify :refer [identify]])
   (def x #'dev/DevMain)
+  (def x #'*)
   (identify x)
   (datafy x)
   (as-> x x
