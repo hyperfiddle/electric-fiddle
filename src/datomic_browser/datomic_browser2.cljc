@@ -126,7 +126,8 @@
         (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
           (cond
             (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-            (is-attr? db (absolute-attribute k)) 
+            (integer? k) (dom/text k) ; indexed collection descent
+            (is-attr? db (absolute-attribute k))
             (if (reverse-attribute? k) 
               (r/link ['.. [:attribute (absolute-attribute k) e]] (dom/text k))
               (r/link ['.. [:attribute (absolute-attribute k)]] (dom/text k)))
@@ -261,7 +262,7 @@
     (when (not (empty? r/route))
       (Page))))
 
-(e/defn DatomicBrowser [conn]
+(e/defn DatomicBrowser2 [conn]
   (e/client
     (binding [db (e/server (e/Task (m/via m/blk (d/db conn))))
               conn conn]
