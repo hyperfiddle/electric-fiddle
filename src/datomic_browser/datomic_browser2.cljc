@@ -301,7 +301,7 @@
 (e/defn Page []
   (dom/style (dom/text css))
   (dom/props {:class "DatomicBrowser Explorer"})
-  (when (empty? r/route) (r/ReplaceState! ['. [[:entity 17592186058336 ""]]]))
+  (when (empty? r/route) (r/ReplaceState! ['. [:attributes]]))
   (dom/props {:class (first r/route)}) ; bad/confusing, has to know route shape ahead of time.
   (Nav)
   (let [[page] r/route]
