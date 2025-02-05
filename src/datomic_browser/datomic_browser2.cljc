@@ -229,22 +229,37 @@
     (dom/text " — Datomic Browser2")))
 
 (declare css)
+
+
+#_(e/defn BrowsePath [locus x]
+  (e/client
+    (Block locus x)
+    (when-some [locus (first router/route)]
+      (router/pop
+        (e/for [locus (e/diff-by identity (e/as-vec locus))] ; don't reuse DOM/IO frames across different objects
+          (let [x (e/server (ex/Offload-reset #(nav-in x locus)))]
+            (BrowsePath locus x)))))))
+
 (e/defn Page []
   (dom/style (dom/text css))
   (dom/props {:class "DatomicBrowser Explorer"})
-  (let [[page] r/route]
-    (when-not page (r/ReplaceState! ['. [:attributes]]))
-    (dom/props {:class page})
-    (r/pop
-      (Nav)
-      (case page
-        :attributes (Attributes)
-        :attribute (AttributeDetail)
-        :tx-detail (TxDetail)
-        :entity (e/amb (EntityDetail) (EntityHistory))
-        :db-stats (DbStats)
-        :recent-tx (RecentTx)
-        (e/amb)))))
+  (r/focus [0]
+    (let [[page] r/route]
+      (when-not page (r/ReplaceState! ['. [:attributes]]))
+      (dom/props {:class page})
+      (r/pop
+        (Nav)
+        (case page
+          :attributes (Attributes)
+          :attribute (AttributeDetail)
+          :tx-detail (TxDetail)
+          :entity (e/amb (EntityDetail) #_(EntityHistory))
+          :db-stats (DbStats)
+          :recent-tx (RecentTx)
+          (e/amb)))))
+  (r/pop
+    (when (not (empty? r/route))
+      (Page))))
 
 (e/defn DatomicBrowser [conn]
   (e/client
