@@ -59,7 +59,9 @@
     {:name (.getName o)
      :commit-short-name (-> o .getName short-commit-id)}))
 
-(defn repo-path [o] (-> o datafy :repo datafy :dir datafy ::fs/absolute-path))
+(defn repo-path [^Git x] (-> x .getRepository .getDirectory fs/file-absolute-path))
+
+(comment (->> (load-repo "./") repo-path (fs/relativize-path (fs/absolute-path "./"))) := ".git")
 
 (comment
   (as-> (load-repo "./") x
