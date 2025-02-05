@@ -1,12 +1,13 @@
 (ns dustingetz.datafy-git2
   (:require [clj-jgit.porcelain :as git]
-            [clojure.core.protocols :refer [nav]]
-            [clojure.datafy :refer [datafy]]
-            [dustingetz.datafy-fs :as fs])
+            clj-jgit.util
+            [clojure.core.protocols :refer [nav Datafiable]]
+            [dustingetz.datafy-fs :as fs]
+            [dustingetz.identify :refer [Identifiable]])
   (:import (org.eclipse.jgit.api Git)
            (org.eclipse.jgit.internal.storage.file FileRepository)
            (org.eclipse.jgit.revwalk RevCommit)
-           (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository)))
+           (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository PersonIdent)))
 
 ; re-export wrappers for convenience - one API not two
 (def load-repo (memoize git/load-repo))
@@ -18,16 +19,22 @@
 #_(defn remote-ref? [^Ref ref] (.startsWith (.getName ref) Constants/R_REMOTES))
 #_(defn local-ref? [^Ref ref] (.startsWith (.getName ref) Constants/R_HEADS))
 (defn ref-type [^Ref ref] (if (.startsWith (.getName ref) "refs/remotes/") :remote :local))
+(defn repo-id [^Git x] (-> x .getRepository .getIdentifier))
+(defn repo-path [^Git x] (-> x .getRepository .getDirectory fs/file-absolute-path))
 
-(extend-protocol clojure.core.protocols/Datafiable
+(comment
+  (->> (load-repo "./") repo-path (fs/relativize-path (fs/absolute-path "./"))) := ".git")
+
+(extend-protocol Datafiable
   Git
   (datafy [^Git o]
     (->
       {:status (git/git-status o) ; keep :log above the fold in blog3 demo
        :repo (.getRepository o)
        :branch-current (git/git-branch-current o)
+       ; return jgit objects for user to datafy
        :branches (memoize #(vec (branch-list o :jgit? true :list-mode :all))) ; arraylist
-       :log (memoize #(vec (log o :until "HEAD")))}
+       :log (memoize #(vec (log o :until "HEAD" :jgit? true)))}
       (with-meta {`nav
                   (fn [xs k v]
                     (case k
@@ -56,14 +63,17 @@
 
   RevCommit
   (datafy [^RevCommit o]
-    {:name (.getName o)
-     :commit-short-name (-> o .getName short-commit-id)}))
+    {:name (.getName o) ; commit
+     :short-name (-> o .getName short-commit-id)
+     :msg (.getShortMessage ^RevCommit o)
+     :author (.getAuthorIdent ^RevCommit o)
+     :committer (.getCommitterIdent ^RevCommit o)})
 
-(defn repo-path [^Git x] (-> x .getRepository .getDirectory fs/file-absolute-path))
-
-(comment (->> (load-repo "./") repo-path (fs/relativize-path (fs/absolute-path "./"))) := ".git")
+  PersonIdent
+  (datafy [^PersonIdent x] (clj-jgit.util/person-ident x)))
 
 (comment
+  (require '[clojure.datafy :refer [datafy]])
   (as-> (load-repo "./") x
     (datafy x)
     (nav x :log (:log x)))
@@ -73,5 +83,47 @@
     (nav x :branches (:branches x))
     (datafy x)
     (nav x 0 (nth x 0))
-    (datafy x))
-  )
+    (datafy x)))
+
+(extend-protocol Identifiable
+  Git (-identify [^Git x] (repo-id x))
+  FileRepository (-identify [^FileRepository x] (.getIdentifier x))
+  Ref (-identify [^Ref x] (Repository/shortenRefName (.getName x)))
+  ObjectId (-identify [^ObjectId x] (.getName x))
+  RevCommit (-identify [^RevCommit x] (-> x .getName short-commit-id))
+  PersonIdent (-identify [^PersonIdent x] (.getEmailAddress x)))
+
+(comment
+  (require '[dustingetz.identify :refer [identify]])
+  (def x (load-repo "./"))
+  (identify x) := "./.git"
+
+  (as-> (datafy x) x
+    (datafy x) (nav x :repo (:repo x))
+    (identify x)) := "./.git"
+
+  (as-> (datafy x) x
+    (datafy x) (nav x :repo (:repo x))
+    (identify x)) := "./.git"
+
+  (as-> (datafy x) x
+    (datafy x) (nav x :log (:log x))
+    (datafy x) (nav x 0 (nth x 0)) ; log record
+    (identify x)) := "b10bf19"
+
+  (as-> (datafy x) x
+    (datafy x) (nav x :log (:log x))
+    (datafy x) (nav x 0 (nth x 0)) ; log record
+    (datafy x) (nav x :id (:id x))
+    (identify x)) := "47f2ce3"
+
+  (as-> (datafy x) x
+    (datafy x) (nav x :branches (:branches x))
+    (datafy x) (nav x 0 (nth x 0)) ; log record
+    (identify x)) := "agent-network"
+
+  (as-> (datafy x) x
+    (datafy x) (nav x :branches (:branches x))
+    (datafy x) (nav x 0 (nth x 0)) ; log record
+    (datafy x) (nav x :object-id (:object-id x))
+    (identify x)) := "12b7acf4d68519b8fa98a31828b5f725abaf80e0")
