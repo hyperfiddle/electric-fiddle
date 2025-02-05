@@ -8,6 +8,7 @@
                      [attributes-stream ident! entity-history-datoms-stream easy-attr
                       summarize-attr is-attr? seq-consumer]])
             #?(:clj contrib.datomic-contrib)
+            [contrib.orderedmap :refer [ordered-map]]
             #?(:clj [clojure.pprint :refer [cl-format]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
@@ -131,6 +132,10 @@
                                          (dom/text (cl-format false "~d reference~:p" (count v))))
               () (e/amb))))))))
 
+(letfn [(attribute-name [attribute] (if (reverse-attribute? attribute) (namespace attribute) (name attribute)))]
+  (defn sort-by-attr [entity-like-map]
+    (into (ordered-map)
+      (sort-by (comp attribute-name key) entity-like-map))))
 
 (e/defn EntityDetail []
   (let [[e _] r/route]
@@ -139,7 +144,7 @@
       (SearchGrid (str "Entity detail: " e)
         (e/fn Query [search]
           (e/server
-            (->> (flatten-nested (e/Task (m/via m/blk (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e))))) ; TODO render backrefs at the end?
+            (->> (flatten-nested (e/Task (m/via m/blk (sort-by-attr (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e)))))) ; TODO render backrefs at the end?
               (filter #(includes-str? (str ((juxt :name :value) %)) search))))) ; string the entries
         Format-entity))))
 
