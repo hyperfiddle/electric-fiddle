@@ -59,8 +59,13 @@
    {:db/cardinality [:db/ident]}
    #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs])
 
+(e/defn DelayBy [ms v]
+  (let [!v0 (atom (e/Snapshot v))]
+    (reset! !v0 (e/Task (m/sleep ms v)))
+    (e/watch !v0)))
+
 (e/defn Attributes []
-  (let [[search] r/route]
+  (let [[search] (DelayBy 128 r/route)]
     (SearchGrid "Attributes"
       (e/fn Query [search]
         (e/server (->> (attributes-stream db attributes-colspec) (m/reduce conj []) e/Task
@@ -74,7 +79,7 @@
       :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [new-search]])))))
 
 (e/defn AttributeDetail []
-  (let [[a search] r/route]
+  (let [[a search] (DelayBy 128 r/route)]
     #_(r/focus [1]) ; search
     (when a ; router glitch
       (SearchGrid (str "Attribute index: " (pr-str a))
@@ -93,7 +98,7 @@
         :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [a new-search]]))))))
 
 (e/defn TxDetail []
-  (let [[e search] r/route]
+  (let [[e search] (DelayBy 128 r/route)]
     #_(r/focus [1]) ; search
     (SearchGrid (str "Tx detail: " e)
       (e/fn Query [search]
@@ -182,7 +187,7 @@
        )))
 
 (e/defn EntityDetail []
-  (let [[[type e search] & other-blocks] r/route]
+  (let [[[type e search] & other-blocks] (DelayBy 128 r/route)]
     #_(r/focus [1]) ; search
     (when e ; glitch
       (SearchGrid (str "Entity detail: " e)
@@ -205,7 +210,7 @@
               (dom/text (e/client (pr-str x)))))))
 
 (e/defn EntityHistory []
-  (let [[e search] r/route]
+  (let [[e search] (DelayBy 128 r/route)]
     #_(r/focus [1]) ; search
     (when e ; router glitch
       (SearchGrid (str "Entity history: " e)
@@ -220,7 +225,7 @@
 
 (e/defn DbStats []
   #_(r/focus [0]) ; search
-  (let [[search] r/route]
+  (let [[search] (DelayBy 128 r/route)]
     (SearchGrid (str "Db stats")
       (e/fn Query [search]
         (e/server
@@ -247,7 +252,7 @@
 
 (e/defn RecentTx []
   #_(r/focus [0]) ; search
-  (let [[search] r/route]
+  (let [[search] (DelayBy 128 r/route)]
     (SearchGrid (str "Recent Txs")
       (e/fn Query [search]
         (e/server (->> (d/datoms db :aevt :db/txInstant) seq-consumer (m/reduce conj ()) e/Task
@@ -298,6 +303,17 @@
     (when-not (empty? r/route)
       (EntityBlock))))
 
+(e/defn Hack--AllowThrough [page k F]
+  (when (e/server (= page k)) (F)))
+
+(e/defn Entity []
+  (let [[eid] (DelayBy 128 r/route)] (r/ReplaceState! ['.. [:entity-detail [:entity eid]]])))
+
+(e/defn EntityDetailWrapper []
+  (let [[_ eid] (first (DelayBy 128 r/route))]
+                         (r/link ['.. [:entity-history eid]] (dom/text "history"))
+                         (EntityBlock)))
+
 (e/defn Page []
   (dom/style (dom/text css))
   (dom/props {:class "DatomicBrowser Explorer"})
@@ -307,16 +323,14 @@
   (let [[page] r/route]
     (r/pop
       (case page
-        :attributes (Attributes)
-        :attribute (AttributeDetail)
-        :tx-detail (TxDetail)
-        :entity (let [[eid] r/route] (r/ReplaceState! ['.. [:entity-detail [:entity eid]]])) #_(e/amb (EntityBlock) #_(EntityHistory))
-        :entity-detail (let [[_ eid] (first r/route)]
-                         (r/link ['.. [:entity-history eid]] (dom/text "history"))
-                         (EntityBlock))
-        :entity-history (EntityHistory)
-        :db-stats (DbStats)
-        :recent-tx (RecentTx)
+        :attributes (Hack--AllowThrough page :attributes Attributes)
+        :attribute (Hack--AllowThrough page :attribute AttributeDetail)
+        :tx-detail (Hack--AllowThrough page :tx-detail TxDetail)
+        :entity (Hack--AllowThrough page :entity Entity) #_(e/amb (EntityBlock) #_(EntityHistory))
+        :entity-detail (Hack--AllowThrough page :entity-detail EntityDetailWrapper)
+        :entity-history (Hack--AllowThrough page :entity-history EntityHistory)
+        :db-stats (Hack--AllowThrough page :db-stats DbStats)
+        :recent-tx (Hack--AllowThrough page :recent-tx RecentTx)
         (e/amb)))))
 
 (e/defn DatomicBrowser2 [conn]
