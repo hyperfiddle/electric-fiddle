@@ -135,11 +135,14 @@
         (dom/td
           (if-not (coll? v) ; don't render card :many intermediate row
             (let [[valueType cardinality] (easy-attr db k)]
-              (cond
-                (= :db/id k) (EntityLink v)
-                (= :ref valueType) (EntityLink v)
-                (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
-                () (dom/text (str v))))
+              ;; HACK without the `e/for` we observed a conditional glitch where
+              ;; the `:db/id` branch stayed alive with a `k` of `:db/doc`
+              (e/for [v (e/diff-by identity (e/as-vec v))]
+                (cond
+                  (= :db/id k) (EntityLink v)
+                  (= :ref valueType) (EntityLink v)
+                  (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
+                  () (dom/text (str v)))))
             (cond
               (reverse-attribute? k) (do (dom/props {:class "reverse-attr"})
                                          (dom/text (cl-format false "~d reference~:p" (count v))))
