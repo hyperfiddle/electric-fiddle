@@ -2,16 +2,18 @@
   (:import [java.lang.management ManagementFactory]
            java.lang.management.ThreadInfo
            com.sun.management.ThreadMXBean)
-  (:require clojure.core.protocols))
+  (:require [clojure.core.protocols :refer [Datafiable]]
+            [dustingetz.identify :refer [Identifiable]]))
 
 (defn resolve-thread [id] (apply com.sun.management.ThreadMXBean/.getThreadInfo
                             (ManagementFactory/getThreadMXBean) [id]))
 
 (defn resolve-thread-manager [] (ManagementFactory/getThreadMXBean))
 
-(extend-protocol clojure.core.protocols/Datafiable
-  com.sun.management.ThreadMXBean
-  (datafy [x]
+(extend-type com.sun.management.ThreadMXBean
+  Identifiable (-identify [^com.sun.management.ThreadMXBean x] (.getObjectName x))
+  Datafiable
+  (datafy [^com.sun.management.ThreadMXBean x]
     (-> {::object-name (str (.getObjectName x))
          ::thread-count (.getThreadCount x)
          ::dumpAllThreads #(->> (.dumpAllThreads x true true) ; hyperlink
@@ -28,9 +30,11 @@
              ::dumpAllThreads (if v (v))
              ::getAllThreadIds (if v (v))
              #_#_::setThreadCpuTimeEnabled (if v (v))
-             v))})))
+             v))}))))
 
-  java.lang.management.ThreadInfo
+(extend-type java.lang.management.ThreadInfo
+  Identifiable (-identify [^java.lang.management.ThreadInfo x] (.getThreadName x))
+  Datafiable
   (datafy [^java.lang.management.ThreadInfo x]
     (-> {::name (.getThreadName x)
          ::state (str (.getThreadState x))
@@ -47,7 +51,12 @@
            (case k
              ::stack-trace (if v (v))
              ;::toString (if v (v))
-             v))})))
+             v))}))))
 
-  java.lang.management.ThreadInfo/1 (datafy [x] (vec x))
-  java.lang.StackTraceElement (datafy [x] {::toString (.toString x)}))
+(extend-type java.lang.management.ThreadInfo/1
+  Identifiable (-identify [x] (assert false (str "-identify unimplemented, x: " x)))
+  Datafiable (datafy [x] (vec x)))
+
+(extend-type java.lang.StackTraceElement
+  Identifiable (-identify [^java.lang.StackTraceElement x] (hash x)) ; better to use local index fallback
+  Datafiable (datafy [^java.lang.StackTraceElement x] {::toString (.toString x)})) ; members are private
