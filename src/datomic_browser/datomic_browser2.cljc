@@ -34,13 +34,13 @@
 (e/declare db)
 
 (e/defn SearchGrid [title Query Row]
-  #_(r/focus [0]) ; search
-  (let [!search (atom "") search (e/watch !search)
+  (let [search (e/client (r/pop (first r/route)))
         xs! (e/server (Query search)) ; wtf
         n (e/server (count xs!))]
-    (dom/fieldset (dom/legend (dom/text title " ")
-                    (do (reset! !search (e/client (Input* ""))) nil)
-                    (dom/text " (" n " items)"))
+    (dom/fieldset
+      (dom/legend (dom/text title " ")
+                  (e/client (r/pop (r/ReplaceState! ['. [(Input* search)]])))
+                  (dom/text " (" n " items)"))
       (TableScroll n xs! Row))))
 
 (def attributes-colspec
@@ -110,21 +110,24 @@
     (revert-attribute attr)
     attr))
 
-(e/defn Format-entity [{:keys [path name value] :as ?row}]
+(e/defn Format-entity [e {:keys [path name value] :as ?row}]
   (e/server ; keep vals on server, row can contain refs
     (let [k name v value]
       (when ?row
         (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
           (cond
             (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-            (is-attr? db (absolute-attribute k)) (r/link ['.. [:attribute (absolute-attribute k)]] (dom/text k))
+            (is-attr? db (absolute-attribute k)) 
+            (if (reverse-attribute? k) 
+              (r/link ['.. [:attribute (absolute-attribute k) e]] (dom/text k))
+              (r/link ['.. [:attribute (absolute-attribute k)]] (dom/text k)))
             () (dom/text (str k)))) ; str is needed for Long db/id, why?
         (dom/td
           (if-not (coll? v) ; don't render card :many intermediate row
             (let [[valueType cardinality] (easy-attr db k)]
               (cond
-                (= :db/id k) (r/link ['.. [:entity v]] (dom/text v))
-                (= :ref valueType) (r/link ['.. [:entity v]] (dom/text v))
+                (= :db/id k) (r/link ['.. '.. [:entity v]] (dom/text v))
+                (= :ref valueType) (r/link ['.. '.. [:entity v]] (dom/text v))
                 (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
                 () (dom/text (str v))))
             (cond
@@ -146,7 +149,7 @@
           (e/server
             (->> (flatten-nested (e/Task (m/via m/blk (sort-by-attr (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e)))))) ; TODO render backrefs at the end?
               (filter #(includes-str? (str ((juxt :name :value) %)) search))))) ; string the entries
-        Format-entity))))
+        (e/Partial Format-entity e)))))
 
 (e/defn Format-history-row [[e aa v tx op :as ?row]]
   (when ?row ; glitch
