@@ -19,3 +19,6 @@
 [submodule "vendor/electric3-starter-app"]
 	path = vendor/electric3-starter-app
 	url = git@gitlab.com:hyperfiddle/electric3-starter-app.git
+[submodule "vendor/electric-datomic-browser"]
+	path = vendor/electric-datomic-browser
+	url = git@gitlab.com:hyperfiddle/electric-datomic-browser.git
