@@ -7,6 +7,8 @@
             #?(:clj [datomic-browser.datomic-model :refer
                      [attributes-stream ident! entity-history-datoms-stream easy-attr
                       summarize-attr is-attr? seq-consumer]])
+            #?(:clj contrib.datomic-contrib)
+            #?(:clj [clojure.pprint :refer [cl-format]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
@@ -91,6 +93,22 @@
         #_(dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))) ; redundant
         ))))
 
+;; copied from contrib.datomic-contrib because lack of .cljc - TODO put in proper shared ns
+(defn reverse-attribute? [attribute]
+  {:pre [(qualified-keyword? attribute)]}
+  (clojure.string/starts-with? (name attribute) "_"))
+
+;; copied from contrib.datomic-contrib because lack of .cljc - TODO put in proper shared ns
+(defn revert-attribute [attribute]
+  {:pre [(qualified-keyword? attribute)]}
+  (let [nom (name attribute)]
+    (keyword (namespace attribute) (if (reverse-attribute? attribute) (subs nom 1) (str "_" nom)))))
+
+(defn absolute-attribute [attr] ; TODO move to shared ns
+  (if (reverse-attribute? attr)
+    (revert-attribute attr)
+    attr))
+
 (e/defn Format-entity [{:keys [path name value] :as ?row}]
   (e/server ; keep vals on server, row can contain refs
     (let [k name v value]
@@ -98,7 +116,7 @@
         (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
           (cond
             (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-            (is-attr? db k) (r/link ['.. [:attribute k]] (dom/text k))
+            (is-attr? db (absolute-attribute k)) (r/link ['.. [:attribute (absolute-attribute k)]] (dom/text k))
             () (dom/text (str k)))) ; str is needed for Long db/id, why?
         (dom/td
           (if-not (coll? v) ; don't render card :many intermediate row
@@ -107,7 +125,12 @@
                 (= :db/id k) (r/link ['.. [:entity v]] (dom/text v))
                 (= :ref valueType) (r/link ['.. [:entity v]] (dom/text v))
                 (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
-                () (dom/text (str v))))))))))
+                () (dom/text (str v))))
+            (cond
+              (reverse-attribute? k) (do (dom/props {:class "reverse-attr"})
+                                         (dom/text (cl-format false "~d reference~:p" (count v))))
+              () (e/amb))))))))
+
 
 (e/defn EntityDetail []
   (let [[e _] r/route]
@@ -116,7 +139,7 @@
       (SearchGrid (str "Entity detail: " e)
         (e/fn Query [search]
           (e/server
-            (->> (flatten-nested (e/Task (m/via m/blk (d/pull db ['*] e))))
+            (->> (flatten-nested (e/Task (m/via m/blk (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e))))) ; TODO render backrefs at the end?
               (filter #(includes-str? (str ((juxt :name :value) %)) search))))) ; string the entries
         Format-entity))))
 
@@ -186,7 +209,7 @@
     (r/link ['.. [:attributes]] (dom/text "attributes")) (dom/text " ")
     (r/link ['.. [:db-stats]] (dom/text "db-stats")) (dom/text " ")
     (r/link ['.. [:recent-tx]] (dom/text "recent-tx"))
-    (dom/text " — Datomic Browser")))
+    (dom/text " — Datomic Browser2")))
 
 (declare css)
 (e/defn Page []
@@ -247,6 +270,7 @@
 .Explorer legend { margin-left: 1em; font-size: larger; }
 .Explorer legend > input[type=text] { vertical-align: middle; }
 .Explorer table td { height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.Explorer table td.reverse-attr { color: darkgray; font-style: italic; }
 .Explorer table tr[data-row-stripe='0'] td { background-color: #f2f2f2; }
 .Explorer table tr:hover td { background-color: #ddd; }
 
