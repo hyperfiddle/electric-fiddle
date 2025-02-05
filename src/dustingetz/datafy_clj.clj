@@ -1,9 +1,13 @@
 (ns dustingetz.datafy-clj
-  (:require [clojure.core.protocols :refer [datafy nav]]))
+  (:require [clojure.core.protocols :refer [Datafiable]]
+            [dustingetz.identify :refer [Identifiable]]))
 
-(extend-protocol clojure.core.protocols/Datafiable
-  clojure.lang.Var
-  (datafy [x]
+(ns-unmap *ns* 'nav)
+
+(extend-type clojure.lang.Var
+  Identifiable (-identify [^clojure.lang.Var x] (.toSymbol x))
+  Datafiable
+  (datafy [^clojure.lang.Var x]
     {::toSymbol (.toSymbol x)
      ::meta (meta x)
      ::getTag (.getTag x)
@@ -11,8 +15,9 @@
      #_#_::deref (str @x)}))
 
 (comment
+  (require '[clojure.datafy :refer [datafy nav]] '[dustingetz.identify :refer [identify]])
   (def x #'dev/DevMain)
-  (clojure.datafy/datafy x)
+  (identify x)
+  (datafy x)
   (as-> x x
-    (clojure.datafy/datafy x)
-    (nav x ::src (get x ::src))))
+    (datafy x) (nav x ::meta (get x ::meta))))
