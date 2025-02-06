@@ -1,6 +1,6 @@
 (ns dustingetz.object-browser-demo
   #?(:clj (:import org.eclipse.jgit.api.Git))
-  (:require [contrib.data :refer [unqualify]]
+  (:require [contrib.data :refer [unqualify map-entry]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric3-contrib :refer [Tap]]
@@ -41,7 +41,7 @@
     (when-some [[uri & _] r/route]
       (r/pop
         (e/for [uri (e/diff-by identity (e/as-vec uri))] ; workaround glitch (Leo, please explain?)
-          (EntityBrowser2 (e/server (UserResolve uri))))))))
+          (EntityBrowser2 (e/server (map-entry uri (UserResolve uri)))))))))
 
 (def css "
 .ThreadDump3 > a + a { margin-left: .5em; }
