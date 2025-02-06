@@ -23,7 +23,7 @@
     (dom/div (dom/props {:class "Viewport"})
       (let [row-height 24
             [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
-        (dom/table (dom/props {:style {:position "relative" :top (str (* offset row-height) "px")}})
+        (dom/table (dom/props {:style {:top (str (* offset row-height) "px")}})
           (e/for [i (IndexRing limit offset)]
             (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
               (Row (nth (vec ?xs!) i nil)))))
@@ -33,6 +33,7 @@
 (e/declare conn)
 (e/declare db)
 
+#_
 (e/defn SearchGrid [title Query Row]
   (let [search (e/client (r/pop (first r/route)))
         xs! (e/server (Query search)) ; wtf
@@ -40,6 +41,15 @@
     (dom/fieldset
       (dom/legend (dom/text title " ")
                   (e/client (r/pop (r/ReplaceState! ['. [(Input* search)]])))
+                  (dom/text " (" n " items)"))
+      (TableScroll n xs! Row))))
+
+(e/defn SearchGrid [title Query Row & {:keys [search SetSearch]}]
+  (let [xs! (e/server (Query search)) ; wtf
+        n (e/server (count xs!))]
+    (dom/fieldset
+      (dom/legend (dom/text title " ")
+                  (e/client (SetSearch (Input* search)))
                   (dom/text " (" n " items)"))
       (TableScroll n xs! Row))))
 
@@ -116,37 +126,38 @@
 
 (e/defn EntityLink [e]
   (e/When e
-    (r/link ['.. [:entity e]] (dom/text e))
+    (r/pop (r/link ['. [[:entity e]]] (dom/text e)))
     (EntityTooltip e)))
 
 (e/defn Format-entity [e {:keys [path name value] :as ?row}]
-  (e/server ; keep vals on server, row can contain refs
-    (let [k name v value]
-      (when ?row
-        (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
-          (cond
-            (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-            (integer? k) (dom/text k) ; indexed collection descent
-            (is-attr? db (absolute-attribute k))
-            (if (reverse-attribute? k) 
-              (r/link ['.. [:attribute (absolute-attribute k) e]] (dom/text k))
-              (r/link ['.. [:attribute (absolute-attribute k)]] (dom/text k)))
-            () (dom/text (str k)))) ; str is needed for Long db/id, why?
-        (dom/td
-          (if-not (coll? v) ; don't render card :many intermediate row
-            (let [[valueType cardinality] (easy-attr db k)]
-              ;; HACK without the `e/for` we observed a conditional glitch where
-              ;; the `:db/id` branch stayed alive with a `k` of `:db/doc`
-              (e/for [v (e/diff-by identity (e/as-vec v))]
-                (cond
-                  (= :db/id k) (EntityLink v)
-                  (= :ref valueType) (EntityLink v)
-                  (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
-                  () (dom/text (str v)))))
-            (cond
-              (reverse-attribute? k) (do (dom/props {:class "reverse-attr"})
-                                         (dom/text (cl-format false "~d reference~:p" (count v))))
-              () (e/amb))))))))
+  (e/client
+    (e/server ; keep vals on server, row can contain refs
+      (let [k name v value]
+        (when ?row
+          (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
+                  (cond
+                    (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
+                    (integer? k) (dom/text k) ; indexed collection descent
+                    (is-attr? db (absolute-attribute k))
+                    (if (reverse-attribute? k)
+                      (r/link ['.. [:attribute (absolute-attribute k) e]] (dom/text k))
+                      (r/link ['.. [:attribute (absolute-attribute k)]] (dom/text k)))
+                    () (dom/text (str k)))) ; str is needed for Long db/id, why?
+          (dom/td
+            (if-not (coll? v) ; don't render card :many intermediate row
+              (let [[valueType cardinality] (easy-attr db k)]
+                ;; HACK without the `e/for` we observed a conditional glitch where
+                ;; the `:db/id` branch stayed alive with a `k` of `:db/doc`
+                (e/for [v (e/diff-by identity (e/as-vec v))]
+                  (cond
+                    (= :db/id k) (EntityLink v)
+                    (= :ref valueType) (EntityLink v)
+                    (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
+                    () (dom/text (str v)))))
+              (cond
+                (reverse-attribute? k) (do (dom/props {:class "reverse-attr"})
+                                           (dom/text (cl-format false "~d reference~:p" (count v))))
+                () (e/amb)))))))))
 
 (letfn [(attribute-name [attribute] (if (reverse-attribute? attribute) (namespace attribute) (name attribute)))]
   (defn sort-by-attr [entity-like-map]
@@ -154,7 +165,7 @@
       (sort-by (comp attribute-name key) entity-like-map))))
 
 (e/defn EntityDetail []
-  (let [[e _] r/route]
+  (let [[[type e search] & other-blocks] r/route]
     #_(r/focus [1]) ; search
     (when e ; glitch
       (SearchGrid (str "Entity detail: " e)
@@ -162,7 +173,9 @@
           (e/server
             (->> (flatten-nested (e/Task (m/via m/blk (sort-by-attr (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e)))))) ; TODO render backrefs at the end?
               (filter #(includes-str? (str ((juxt :name :value) %)) search))))) ; string the entries
-        (e/Partial Format-entity e)))))
+        (e/Partial Format-entity e)
+        :search search
+        :SetSearch (e/fn [new-search] (r/ReplaceState! ['. (cons [type e new-search] other-blocks)]))))))
 
 (e/defn Format-history-row [[e aa v tx op :as ?row]]
   (when ?row ; glitch
@@ -227,9 +240,9 @@
 (e/defn Nav []
   (dom/div (dom/props {:class "nav"})
     (dom/text "Nav: ")
-    (r/link ['.. [:attributes]] (dom/text "attributes")) (dom/text " ")
-    (r/link ['.. [:db-stats]] (dom/text "db-stats")) (dom/text " ")
-    (r/link ['.. [:recent-tx]] (dom/text "recent-tx"))
+    (r/link ['. [[:attributes]]] (dom/text "attributes")) (dom/text " ")
+    (r/link ['. [[:db-stats]]] (dom/text "db-stats")) (dom/text " ")
+    (r/link ['. [[:recent-tx]]] (dom/text "recent-tx"))
     (dom/text " — Datomic Browser2")))
 
 (declare css)
@@ -244,26 +257,31 @@
           (let [x (e/server (ex/Offload-reset #(nav-in x locus)))]
             (BrowsePath locus x)))))))
 
+;; http://localhost:8080/datomic-browser.mbrainz-browser!DatomicBrowser/(:entity,17592186058336,'')/(:entity,580542139477874)/(:entity,17592186045645)
+;; http://localhost:8080/datomic-browser.mbrainz-browser!DatomicBrowser/:entity/(17592186058336,'')/(580542139477874,'')/(17592186045645,'')
+
+#_(case type
+    :attributes (Attributes)
+    :attribute (AttributeDetail)
+    :tx-detail (TxDetail)
+    :entity (e/amb (EntityDetail) #_(EntityHistory))
+    :db-stats (DbStats)
+    :recent-tx (RecentTx)
+    (e/amb))
+
+(e/defn Block []
+  (EntityDetail)
+  (r/pop
+    (when-not (empty? r/route)
+      (Block))))
+
 (e/defn Page []
   (dom/style (dom/text css))
   (dom/props {:class "DatomicBrowser Explorer"})
-  (r/focus [0]
-    (let [[page] r/route]
-      (when-not page (r/ReplaceState! ['. [:attributes]]))
-      (dom/props {:class page})
-      (r/pop
-        (Nav)
-        (case page
-          :attributes (Attributes)
-          :attribute (AttributeDetail)
-          :tx-detail (TxDetail)
-          :entity (e/amb (EntityDetail) #_(EntityHistory))
-          :db-stats (DbStats)
-          :recent-tx (RecentTx)
-          (e/amb)))))
-  (r/pop
-    (when (not (empty? r/route))
-      (Page))))
+  (when (empty? r/route) (r/ReplaceState! ['. [[:entity 17592186058336 ""]]]))
+  (dom/props {:class (ffirst r/route)}) ; bad/confusing, has to know route shape ahead of time.
+  (Nav)
+  (Block))
 
 (e/defn DatomicBrowser2 [conn]
   (e/client
@@ -290,7 +308,7 @@
 
 (def css "
 /* Scroll machinery */
-.Explorer { position: fixed; } /* mobile: don't allow momentum scrolling on page */
+/* .Explorer { position: fixed; } */ /* mobile: don't allow momentum scrolling on page */
 .Explorer .Viewport { overflow-x:hidden; overflow-y:auto; }
 .Explorer table { display: grid; }
 .Explorer table tr { display: contents; visibility: var(--visibility); }
@@ -298,7 +316,7 @@
 .Explorer div.Viewport { height: 100%; }
 
 /* Userland layout */
-.Explorer fieldset { position:fixed; top:3em; bottom:0; left:0; right:0; }
+/* .Explorer fieldset { position:fixed; top:3em; bottom:0; left:0; right:0; } */
 .Explorer table { grid-template-columns: 20em auto; }
 
 /* Cosmetic */
@@ -312,10 +330,8 @@
 
 /* Progressive enhancement */
 .Explorer .nav { margin: 0; }
-.Explorer.entity fieldset:nth-of-type(1) { top:3em; bottom:40vh; left:0; right:0; }
-.Explorer.entity fieldset:nth-of-type(2) { top:60vh; bottom:0; left:0; right:0; }
-.Explorer.entity fieldset:nth-of-type(1) table { grid-template-columns: 15em auto; }
-.Explorer.entity fieldset:nth-of-type(2) table { grid-template-columns: 5em 10em 15em auto 10em 9em; }
+.Explorer.entity fieldset .Viewport { height: 264px; } /* multiple of row height */
+.Explorer.entity fieldset table { grid-template-columns: 15em auto; }
 .Explorer.attributes table { grid-template-columns: minmax(14em, 2fr) 1fr; }
 .Explorer.attribute table { grid-template-columns: minmax(0, 1fr) 3fr minmax(0, 1fr); }
 .Explorer.tx-detail table { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2fr; }
