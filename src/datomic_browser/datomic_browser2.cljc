@@ -127,6 +127,8 @@
     (revert-attribute attr)
     attr))
 
+(defn safe [f pred] (fn [x] (if (pred x) (f x) x))) ; hack around glitches
+
 (e/defn EntityTooltip [e]
   (e/client
     (dom/pre (dom/props {:class "entity-tooltip"}) (dom/text (contrib.str/pprint-str (e/server (d/pull db ['*] e)))))))
@@ -137,39 +139,47 @@
     (EntityTooltip e)))
 
 (e/defn Format-entity [e {:keys [path name value] :as ?row}]
-  (e/client
-    (e/server ; keep vals on server, row can contain refs
-      (let [k name v value]
-        (when ?row
-          (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
-                  (cond
-                    (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
-                    (integer? k) (dom/text k) ; indexed collection descent
-                    (is-attr? db (absolute-attribute k))
-                    (if (reverse-attribute? k)
-                      (r/link ['.. [:attribute (absolute-attribute k) e]] (dom/text k))
-                      (r/link ['.. [:attribute (absolute-attribute k)]] (dom/text k)))
-                    () (dom/text (str k)))) ; str is needed for Long db/id, why?
-          (dom/td
-            (if-not (coll? v) ; don't render card :many intermediate row
-              (let [[valueType cardinality] (easy-attr db k)]
-                ;; HACK without the `e/for` we observed a conditional glitch where
-                ;; the `:db/id` branch stayed alive with a `k` of `:db/doc`
-                (e/for [v (e/diff-by identity (e/as-vec v))]
-                  (cond
-                    (= :db/id k) (EntityLink v)
-                    (= :ref valueType) (EntityLink v)
-                    (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
-                    () (dom/text (str v)))))
-              (cond
-                (reverse-attribute? k) (do (dom/props {:class "reverse-attr"})
-                                           (dom/text (cl-format false "~d reference~:p" (count v))))
-                () (e/amb)))))))))
+  (e/server ; keep vals on server, row can contain refs
+    (let [k name v value]
+      ;; (e/for [[?row k v] (e/diff-by identity (e/as-vec [?row k v]))])
+      (when ?row
+        (dom/td (dom/props {:style {:padding-left (some-> path count (* 15) (str "px"))}})
+                (cond
+                  (= :db/id k) (dom/text k) ; :db/id is our schema extension, can't nav to it
+                  (integer? k) (dom/text k) ; indexed collection descent
+                  (is-attr? db ((safe absolute-attribute keyword?) k))
+                  (if ((safe reverse-attribute? keyword?) k)
+                    (r/link ['.. [:attribute ((safe absolute-attribute keyword?) k) e]] (dom/text k))
+                    (r/link ['.. [:attribute ((safe absolute-attribute keyword?) k)]] (dom/text k)))
+                  () (dom/text (str k)))) ; str is needed for Long db/id, why?
+        (dom/td
+          (if-not (coll? v) ; don't render card :many intermediate row
+            (let [[valueType cardinality] (easy-attr db k)]
+              ;; HACK without the `e/for` we observed a conditional glitch where
+              ;; the `:db/id` branch stayed alive with a `k` of `:db/doc`
+              (e/for [v (e/diff-by identity (e/as-vec v))]
+                (cond
+                  (= :db/id k) (EntityLink v)
+                  (= :ref valueType) (EntityLink v)
+                  (= :string valueType) (dom/text v) #_(Form! (Input! k v) :commit (fn [] []) :show-buttons :smart)
+                  () (dom/text (str v)))))
+            (cond
+              (reverse-attribute? k) (do (dom/props {:class "reverse-attr"})
+                                         (dom/text (cl-format false "~d reference~:p" (count v))))
+              () (e/amb))))))))
 
 (letfn [(attribute-name [attribute] (if (reverse-attribute? attribute) (namespace attribute) (name attribute)))]
   (defn sort-by-attr [entity-like-map]
     (into (ordered-map)
       (sort-by (comp attribute-name key) entity-like-map))))
+
+#?(:clj
+   (defn- query-entity-detail [db e search]
+     (if (and db e) ; hack around glitches
+       (->> (flatten-nested #_(e/Task (m/via m/blk)) (sort-by-attr (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e)))) ; TODO render backrefs at the end?
+         (filter #(includes-str? (str ((juxt :name :value) %)) search))) ; string the entries
+       ()
+       )))
 
 (e/defn EntityDetail []
   (let [[[type e search] & other-blocks] r/route]
@@ -177,9 +187,7 @@
     (when e ; glitch
       (SearchGrid (str "Entity detail: " e)
         (e/fn Query [search]
-          (e/server
-            (->> (flatten-nested (e/Task (m/via m/blk (sort-by-attr (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e)))))) ; TODO render backrefs at the end?
-              (filter #(includes-str? (str ((juxt :name :value) %)) search))))) ; string the entries
+          (e/server (query-entity-detail db e search)))
         (e/Partial Format-entity e)
         :search search
         :SetSearch (e/fn [new-search] (r/ReplaceState! ['. (cons [type e new-search] other-blocks)]))))))
