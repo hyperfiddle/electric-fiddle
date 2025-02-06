@@ -24,31 +24,24 @@
       :git (ex/Offload-reset #(dustingetz.datafy-git2/load-repo "./"))
       :class (ex/Offload-reset #(resolve-class #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean} id))
       :file (ex/Offload-reset #(clojure.java.io/file (dustingetz.datafy-fs/absolute-path id)))
-      :ns (ex/Offload-reset #(vec (sort-by ns-name (all-ns))))
+      'clojure.core/all-ns (ex/Offload-reset #(vec (sort-by ns-name (all-ns))))
       (e/amb))))
 
-(declare css)
+(def targets [[['clojure.core/all-ns] ['clojure.core]] [[:git]] [[:file "./"]] [[:thread-mx]] [[:tap]]
+              [[:class 'org.eclipse.jgit.api.Git]]
+              [[:class 'java.lang.management.ThreadMXBean]]])
 
+(declare css)
 (e/defn ObjectBrowserDemo []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
     (dom/text "Target: ")
-    (e/for [[tag e :as ref] (e/amb [:thread-mx] [:git] [:file "./"]
-                              [:ns] [:tap]
-                              [:class 'org.eclipse.jgit.api.Git]
-                              [:class 'java.lang.management.ThreadMXBean])]
-      (r/link ['. [ref]] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))
+    (e/for [[[tag e] & paths :as ref] (e/diff-by {} targets)]
+      (r/link ['. ref] (dom/text (pr-str (remove nil? [(unqualify tag) e])))))
 
     (when-some [[uri & _] r/route]
       (r/pop
         (e/for [uri (e/diff-by identity (e/as-vec uri))] ; workaround glitch (Leo, please explain?)
-          (let [x (e/server (UserResolve uri))]
-            (EntityBrowser2 x)))))))
-
-(comment
-  (require '[clojure.datafy :refer [datafy]])
-  (def x (find-ns 'clojure.core))
-  (datafy x)
-  )
+          (EntityBrowser2 (e/server (UserResolve uri))))))))
 
 (def css "
 .ThreadDump3 > a + a { margin-left: .5em; }
