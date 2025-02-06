@@ -11,7 +11,7 @@
 (defn resolve-thread-manager [] (ManagementFactory/getThreadMXBean))
 
 (extend-type com.sun.management.ThreadMXBean
-  Identifiable (-identify [^com.sun.management.ThreadMXBean x] (.getObjectName x))
+  Identifiable (-identify [^com.sun.management.ThreadMXBean x] (-> x .getObjectName str))
   Datafiable
   (datafy [^com.sun.management.ThreadMXBean x]
     (-> {::object-name (str (.getObjectName x))
