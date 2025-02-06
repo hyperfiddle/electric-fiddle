@@ -23,7 +23,7 @@
     (dom/div (dom/props {:class "Viewport"})
       (let [row-height 24
             [offset limit] (Scroll-window row-height record-count dom/node {:overquery-factor 1})]
-        (dom/table (dom/props {:style {:top (str (* offset row-height) "px")}})
+        (dom/table
           (e/for [i (IndexRing limit offset)]
             (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
               (Row (nth (vec ?xs!) i nil)))))
@@ -44,7 +44,7 @@
                   (dom/text " (" n " items)"))
       (TableScroll n xs! Row))))
 
-(e/defn SearchGrid [title Query Row & {:keys [search SetSearch]}]
+(e/defn SearchGrid [title Query Row & {:keys [search SetSearch] :or {search "", SetSearch (e/fn [_])}}]
   (let [xs! (e/server (Query search)) ; wtf
         n (e/server (count xs!))]
     (dom/fieldset
@@ -60,18 +60,21 @@
    #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs])
 
 (e/defn Attributes []
-  (SearchGrid "Attributes"
-    (e/fn Query [search]
-      (e/server (->> (attributes-stream db attributes-colspec) (m/reduce conj []) e/Task
-                  (map #(assoc % ::summary (->> (summarize-attr db (:db/ident %)) (map name) (clojure.string/join " "))))
-                  (filter #(includes-str? ((juxt :db/ident ::summary) %) search)) ; search after summary
-                  (sort-by :db/ident))))
-    (e/fn Row [x]
-      (dom/td (let [v (:db/ident x)] (r/link ['.. [:attribute v]] (dom/text v))))
-      (dom/td (dom/text (::summary x))))))
+  (let [[search] r/route]
+    (SearchGrid "Attributes"
+      (e/fn Query [search]
+        (e/server (->> (attributes-stream db attributes-colspec) (m/reduce conj []) e/Task
+                    (map #(assoc % ::summary (->> (summarize-attr db (:db/ident %)) (map name) (clojure.string/join " "))))
+                    (filter #(includes-str? ((juxt :db/ident ::summary) %) search)) ; search after summary
+                    (sort-by :db/ident))))
+      (e/fn Row [x]
+        (dom/td (let [v (:db/ident x)] (r/link ['.. [:attribute v]] (dom/text v))))
+        (dom/td (dom/text (::summary x))))
+      :search search
+      :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [new-search]])))))
 
 (e/defn AttributeDetail []
-  (let [[a _] r/route]
+  (let [[a search] r/route]
     #_(r/focus [1]) ; search
     (when a ; router glitch
       (SearchGrid (str "Attribute index: " (pr-str a))
@@ -85,10 +88,12 @@
               (dom/td (r/link ['.. [:entity e]] (dom/text e)))
               #_(dom/td (dom/text (pr-str a))) ; redundant
               (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
-              (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))))))
+              (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))
+        :search search
+        :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [a new-search]]))))))
 
 (e/defn TxDetail []
-  (let [[e _] r/route]
+  (let [[e search] r/route]
     #_(r/focus [1]) ; search
     (SearchGrid (str "Tx detail: " e)
       (e/fn Query [search]
@@ -102,7 +107,9 @@
         (dom/td (let [aa (e/server (e/Task (ident! db aa)))] (r/link ['.. [:attribute aa]] (dom/text aa))))
         (dom/td (dom/text (pr-str v))) ; todo if a is ref, present link
         #_(dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))) ; redundant
-        ))))
+        )
+      :search search
+      :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [e new-search]])))))
 
 ;; copied from contrib.datomic-contrib because lack of .cljc - TODO put in proper shared ns
 (defn reverse-attribute? [attribute]
@@ -203,18 +210,21 @@
 
 (e/defn DbStats []
   #_(r/focus [0]) ; search
-  (SearchGrid (str "Db stats")
-    (e/fn Query [search]
-      (e/server
-        #_(flatten-nested (e/Task (m/via m/blk (d/db-stats db)))) ; need more control to inline short maps
-        (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil))
-                (e/Task (m/via m/blk (d/db-stats db)))) search))))
-    (e/fn Row [[tab [k v] :as ?row]] ; thead: [::k ::v]
-      (when ?row
-        (dom/td (dom/text (pr-str k)) (dom/props {:style {:padding-left (some-> tab (* 15) (str "px"))}}))
-        (dom/td (cond
-                  (= k :attrs) nil ; print children instead
-                  () (dom/text (pr-str v))))))))
+  (let [[search] r/route]
+    (SearchGrid (str "Db stats")
+      (e/fn Query [search]
+        (e/server
+          #_(flatten-nested (e/Task (m/via m/blk (d/db-stats db)))) ; need more control to inline short maps
+          (seq ((treelister (fn [[k v]] (condp = k :attrs (into (sorted-map) v) nil))
+                  (e/Task (m/via m/blk (d/db-stats db)))) search))))
+      (e/fn Row [[tab [k v] :as ?row]] ; thead: [::k ::v]
+        (when ?row
+          (dom/td (dom/text (pr-str k)) (dom/props {:style {:padding-left (some-> tab (* 15) (str "px"))}}))
+          (dom/td (cond
+                    (= k :attrs) nil ; print children instead
+                    () (dom/text (pr-str v))))))
+      :search search
+      :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [new-search]])))))
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db test-conn lennon]])
@@ -227,22 +237,25 @@
 
 (e/defn RecentTx []
   #_(r/focus [0]) ; search
-  (SearchGrid (str "Recent Txs")
-    (e/fn Query [search]
-      (e/server (->> (d/datoms db :aevt :db/txInstant) seq-consumer (m/reduce conj ()) e/Task
-                  (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search)))))
-    (e/fn Row [[e _ v tx op :as ?row]]
-      ; columns [:db/id :db/txInstant]
-      (when ?row
-        (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
-        (dom/td (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v))))))))
+  (let [[search] r/route]
+    (SearchGrid (str "Recent Txs")
+      (e/fn Query [search]
+        (e/server (->> (d/datoms db :aevt :db/txInstant) seq-consumer (m/reduce conj ()) e/Task
+                    (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search)))))
+      (e/fn Row [[e _ v tx op :as ?row]]
+                                        ; columns [:db/id :db/txInstant]
+        (when ?row
+          (dom/td (e/client (r/link ['.. [:tx-detail tx]] (dom/text tx))))
+          (dom/td (dom/text (e/client (pr-str v)) #_(e/client (.toLocaleDateString v))))))
+      :search search
+      :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [new-search]])))))
 
 (e/defn Nav []
   (dom/div (dom/props {:class "nav"})
     (dom/text "Nav: ")
-    (r/link ['. [[:attributes]]] (dom/text "attributes")) (dom/text " ")
-    (r/link ['. [[:db-stats]]] (dom/text "db-stats")) (dom/text " ")
-    (r/link ['. [[:recent-tx]]] (dom/text "recent-tx"))
+    (r/link ['. [:attributes]] (dom/text "attributes")) (dom/text " ")
+    (r/link ['. [:db-stats]] (dom/text "db-stats")) (dom/text " ")
+    (r/link ['. [:recent-tx]] (dom/text "recent-tx"))
     (dom/text " — Datomic Browser2")))
 
 (declare css)
@@ -269,19 +282,29 @@
     :recent-tx (RecentTx)
     (e/amb))
 
-(e/defn Block []
+(e/defn EntityBlock []
   (EntityDetail)
   (r/pop
     (when-not (empty? r/route)
-      (Block))))
+      (EntityBlock))))
 
 (e/defn Page []
   (dom/style (dom/text css))
   (dom/props {:class "DatomicBrowser Explorer"})
   (when (empty? r/route) (r/ReplaceState! ['. [[:entity 17592186058336 ""]]]))
-  (dom/props {:class (ffirst r/route)}) ; bad/confusing, has to know route shape ahead of time.
+  (dom/props {:class (first r/route)}) ; bad/confusing, has to know route shape ahead of time.
   (Nav)
-  (Block))
+  (let [[page] r/route]
+    (r/pop
+      (case page
+        :attributes (Attributes)
+        :attribute (AttributeDetail)
+        :tx-detail (TxDetail)
+        :entity (let [[eid] r/route] (r/ReplaceState! ['.. [:entity-detail [:entity eid]]])) #_(e/amb (EntityBlock) #_(EntityHistory))
+        :entity-detail (EntityBlock)
+        :db-stats (DbStats)
+        :recent-tx (RecentTx)
+        (e/amb)))))
 
 (e/defn DatomicBrowser2 [conn]
   (e/client
@@ -309,11 +332,10 @@
 (def css "
 /* Scroll machinery */
 /* .Explorer { position: fixed; } */ /* mobile: don't allow momentum scrolling on page */
-.Explorer .Viewport { overflow-x:hidden; overflow-y:auto; }
-.Explorer table { display: grid; }
+.Explorer .Viewport { overflow-x:hidden; overflow-y:auto; height: 480px; max-height: 100dvh; }
+.Explorer table { display: grid; position:sticky; top:0; }
 .Explorer table tr { display: contents; visibility: var(--visibility); }
 .Explorer table td { grid-row: var(--order); }
-.Explorer div.Viewport { height: 100%; }
 
 /* Userland layout */
 /* .Explorer fieldset { position:fixed; top:3em; bottom:0; left:0; right:0; } */
@@ -330,8 +352,8 @@
 
 /* Progressive enhancement */
 .Explorer .nav { margin: 0; }
-.Explorer.entity fieldset .Viewport { height: 264px; } /* multiple of row height */
-.Explorer.entity fieldset table { grid-template-columns: 15em auto; }
+.Explorer:is(.entity,.entity-detail) fieldset .Viewport { height: 264px; } /* multiple of row height */
+.Explorer:is(.entity,.entity-detail) fieldset table { grid-template-columns: 15em auto; }
 .Explorer.attributes table { grid-template-columns: minmax(14em, 2fr) 1fr; }
 .Explorer.attribute table { grid-template-columns: minmax(0, 1fr) 3fr minmax(0, 1fr); }
 .Explorer.tx-detail table { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2fr; }
