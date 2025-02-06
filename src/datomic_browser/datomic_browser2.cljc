@@ -197,7 +197,7 @@
               (dom/text (e/client (pr-str x)))))))
 
 (e/defn EntityHistory []
-  (let [[e _] r/route]
+  (let [[e search] r/route]
     #_(r/focus [1]) ; search
     (when e ; router glitch
       (SearchGrid (str "Entity history: " e)
@@ -206,7 +206,9 @@
                       (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search))))) ; todo resolve human attrs
         Format-history-row
         #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
-           ::dom/class "Viewport entity-history"}))))
+           ::dom/class "Viewport entity-history"}
+        :search search
+        :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [e new-search]]))))))
 
 (e/defn DbStats []
   #_(r/focus [0]) ; search
@@ -301,7 +303,10 @@
         :attribute (AttributeDetail)
         :tx-detail (TxDetail)
         :entity (let [[eid] r/route] (r/ReplaceState! ['.. [:entity-detail [:entity eid]]])) #_(e/amb (EntityBlock) #_(EntityHistory))
-        :entity-detail (EntityBlock)
+        :entity-detail (let [[_ eid] (first r/route)]
+                         (r/link ['.. [:entity-history eid]] (dom/text "history"))
+                         (EntityBlock))
+        :entity-history (EntityHistory)
         :db-stats (DbStats)
         :recent-tx (RecentTx)
         (e/amb)))))
