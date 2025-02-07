@@ -1,6 +1,7 @@
 (ns datomic-browser.dbob
   (:require [dustingetz.entity-browser2 :as eb]
             #?(:clj dustingetz.mbrainz)
+            #?(:clj dustingetz.identify)
             [contrib.assert :as ca]
             [contrib.data :as cd]
             [clojure.string :as str]
@@ -16,6 +17,11 @@
 (e/declare conn)
 (e/declare db)
 
+#?(:clj
+   (extend-type datomic.query.EntityMap
+     dustingetz.identify/Identifiable
+     (-identify [^datomic.query.EntityMap !e] (:db/id !e))))
+
 (def attributes-colspec
   [:db/ident :db/unique :db/isComponent
    {:db/valueType [:db/ident]}
@@ -23,10 +29,7 @@
    #_#_#_#_:db/fulltext :db/tupleType :db/tupleTypes :db/tupleAttrs])
 
 (e/defn Attributes []
-  (e/server (->> (da-model/attributes-stream db attributes-colspec) (m/reduce conj []) e/Task
-              (map #(assoc % ::summary (->> (da-model/summarize-attr db (:db/ident %)) (map name) (str/join " "))))
-              #_(filter #(cstr/includes-str? ((juxt :db/ident ::summary) %) search)) ; search after summary
-              (sort-by :db/ident))))
+  (e/server (mapv #(d/entity db %) (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db))))
 
 (e/defn UserResolve [tag]
   (e/server
