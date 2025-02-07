@@ -5,6 +5,7 @@
             [electric-essay.essay-app :refer [Essay]]
 
             [datomic-browser.mbrainz-browser :refer [DatomicBrowser]]
+            [datomic-browser.dbob :as dbob]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [dustingetz.threaddump :refer [ThreadDump]]
@@ -42,6 +43,7 @@
 
 (e/defn ListedDemos []
   {`DatomicBrowser DatomicBrowser
+   `dbob/DatomicBrowserOB dbob/DatomicBrowserOB
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
