@@ -1,13 +1,13 @@
 (ns datomic-browser.mbrainz-browser
   (:require #?(:clj datomic.api)
-            [datomic-browser.datomic-browser :refer [Inject-datomic]]
+            [datomic-browser.datomic-browser2 :refer [Inject-datomic]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [hyperfiddle.electric3 :as e]))
 
 (e/defn DatomicBrowser
   ([] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri
-                datomic-browser.datomic-browser/DatomicBrowser))))
+                datomic-browser.datomic-browser2/DatomicBrowser2))))
 
 (e/defn Fiddles []
   {`DatomicBrowser DatomicBrowser})
