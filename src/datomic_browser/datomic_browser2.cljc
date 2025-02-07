@@ -81,21 +81,22 @@
 (e/defn AttributeDetail []
   (let [[a search] (DelayBy 128 r/route)]
     #_(r/focus [1]) ; search
-    (when a ; router glitch
-      (SearchGrid (str "Attribute index: " (pr-str a))
-        (e/fn Query [search]
-          (e/server (->> (seq-consumer (d/datoms db :aevt a)) (m/reduce conj []) e/Task
-                      (filter #(includes-str? (:v %) search))
-                      (sort-by :v))))
-        (e/fn Row [x]
-          (e/server
-            (let [[e _ v tx op] x]
-              (dom/td (r/link ['.. [:entity e]] (dom/text e)))
-              #_(dom/td (dom/text (pr-str a))) ; redundant
-              (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
-              (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))
-        :search search
-        :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [a new-search]]))))))
+    (SearchGrid (str "Attribute index: " (pr-str a))
+      (e/fn Query [search]
+        (e/server
+          (when a ; router glitch
+            (->> (seq-consumer (d/datoms db :aevt a)) (m/reduce conj []) e/Task
+              (filter #(includes-str? (:v %) search))
+              (sort-by :v)))))
+      (e/fn Row [x]
+        (e/server
+          (let [[e _ v tx op] x]
+            (dom/td (r/link ['.. [:entity e]] (dom/text e)))
+            #_(dom/td (dom/text (pr-str a))) ; redundant
+            (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
+            (dom/td (r/link ['.. [:tx-detail tx]] (dom/text tx))))))
+      :search search
+      :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [a new-search]])))))
 
 (e/defn TxDetail []
   (let [[e search] (DelayBy 128 r/route)]
@@ -189,13 +190,14 @@
 (e/defn EntityDetail []
   (let [[[type e search] & other-blocks] (DelayBy 128 r/route)]
     #_(r/focus [1]) ; search
-    (when e ; glitch
-      (SearchGrid (str "Entity detail: " e)
-        (e/fn Query [search]
-          (e/server (query-entity-detail db e search)))
-        (e/Partial Format-entity e)
-        :search search
-        :SetSearch (e/fn [new-search] (r/ReplaceState! ['. (cons [type e new-search] other-blocks)]))))))
+    (SearchGrid (str "Entity detail: " e)
+      (e/fn Query [search]
+        (e/server
+          (when e ; glitch
+            (query-entity-detail db e search))))
+      (e/Partial Format-entity e)
+      :search search
+      :SetSearch (e/fn [new-search] (r/ReplaceState! ['. (cons [type e new-search] other-blocks)])))))
 
 (e/defn Format-history-row [[e aa v tx op :as ?row]]
   (when ?row ; glitch
@@ -212,16 +214,17 @@
 (e/defn EntityHistory []
   (let [[e search] (DelayBy 128 r/route)]
     #_(r/focus [1]) ; search
-    (when e ; router glitch
-      (SearchGrid (str "Entity history: " e)
-        (e/fn [search]
-          (e/server (->> (entity-history-datoms-stream db e) (m/reduce conj []) e/Task
-                      (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search))))) ; todo resolve human attrs
-        Format-history-row
-        #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
-           ::dom/class "Viewport entity-history"}
-        :search search
-        :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [e new-search]]))))))
+    (SearchGrid (str "Entity history: " e)
+      (e/fn [search]
+        (e/server
+          (when e ; router glitch
+            (->> (entity-history-datoms-stream db e) (m/reduce conj []) e/Task
+              (filter #(includes-str? (str ((juxt :e #_:a :v #_:tx) %)) search)))))) ; todo resolve human attrs
+      Format-history-row
+      #_{:columns [::e ::a ::op ::v ::tx-instant ::tx]
+         ::dom/class "Viewport entity-history"}
+      :search search
+      :SetSearch (e/fn [new-search] (r/ReplaceState! ['. [e new-search]])))))
 
 (e/defn DbStats []
   #_(r/focus [0]) ; search
