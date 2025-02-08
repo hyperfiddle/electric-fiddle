@@ -44,7 +44,6 @@
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser)
    'datomic-browser.mbrainz-browser/DatomicBrowser2 (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser2)
-   `dbob/DatomicBrowserOB (Inject-datomic dustingetz.mbrainz/mbrainz-uri dbob/DatomicBrowserOB)
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
@@ -55,6 +54,7 @@
      'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")
      'demos (e/fn [] (binding [electric-fiddle.fiddle-index/pages (ListedDemos)] (FiddleIndex)))
      'fiddles FiddleIndex}
+    (datomic-browser.dbob/Fiddles)
     (TutorialFiddles)
     (BlogFiddles)
     (ListedDemos)
