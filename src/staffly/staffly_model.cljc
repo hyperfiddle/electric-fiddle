@@ -7,6 +7,9 @@
             [missionary.core :as m]
             #?(:clj staffly.staffly-fixtures)))
 
+; The need to load fixtures makes database init more complicated than mbrainz :/
+#_(def staffly-uri "datomic:mem://staffly")
+
 (def ^:dynamic *datomic-conn*)
 (def ^:dynamic *db*) ; todo reactive
 (def ^:dynamic *schema*)
