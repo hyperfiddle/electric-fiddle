@@ -23,13 +23,15 @@ for any matching leaves"
 
 (defn records-coll? [?coll] (and (sequential? ?coll) (map? (first ?coll))))
 
-(defn shallow-data-children [x] ; avoid descending large or weird collections (heuristic)
-  (cond (map? x) (seq x)
-        (map-entry? x) (when-some [v* (data-children (val x))]
-                         (let [k (key x)]
-                           (mapv (fn [[p v]] [[k p] v]) v*)))
-        #_#_(coll? x) (into [] (map-indexed vector) x) ; just don't descend nested colls at all, seems to work out
-        :else nil))
+(defn shallow-data-children
+  ([x pull-pattern] (shallow-data-children x))
+  ([x] ; avoid descending large or weird collections (heuristic)
+   (cond (map? x) (seq x)
+         (map-entry? x) (when-some [v* (data-children (val x))]
+                          (let [k (key x)]
+                            (mapv (fn [[p v]] [[k p] v]) v*)))
+         #_#_(coll? x) (into [] (map-indexed vector) x) ; just don't descend nested colls at all, seems to work out
+         :else nil)))
 
 (comment
   (-> #'* meta :arglists) := '([] [x] [x y] [x y & more]) ; weird collection
