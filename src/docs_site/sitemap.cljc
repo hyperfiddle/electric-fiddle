@@ -42,9 +42,9 @@
     ))
 
 (e/defn ListedDemos []
-  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser)))
-   'datomic-browser.mbrainz-browser/DatomicBrowser2 (e/fn [] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser2)))
-   `dbob/DatomicBrowserOB (e/fn [] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri dbob/DatomicBrowserOB)))
+  {'datomic-browser.mbrainz-browser/DatomicBrowser (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser)
+   'datomic-browser.mbrainz-browser/DatomicBrowser2 (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser2)
+   `dbob/DatomicBrowserOB (Inject-datomic dustingetz.mbrainz/mbrainz-uri dbob/DatomicBrowserOB)
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
