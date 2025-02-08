@@ -1,12 +1,11 @@
-(ns contrib.datomic-contrib
+(ns dustingetz.datomic-contrib
   (:require [contrib.data :refer [index-by unqualify]]
-            [contrib.datomic-m :as d] ; care
+            [dustingetz.datomic-m :as d] ; care
             datomic.api
             [dustingetz.identify :refer [Identifiable]] ; unresolved from electric module, promote ns to root
             #_[hyperfiddle.electric :as e] ; ?
             [hyperfiddle.rcf :refer [tests % tap]]
             [missionary.core :as m]
-            [contrib.test.datomic-peer-mbrainz :as test]
             [clojure.core.protocols :as ccp :refer [Datafiable]]))
 
 (tests 

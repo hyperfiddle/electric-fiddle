@@ -1,8 +1,8 @@
 (ns staffly.staffly-model
   (:require [contrib.assert :refer [check]]
-            #?(:clj [contrib.datomic-contrib :as dx])
             #?(:clj [clojure.tools.logging :as log])
             #?(:clj [datomic.api :as d])
+            #?(:clj [dustingetz.datomic-contrib :as dx])
             [hyperfiddle.electric3 :as e]
             [missionary.core :as m]
             #?(:clj staffly.staffly-fixtures)))

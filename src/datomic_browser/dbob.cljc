@@ -3,7 +3,7 @@
             #?(:clj dustingetz.mbrainz)
             [contrib.assert :as ca]
             [contrib.data :as cd]
-            contrib.datomic-contrib ; datafy entity
+            #?(:clj dustingetz.datomic-contrib) ; datafy entity
             [clojure.string :as str]
             [contrib.str :as cstr]
             [hyperfiddle.electric3 :as e]

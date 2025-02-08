@@ -1,5 +1,5 @@
-(ns contrib.datomic-contrib-2020
-  (:require [contrib.datomic-contrib :refer [identify]]
+(ns dustingetz.datomic-contrib-2020
+  (:require [dustingetz.datomic-contrib :refer [identify]]
             clojure.set
             [contrib.data :refer [update-existing]]
             [hyperfiddle.rcf :refer [tests]]))

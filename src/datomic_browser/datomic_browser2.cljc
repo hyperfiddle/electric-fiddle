@@ -7,7 +7,7 @@
             #?(:clj [datomic-browser.datomic-model :refer
                      [attributes-stream ident! entity-history-datoms-stream easy-attr
                       summarize-attr is-attr? seq-consumer]])
-            #?(:clj contrib.datomic-contrib)
+            #?(:clj dustingetz.datomic-contrib) ; datafy EntityMap
             [contrib.orderedmap :refer [ordered-map]]
             #?(:clj [clojure.pprint :refer [cl-format]])
             [hyperfiddle.electric3 :as e]
@@ -182,7 +182,7 @@
 #?(:clj
    (defn- query-entity-detail [db e search]
      (if (and db e) ; hack around glitches
-       (->> (flatten-nested #_(e/Task (m/via m/blk)) (sort-by-attr (merge (d/pull db ['*] e) (contrib.datomic-contrib/back-references db e)))) ; TODO render backrefs at the end?
+       (->> (flatten-nested #_(e/Task (m/via m/blk)) (sort-by-attr (merge (d/pull db ['*] e) (dustingetz.datomic-contrib/back-references db e)))) ; TODO render backrefs at the end?
          (filter #(includes-str? (str ((juxt :name :value) %)) search))) ; string the entries
        ()
        )))

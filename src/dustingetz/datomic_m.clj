@@ -1,4 +1,4 @@
-(ns contrib.datomic-m
+(ns dustingetz.datomic-m
   "datomic compatibility facade"
   (:require contrib.deptector
             [clojure.tools.logging :as log]
@@ -46,46 +46,46 @@
 (def squuid)
 
 (defn install-datomic-onprem []
-  (require 'contrib.datomic-peer-m)
-  (alter-var-root #'tempid?     (constantly (eval 'contrib.datomic-peer-m/tempid?)))
+  (require 'dustingetz.datomic-peer-m)
+  (alter-var-root #'tempid?     (constantly (eval 'dustingetz.datomic-peer-m/tempid?)))
   ; client
-  (alter-var-root #'connect     (constantly (eval 'contrib.datomic-peer-m/connect)))
-  (alter-var-root #'db          (constantly (eval 'contrib.datomic-peer-m/db)))
-  (alter-var-root #'db-stats    (constantly (eval 'contrib.datomic-peer-m/db-stats)))
-  (alter-var-root #'with        (constantly (eval 'contrib.datomic-peer-m/with)))
-  (alter-var-root #'with-db     (constantly (eval 'contrib.datomic-peer-m/with-db)))
+  (alter-var-root #'connect     (constantly (eval 'dustingetz.datomic-peer-m/connect)))
+  (alter-var-root #'db          (constantly (eval 'dustingetz.datomic-peer-m/db)))
+  (alter-var-root #'db-stats    (constantly (eval 'dustingetz.datomic-peer-m/db-stats)))
+  (alter-var-root #'with        (constantly (eval 'dustingetz.datomic-peer-m/with)))
+  (alter-var-root #'with-db     (constantly (eval 'dustingetz.datomic-peer-m/with-db)))
   ; with-db
-  (alter-var-root #'entity      (constantly (eval 'contrib.datomic-peer-m/entity)))
-  (alter-var-root #'touch       (constantly (eval 'contrib.datomic-peer-m/touch)))
-  (alter-var-root #'pull        (constantly (eval 'contrib.datomic-peer-m/pull)))
-  (alter-var-root #'pull-sorted (constantly (eval 'contrib.datomic-peer-m/pull-sorted)))
-  (alter-var-root #'datoms>     (constantly (eval 'contrib.datomic-peer-m/datoms>)))
-  (alter-var-root #'tx-range>   (constantly (eval 'contrib.datomic-peer-m/tx-range>)))
-  (alter-var-root #'q           (constantly (eval 'contrib.datomic-peer-m/q)))
-  (alter-var-root #'query       (constantly (eval 'contrib.datomic-peer-m/query)))
-  (alter-var-root #'qseq        (constantly (eval 'contrib.datomic-peer-m/qseq)))
-  (alter-var-root #'history     (constantly (eval 'contrib.datomic-peer-m/history)))
-  (alter-var-root #'squuid      (constantly (eval 'contrib.datomic-peer-m/squuid))))
+  (alter-var-root #'entity      (constantly (eval 'dustingetz.datomic-peer-m/entity)))
+  (alter-var-root #'touch       (constantly (eval 'dustingetz.datomic-peer-m/touch)))
+  (alter-var-root #'pull        (constantly (eval 'dustingetz.datomic-peer-m/pull)))
+  (alter-var-root #'pull-sorted (constantly (eval 'dustingetz.datomic-peer-m/pull-sorted)))
+  (alter-var-root #'datoms>     (constantly (eval 'dustingetz.datomic-peer-m/datoms>)))
+  (alter-var-root #'tx-range>   (constantly (eval 'dustingetz.datomic-peer-m/tx-range>)))
+  (alter-var-root #'q           (constantly (eval 'dustingetz.datomic-peer-m/q)))
+  (alter-var-root #'query       (constantly (eval 'dustingetz.datomic-peer-m/query)))
+  (alter-var-root #'qseq        (constantly (eval 'dustingetz.datomic-peer-m/qseq)))
+  (alter-var-root #'history     (constantly (eval 'dustingetz.datomic-peer-m/history)))
+  (alter-var-root #'squuid      (constantly (eval 'dustingetz.datomic-peer-m/squuid))))
 
 (defn install-datomic-cloud []
-  (require 'contrib.datomic-cloud-m)
-  (alter-var-root #'tempid?     (constantly (eval 'contrib.datomic-cloud-m/tempid?)))
-  (alter-var-root #'connect     (constantly (eval 'contrib.datomic-cloud-m/connect)))
-  (alter-var-root #'client      (constantly (eval 'contrib.datomic-cloud-m/client)))
-  (alter-var-root #'db          (constantly (eval 'contrib.datomic-cloud-m/db)))
-  (alter-var-root #'db-stats    (constantly (eval 'contrib.datomic-cloud-m/db-stats)))
-  (alter-var-root #'with        (constantly (eval 'contrib.datomic-cloud-m/with)))
-  (alter-var-root #'with-db     (constantly (eval 'contrib.datomic-cloud-m/with-db)))
+  (require 'dustingetz.datomic-cloud-m)
+  (alter-var-root #'tempid?     (constantly (eval 'dustingetz.datomic-cloud-m/tempid?)))
+  (alter-var-root #'connect     (constantly (eval 'dustingetz.datomic-cloud-m/connect)))
+  (alter-var-root #'client      (constantly (eval 'dustingetz.datomic-cloud-m/client)))
+  (alter-var-root #'db          (constantly (eval 'dustingetz.datomic-cloud-m/db)))
+  (alter-var-root #'db-stats    (constantly (eval 'dustingetz.datomic-cloud-m/db-stats)))
+  (alter-var-root #'with        (constantly (eval 'dustingetz.datomic-cloud-m/with)))
+  (alter-var-root #'with-db     (constantly (eval 'dustingetz.datomic-cloud-m/with-db)))
   ; entity
   ; touch
-  (alter-var-root #'pull        (constantly (eval 'contrib.datomic-cloud-m/pull)))
-  (alter-var-root #'pull-sorted (constantly (eval 'contrib.datomic-cloud-m/pull-sorted)))
-  (alter-var-root #'datoms>     (constantly (eval 'contrib.datomic-cloud-m/datoms>)))
-  (alter-var-root #'tx-range>   (constantly (eval 'contrib.datomic-cloud-m/tx-range>)))
-  (alter-var-root #'q           (constantly (eval 'contrib.datomic-cloud-m/q)))
-  (alter-var-root #'query       (constantly (eval 'contrib.datomic-cloud-m/query)))
-  (alter-var-root #'qseq        (constantly (eval 'contrib.datomic-cloud-m/qseq)))
-  (alter-var-root #'history     (constantly (eval 'contrib.datomic-cloud-m/history)))
+  (alter-var-root #'pull        (constantly (eval 'dustingetz.datomic-cloud-m/pull)))
+  (alter-var-root #'pull-sorted (constantly (eval 'dustingetz.datomic-cloud-m/pull-sorted)))
+  (alter-var-root #'datoms>     (constantly (eval 'dustingetz.datomic-cloud-m/datoms>)))
+  (alter-var-root #'tx-range>   (constantly (eval 'dustingetz.datomic-cloud-m/tx-range>)))
+  (alter-var-root #'q           (constantly (eval 'dustingetz.datomic-cloud-m/q)))
+  (alter-var-root #'query       (constantly (eval 'dustingetz.datomic-cloud-m/query)))
+  (alter-var-root #'qseq        (constantly (eval 'dustingetz.datomic-cloud-m/qseq)))
+  (alter-var-root #'history     (constantly (eval 'dustingetz.datomic-cloud-m/history)))
   ; squuid
   )
 
@@ -102,9 +102,9 @@
 
 (tests
   (cond
-    (datomic-products 'datomic.api) (require '[contrib.test.datomic-peer-mbrainz :as test])
+    (datomic-products 'datomic.api) (require '[dustingetz.mbrainz :refer [test-db]])
     () (assert false (str "no tests for this datomic product: " (pr-str datomic-products))))
-  (some? test/db) := true
+  (some? @test-db) := true
   
   (take 3 (keys (m/? (pull test/db {:eid 50 :selector '[*]}))))
   := [:db/id :db/ident :db/valueType])

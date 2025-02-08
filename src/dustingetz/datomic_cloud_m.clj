@@ -1,4 +1,4 @@
-(ns contrib.datomic-cloud-m
+(ns dustingetz.datomic-cloud-m
   (:require [contrib.data :refer [omit-keys-ns auto-props]]
             [contrib.missionary-core-async :as mxca]
             [clojure.core.protocols :as ccp :refer [nav]]
