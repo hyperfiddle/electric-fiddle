@@ -1,9 +1,9 @@
 (ns datomic-browser.dbob
   (:require [dustingetz.entity-browser2 :as eb]
             #?(:clj dustingetz.mbrainz)
-            #?(:clj dustingetz.identify)
             [contrib.assert :as ca]
             [contrib.data :as cd]
+            contrib.datomic-contrib ; datafy entity
             [clojure.string :as str]
             [contrib.str :as cstr]
             [hyperfiddle.electric3 :as e]
@@ -16,11 +16,6 @@
 
 (e/declare conn)
 (e/declare db)
-
-#?(:clj
-   (extend-type datomic.query.EntityMap
-     dustingetz.identify/Identifiable
-     (-identify [^datomic.query.EntityMap !e] (:db/id !e))))
 
 (def attributes-colspec
   [:db/ident :db/unique :db/isComponent
