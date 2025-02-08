@@ -1,6 +1,5 @@
 (ns datomic-browser.dbob
   (:require [dustingetz.entity-browser2 :as eb]
-            #?(:clj dustingetz.mbrainz)
             [contrib.assert :as ca]
             [contrib.data :as cd]
             #?(:clj dustingetz.datomic-contrib) ; datafy entity
@@ -34,27 +33,9 @@
 
 (def targets [[:attributes]])
 
-(e/defn Inject [?x #_& {:keys [Busy Failed Ok]}]
-  ; todo needs to be a lot more sophisticated to inject many dependencies concurrently and report status in batch
-  (cond
-    (ex/None? ?x) Busy
-    (or (some? (ex-message ?x)) (nil? ?x)) (Failed ?x)
-    () (e/Partial Ok ?x)))
-
-(e/defn Inject-datomic [datomic-uri F]
-  (e/server
-    (Inject (e/Task (m/via m/blk
-                      (try (ca/check (datomic.api/connect datomic-uri))
-                           (catch Exception e #_(log/error e) e))))
-      {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
-       :Failed (e/fn [err] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
-                 (dom/pre (dom/text (pr-str err))))
-       :Ok F})))
-
 (declare css)
 
 (e/defn DatomicBrowserOB
-  ([] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowserOB)))
   ([conn]
    (e/client
      (binding [db (e/server (e/Task (m/via m/blk (d/db conn))))
