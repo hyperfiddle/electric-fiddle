@@ -12,6 +12,8 @@
 (def yanne 778454232478138)
 
 (tests
+  (some? @test-db) := true
+  (some? (d/touch (d/entity @test-db lennon))) := true
   (d/pull @test-db [:db/id :abstractRelease/name :abstractRelease/artistCredit] pour-lamour)
   := {:db/id pour-lamour,
       :abstractRelease/name "Pour l’amour des sous / Parle au patron, ma tête est malade",
