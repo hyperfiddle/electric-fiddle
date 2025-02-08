@@ -3,8 +3,8 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
             [electric-essay.tutorial-app :refer [Tutorial]]
             [electric-essay.essay-app :refer [Essay]]
-
-            [datomic-browser.mbrainz-browser :refer [DatomicBrowser]]
+            [datomic-browser.datomic-browser :refer [Inject-datomic DatomicBrowser]]
+            [datomic-browser.datomic-browser2 :refer [DatomicBrowser2]]
             [datomic-browser.dbob :as dbob]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
@@ -16,7 +16,7 @@
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
             staffly.staffly
-            ))
+            #?(:clj dustingetz.mbrainz)))
 
 (def blog-sitemap
   [["Blog"
@@ -42,7 +42,8 @@
     ))
 
 (e/defn ListedDemos []
-  {`DatomicBrowser DatomicBrowser
+  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser)))
+   'datomic-browser.mbrainz-browser/DatomicBrowser2 (e/fn [] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser2)))
    `dbob/DatomicBrowserOB dbob/DatomicBrowserOB
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
