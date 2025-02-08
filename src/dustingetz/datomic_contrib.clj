@@ -9,7 +9,8 @@
             [clojure.core.protocols :as ccp :refer [Datafiable]]))
 
 (tests 
-  (require '[dustingetz.mbrainz :refer [test-db lennon pour-lamour yanne cobblestone]])
+  (require '[clojure.datafy :refer [datafy nav]]
+           '[dustingetz.mbrainz :refer [test-db lennon pour-lamour yanne cobblestone]])
   (some? @test-db) := true)
 
 ; These should use entity API & fetch data when necessary, doing on trees is not ergonomic enough
@@ -346,73 +347,83 @@
                                  ))})))))
 
 
-(comment
-  (require '[clojure.datafy :refer [datafy nav]])
-  (def !e (datomic.api/entity @test-db pour-lamour))
-  (datomic.api/touch !e) ; for effect
-  (datafy !e)
-   := {:db/id 17592186058336,
-       :abstractRelease/gid #uuid "f05a1be3-e383-4cd4-ad2a-150ae118f622",
-       :abstractRelease/name "Pour l’amour des sous / Parle au patron, ma tête est malade",
-       :abstractRelease/type :release.type/single,
-       :abstractRelease/artists _ ; #{datomic.query.EntityMap datomic.query.EntityMap}
-       :abstractRelease/artistCredit "Jean Yanne & Michel Magne"}
+(tests
+  (def !pour-lamour (datomic.api/entity @test-db pour-lamour))
+  (do (datomic.api/touch !pour-lamour) (datafy !pour-lamour))
+  ; RCF crash on '_: java.lang.AbstractMethodError: Receiver class datomic.query.EntityMap does not define or inherit an implementation ...
+  #_ {:db/id 17592186058336,
+      :abstractRelease/gid #uuid "f05a1be3-e383-4cd4-ad2a-150ae118f622",
+      :abstractRelease/name "Pour l’amour des sous / Parle au patron, ma tête est malade",
+      :abstractRelease/type :release.type/single,
+      :abstractRelease/artists _ ; #{datomic.query.EntityMap datomic.query.EntityMap}
+      :abstractRelease/artistCredit "Jean Yanne & Michel Magne"}
 
   "datomic presents deep refs as native entity, NOT maps" ; WARNING: EntityMap prints as {:db/id 1}, which is incredibly confusing.
-  (map type (:abstractRelease/artists (datomic.api/touch !e))) := [datomic.query.EntityMap datomic.query.EntityMap]
+  (map type (:abstractRelease/artists (datomic.api/touch !pour-lamour))) := [datomic.query.EntityMap datomic.query.EntityMap]
 
   "datafy presents deep refs as native entity NOT maps NOT scalars"
-  (map type (:abstractRelease/artists (datafy !e))) := [datomic.query.EntityMap datomic.query.EntityMap]
+  (map type (:abstractRelease/artists (datafy !pour-lamour))) := [datomic.query.EntityMap datomic.query.EntityMap]
 
   (tests "self-nav resolves the original underlying reference"
-    (let [x (as-> (datafy !e) x (nav x :db/id (:db/id x)))]
+    (let [x (as-> (datafy !pour-lamour) x (nav x :db/id (:db/id x)))]
       (type x) := datomic.query.EntityMap
-      (= !e x) := true))
+      (= !pour-lamour x) := true))
 
-  (as-> (datafy !e) x
+  (as-> (datafy !pour-lamour) x
     (nav x :abstractRelease/artists (:abstractRelease/artists x))
     (map type x)) := [datomic.query.EntityMap datomic.query.EntityMap] ; prints as #{#:db{:id 778454232478138} #:db{:id 580542139477874}}
 
-  (def !yanne
-    (as-> (datafy !e) x
-      (nav x :abstractRelease/artists (:abstractRelease/artists x)) ; entities yanne and magne
-      (index-by :db/id x)
-      (nav x 778454232478138 (get x 778454232478138))))
+  (comment
+    (query-schema _db)
+    (def _schema (index-schema (query-schema _db)))
+    (ref? _schema :db/ident)
+    (get-in _schema [:abstractRelease/artists])
+    (get-in _schema [:artist/country])))
 
-  (type !yanne) := datomic.query.EntityMap
-  (:db/id !yanne) := yanne
+(tests "sanity tests / docs"
+  (tests
+    (def !yanne
+      (as-> (datafy !pour-lamour) x
+        (nav x :abstractRelease/artists (:abstractRelease/artists x)) ; entities yanne and magne
+        (index-by :db/id x)
+        (nav x 778454232478138 (get x 778454232478138))))
 
-  (datafy !yanne)
-  := {:artist/sortName "Yanne, Jean",
-      :artist/name "Jean Yanne",
-      :artist/type :artist.type/person,
-      :artist/country :country/FR,
-      :artist/gid #uuid "da0c147b-2da4-4d81-818e-f2aa9be37f9e",
-      :artist/startDay 18,
-      :artist/endDay 23,
-      :artist/startYear 1933,
-      :artist/endMonth 5,
-      :artist/endYear 2003,
-      :db/id 778454232478138,
-      :artist/startMonth 7,
-      :artist/gender :artist.gender/male,
-      ;; FIXME inconsistent
-      :track/_artists #{862017116284125 1059929209283807 1059929209283808 862017116284124},
-      :release/_artists #{17592186080017 17592186069801},
-      :abstractRelease/_artists #{17592186058336 17592186067319}}
+    (type !yanne) := datomic.query.EntityMap
+    (:db/id !yanne) := yanne)
 
-  (def !france (as-> (datafy !yanne) x (nav x :artist/country (:artist/country x))))
-  (datafy !france)
-   := {:db/id 17592186045645,
-      :db/ident :country/FR,
-      :country/name "France",
-      :release/_country #{17592186076553 ...},
-      :artist/_country #{765260092944782 ...},
-      :label/_country #{17592186068643 ...}}
+  (tests
+    (datafy !yanne) ; RCF crashes with java.lang.AbstractMethodError, RCF bug?
+    #_{:artist/sortName "Yanne, Jean",
+       :artist/name "Jean Yanne",
+       :artist/type :artist.type/person,
+       :artist/country :country/FR,
+       :artist/gid #uuid"da0c147b-2da4-4d81-818e-f2aa9be37f9e",
+       :artist/startDay 18,
+       :artist/endDay 23,
+       :artist/startYear 1933,
+       :track/_artists _ ; EntityMap -- #{#:db{:id 1059929209283807} #:db{:id 862017116284124} #:db{:id 862017116284125} #:db{:id 1059929209283808}}
+       :artist/endMonth 5,
+       :release/_artists _ ; EntityMap -- #{#:db{:id 17592186069801} #:db{:id 17592186080017}}
+       :abstractRelease/_artists _ ; EntityMap -- #{#:db{:id 17592186058336} #:db{:id 17592186067319}}
+       :artist/endYear 2003,
+       :db/id 778454232478138,
+       :artist/startMonth 7,
+       :artist/gender :artist.gender/male}
+    (-> (datafy !yanne) :track/_artists first type) := datomic.query.EntityMap
+    (-> (datafy !yanne) :track/_artists count) := 4
+    (-> (datafy !yanne) :release/_artists count) := 2
+    (-> (datafy !yanne) :abstractRelease/_artists count) := 2)
 
-  (query-schema _db)
-  (def _schema (index-schema (query-schema _db)))
-  (ref? _schema :db/ident)
-  (get-in _schema [:abstractRelease/artists])
-  (get-in _schema [:artist/country])
-  )
+  (tests
+    (def !france (as-> (datafy !yanne) x (nav x :artist/country (:artist/country x))))
+    (datafy !france)
+    #_{:db/id 17592186045645,
+       :db/ident :country/FR,
+       :country/name "France",
+       :release/_country #{#:db{:id 17592186076553} ...},
+       :artist/_country #{#:db{:id 765260092944782} ...},
+       :label/_country #{#:db{:id 17592186068643} ...}}
+    (-> (datafy !france) :release/_country first type) := datomic.query.EntityMap
+    (-> (datafy !france) :release/_country count) := 574
+    (-> (datafy !france) :artist/_country count) := 140
+    (-> (datafy !france) :label/_country count) := 59))
