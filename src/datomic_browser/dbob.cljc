@@ -51,14 +51,20 @@
       (e/server (map-entry `DbStats (d/db-stats db)))
       nil :cols *hfql-spec)))
 
+#?(:clj (defn aevt [a]
+          (let [db @dustingetz.mbrainz/test-db]
+            (->> (d/datoms db :aevt a) (sort-by :v)))))
+
+(comment
+  (time (count (aevt :abstractRelease/name))) := 10180
+  (clojure.datafy/datafy (first (aevt :abstractRelease/name))))
+
 (e/defn AttributeDetail [a]
   (e/client
     (TableBlock ::select-user
-      (e/server (when a ; glitch
-                  (map-entry `AttributeDetail
-                    (->> (seq-consumer (d/datoms db :aevt a)) (m/reduce conj []) e/Task (sort-by :v)))))
-      nil :cols *hfql-spec
-      :Row (e/fn [cols x]
+      (e/server (map-entry `AttributeDetail (fn [search] (when a (aevt a)))))
+      nil *hfql-spec
+      #_#_:Row (e/fn [cols x]
              (e/server
                (let [[e _ v tx op] x]
                  (dom/td (r/link ['.. [`EntityDetail e]] (dom/text e)))
@@ -79,7 +85,7 @@
                           `(summarize-attr* ~'%)
                           #_'*]
              `DbStats ['*]
-             `AttributeDetail ['*] ; #datom
+             `AttributeDetail [:e :a :v :tx #_:added]
              `TxDetail ['*]
              `EntityDetail ['*]})))
 
