@@ -73,21 +73,13 @@
 
 (e/defn TxDetail [])
 
-(e/defn Index []
-  (e/client
-    (dom/props {:class "Index"})
-    (dom/text "Target: ")
-    (e/for [page-sym (e/amb `Index `Attributes `DbStats)]
-      (r/link ['.. [page-sym]] (dom/text (name page-sym))))))
-
 #?(:clj (defn summarize-attr* [?!a]
           (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
             (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " "))))))
 
 #?(:clj (def !sitemap
           (atom ; picker routes should merge into colspec as pull recursion
-            {`Index nil
-             `Attributes [:db/ident `(summarize-attr* ~'%) #_'*]
+            {`Attributes [:db/ident `(summarize-attr* ~'%) #_'*]
              `DbStats ['*]
              `AttributeDetail ['*] ; #datom
              `TxDetail ['*]
@@ -99,19 +91,28 @@
   (swap! !sitemap update-in [`Attributes] (constantly [:db/ident `(summarize-attr* ~'%)]))
   )
 
+(e/defn Index [sitemap]
+  (e/client
+    (dom/props {:class "Index"})
+    (dom/text "Nav: ")
+    (e/for [page-sym (e/diff-by {} (keys sitemap))]
+      (r/link ['. [page-sym]] (dom/text (name page-sym))))
+    (dom/text " — Datomic Browser")))
+
 (declare css)
 (e/defn Fiddles []
   {`DatomicBrowserOB (Inject-datomic dustingetz.mbrainz/mbrainz-uri
                        (e/fn [conn]
-                         (binding [pages {`Index Index
-                                          `Attributes Attributes
+                         (binding [pages {`Attributes Attributes
                                           `AttributeDetail AttributeDetail
                                           `DbStats DbStats
                                           `TxDetail TxDetail
                                           `EntityDetail EntityDetail}
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
                            (dom/style (dom/text css))
-                           (HfqlRoot (e/server (e/watch !sitemap)) :default `(Index)))))})
+                           (let [sitemap (e/server (e/watch !sitemap))]
+                             (Index sitemap)
+                             (HfqlRoot sitemap :default `(Attributes))))))})
 
 (def css "
 .Index > a+a { margin-left: .5em; }
