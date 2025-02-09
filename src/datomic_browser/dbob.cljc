@@ -18,20 +18,31 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric3-contrib :as ex]
-            [missionary.core :as m]))
+            [missionary.core :as m]
+            #?(:clj [dustingetz.y2020.hfql.hfql11 :refer [hf-pull]])))
 
 (e/declare conn)
 (e/declare db)
 
-#?(:clj (defn attributes [db]
+#?(:clj (defn attributes [db hfql-spec search]
           (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            (mapv #(d/entity db %))
-            (sort-by :db/ident))))
+            (eduction
+              (map #(d/entity db %))
+              (map (fn [!e] [!e ((hf-pull hfql-spec) {'% !e})])) ; pull everything for search
+              (filter #(contrib.str/includes-str? (nth % 1) search)) ; search all pulled cols
+              (map first)) ; unpull so we can datafy entity in view to infer cols
+            sequence
+            (sort-by (first hfql-spec)))))
+
+(comment
+  (require '[dustingetz.mbrainz :refer [test-db]])
+  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "ref one"))) := 18
+  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "sys"))) := 3)
 
 (e/defn Attributes []
   (e/client
     (TableBlock ::select-user
-      (e/server (map-entry `Attributes (attributes db)))
+      (e/server (map-entry `Attributes #(attributes db *hfql-spec %)))
       nil *hfql-spec
       #_#_:Row (e/fn Row [cols x]
              (e/server
