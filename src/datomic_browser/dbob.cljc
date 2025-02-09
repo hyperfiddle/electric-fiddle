@@ -25,15 +25,18 @@
 
 #?(:clj (defn attributes [db]
           (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            (mapv #(d/entity db %)))))
+            (mapv #(d/entity db %))
+            (sort-by :db/ident))))
 
 (e/defn Attributes []
   (e/client
     (TableBlock ::select-user
-      (e/server (map-entry `Attributes #_(attributes db)
-                  (->> (attributes-stream db [:db/ident]) (m/reduce conj []) e/Task (sort-by :db/ident)
-                    (mapv #(assoc % ::summary (->> (summarize-attr db (:db/ident %)) (map name) (clojure.string/join " ")))))))
-      nil :cols *hfql-spec)))
+      (e/server (map-entry `Attributes (attributes db)))
+      nil *hfql-spec
+      #_#_:Row (e/fn Row [cols x]
+             (e/server
+               (dom/td (let [v (:db/ident x)] (r/link ['.. [`AttributeDetail v]] (dom/text v))))
+               (dom/td (dom/text (::summary x))))))))
 
 (e/defn DbStats []
   (e/client
@@ -41,16 +44,23 @@
       (e/server (map-entry `DbStats (d/db-stats db)))
       nil :cols *hfql-spec)))
 
-(e/defn AttributeDetail []
+(e/defn AttributeDetail [a]
   (e/client
-    (let [[a _] r/route]
-      (TreeBlock ::select-user
-        (e/server (when a ; glitch
-                    (map-entry `AttributeDetail
-                      (->> (seq-consumer (d/datoms db :aevt a)) (m/reduce conj []) e/Task (sort-by :v)))))
-        nil :cols *hfql-spec))))
+    (TableBlock ::select-user
+      (e/server (when a ; glitch
+                  (map-entry `AttributeDetail
+                    (->> (seq-consumer (d/datoms db :aevt a)) (m/reduce conj []) e/Task (sort-by :v)))))
+      nil :cols *hfql-spec
+      :Row (e/fn [cols x]
+             (e/server
+               (let [[e _ v tx op] x]
+                 (dom/td (r/link ['.. [`EntityDetail e]] (dom/text e)))
+                 (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
+                 (dom/td (r/link ['.. [`TxDetail tx]] (dom/text tx)))))))))
 
-(declare sitemap)
+(e/defn EntityDetail [])
+
+(e/defn TxDetail [])
 
 (e/defn Index []
   (e/client
@@ -59,11 +69,24 @@
     (e/for [page-sym (e/amb `Index `Attributes `DbStats)]
       (r/link ['.. [page-sym]] (dom/text (name page-sym))))))
 
-(def sitemap
-  {`Index nil
-   `Attributes [:db/ident ::summary]
-   `DbStats ['*]
-   `AttributeDetail ['*]})
+#?(:clj (defn summarize-attr* [?!a]
+          (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
+            (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " "))))))
+
+#?(:clj (def !sitemap
+          (atom ; picker routes should merge into colspec as pull recursion
+            {`Index nil
+             `Attributes [:db/ident `(summarize-attr* ~'%) #_'*]
+             `DbStats ['*]
+             `AttributeDetail ['*] ; #datom
+             `TxDetail ['*]
+             `EntityDetail ['*]})))
+
+(comment
+  (swap! !sitemap update-in [`Attributes] conj :db/id)
+  (swap! !sitemap update-in [`Attributes] (constantly [:db/ident]))
+  (swap! !sitemap update-in [`Attributes] (constantly [:db/ident `(summarize-attr* ~'%)]))
+  )
 
 (declare css)
 (e/defn Fiddles []
@@ -72,10 +95,12 @@
                          (binding [pages {`Index Index
                                           `Attributes Attributes
                                           `AttributeDetail AttributeDetail
-                                          `DbStats DbStats}
+                                          `DbStats DbStats
+                                          `TxDetail TxDetail
+                                          `EntityDetail EntityDetail}
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
                            (dom/style (dom/text css))
-                           (HfqlRoot sitemap :default `(Index)))))})
+                           (HfqlRoot (e/server (e/watch !sitemap)) :default `(Index)))))})
 
 (def css "
 .Index > a+a { margin-left: .5em; }
