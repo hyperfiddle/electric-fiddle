@@ -43,11 +43,7 @@
   (e/client
     (TableBlock ::select-user
       (e/server (map-entry `Attributes #(attributes db *hfql-spec %)))
-      nil *hfql-spec
-      #_#_:Row (e/fn Row [cols x]
-             (e/server
-               (dom/td (let [v (:db/ident x)] (r/link ['.. [`AttributeDetail v]] (dom/text v))))
-               (dom/td (dom/text (::summary x))))))))
+      nil *hfql-spec)))
 
 (e/defn DbStats []
   (e/client
@@ -79,7 +75,9 @@
 
 #?(:clj (def !sitemap
           (atom ; picker routes should merge into colspec as pull recursion
-            {`Attributes [:db/ident `(summarize-attr* ~'%) #_'*]
+            {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)})
+                          `(summarize-attr* ~'%)
+                          #_'*]
              `DbStats ['*]
              `AttributeDetail ['*] ; #datom
              `TxDetail ['*]
@@ -89,6 +87,7 @@
   (swap! !sitemap update-in [`Attributes] conj :db/id)
   (swap! !sitemap update-in [`Attributes] (constantly [:db/ident]))
   (swap! !sitemap update-in [`Attributes] (constantly [:db/ident `(summarize-attr* ~'%)]))
+  (-> @!sitemap (get `Attributes) first meta :hf/link)
   )
 
 (e/defn Index [sitemap]
