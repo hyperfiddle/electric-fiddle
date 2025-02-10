@@ -73,7 +73,21 @@
 
 (e/defn EntityDetail [])
 
-(e/defn TxDetail [])
+;; TODO mismacth, Datoms are vector-like
+;; TODO e a should be refs so we can render them as links
+#?(:clj (defn tx-detail [conn e hfql-spec search]
+          (->> (d/tx-range (d/log conn) e (inc e))
+            (eduction (mapcat :data)
+              (map (fn [[e a v tx op]]
+                     (let [m {:e e, :a a, :v v, :tx tx, :op op}]
+                       ((hf-pull hfql-spec) {'% m}))))
+              (filter #(contrib.str/includes-str? % search))))))
+
+(e/defn TxDetail [e]
+  (e/client
+    (TableBlock ::select-user
+      (e/server (map-entry `(TxDetail ~e) (fn [search] (tx-detail conn e *hfql-spec search))))
+      nil *hfql-spec)))
 
 #?(:clj (defn summarize-attr* [?!a]
           (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
@@ -86,7 +100,7 @@
                           #_'*]
              `DbStats ['*]
              `AttributeDetail [:e :a :v :tx #_:added]
-             `TxDetail ['*]
+             `TxDetail [:e :a :v]
              `EntityDetail ['*]})))
 
 (comment
@@ -113,6 +127,7 @@
                                           `DbStats DbStats
                                           `TxDetail TxDetail
                                           `EntityDetail EntityDetail}
+                                   conn conn
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
                            (dom/style (dom/text css))
                            (let [sitemap (e/server (e/watch !sitemap))]
