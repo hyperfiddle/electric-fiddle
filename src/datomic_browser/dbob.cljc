@@ -71,7 +71,11 @@
                  (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
                  (dom/td (r/link ['.. [`TxDetail tx]] (dom/text tx)))))))))
 
-(e/defn EntityDetail [])
+(e/defn EntityDetail [e]
+  (e/client
+    (TreeBlock ::select-user
+      (e/server (map-entry `(EntityDetail ~e) (d/entity db e)))
+       nil :cols *hfql-spec)))
 
 ;; TODO mismacth, Datoms are vector-like
 ;; TODO e a should be refs so we can render them as links
