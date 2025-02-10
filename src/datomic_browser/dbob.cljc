@@ -62,7 +62,7 @@
 (e/defn AttributeDetail [a]
   (e/client
     (TableBlock ::select-user
-      (e/server (map-entry `AttributeDetail (fn [search] (when a (aevt a)))))
+      (e/server (map-entry `(AttributeDetail ~a) (fn [search] (when a (aevt a)))))
       nil *hfql-spec
       #_#_:Row (e/fn [cols x]
              (e/server
