@@ -117,12 +117,14 @@
   (-> @!sitemap (get `Attributes) first meta :hf/link)
   )
 
-(e/defn Index [sitemap]
+(e/defn Index [_sitemap]
+  ;; TODO auto-derive from sitemap, only for top-level, non-partial links.
+  ;;      or provide a picker to fulfill missing args
   (e/client
     (dom/props {:class "Index"})
     (dom/text "Nav: ")
-    (e/for [page-sym (e/diff-by {} (keys sitemap))]
-      (r/link ['. [page-sym]] (dom/text (name page-sym))))
+    (r/link ['. [`Attributes]] (dom/text "Attributes"))
+    (r/link ['. [`DbStats]] (dom/text "DbStats"))
     (dom/text " — Datomic Browser")))
 
 (declare css)
