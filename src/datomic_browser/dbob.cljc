@@ -46,8 +46,9 @@
       nil *hfql-spec)))
 
 (e/defn DbStats []
+  ;; TODO search should filter keys, not values (numbers)
   (e/client
-    (TreeBlock ::select-user
+    (TreeBlock ::db-stats
       (e/server (map-entry `DbStats (d/db-stats db)))
       nil :cols *hfql-spec)))
 
@@ -97,12 +98,14 @@
           (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
             (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " "))))))
 
+#?(:clj (defn attributes-count [x] (-> x :attrs (update-vals :count))))
+
 #?(:clj (def !sitemap
           (atom ; picker routes should merge into colspec as pull recursion
             {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)})
                           `(summarize-attr* ~'%)
                           #_'*]
-             `DbStats ['*]
+             `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
              `AttributeDetail [:e :a :v :tx #_:added]
              `TxDetail [:e :a :v]
              `EntityDetail ['*]})))
@@ -141,4 +144,8 @@
 (def css "
 .Index > a+a { margin-left: .5em; }
 .ThreadDump3 > a + a { margin-left: .5em; }
-.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */")
+.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
+.Browser .-datomic-browser-dbob-db-stats table { grid-template-columns: 36ch auto;}
+
+"
+)
