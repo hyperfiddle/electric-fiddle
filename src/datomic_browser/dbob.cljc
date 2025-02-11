@@ -49,7 +49,7 @@
 
 #?(:clj (defn aevt [a]
           (let [db @dustingetz.mbrainz/test-db]
-            (->> (d/datoms db :aevt a) (sort-by :v)))))
+            (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]] {:e e, :a a, :v v, :tx tx, :added added}))))))
 
 (comment
   (time (count (aevt :abstractRelease/name))) := 10180
@@ -60,7 +60,7 @@
     (TableBlock ::select-user
       (e/server (map-entry `(AttributeDetail ~a) (fn [search] (when a (aevt a)))))
       nil *hfql-spec
-      :Row (e/fn [hfql-spec cols x]
+      #_#_:Row (e/fn [hfql-spec cols x]
              (e/server
                (let [[e _ v tx op] x]
                  (dom/td (r/link ['.. [`EntityDetail e]]
@@ -142,16 +142,28 @@
 (e/defn Attribute [?e a v pull-expr]
   (Render ?e a (e/server (:db/ident (d/entity db v))) pull-expr))
 
+(e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
+  (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
+
 #?(:clj (def !sitemap
           (atom ; picker routes should merge into colspec as pull recursion
-            {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)})
+            {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
+                                                :hf/Tooltip `EntityTooltip})
                           `(summarize-attr* ~'%)
                           #_'*]
              `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
-             `AttributeDetail [:e :a :v :tx #_:added]
-             `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)})
+                                                        ; TODO custom key/value renderers - conflict with treelister
+             `AttributeDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
+                                              :hf/Tooltip `EntityTooltip})
+                               :v
+                               (with-meta 'tx {:hf/link `(TxDetail ~'tx)
+                                               :hf/Tooltip `EntityTooltip})
+                               #_:added]
+             `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
+                                       :hf/Tooltip `EntityTooltip})
                         (with-meta 'a {:hf/link `(AttributeDetail ~'a)
-                                       :hf/Render `Attribute})
+                                       :hf/Render `Attribute
+                                       :hf/Tooltip `EntityTooltip})
                         :v]
              `EntityDetail ['*]})))
 
@@ -181,7 +193,8 @@
                                           `DbStats DbStats
                                           `TxDetail TxDetail
                                           `EntityDetail EntityDetail}
-                                   dustingetz.entity-browser2/whitelist {`Attribute Attribute}
+                                   dustingetz.entity-browser2/whitelist {`Attribute Attribute
+                                                                         `EntityTooltip EntityTooltip}
                                    conn conn
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
                            (dom/style (dom/text css tooltip/css))
