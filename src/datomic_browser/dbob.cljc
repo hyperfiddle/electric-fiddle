@@ -143,7 +143,9 @@
                           #_'*]
              `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
              `AttributeDetail [:e :a :v :tx #_:added]
-             `TxDetail [:e :a :v]
+             `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)})
+                        (with-meta 'a {:hf/link `(AttributeDetail ~'a)})
+                        :v]
              `EntityDetail ['*]})))
 
 (comment
