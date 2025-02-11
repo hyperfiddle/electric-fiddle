@@ -46,13 +46,6 @@
       (e/server (map-entry `Attributes #(attributes db *hfql-spec %)))
       nil *hfql-spec)))
 
-(e/defn DbStats []
-  ;; TODO search should filter keys, not values (numbers)
-  (e/client
-    (TreeBlock ::db-stats
-      (e/server (map-entry `DbStats (d/db-stats db)))
-      nil :cols *hfql-spec)))
-
 #?(:clj (defn aevt [a]
           (let [db @dustingetz.mbrainz/test-db]
             (->> (d/datoms db :aevt a) (sort-by :v)))))
@@ -94,7 +87,8 @@
        (if-some [c* (seq c*)]
          (when-some [v* (seq (into [] (mapcat (fn [[p v]] (-tree-list (conj path p) v children-fn keep? false))) c*))]
            (cons [path x true] v*))
-         (when (keep? x) [[path x]])))))
+         ;;           search value and last path (is this heuristic correct?)
+         (when (keep? [x (peek path)]) [[path x]])))))
 
 #?(:clj
    (defn treelist
@@ -102,6 +96,13 @@
      ([children-fn x] (treelist children-fn (constantly true) x))
      ([children-fn keep? x]
       (-tree-list [] x children-fn keep? :root))))
+
+(e/defn DbStats []
+  (e/client
+    (TreeBlock2 ::db-stats
+      (e/server (map-entry `DbStats (d/db-stats db)))
+      nil (e/server (fn [search x] (treelist data-children #(contrib.str/includes-str? % search) x)))
+      :cols *hfql-spec)))
 
 (e/defn EntityDetail [e]
   (e/client
