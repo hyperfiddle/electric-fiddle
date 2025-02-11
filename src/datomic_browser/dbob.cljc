@@ -11,7 +11,7 @@
                       summarize-attr is-attr? seq-consumer]])
             #?(:clj dustingetz.datomic-contrib) ; datafy entity
             [dustingetz.entity-browser1 :refer [HfqlRoot *hfql-spec]]
-            [dustingetz.entity-browser2 :refer [TableBlock TreeBlock]]
+            [dustingetz.entity-browser2 :refer [TableBlock TreeBlock TreeBlock2]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
@@ -19,7 +19,8 @@
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric3-contrib :as ex]
             [missionary.core :as m]
-            #?(:clj [dustingetz.y2020.hfql.hfql11 :refer [hf-pull]])))
+            #?(:clj [dustingetz.y2020.hfql.hfql11 :refer [hf-pull]])
+            [dustingetz.treelister3 :as tl]))
 
 (e/declare conn)
 (e/declare db)
@@ -72,11 +73,42 @@
                  (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
                  (dom/td (r/link ['.. [`TxDetail tx]] (dom/text tx)))))))))
 
+;; fork entire treelist3 to control datomic EntityMap traversal
+;; traverse into first (root) entity, don't traverse further
+#?(:clj
+   (defn data-children [x]
+     (cond (instance? datomic.query.EntityMap x) x ; (coll? EntityMap) true, we want to control deep traversal
+           (map? x) (seq x)
+           (map-entry? x) (when-some [v* (data-children (val x))]
+                            (let [k (key x)]
+                              (mapv (fn [[p v]] [[k p] v]) v*)))
+           (coll? x) (into [] (map-indexed vector) x)
+           :else nil)))
+
+#?(:clj
+   (defn -tree-list [path x children-fn keep? root?]
+     (let [c*? (children-fn x)
+           c* (if (instance? datomic.query.EntityMap c*?)
+                (when root? c*?)
+                c*?)]
+       (if-some [c* (seq c*)]
+         (when-some [v* (seq (into [] (mapcat (fn [[p v]] (-tree-list (conj path p) v children-fn keep? false))) c*))]
+           (cons [path x true] v*))
+         (when (keep? x) [[path x]])))))
+
+#?(:clj
+   (defn treelist
+     ([x] (treelist data-children x))
+     ([children-fn x] (treelist children-fn (constantly true) x))
+     ([children-fn keep? x]
+      (-tree-list [] x children-fn keep? :root))))
+
 (e/defn EntityDetail [e]
   (e/client
-    (TreeBlock ::select-user
+    (TreeBlock2 ::select-user
       (e/server (map-entry `(EntityDetail ~e) (d/entity db e)))
-       nil :cols *hfql-spec)))
+      nil (e/server (fn [search x] (treelist data-children #(contrib.str/includes-str? % search) x)))
+      :cols *hfql-spec)))
 
 ;; TODO mismacth, Datoms are vector-like
 ;; TODO e a should be refs so we can render them as links
