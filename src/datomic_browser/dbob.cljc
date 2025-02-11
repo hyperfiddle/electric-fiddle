@@ -134,7 +134,10 @@
           (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
             (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " "))))))
 
-#?(:clj (defn attributes-count [x] (-> x :attrs (update-vals :count))))
+#?(:clj (defn attributes-count [{:keys [datoms attrs] :as m}]
+          (->> (update-vals attrs :count)
+            (clojure.set/map-invert)
+            (into (sorted-map-by #(compare %2 %1))))))
 
 #?(:clj (def !sitemap
           (atom ; picker routes should merge into colspec as pull recursion
