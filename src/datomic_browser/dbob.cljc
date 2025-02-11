@@ -18,6 +18,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric3-contrib :as ex]
+            [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
             [missionary.core :as m]
             #?(:clj [dustingetz.y2020.hfql.hfql11 :refer [hf-pull]])
             [dustingetz.treelister3 :as tl]))
@@ -59,10 +60,12 @@
     (TableBlock ::select-user
       (e/server (map-entry `(AttributeDetail ~a) (fn [search] (when a (aevt a)))))
       nil *hfql-spec
-      #_#_:Row (e/fn [cols x]
+      :Row (e/fn [hfql-spec cols x]
              (e/server
                (let [[e _ v tx op] x]
-                 (dom/td (r/link ['.. [`EntityDetail e]] (dom/text e)))
+                 (dom/td (r/link ['.. [`EntityDetail e]]
+                           (dom/text e)
+                           (dom/props {:data-tooltip (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] e))))})))
                  (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
                  (dom/td (r/link ['.. [`TxDetail tx]] (dom/text tx)))))))))
 
@@ -171,10 +174,12 @@
                                           `EntityDetail EntityDetail}
                                    conn conn
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
-                           (dom/style (dom/text css))
+                           (dom/style (dom/text css tooltip/css))
                            (let [sitemap (e/server (e/watch !sitemap))]
                              (Index sitemap)
-                             (HfqlRoot sitemap :default `(Attributes))))))})
+                             (TooltipArea (e/fn []
+                                            (Tooltip)
+                                            (HfqlRoot sitemap :default `(Attributes))))))))})
 
 (def css "
 .Index > a+a { margin-left: .5em; }
