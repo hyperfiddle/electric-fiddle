@@ -11,7 +11,7 @@
                       summarize-attr is-attr? seq-consumer]])
             #?(:clj dustingetz.datomic-contrib) ; datafy entity
             [dustingetz.entity-browser1 :refer [HfqlRoot *hfql-spec]]
-            [dustingetz.entity-browser2 :refer [TableBlock TreeBlock TreeBlock2]]
+            [dustingetz.entity-browser2 :refer [TableBlock TreeBlock TreeBlock2 Render]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
@@ -139,6 +139,9 @@
             (clojure.set/map-invert)
             (into (sorted-map-by #(compare %2 %1))))))
 
+(e/defn Attribute [?e a v pull-expr]
+  (Render ?e a (e/server (:db/ident (d/entity db v))) pull-expr))
+
 #?(:clj (def !sitemap
           (atom ; picker routes should merge into colspec as pull recursion
             {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)})
@@ -147,7 +150,8 @@
              `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
              `AttributeDetail [:e :a :v :tx #_:added]
              `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)})
-                        (with-meta 'a {:hf/link `(AttributeDetail ~'a)})
+                        (with-meta 'a {:hf/link `(AttributeDetail ~'a)
+                                       :hf/Render `Attribute})
                         :v]
              `EntityDetail ['*]})))
 
@@ -177,6 +181,7 @@
                                           `DbStats DbStats
                                           `TxDetail TxDetail
                                           `EntityDetail EntityDetail}
+                                   dustingetz.entity-browser2/whitelist {`Attribute Attribute}
                                    conn conn
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
                            (dom/style (dom/text css tooltip/css))
