@@ -341,7 +341,7 @@
         #_(into (back-references db (:db/id entity))) ; G: should this be always on?
         (with-meta {`ccp/nav (fn nav-datomic-entity [_ k v]
                                (cond
-                                 (= :db/id k) entity
+                                 (#{:db/id :db/ident} k) entity
                                  (and (keyword? v) (ref? @indexed-schema k)) (datomic.api/entity db v) ; traverse ident refs
                                  () v #_(k entity v) ; traverse refs or return value
                                  ))})))))
