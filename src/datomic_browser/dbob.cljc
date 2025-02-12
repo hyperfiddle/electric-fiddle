@@ -127,7 +127,7 @@
 (e/defn TxDetail [e]
   (e/client
     (TableBlock ::select-user
-      (e/server (map-entry `(TxDetail ~e) (fn [search] (tx-detail conn e *hfql-spec search))))
+      (e/server (map-entry `(TxDetail ~e) (fn [search] (when e (tx-detail conn e *hfql-spec search)))))
       nil *hfql-spec)))
 
 #?(:clj (defn summarize-attr* [?!a]
