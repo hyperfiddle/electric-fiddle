@@ -11,45 +11,24 @@
             #?(:clj dustingetz.datafy-clj)
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric3-contrib :as ex :refer [Tap]]
+            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            #?(:clj [dustingetz.y2020.hfql.hfql11 :refer [hf-pull]])
             #?(:clj [datomic-browser.dbob :refer [treelist]]) ; fixme
             ))
 
-#?(:clj (defn resolve-class [whiteset qs]
-          (try (some-> (whiteset qs) resolve) (catch Exception e nil))))
-
-#_
-(e/defn UserResolve [[tag id]]
-  (e/server
-    (case tag
-      :tap (Tap)
-      :thread-mx (ex/Offload-reset #(dustingetz.datafy-jvm2/resolve-thread-manager))
-      :thread (ex/Offload-reset #(dustingetz.datafy-jvm2/resolve-thread id))
-      :class (ex/Offload-reset #(resolve-class #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean} id))
-      (e/amb))))
-
 (e/defn GitRepo [repo-path]
-  #_(ex/Offload-reset #(dustingetz.datafy-git2/load-repo repo-path))
-  #_(EntityBrowser2 (e/server (map-entry uri (UserResolve uri))))
   (e/client
     (TreeBlock ::select-git
       (e/server (map-entry `GitRepo (dustingetz.datafy-git2/load-repo repo-path)))
-      nil
-      :cols *hfql-spec)))
+      nil :cols *hfql-spec)))
 
 (e/defn File [file-path]
   (e/client
     (TreeBlock ::select
       (e/server (map-entry `File (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))
-      nil
-      #_(e/server (fn children-fn [search x] []
-                  #_(treelist #(get % `(fs/dir-list ~'%))
-                                             #(contrib.str/includes-str? % search) x)))
-      :cols *hfql-spec)))
+      nil :cols *hfql-spec)))
 
 (e/defn Clojure-all-ns []
   (e/client
@@ -57,42 +36,54 @@
       (e/server (map-entry `Clojure-all-ns (fn [search] (vec (sort-by ns-name (all-ns)))) #_*hfql-spec))
       nil *hfql-spec)))
 
-(comment
+(e/defn ThreadMX []
+  (e/client
+    (TreeBlock ::select
+      (e/server (map-entry `ThreadMX (dustingetz.datafy-jvm2/resolve-thread-manager)))
+      nil :cols *hfql-spec)))
 
-  (require '[clojure.datafy :refer [datafy nav]])
+(e/defn Class_ [class-name]
+  (e/client
+    (TreeBlock ::select-git
+      (e/server (map-entry `Class_ (dustingetz.datafy-jvm2/resolve-class
+                                    #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
+                                    class-name)))
+      nil :cols *hfql-spec)))
 
-  (clojure.datafy/datafy *ns*)
-  ((hf-pull ['*]) {'% *ns*})
-  ((hf-pull [:name :publics :imports :interns]) {'% (datafy *ns*)})
-  ((hf-pull [`(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]) {'% *ns*})
+(e/defn Thread_ [thread-id]
+  (e/client
+    (TreeBlock ::select-git
+      (e/server (map-entry `Thread_ (dustingetz.datafy-jvm2/resolve-thread thread-id)))
+      nil :cols *hfql-spec)))
 
-  (ns-name *ns*)
-
-  (datafy (class *ns*))
-
-  (def x (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./")))
-  ((hf-pull ['*]) {'% x})
-  ((hf-pull '*) {'% x})
-  ((hf-pull [`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
-  ((hf-pull [#_`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
-  ((hf-pull `(fs/file-name ~'%)) {'% x})
-
-  )
-
-#_
-(def targets [[[:thread-mx]] [[:tap]]
-              [[:class 'org.eclipse.jgit.api.Git]]
-              [[:class 'java.lang.management.ThreadMXBean]]])
+(e/defn Tap [])
 
 (e/defn Index [_sitemap]
   (e/client
     (dom/props {:class "Index"})
     (dom/text "Nav: ")
     (r/link ['. [`Clojure-all-ns]] (dom/text "clojure.core"))
-    (r/link ['. [`GitRepo "./"]] (dom/text "GitRepo"))
-    (r/link ['. [`File "./"]] (dom/text "File"))))
+    (r/link ['. [`GitRepo "./"]] (dom/text "git"))
+    (r/link ['. [`File "./"]] (dom/text "file"))
+    (r/link ['. [`ThreadMX]] (dom/text "thread-mx"))
+    #_(r/link ['. [`Thread_ 0]] (dom/text "Thread 0"))
+    (r/link ['. [`Class_ 'java.lang.management.ThreadMXBean]] (dom/text "class"))
+    (r/link ['. [`Tap]] (dom/text "Tap"))))
 
-#_(e/for [uri (e/diff-by identity (e/as-vec uri))]) ; workaround glitch (Leo, please explain?)
+(comment
+  (require '[clojure.datafy :refer [datafy nav]]
+    '[dustingetz.y2020.hfql.hfql11 :refer [hf-pull hf-pull2]])
+  (datafy *ns*)
+  ((hf-pull ['*]) {'% *ns*})
+  ((hf-pull [:name :publics :imports :interns]) {'% (datafy *ns*)})
+  ((hf-pull [`(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]) {'% *ns*})
+
+  (def x (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./")))
+  ((hf-pull ['*]) {'% x})
+  ((hf-pull '*) {'% x})
+  ((hf-pull [`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
+  ((hf-pull [#_`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
+  ((hf-pull `(fs/file-name ~'%)) {'% x}))
 
 #?(:clj (def !sitemap
           (atom
@@ -108,15 +99,24 @@
                     `(fs/file-created ~'%)
                     `(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))
                     #_{`(fs/dir-list ~'%) ['*]}]
-             `Clojure-all-ns [`(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]})))
+             `Clojure-all-ns [:name :publics '*
+                              `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
+             `ThreadMX ['*]
+             `Thread_ ['*]
+             `Class_ ['*]
+             `Tap ['*]})))
 
 (declare css)
 (e/defn Fiddles []
   {`ObjectBrowserDemo2
    (e/fn []
-     (binding [pages {`GitRepo GitRepo
+     (binding [pages {`Clojure-all-ns Clojure-all-ns
+                      `GitRepo GitRepo
                       `File File
-                      `Clojure-all-ns Clojure-all-ns}]
+                      `ThreadMX ThreadMX
+                      `Class_ Class_
+                      `Thread_ Thread_
+                      `Tap Tap}]
        (dom/style (dom/text css))
        (let [sitemap (e/server (e/watch !sitemap))]
          (Index sitemap)

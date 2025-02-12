@@ -10,6 +10,8 @@
 
 (defn resolve-thread-manager [] (ManagementFactory/getThreadMXBean))
 
+(defn resolve-class [whiteset qs] (try (some-> (whiteset qs) resolve) (catch Exception e nil)))
+
 (extend-type com.sun.management.ThreadMXBean
   Identifiable (-identify [^com.sun.management.ThreadMXBean x] (-> x .getObjectName str))
   Datafiable
