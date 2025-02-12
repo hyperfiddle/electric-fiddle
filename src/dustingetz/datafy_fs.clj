@@ -112,6 +112,17 @@
 (defn file-absolute-path [^File x] (-> x .toPath .normalize .toAbsolutePath str))
 (defn file-order-compare [^File x] [(not (.isDirectory x)) (.getName x)])
 (defn dir-list [^File x] (some->> x .listFiles (sort-by file-order-compare)))
+(defn file-name [^File x] (.getName x))
+(defn file-kind [^File x]
+  (let [attrs (file-attrs x)]
+    (cond (.isDirectory attrs) ::dir
+          (.isSymbolicLink attrs) ::symlink
+          (.isOther attrs) ::other
+          (.isRegularFile attrs) (if-let [s (get-extension (.getName x))]
+                                   (keyword (namespace ::foo) s)
+                                   ::unknown-kind)
+          () ::unknown-kind)))
+(defn file-created [^File x] (-> x file-attrs .creationTime .toInstant java.util.Date/from))
 
 (extend-type java.io.File
   Identifiable (-identify [^File x] (.getName x)) ; locally unique in its folder
@@ -126,15 +137,9 @@
           mime-type (detect-mime-type-no-access n)]
       (as-> {::name n
              ::hidden (file-hidden? f)
-             ::kind (cond (.isDirectory attrs) ::dir
-                          (.isSymbolicLink attrs) ::symlink
-                          (.isOther attrs) ::other
-                          (.isRegularFile attrs) (if-let [s (get-extension n)]
-                                                   (keyword (namespace ::foo) s)
-                                                   ::unknown-kind)
-                          () ::unknown-kind)
+             ::kind (file-kind f)
              ::absolute-path (file-absolute-path f)
-             ::created (-> attrs .creationTime .toInstant java.util.Date/from)
+             ::created (file-created f)
              ::accessed (-> attrs .lastAccessTime .toInstant java.util.Date/from)
              ::modified (-> attrs .lastModifiedTime .toInstant java.util.Date/from)
              ::size (.size attrs)

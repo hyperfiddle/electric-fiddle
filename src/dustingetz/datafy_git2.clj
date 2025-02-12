@@ -11,8 +11,8 @@
 
 ; re-export wrappers for convenience - one API not two
 (def load-repo (memoize git/load-repo))
-(def log git/git-log)
-(def branch-list git/git-branch-list)
+#_(def log git/git-log)
+#_(def branch-list git/git-branch-list)
 
 (defn short-commit-id [id] (apply str (take 7 id)))
 
@@ -21,6 +21,11 @@
 (defn ref-type [^Ref ref] (if (.startsWith (.getName ref) "refs/remotes/") :remote :local))
 (defn repo-id [^Git x] (-> x .getRepository .getIdentifier))
 (defn repo-path [^Git x] (-> x .getRepository .getDirectory fs/file-absolute-path))
+(defn repo-repo [^Git x] (-> x .getRepository))
+(defn status [^Git x] (git/git-status x))
+(defn branch-current [^Git x] (git/git-branch-current x))
+(defn branch-list [^Git x] (vec (git/git-branch-list x :jgit? true :list-mode :all))) ; arraylist
+(defn log [^Git x] (vec (git/git-log x :until "HEAD" :jgit? true)))
 
 (comment
   (->> (load-repo "./") repo-path (fs/relativize-path (fs/absolute-path "./"))) := ".git")
@@ -33,8 +38,8 @@
        :repo (.getRepository o)
        :branch-current (git/git-branch-current o)
        ; return jgit objects for user to datafy
-       :branches (memoize #(vec (branch-list o :jgit? true :list-mode :all))) ; arraylist
-       :log (memoize #(vec (log o :until "HEAD" :jgit? true)))}
+       :branches (memoize branch-list)
+       :log (memoize log)}
       (with-meta {`nav
                   (fn [xs k v]
                     (case k
