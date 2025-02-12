@@ -9,7 +9,7 @@
             #?(:clj [datomic-browser.datomic-model :as da-model :refer
                      [attributes-stream ident! entity-history-datoms-stream easy-attr
                       summarize-attr is-attr? seq-consumer]])
-            #?(:clj dustingetz.datomic-contrib) ; datafy entity
+            #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
             [dustingetz.entity-browser1 :refer [HfqlRoot *hfql-spec]]
             [dustingetz.entity-browser2 :refer [TableBlock TreeBlock TreeBlock2 Render]]
             #?(:clj dustingetz.mbrainz)
@@ -145,14 +145,16 @@
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
 
+#?(:clj (defn backrefs [!e] (update-vals (dx/back-references (d/entity-db !e) (:db/id !e)) count)))
+
 #?(:clj (def !sitemap
-          (atom ; picker routes should merge into colspec as pull recursion
+          (atom      ; picker routes should merge into colspec as pull recursion
             {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
                                                 :hf/Tooltip `EntityTooltip})
                           `(summarize-attr* ~'%)
                           #_'*]
              `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
-                                                        ; TODO custom key/value renderers - conflict with treelister
+                                        ; TODO custom key/value renderers - conflict with treelister
              `AttributeDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
                                               :hf/Tooltip `EntityTooltip})
                                :v
@@ -165,7 +167,7 @@
                                        :hf/Render `Attribute
                                        :hf/Tooltip `EntityTooltip})
                         :v]
-             `EntityDetail ['*]})))
+             `EntityDetail ['* `(backrefs ~'%)]})))
 
 (comment
   (swap! !sitemap update-in [`Attributes] conj :db/id)

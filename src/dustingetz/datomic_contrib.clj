@@ -338,7 +338,7 @@
           indexed-schema (delay (index-schema (query-schema db)))] ; could be cached outside to be shared outside
       (-> {:db/id (:db/id entity)}
         (into (datomic.api/touch entity))
-        (into (back-references db (:db/id entity))) ; G: should this be always on?
+        #_(into (back-references db (:db/id entity))) ; G: should this be always on?
         (with-meta {`ccp/nav (fn nav-datomic-entity [_ k v]
                                (cond
                                  (= :db/id k) entity
