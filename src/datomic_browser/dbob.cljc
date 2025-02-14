@@ -10,10 +10,10 @@
                      [attributes-stream ident! entity-history-datoms-stream easy-attr
                       summarize-attr is-attr? seq-consumer]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
-            [dustingetz.entity-browser1 :refer [HfqlRoot *hfql-spec]]
+            [dustingetz.easy-table :refer [Load-css]]
             [dustingetz.entity-browser2 :refer [TableBlock TreeBlock TreeBlock2 Render]]
             #?(:clj dustingetz.mbrainz)
-            [electric-fiddle.fiddle-index :refer [pages]]
+            [electric-fiddle.fiddle-index :refer [pages NotFoundPage]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
@@ -25,6 +25,7 @@
 
 (e/declare conn)
 (e/declare db)
+(e/declare *hfql-spec)
 
 #?(:clj (defn attributes [db hfql-spec search]
           (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
@@ -192,6 +193,25 @@
     (dom/text " — Datomic Browser")))
 
 (declare css)
+(e/defn HfqlRoot
+  [sitemap
+   & {:keys [default]
+      :or {default nil}}]
+  (e/client
+    #_(dom/pre (dom/text (pr-str r/route)))
+    (Load-css "dustingetz/easy_table.css")
+    (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
+      (e/for [route (e/diff-by identity (e/as-vec r/route))] ; reboot entire page
+        (binding [r/route route]
+          (let [[fiddle & _] r/route]
+            (if-not fiddle
+              (r/ReplaceState! ['. default])
+              (let [Fiddle (get pages fiddle NotFoundPage)]
+                (set! (.-title js/document) (str (some-> fiddle name (str " – ")) "Hyperfiddle"))
+                (r/pop
+                  (binding [*hfql-spec (e/server (get sitemap fiddle []))] ; cols don't serialize perfectly yet fixme
+                    (r/Apply Fiddle r/route)))))))))))
+
 (e/defn Fiddles []
   {`DatomicBrowserOB (Inject-datomic dustingetz.mbrainz/mbrainz-uri
                        (e/fn [conn]
@@ -210,13 +230,24 @@
                              (Index sitemap)
                              (TooltipArea (e/fn []
                                             (Tooltip)
-                                            (HfqlRoot sitemap :default `(Attributes))))))))})
+                                            (HfqlRoot sitemap :default `[Attributes])))))))})
 
 (def css "
+.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
+.Browser fieldset { position: relative; height: 25em; }
+:where(.Browser fieldset.entity)          table { grid-template-columns: 15em auto; }
+.Browser fieldset.entity-children table { grid-template-columns: repeat(var(--col-count), 1fr); }
+
+/* table cell tooltips */
+.Browser td {position: relative;}
+.Browser .dustingetz-tooltip >       span { visibility: hidden; }
+.Browser .dustingetz-tooltip:hover > span { visibility: visible; pointer-events: none; }
+.Browser .dustingetz-tooltip > span {
+  position: absolute; top: 20px; left: 10px; z-index: 2; /* interaction with row selection z=1 */
+  margin-top: 4px; padding: 4px; font-size: smaller;
+  box-shadow: 0 0 .5rem gray; border: 1px whitesmoke solid; border-radius: 3px; background-color: white; }
 .Index > a+a { margin-left: .5em; }
 .ThreadDump3 > a + a { margin-left: .5em; }
 .Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
 .Browser .-datomic-browser-dbob-db-stats table { grid-template-columns: 36ch auto;}
-
-"
-)
+")
