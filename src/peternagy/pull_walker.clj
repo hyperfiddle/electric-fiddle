@@ -12,6 +12,12 @@
   ([path p] (with-meta (conj path p) (meta p)))
   ([path p o] (with-meta (conj path p) (merge (meta o) (meta p)))))
 
+(defn ?expand-star [pull v]
+  (if (some #{'*} pull)
+    (-> (into [] (comp cat (distinct)) [(eduction (remove #{'*}) pull) (keys v)])
+      (with-meta (meta pull)))
+    pull))
+
 (defn walker
   ([v pull] (walker v pull (fn [_k _v] true)))
   ([v pull keep?]
@@ -25,9 +31,7 @@
                                                       (cons [npath nv true] recv))
                                                     (when (keep? k nv) [[npath nv false]])))))
                               p)
-                            (if (= '* p)
-                              (eduction (keep (fn [[k nv]] (when (keep? k nv) [(next-path path k p) nv false]))) v)
-                              (let [nv (get v p)]
-                                (when (keep? p nv) [[(next-path path p) nv false]]))))))
-        pull))
+                            (let [nv (get v p)]
+                              (when (keep? p nv) [[(next-path path p) nv false]])))))
+        (?expand-star pull v)))
     v pull [])))

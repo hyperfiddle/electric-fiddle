@@ -59,7 +59,21 @@
 
   (t/testing "doesn't traverse collections"
     (t/is (= [[[:coll] [{:foo 1, :bar 10} {:foo 2, :bar 20}] false]]
-            (pw/walker data-map [{:coll ['*]}])))))
+            (pw/walker data-map [{:coll ['*]}]))))
+
+  (t/testing "* and more doesn't fetch twice"
+    (t/is (= [[[:map] {:a 1, :b 2, :coll [1 2], :map {:x 1, :y 2}} true]
+              [[:map :map] {:x 1, :y 2} true]
+              [[:map :map :x] 1 false]
+              [[:map :map :y] 2 false]]
+            (vec (pw/walker data-map [{:map [{:map ['* :x :y]}]}]))))
+
+    (t/testing "and preserves order"
+      (t/is (= [[[:map] {:a 1, :b 2, :coll [1 2], :map {:x 1, :y 2}} true]
+                [[:map :map] {:x 1, :y 2} true]
+                [[:map :map :y] 2 false]     ; `:y` before `:x`, as per pull query
+                [[:map :map :x] 1 false]]
+              (pw/walker data-map [{:map [{:map [:y :x '*]}]}]))))))
 
 (t/deftest searching
   (t/is (= [[[:map] {:a 1, :b 2, :coll [1 2], :map {:x 1, :y 2}} true]
