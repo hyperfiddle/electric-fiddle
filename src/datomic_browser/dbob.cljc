@@ -1,6 +1,5 @@
 (ns datomic-browser.dbob
-  (:require [dustingetz.entity-browser2 :as eb]
-            [contrib.assert :as ca]
+  (:require [contrib.assert :as ca]
             [contrib.data :as cd :refer [map-entry]]
             [clojure.string :as str]
             [contrib.str :as cstr]
@@ -11,7 +10,7 @@
                       summarize-attr is-attr? seq-consumer]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
             [dustingetz.easy-table :refer [Load-css]]
-            [dustingetz.entity-browser2 :refer [TableBlock TreeBlock TreeBlock2 Render]]
+            [dustingetz.entity-browser3 :as eb :refer [TableBlock TreeBlock TreeBlock2 Render]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages NotFoundPage]]
             [hyperfiddle.electric3 :as e]
@@ -21,7 +20,8 @@
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
             [missionary.core :as m]
             #?(:clj [dustingetz.y2020.hfql.hfql11 :refer [hf-pull]])
-            [dustingetz.treelister3 :as tl]))
+            [dustingetz.treelister3 :as tl]
+            [contrib.debug :as dbg]))
 
 (e/declare conn)
 (e/declare db)
@@ -188,8 +188,8 @@
   (e/client
     (dom/props {:class "Index"})
     (dom/text "Nav: ")
-    (r/link ['. [`Attributes]] (dom/text "Attributes"))
-    (r/link ['. [`DbStats]] (dom/text "DbStats"))
+    (r/link ['. [[`Attributes]]] (dom/text "Attributes"))
+    (r/link ['. [[`DbStats]]] (dom/text "DbStats"))
     (dom/text " — Datomic Browser")))
 
 (declare css)
@@ -203,14 +203,13 @@
     (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
       (e/for [route (e/diff-by identity (e/as-vec r/route))] ; reboot entire page
         (binding [r/route route]
-          (let [[fiddle & _] r/route]
+          (let [[fiddle & _] (first r/route)]
             (if-not fiddle
               (r/ReplaceState! ['. default])
               (let [Fiddle (get pages fiddle NotFoundPage)]
                 (set! (.-title js/document) (str (some-> fiddle name (str " – ")) "Hyperfiddle"))
-                (r/pop
-                  (binding [*hfql-spec (e/server (get sitemap fiddle []))] ; cols don't serialize perfectly yet fixme
-                    (r/Apply Fiddle r/route)))))))))))
+                (binding [*hfql-spec (e/server (get sitemap fiddle []))] ; cols don't serialize perfectly yet fixme
+                  (e/Apply Fiddle (nfirst r/route)))))))))))
 
 (e/defn Fiddles []
   {`DatomicBrowserOB (Inject-datomic dustingetz.mbrainz/mbrainz-uri
@@ -220,9 +219,9 @@
                                           `DbStats DbStats
                                           `TxDetail TxDetail
                                           `EntityDetail EntityDetail}
-                                   dustingetz.entity-browser2/whitelist {`Attribute Attribute
-                                                                         `EntityTooltip EntityTooltip
-                                                                         `Ident Ident}
+                                   eb/whitelist {`Attribute Attribute
+                                                 `EntityTooltip EntityTooltip
+                                                 `Ident Ident}
                                    conn conn
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
                            (dom/style (dom/text css tooltip/css))
@@ -230,7 +229,7 @@
                              (Index sitemap)
                              (TooltipArea (e/fn []
                                             (Tooltip)
-                                            (HfqlRoot sitemap :default `[Attributes])))))))})
+                                            (HfqlRoot sitemap :default `[[Attributes]])))))))})
 
 (def css "
 .Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
