@@ -27,6 +27,12 @@
 (defn branch-list [^Git x] (vec (git/git-branch-list x :jgit? true :list-mode :all))) ; arraylist
 (defn log [^Git x] (vec (git/git-log x :until "HEAD" :jgit? true)))
 
+(defn commit-name [^RevCommit o] (.getName o))
+(defn commit-short-name [^RevCommit o] (-> o .getName short-commit-id))
+(defn commit-message [^RevCommit o] (.getShortMessage o))
+(defn commit-author-ident [^RevCommit o] (.getAuthorIdent o))
+(defn commit-committer-ident [^RevCommit o] (.getCommitterIdent o))
+
 (comment
   (->> (load-repo "./") repo-path (fs/relativize-path (fs/absolute-path "./"))) := ".git")
 
@@ -68,11 +74,11 @@
 
   RevCommit
   (datafy [^RevCommit o]
-    {:name (.getName o) ; commit
-     :short-name (-> o .getName short-commit-id)
-     :msg (.getShortMessage ^RevCommit o)
-     :author (.getAuthorIdent ^RevCommit o)
-     :committer (.getCommitterIdent ^RevCommit o)})
+    {:name (commit-name o)
+     :short-name (commit-short-name o)
+     :msg (commit-message o)
+     :author (commit-author-ident o)
+     :committer (commit-committer-ident o)})
 
   PersonIdent
   (datafy [^PersonIdent x] (clj-jgit.util/person-ident x)))
@@ -95,7 +101,7 @@
   FileRepository (-identify [^FileRepository x] (.getIdentifier x))
   Ref (-identify [^Ref x] (Repository/shortenRefName (.getName x)))
   ObjectId (-identify [^ObjectId x] (.getName x))
-  RevCommit (-identify [^RevCommit x] (-> x .getName short-commit-id))
+  RevCommit (-identify [^RevCommit x] (commit-short-name x))
   PersonIdent (-identify [^PersonIdent x] (.getEmailAddress x)))
 
 (comment

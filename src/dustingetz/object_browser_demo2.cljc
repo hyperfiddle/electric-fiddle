@@ -149,13 +149,15 @@
                        `(git/status ~'%)
                        `(git/branch-current ~'%)
                        `(git/branch-list ~'%)
-                       `(git/log ~'%)]
+                       `(git/log ~'%)
+                       #_{`(git/log ~'%)
+                        [`(git/commit-short-name ~'%)]}]
              `File [`(fs/file-name ~'%)
                     `(fs/file-hidden? ~'%)
                     `(fs/file-name ~'%)
                     `(fs/file-kind ~'%)
                     `(fs/file-created ~'%)
-                    `(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))
+                    #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))
                     #_{`(fs/dir-list ~'%) ['*]}]
              `Clojure-all-ns [:name :publics '*
                               `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
