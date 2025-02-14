@@ -133,7 +133,7 @@
     (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
 
   ;; unstable test, sensible to filesystem
-  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) 3}]
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) 2}]
     (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
 
   (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) '...}]
@@ -158,7 +158,7 @@
                     `(fs/file-kind ~'%)
                     `(fs/file-created ~'%)
                     #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))
-                    #_{`(fs/dir-list ~'%) ['*]}]
+                    {`(fs/dir-list ~'%) 2}]
              `Clojure-all-ns [:name :publics '*
                               `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
              `ThreadMX ['*]
