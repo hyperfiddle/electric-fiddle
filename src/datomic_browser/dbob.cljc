@@ -146,17 +146,12 @@
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
 
-(e/defn Ident [?e a v pull-expr] (Render ?e a (e/server (:db/ident v)) pull-expr))
-
 #?(:clj (defn backrefs [!e] (update-vals (dx/back-references (d/entity-db !e) (:db/id !e)) count)))
 
 #?(:clj (def !sitemap
           (atom      ; picker routes should merge into colspec as pull recursion
             {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
-                                                :hf/Tooltip `EntityTooltip
-                                                ;; FIXME :db/ident became self-nav in datafy/nav
-                                                ;; Now we need to extract the actual ident manually
-                                                :hf/Render `Ident})
+                                                :hf/Tooltip `EntityTooltip})
                           `(summarize-attr* ~'%)
                           #_'*]
              `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
@@ -220,8 +215,7 @@
                                           `TxDetail TxDetail
                                           `EntityDetail EntityDetail}
                                    eb/whitelist {`Attribute Attribute
-                                                 `EntityTooltip EntityTooltip
-                                                 `Ident Ident}
+                                                 `EntityTooltip EntityTooltip}
                                    conn conn
                                    db (e/server (ex/Offload-latch #(d/db conn)))]
                            (dom/style (dom/text css tooltip/css))
