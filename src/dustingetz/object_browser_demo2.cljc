@@ -2,9 +2,7 @@
   #?(:clj (:import org.eclipse.jgit.api.Git))
   (:require [contrib.data :refer [map-entry]]
             [dustingetz.entity-browser1 :refer [HfqlRoot *hfql-spec]]
-            [dustingetz.entity-browser2 :refer
-             [TableBlock TreeBlock TreeBlock2 Render
-              EntityBrowser2]]
+            [dustingetz.entity-browser3 :refer [TableBlock TreeBlock Render]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj [dustingetz.datafy-fs :as fs])
@@ -14,9 +12,7 @@
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
-            [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            #?(:clj [datomic-browser.dbob :refer [treelist]]) ; fixme
-            ))
+            [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]))
 
 (e/defn GitRepo [repo-path]
   (e/client
