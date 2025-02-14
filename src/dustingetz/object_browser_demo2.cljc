@@ -89,12 +89,60 @@
   (hf-pull3 ['*] x)
 
   ((hf-pull '*) {'% x})
+  (hf-pull3 '* x)
 
   ((hf-pull [`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
+  (hf-pull3 [`(fs/dir-list ~'%) `(fs/file-name ~'%)] x)
 
   ((hf-pull [#_`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
+  (hf-pull3 [#_`(fs/dir-list ~'%) `(fs/file-name ~'%)] x)
 
-  ((hf-pull `(fs/file-name ~'%)) {'% x}))
+  ((hf-pull `(fs/file-name ~'%)) {'% x})
+  (hf-pull3 `(fs/file-name ~'%) x)
+
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%)
+                                  [`(fs/file-name ~'%)]}] x)
+
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%)
+                                  [`(fs/file-name ~'%) {`(fs/dir-list ~'%)
+                                                        [`(fs/file-name ~'%)]}]}] x)
+
+  (hf-pull3 {`(fs/dir-list ~'%) 0} x) := nil ; should it be empty map?
+  (hf-pull3 [{`(fs/dir-list ~'%) 0}] x) := {} ; should it be nil?
+
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) 0}] x)
+  := '{(dustingetz.datafy-fs/file-name %) "electric-fiddle"}
+
+  ;; unstable test, sensible to filesystem
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) 1}]
+    (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
+  := '{(dustingetz.datafy-fs/file-name %) "src",
+       (dustingetz.datafy-fs/dir-list %)
+       ({(dustingetz.datafy-fs/file-name %) "contrib"}
+        {(dustingetz.datafy-fs/file-name %) "datagrid"}
+        {(dustingetz.datafy-fs/file-name %) "datomic_browser"}
+        {(dustingetz.datafy-fs/file-name %) "docs_site"}
+        {(dustingetz.datafy-fs/file-name %) "dustingetz"}
+        {(dustingetz.datafy-fs/file-name %) "electric_essay"}
+        {(dustingetz.datafy-fs/file-name %) "electric_fiddle"}
+        {(dustingetz.datafy-fs/file-name %) "electric_tutorial"}
+        {(dustingetz.datafy-fs/file-name %) "hello_fiddle"}
+        {(dustingetz.datafy-fs/file-name %) "peternagy"}
+        {(dustingetz.datafy-fs/file-name %) "scratch"}
+        {(dustingetz.datafy-fs/file-name %) "staffly"}
+        {(dustingetz.datafy-fs/file-name %) ".DS_Store"})}
+
+  ;; unstable test, sensible to filesystem
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) 2}]
+    (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
+
+  ;; unstable test, sensible to filesystem
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) 3}]
+    (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
+
+  nil ; don't print tons of files at the REPL
+
+  )
 
 #?(:clj (def !sitemap
           (atom
