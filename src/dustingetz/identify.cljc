@@ -2,7 +2,7 @@
 
 (defprotocol Identifiable (-identify [o]))
 
-(defn identify [?o] (when (satisfies? Identifiable ?o) (-identify ?o)))
+(defn identify [?o] (-identify ?o))
 
 (comment (identify nil) := nil)
 
@@ -11,6 +11,6 @@
      clojure.lang.Namespace
      (-identify [ns] (ns-name ns))
      Object
-     (-identify [_])
+     (-identify [x] x) ; value is its own identity
      nil
      (-identify [_])))
