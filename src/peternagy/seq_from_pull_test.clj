@@ -1,5 +1,6 @@
 (ns peternagy.seq-from-pull-test
   (:require [peternagy.seq-from-pull :as sfp]
+            [contrib.str]
             [clojure.test :as t]))
 
 (def data-map {:coll [{:foo 1, :bar 10}, {:foo 2, :bar 20}]
@@ -59,3 +60,18 @@
   (t/testing "doesn't traverse collections"
     (t/is (= [[[:coll] [{:foo 1, :bar 10} {:foo 2, :bar 20}] false]]
             (sfp/seq-from-pull data-map [{:coll ['*]}])))))
+
+(t/deftest searching
+  (t/is (= [[[:map] {:a 1, :b 2, :coll [1 2], :map {:x 1, :y 2}} true]
+            [[:map :a] 1 false]
+            [[:map :map] {:x 1, :y 2} false]]
+          (sfp/seq-from-pull data-map [{:map ['*]}] (fn [k v] (contrib.str/any-matches? [k v] "a")))))
+
+  (t/is (= [[[:map] {:a 1, :b 2, :coll [1 2], :map {:x 1, :y 2}} true]
+            [[:map :map] {:x 1, :y 2} true]
+            [[:map :map :x] 1 false]]
+          (sfp/seq-from-pull data-map [{:map [{:map ['*]}]}] (fn [k v] (contrib.str/any-matches? [k v] "x")))))
+
+  (t/testing "parents omitted if no children match"
+    (t/is (= [] (sfp/seq-from-pull data-map [{:map ['*]}] (fn [_k _v] false))))
+    (t/is (= [] (sfp/seq-from-pull data-map [{:map [{:map ['*]}]}] (fn [_k _v] false))))))

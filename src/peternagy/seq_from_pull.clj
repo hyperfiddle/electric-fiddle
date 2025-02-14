@@ -13,17 +13,21 @@
   ([path p o] (with-meta (conj path p) (merge (meta o) (meta p)))))
 
 (defn seq-from-pull
-  ([v pull] (seq-from-pull v pull []))
-  ([v pull path]
-   (eduction (mapcat (fn [p]
-                       (if (map? p)
-                         (eduction (mapcat (fn [[k npull]]
-                                             (let [nv (get v k), npath (next-path path k p)]
-                                               (if (map? nv)
-                                                 (cons [npath nv true] (seq-from-pull nv npull npath))
-                                                 [[npath nv false]]))))
-                           p)
-                         (if (= '* p)
-                           (eduction (map (fn [[k nv]] [(next-path path k p) nv false])) v)
-                           [[(next-path path p) (get v p) false]]))))
-     pull)))
+  ([v pull] (seq-from-pull v pull (fn [_k _v] true)))
+  ([v pull keep?]
+   ((fn rec [v pull path]
+      (eduction (mapcat (fn [p]
+                          (if (map? p)
+                            (eduction (mapcat (fn [[k npull]]
+                                                (let [nv (get v k), npath (next-path path k p)]
+                                                  (if (map? nv)
+                                                    (when-some [recv (seq (rec nv npull npath))]
+                                                      (cons [npath nv true] recv))
+                                                    (when (keep? k nv) [[npath nv false]])))))
+                              p)
+                            (if (= '* p)
+                              (eduction (keep (fn [[k nv]] (when (keep? k nv) [(next-path path k p) nv false]))) v)
+                              (let [nv (get v p)]
+                                (when (keep? p nv) [[(next-path path p) nv false]]))))))
+        pull))
+    v pull [])))
