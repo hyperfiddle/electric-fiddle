@@ -1,8 +1,8 @@
-(ns peternagy.seq-from-pull)
+(ns peternagy.pull-walker)
 
 ;;; Given a pull expression
 ;;; - `hf-pull` the data based on this expression
-;;; - `seq-from-pull` to turn the pulled tree into a sequence of `[path value branch?]`
+;;; - `walker` to turn the pulled tree into a sequence of `[path value branch?]`
 ;;;
 ;;; Map traversal rules {:foo [:bar]}:
 ;;; - if traversing `:foo` returns a collection don't unroll further
@@ -12,8 +12,8 @@
   ([path p] (with-meta (conj path p) (meta p)))
   ([path p o] (with-meta (conj path p) (merge (meta o) (meta p)))))
 
-(defn seq-from-pull
-  ([v pull] (seq-from-pull v pull (fn [_k _v] true)))
+(defn walker
+  ([v pull] (walker v pull (fn [_k _v] true)))
   ([v pull keep?]
    ((fn rec [v pull path]
       (eduction (mapcat (fn [p]
