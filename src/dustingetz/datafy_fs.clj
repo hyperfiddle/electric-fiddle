@@ -1,11 +1,13 @@
 (ns dustingetz.datafy-fs
   "nav implementation for java file system traversals"
-  (:require [clojure.core.protocols :refer [nav Datafiable]]
+  (:require [clojure.core.protocols :refer [nav Datafiable Navigable]]
             [clojure.spec.alpha :as s]
             [contrib.assert :refer [check]]
             [dustingetz.identify :refer [Identifiable]]
+            [dustingetz.nav-context :refer [NavContext nav-context]]
             [hyperfiddle.rcf :refer [tests]]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.core.protocols :as ccp])
   (:import [java.nio.file Path Paths Files]
            java.io.File
            java.nio.file.LinkOption
@@ -126,6 +128,19 @@
 
 (extend-type java.io.File
   Identifiable (-identify [^File x] (.getName x)) ; locally unique in its folder
+  NavContext
+  (-nav-context [^File f] {`ccp/nav (fn [^File _ k v] (nav f k v))})
+  Navigable
+  (nav [^File f k v]
+    (let [attrs (file-attrs f)]
+      (case k
+        ;; reverse data back to object, to be datafied again by caller
+        ::modified (.lastModifiedTime attrs)
+        ::created (.creationTime attrs)
+        ::accessed (.lastAccessTime attrs)
+        ::children (vec (dir-list f))
+        ::content (datafy-file-content f)
+        v)))
   Datafiable
   (datafy [^File f]
     ; represent object's top layer as EDN-ready value records, for display
@@ -145,18 +160,9 @@
              ::size (.size attrs)
              ::mime-type mime-type} %
             (merge % (if (= ::dir (::kind %))
-                       {::children #(vec (dir-list f)) ; fns are hyperlinks - experiment
+                       {::children #() ; fns are hyperlinks - experiment - use nav to call it - should probably be elided entirely
                         ::parent (-> f file-path .getParent .toFile)}))
-        (with-meta % {`nav
-                          (fn [xs k v]
-                            (case k
-                              ; reverse data back to object, to be datafied again by caller
-                              ::modified (.lastModifiedTime attrs)
-                              ::created (.creationTime attrs)
-                              ::accessed (.lastAccessTime attrs)
-                              ::children (if v (v)) ; weird and bad, nav is intended to enrich not resolve
-                              ::content (datafy-file-content f)
-                              v))})))))
+        (with-meta % (nav-context f))))))
 
 (tests
   (require '[clojure.datafy :refer [datafy]])
@@ -197,7 +203,7 @@
 
 (tests
   (as-> (datafy h) %
-        (nav % ::children ((::children %))) ; fn - weird
+        (nav % ::children (::children %)) ; fn - weird
         (datafy %) ; can skip - simple data
         (map datafy %)
         (vec (filter #(= (::name %) "contrib") %)) ; stabilize test
@@ -214,11 +220,11 @@
   (def m (datafy h))
   (::name m) := "src"
   (as-> m %
-    (nav % ::children ((::children %)))
+    (nav % ::children (::children %))
     (datafy %) ; dir
     (nav % 1 (get % 1)) ; first file in dir (skip .DS_Store it is not a dir!)
     (datafy %)
-    (nav % ::parent ((::parent %))) ; dir (skip level on way up)
+    (nav % ::parent (::parent %)) ; dir (skip level on way up)
     (datafy %)
     (::name %))
   := "src")

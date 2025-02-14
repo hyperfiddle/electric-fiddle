@@ -72,17 +72,28 @@
 
 (comment
   (require '[clojure.datafy :refer [datafy nav]]
-    '[dustingetz.y2020.hfql.hfql11 :refer [hf-pull hf-pull2]])
+    '[dustingetz.y2020.hfql.hfql11 :refer [hf-pull hf-pull2 hf-pull3]])
   (datafy *ns*)
+
   ((hf-pull ['*]) {'% *ns*})
+  (hf-pull3 ['*] *ns*)
+
   ((hf-pull [:name :publics :imports :interns]) {'% (datafy *ns*)})
+  (hf-pull3 [:name :publics :imports :interns] (datafy *ns*))
+
   ((hf-pull [`(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]) {'% *ns*})
+  (hf-pull3 [`(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)] *ns*)
 
   (def x (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./")))
   ((hf-pull ['*]) {'% x})
+  (hf-pull3 ['*] x)
+
   ((hf-pull '*) {'% x})
+
   ((hf-pull [`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
+
   ((hf-pull [#_`(fs/dir-list ~'%) `(fs/file-name ~'%)]) {'% x})
+
   ((hf-pull `(fs/file-name ~'%)) {'% x}))
 
 #?(:clj (def !sitemap

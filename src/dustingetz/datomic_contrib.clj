@@ -3,6 +3,7 @@
             [dustingetz.datomic-m :as d] ; care
             datomic.api
             [dustingetz.identify :refer [Identifiable]] ; unresolved from electric module, promote ns to root
+            [dustingetz.nav-context :refer [NavContext nav-context]]
             #_[hyperfiddle.electric :as e] ; ?
             [hyperfiddle.rcf :refer [tests % tap]]
             [missionary.core :as m]
@@ -297,6 +298,11 @@
   (map type (:release/_artists !e)) := [datomic.query.EntityMap datomic.query.EntityMap]
   (map type (:track/_artists !e)) := [datomic.query.EntityMap datomic.query.EntityMap datomic.query.EntityMap datomic.query.EntityMap])
 
+(comment
+  (back-references _db 778454232478138)
+  (back-references _db (:db/id _artist_e))
+  )
+
 ;;; Datafy/Nav
 
 (defn query-schema [db]
@@ -310,6 +316,33 @@
 
 (defn index-schema [schema] (into {} (comp cat (index-by :db/ident)) schema))
 (defn ref? [indexed-schema a] (= :db.type/ref (get-in indexed-schema [a :db/valueType :db/ident])))
+
+(extend-type datomic.query.EntityMap
+  Identifiable (-identify [^datomic.query.EntityMap !e] (:db/id !e))
+  NavContext (-nav-context [entity] {`ccp/nav (fn [e k v] (clojure.datafy/nav entity k v))})
+  ccp/Navigable
+  (nav [^datomic.query.EntityMap entity k v]
+    (cond
+      (#{:db/id :db/ident} k) entity
+      (and (keyword? v) (ref? (index-schema (query-schema (.-db entity))) k)) ; TODO cache schema?
+      (datomic.api/entity (.-db entity) v) ; traverse ident refs
+      () (k entity v) ; traverse refs or return value
+      ))
+  ccp/Datafiable
+  (datafy [^datomic.query.EntityMap entity]
+    (let [db (.-db entity)]
+      (-> {:db/id (:db/id entity)}
+        (into (datomic.api/touch entity))
+        (into (back-references db (:db/id entity))) ; G: should this be always on?
+        (with-meta (nav-context entity))
+        ))))
+
+;; Patch EntityMap printing to differentiate it from regular maps
+(defonce original-entity-map-print-method (get-method print-method datomic.query.EntityMap))
+(defmethod print-method datomic.query.EntityMap [e writer]
+  (.write writer "#datomic.query.EntityMap ")
+  (binding [*print-namespace-maps* false]
+    (original-entity-map-print-method e writer)))
 
 #_ ; BAD FUNCTION, leaving this tombstone to warn the next confused person
 (defn untouch-refs [indexed-schema touched-entity] ; only touched attrs are present
@@ -329,22 +362,6 @@
   (:abstractRelease/artists (datomic.api/touch !e)) ; := #{#:db{:id 778454232478138} #:db{:id 580542139477874}} -- fail bc entity not= map
   (:abstractRelease/artists (untouch-refs @test-schema (datomic.api/touch (datomic.api/entity @test-db pour-lamour))))
   (map type *1) := [datomic.query.EntityMap datomic.query.EntityMap])
-
-(extend-type datomic.query.EntityMap
-  Identifiable (-identify [^datomic.query.EntityMap !e] (:db/id !e))
-  Datafiable
-  (datafy [^datomic.query.EntityMap entity]
-    (let [db (.-db entity)
-          indexed-schema (delay (index-schema (query-schema db)))] ; could be cached outside to be shared outside
-      (-> {:db/id (:db/id entity)}
-        (into (datomic.api/touch entity))
-        #_(into (back-references db (:db/id entity))) ; G: should this be always on?
-        (with-meta {`ccp/nav (fn nav-datomic-entity [_ k v]
-                               (cond
-                                 (#{:db/id :db/ident} k) entity
-                                 (and (keyword? v) (ref? @indexed-schema k)) (datomic.api/entity db v) ; traverse ident refs
-                                 () v #_(k entity v) ; traverse refs or return value
-                                 ))})))))
 
 
 (tests
