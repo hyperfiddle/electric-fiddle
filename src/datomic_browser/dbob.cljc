@@ -10,7 +10,7 @@
                       summarize-attr is-attr? seq-consumer]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
             [dustingetz.easy-table :refer [Load-css]]
-            [dustingetz.entity-browser3 :as eb :refer [TableBlock TreeBlock TreeBlock2 Render]]
+            [dustingetz.entity-browser3 :as eb :refer [TableBlock TreeBlock Render]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages NotFoundPage]]
             [hyperfiddle.electric3 :as e]
@@ -103,16 +103,16 @@
 
 (e/defn DbStats []
   (e/client
-    (TreeBlock2 ::db-stats
+    (TreeBlock ::db-stats
       (e/server (map-entry `DbStats (d/db-stats db)))
-      nil (e/server (fn [search x] (treelist data-children #(contrib.str/includes-str? % search) x)))
+      nil
       :cols *hfql-spec)))
 
 (e/defn EntityDetail [e]
   (e/client
-    (TreeBlock2 ::select-user
+    (TreeBlock ::select-user
       (e/server (map-entry `(EntityDetail ~e) (d/entity db e)))
-      nil (e/server (fn [search x] (treelist data-children #(contrib.str/includes-str? % search) x)))
+      nil
       :cols *hfql-spec)))
 
 ;; TODO mismacth, Datoms are vector-like
@@ -168,7 +168,10 @@
                                        :hf/Render `Attribute
                                        :hf/Tooltip `EntityTooltip})
                         :v]
-             `EntityDetail ['* `(backrefs ~'%)]})))
+             `EntityDetail ['*
+                            #_{(ground :country/GB) []}
+                            #_{'* '...}
+                            #_(with-meta '* {:hf/link `(EntityDetail ~'*)})]})))
 
 (comment
   (swap! !sitemap update-in [`Attributes] conj :db/id)
