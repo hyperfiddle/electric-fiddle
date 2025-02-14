@@ -136,6 +136,9 @@
   (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) 3}]
     (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
 
+  (hf-pull3 [`(fs/file-name ~'%) {`(fs/dir-list ~'%) '...}]
+    (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
+
   nil ; don't print tons of files at the REPL
 
   )
