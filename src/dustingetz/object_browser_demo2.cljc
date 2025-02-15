@@ -68,7 +68,7 @@
 
 (comment
   (require '[clojure.datafy :refer [datafy nav]]
-    '[dustingetz.y2020.hfql.hfql11 :refer [hf-pull hf-pull2 hf-pull3]])
+    '[dustingetz.hfql11 :refer [hf-pull hf-pull2 hf-pull3]])
   (datafy *ns*)
 
   ((hf-pull ['*]) {'% *ns*})

@@ -19,7 +19,7 @@
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
             [missionary.core :as m]
-            #?(:clj [dustingetz.y2020.hfql.hfql11 :refer [hf-pull]])
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull]])
             [dustingetz.treelister3 :as tl]
             [contrib.debug :as dbg]))
 
