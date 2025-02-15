@@ -1,27 +1,22 @@
 (ns datomic-browser.dbob
-  (:require [contrib.assert :as ca]
-            [contrib.data :as cd :refer [map-entry]]
-            [clojure.string :as str]
-            [contrib.str :as cstr]
+  (:require clojure.string
+            [contrib.data :refer [map-entry]]
+            [contrib.debug :refer [dbg-ok]]
+            contrib.str
             #?(:clj [datomic.api :as d])
             [datomic-browser.datomic-browser :refer [Inject-datomic]]
-            #?(:clj [datomic-browser.datomic-model :as da-model :refer
-                     [attributes-stream ident! entity-history-datoms-stream easy-attr
-                      summarize-attr is-attr? seq-consumer]])
+            #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
             [dustingetz.easy-table :refer [Load-css]]
             [dustingetz.entity-browser3 :as eb :refer [TableBlock TreeBlock Render]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages NotFoundPage]]
             [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
-            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            [missionary.core :as m]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull]])
-            [dustingetz.treelister3 :as tl]
-            [contrib.debug :as dbg]))
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull]])))
 
 (e/declare conn)
 (e/declare db)
