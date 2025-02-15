@@ -15,7 +15,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull]])))
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3]])))
 
 (e/declare conn)
 (e/declare db)
@@ -25,7 +25,7 @@
           (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             (eduction
               (map #(d/entity db %))
-              (map (fn [!e] [!e ((hf-pull hfql-spec) {'% !e})])) ; pull everything for search
+              (map (fn [!e] [!e (hf-pull3 hfql-spec !e)])) ; pull everything for search
               (filter #(contrib.str/includes-str? (nth % 1) search)) ; search all pulled cols
               (map first)) ; unpull so we can datafy entity in view to infer cols
             sequence
