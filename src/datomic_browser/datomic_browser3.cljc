@@ -109,8 +109,6 @@
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
 
-#?(:clj (defn backrefs [!e] (update-vals (dx/back-references (d/entity-db !e) (:db/id !e)) count)))
-
 #?(:clj (def !sitemap
           (atom      ; picker routes should merge into colspec as pull recursion
             {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
