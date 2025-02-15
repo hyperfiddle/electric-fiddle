@@ -1,10 +1,9 @@
-(ns datomic-browser.dbob
+(ns datomic-browser.datomic-browser3
   (:require clojure.string
             [contrib.data :refer [map-entry]]
             [contrib.debug :refer [dbg-ok]]
             contrib.str
             #?(:clj [datomic.api :as d])
-            [datomic-browser.datomic-browser :refer [Inject-datomic]]
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
             [dustingetz.easy-table :refer [Load-css]]
@@ -204,24 +203,22 @@
                 (binding [*hfql-spec (e/server (get sitemap fiddle []))] ; cols don't serialize perfectly yet fixme
                   (e/Apply Fiddle (nfirst r/route)))))))))))
 
-(e/defn Fiddles []
-  {`DatomicBrowserOB (Inject-datomic dustingetz.mbrainz/mbrainz-uri
-                       (e/fn [conn]
-                         (binding [pages {`Attributes Attributes
-                                          `AttributeDetail AttributeDetail
-                                          `DbStats DbStats
-                                          `TxDetail TxDetail
-                                          `EntityDetail EntityDetail}
-                                   eb/whitelist {`Attribute Attribute
-                                                 `EntityTooltip EntityTooltip}
-                                   conn conn
-                                   db (e/server (ex/Offload-latch #(d/db conn)))]
-                           (dom/style (dom/text css tooltip/css))
-                           (let [sitemap (e/server (e/watch !sitemap))]
-                             (Index sitemap)
-                             (TooltipArea (e/fn []
-                                            (Tooltip)
-                                            (HfqlRoot sitemap :default `[[Attributes]])))))))})
+(e/defn DatomicBrowser3 [conn]
+  (binding [pages {`Attributes Attributes
+                   `AttributeDetail AttributeDetail
+                   `DbStats DbStats
+                   `TxDetail TxDetail
+                   `EntityDetail EntityDetail}
+            eb/whitelist {`Attribute Attribute
+                          `EntityTooltip EntityTooltip}
+            conn conn
+            db (e/server (ex/Offload-latch #(d/db conn)))]
+    (dom/style (dom/text css tooltip/css))
+    (let [sitemap (e/server (e/watch !sitemap))]
+      (Index sitemap)
+      (TooltipArea (e/fn []
+                     (Tooltip)
+                     (HfqlRoot sitemap :default `[[Attributes]]))))))
 
 (def css "
 .Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
