@@ -64,37 +64,6 @@
                  (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
                  (dom/td (r/link ['.. [`TxDetail tx]] (dom/text tx)))))))))
 
-;; fork entire treelist3 to control datomic EntityMap traversal
-;; traverse into first (root) entity, don't traverse further
-#?(:clj
-   (defn data-children [x]
-     (cond (instance? datomic.query.EntityMap x) x ; (coll? EntityMap) true, we want to control deep traversal
-           (map? x) (seq x)
-           (map-entry? x) (when-some [v* (data-children (val x))]
-                            (let [k (key x)]
-                              (mapv (fn [[p v]] [[k p] v]) v*)))
-           (coll? x) (into [] (map-indexed vector) x)
-           :else nil)))
-
-#?(:clj
-   (defn -tree-list [path x children-fn keep? root?]
-     (let [c*? (children-fn x)
-           c* (if (instance? datomic.query.EntityMap c*?)
-                (when root? c*?)
-                c*?)]
-       (if-some [c* (seq c*)]
-         (when-some [v* (seq (into [] (mapcat (fn [[p v]] (-tree-list (conj path p) v children-fn keep? false))) c*))]
-           (cons [path x true] v*))
-         ;;           search value and last path (is this heuristic correct?)
-         (when (keep? [x (peek path)]) [[path x]])))))
-
-#?(:clj
-   (defn treelist
-     ([x] (treelist data-children x))
-     ([children-fn x] (treelist children-fn (constantly true) x))
-     ([children-fn keep? x]
-      (-tree-list [] x children-fn keep? :root))))
-
 (e/defn DbStats []
   (e/client
     (TreeBlock ::db-stats
