@@ -104,7 +104,8 @@
                    com.hyperfiddle/hfql {:local/root "vendor/hfql"}
                    com.hyperfiddle/rcf {:local/root "vendor/rcf"}}
    :extra-deps
-   {com.pitch/uix.core {:mvn/version "1.0.1"}
+   {clj-python/libpython-clj {:mvn/version "2.026"}
+    com.pitch/uix.core {:mvn/version "1.0.1"}
     com.pitch/uix.dom {:mvn/version "1.0.1"}
     meander/epsilon {:mvn/version "0.0.650"}}}
 

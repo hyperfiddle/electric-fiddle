@@ -24,3 +24,6 @@ data
 /src-dev/electric-fiddle.edn
 /.dir-locals.el
 /resources/public/user/ui_demo.css
+
+# libpython-clj
+/classes
