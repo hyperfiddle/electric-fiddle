@@ -3,7 +3,7 @@
             [dustingetz.easy-table :refer [DemoEasyTable]]
             [dustingetz.edn-viewer0 :refer [EdnViewer0]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
-            dustingetz.object-browser-demo2
+            [dustingetz.object-browser-demo2 :refer [ObjectBrowserDemo2]]
             [dustingetz.logic :refer [Logic]]
             [dustingetz.london-talk-2024.webview-concrete :refer [WebviewConcrete]]
             [dustingetz.london-talk-2024.webview-generic :refer [WebviewGeneric]]
@@ -31,8 +31,8 @@
      `Y-dir Y-dir
      `MillionCheckboxes MillionCheckboxes
      `MillionCheckboxes2 MillionCheckboxes2
-     `Logic Logic}
-    (dustingetz.object-browser-demo2/Fiddles)
+     `Logic Logic
+     `ObjectBrowserDemo2 ObjectBrowserDemo2}
     {`WebviewConcrete WebviewConcrete
      `WebviewGeneric WebviewGeneric
      `WebviewDynamic WebviewDynamic

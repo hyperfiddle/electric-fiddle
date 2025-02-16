@@ -167,20 +167,20 @@
              `Tap ['*]})))
 
 (declare css)
-(e/defn Fiddles []
-  {`ObjectBrowserDemo2
-   (e/fn []
-     (binding [pages {`Clojure-all-ns Clojure-all-ns
-                      `GitRepo GitRepo
-                      `File File
-                      `ThreadMX ThreadMX
-                      `Class_ Class_
-                      `Thread_ Thread_
-                      `Tap Tap}]
-       (dom/style (dom/text css))
-       (let [sitemap (e/server (e/watch !sitemap))]
-         (Index sitemap)
-         (HfqlRoot sitemap :default `(Clojure-all-ns)))))})
+
+(e/defn ObjectBrowserDemo2 []
+  (binding [pages {`Clojure-all-ns Clojure-all-ns
+                   `GitRepo GitRepo
+                   `File File
+                   `ThreadMX ThreadMX
+                   `Class_ Class_
+                   `Thread_ Thread_
+                   `Tap Tap}]
+    (dom/style (dom/text css))
+    (let [sitemap (e/server (e/watch !sitemap))]
+      (Index sitemap)
+      (HfqlRoot sitemap :default `(Clojure-all-ns)))))
+
 
 (def css "
 .Index > a+a { margin-left: .5em; }
