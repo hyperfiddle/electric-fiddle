@@ -7,7 +7,7 @@
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
             [dustingetz.easy-table :refer [Load-css]]
-            [dustingetz.entity-browser3 :as eb :refer [TableBlock TreeBlock Render]]
+            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec TableBlock TreeBlock Render]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages NotFoundPage]]
             [hyperfiddle.electric3 :as e]
@@ -19,7 +19,6 @@
 
 (e/declare conn)
 (e/declare db)
-(e/declare *hfql-spec)
 
 #?(:clj (defn attributes [db hfql-spec search]
           (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
@@ -152,24 +151,6 @@
     (dom/text " — Datomic Browser")))
 
 (declare css)
-(e/defn HfqlRoot
-  [sitemap
-   & {:keys [default]
-      :or {default nil}}]
-  (e/client
-    #_(dom/pre (dom/text (pr-str r/route)))
-    (Load-css "dustingetz/easy_table.css")
-    (dom/div (dom/props {:class (str "Browser dustingetz-EasyTable")})
-      (e/for [route (e/diff-by identity (e/as-vec r/route))] ; reboot entire page
-        (binding [r/route route]
-          (let [[fiddle & _] (first r/route)]
-            (if-not fiddle
-              (r/ReplaceState! ['. default])
-              (let [Fiddle (get pages fiddle NotFoundPage)]
-                (set! (.-title js/document) (str (some-> fiddle name (str " – ")) "Hyperfiddle"))
-                (binding [*hfql-spec (e/server (get sitemap fiddle []))] ; cols don't serialize perfectly yet fixme
-                  (e/Apply Fiddle (nfirst r/route)))))))))))
-
 (e/defn DatomicBrowser3 [conn]
   (binding [pages {`Attributes Attributes
                    `AttributeDetail AttributeDetail
