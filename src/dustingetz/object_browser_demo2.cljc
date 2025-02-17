@@ -3,6 +3,7 @@
   (:require [contrib.data :refer [map-entry]]
             [dustingetz.entity-browser1 :refer [HfqlRoot *hfql-spec]]
             [dustingetz.entity-browser3 :refer [TableBlock TreeBlock Render]]
+            [datomic-browser.datomic-browser3 :refer [BrowsePath]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj [dustingetz.datafy-fs :as fs])
@@ -16,41 +17,41 @@
 
 (e/defn GitRepo [repo-path]
   (e/client
-    (TreeBlock ::select-git
-      (e/server (map-entry `GitRepo (dustingetz.datafy-git2/load-repo repo-path)))
-      nil :cols *hfql-spec)))
+    (let [kv (e/server (e/server (map-entry `GitRepo (dustingetz.datafy-git2/load-repo repo-path))))]
+      #_(r/pop (BrowsePath kv))
+      (TreeBlock ::select-git kv nil :cols *hfql-spec))))
 
 (e/defn File [file-path]
   (e/client
-    (TreeBlock ::select
-      (e/server (map-entry `File (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))
-      nil :cols *hfql-spec)))
+    (let [kv (e/server (map-entry `File (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))]
+      #_(r/pop (BrowsePath kv))
+      (TreeBlock ::select kv nil :cols *hfql-spec))))
 
 (e/defn Clojure-all-ns []
   (e/client
-    (TableBlock ::select
-      (e/server (map-entry `Clojure-all-ns (fn [search] (vec (sort-by ns-name (all-ns)))) #_*hfql-spec))
-      nil *hfql-spec)))
+    #_(r/pop (BrowsePath (e/server (map-entry `Clojure-all-ns (vec (sort-by ns-name (all-ns)))))))
+    (let [kv (e/server (map-entry `Clojure-all-ns (fn [search] (vec (sort-by ns-name (all-ns))))))]
+      (TableBlock ::select kv nil *hfql-spec))))
 
 (e/defn ThreadMX []
   (e/client
-    (TreeBlock ::select
-      (e/server (map-entry `ThreadMX (dustingetz.datafy-jvm2/resolve-thread-manager)))
-      nil :cols *hfql-spec)))
+    (let [kv (e/server (map-entry `ThreadMX (dustingetz.datafy-jvm2/resolve-thread-manager)))]
+      #_(r/pop (BrowsePath kv))
+      (TreeBlock ::select kv nil :cols *hfql-spec))))
 
 (e/defn Class_ [class-name]
   (e/client
-    (TreeBlock ::select-git
-      (e/server (map-entry `Class_ (dustingetz.datafy-jvm2/resolve-class
-                                    #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
-                                    class-name)))
-      nil :cols *hfql-spec)))
+    (let [kv (e/server (map-entry `Class_ (dustingetz.datafy-jvm2/resolve-class
+                                            #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
+                                            class-name)))]
+      #_(r/pop (BrowsePath kv))
+      (TreeBlock ::select-git kv nil :cols *hfql-spec))))
 
 (e/defn Thread_ [thread-id]
   (e/client
-    (TreeBlock ::select-git
-      (e/server (map-entry `Thread_ (dustingetz.datafy-jvm2/resolve-thread thread-id)))
-      nil :cols *hfql-spec)))
+    (let [kv (e/server (e/server (map-entry `Thread_ (dustingetz.datafy-jvm2/resolve-thread thread-id))))]
+      #_(r/pop (BrowsePath kv))
+      (TreeBlock ::select-git kv nil :cols *hfql-spec))))
 
 (e/defn Tap [])
 
