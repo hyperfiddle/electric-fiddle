@@ -1,21 +1,25 @@
 (ns datomic-browser.datomic-browser3
   (:require clojure.string
-            [contrib.data :refer [map-entry]]
+            [contrib.data :refer [map-entry unqualify]]
             [contrib.debug :refer [dbg-ok]]
             contrib.str
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
             [dustingetz.easy-table :refer [Load-css]]
-            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec TableBlock TreeBlock Render]]
+            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec TableBlock TableBlock2 TreeBlock Render]]
+            [dustingetz.identify :refer [identify]]
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages NotFoundPage]]
+            [clojure.datafy :refer [datafy nav]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.electric-forms4 :refer [Interpreter]]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3]])))
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3]])
+            #?(:clj [markdown.core :as md])))
 
 (e/declare conn)
 (e/declare db)
@@ -70,12 +74,93 @@
       nil
       :cols *hfql-spec)))
 
-(e/defn EntityDetail [e]
+;; ----------------------------------------------------------------------
+
+#?(:clj (defmulti title (fn [m] (some-> m meta :clojure.datafy/class))))
+#?(:clj (defmethod title :default [m]
+          (or (some-> m meta :clojure.datafy/obj identify)
+            (some-> m meta :clojure.datafy/class str))))
+
+(e/defn MarkdownBlock [field-name kv _selected & _]
+  (dom/fieldset
+    (dom/legend (dom/text (e/server (pr-str (key kv)))))
+    (dom/div
+      (set! (.-innerHTML dom/node) (e/server (md/md-to-html-string (val kv)))))))
+
+(defn infer-block-type [x]
+  ;; (prn "infer-block-type" (type x) x)
+  (cond
+    (or (set? x) ; align with explorer-seq which indexes sets
+      (sequential? x)
+      (fn? x)) :table ; datafy does not alter cardinality, do not need to call it
+    (string? x) :string
+    (map? (datafy x)) :tree ; fixme gross, how to detect scalars? Can we not emit selection on scalars instead?
+    () :scalar))
+
+(e/defn Block [kv locus]
+  ;; (e/server (prn 'Block {:locus locus, :kv kv}))
   (e/client
+    (let [x (e/server #_datafy (val kv))]
+      (when-some [F (e/server (case (infer-block-type x) :tree TreeBlock :table TableBlock2 :string MarkdownBlock :scalar nil nil))]
+        (Interpreter {::select (e/fn [path] (r/Navigate! ['. (if path [path] [])])
+                                 [:hyperfiddle.electric-forms4/ok])}
+          (do
+            ;; (e/server (prn "Block" (infer-block-type x) kv))
+            (F ::select kv locus :cols ['*])))))))
+
+
+#_
+(defn nav-in [m path]
+  (loop [m m, path path]
+    (if-some [[p & ps] (seq path)]
+      (let [v (get m p)]
+        (recur (datafy (nav m p v)) ps)) ; todo revisit
+      m)))
+
+(defn datafy-nav-in [x path] ; datafy enables generic descent as an associative, self-describing tree
+  #_(map-entry path)
+  (loop [m (datafy x), path path]
+    (if-some [[p & ps] (seq path)]
+      (let [v (get m p)]
+        (recur (nav m p v) ps))
+      m)))
+
+(defn datafy-pull-1 [x path] ; weirdo, hfql will be better
+  (map-entry path (datafy-nav-in x path)))
+
+(defn- id->index [id xs!]
+  (first (eduction (map-indexed vector)
+           (keep (fn [[i v]] (when (= id (identify v)) i)))
+           (take 1)
+           xs!)))
+
+(e/defn BrowsePath [kv]
+  (e/client
+    (let [locus (first r/route)]
+      (Block kv locus)
+      (when (some? locus)
+        (r/pop
+          (e/for [locus (e/diff-by identity (e/as-vec locus))] ; don't reuse DOM/IO frames across different objects
+            (let [kv (e/server #_(ex/Offload-reset (fn []))
+                               (case (infer-block-type (val kv))
+                                 :table (let [value (vec (val kv))
+                                              index (id->index (first locus) (datafy value))]
+                                          (map-entry locus (datafy-nav-in value [index])))
+                                 (datafy-pull-1 (val kv) locus)))]
+              (BrowsePath kv))))))))
+
+(e/defn EntityDetail [e]
+  (r/pop
+    (BrowsePath (e/server (map-entry `(EntityDetail ~e) (d/entity db e)))))
+  #_(e/client
     (TreeBlock ::select-user
       (e/server (map-entry `(EntityDetail ~e) (d/entity db e)))
       nil
       :cols *hfql-spec)))
+
+
+;; ----------------------------------------------------------------------
+
 
 ;; TODO mismacth, Datoms are vector-like
 ;; TODO e a should be refs so we can render them as links
