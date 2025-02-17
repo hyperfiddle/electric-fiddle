@@ -184,6 +184,6 @@
 
 (def css "
 .Index > a+a { margin-left: .5em; }
-.ThreadDump3 > a + a { margin-left: .5em; }
 .Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
-.Browser .-datomic-browser-dbob-db-stats table { grid-template-columns: 36ch auto;}")
+.Browser fieldset.entity table { grid-template-columns: 20em auto; }
+")
