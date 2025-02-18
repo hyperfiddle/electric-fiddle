@@ -99,7 +99,10 @@
 
 #?(:clj (defn aevt [a]
           (let [db @dustingetz.mbrainz/test-db]
-            (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]] {:e e, :a a, :v v, :tx tx, :added added}))))))
+            (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]]
+                                                           (with-meta
+                                                             {:e e, :a a, :v v, :tx tx, :added added}
+                                                             {`dustingetz.identify/-identify (constantly e)})))))))
 
 (comment
   (time (count (aevt :abstractRelease/name))) := 10180

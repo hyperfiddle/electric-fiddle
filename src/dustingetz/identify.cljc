@@ -1,6 +1,8 @@
 (ns dustingetz.identify)
 
-(defprotocol Identifiable (-identify [o]))
+(defprotocol Identifiable
+  :extend-via-metadata true
+  (-identify [o]))
 
 (defn identify [?o] (-identify ?o))
 
