@@ -104,7 +104,7 @@
       (when-some [F (e/server (case (infer-block-type x) :tree TreeBlock :table TableBlock2 :string MarkdownBlock :scalar nil nil))]
         (Interpreter {::select (e/fn [path] (r/Navigate! ['. (if path [path] [])])
                                  [:hyperfiddle.electric-forms4/ok])}
-          (F ::select kv locus :cols *hfql-spec))))))
+          (F ::select kv locus *hfql-spec))))))
 
 
 #_
@@ -145,7 +145,9 @@
                                               index (id->index (first locus) (datafy value))]
                                           (map-entry locus (datafy-nav-in value [index])))
                                  (datafy-pull-1 (val kv) locus)))]
-              (BrowsePath kv))))))))
+              ;; stacked views should get '*. First `Block` renders above
+              (binding [*hfql-spec (e/server ['*])]
+                (BrowsePath kv)))))))))
 
 (e/defn EntityDetail [e]
   (r/pop
