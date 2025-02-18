@@ -143,42 +143,34 @@
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
 
-#?(:clj (def !sitemap
-          (atom      ; picker routes should merge into colspec as pull recursion
-            {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
-                                                :hf/Tooltip `EntityTooltip})
-                          `(summarize-attr* ~'%)
-                          #_'*]
-             `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
-                                        ; TODO custom key/value renderers - conflict with treelister
-             `AttributeDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
+#?(:clj (def sitemap
+          {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
                                               :hf/Tooltip `EntityTooltip})
-                               :v
-                               (with-meta 'tx {:hf/link `(TxDetail ~'tx)
-                                               :hf/Tooltip `EntityTooltip})
-                               #_:added]
-             `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
-                                       :hf/Tooltip `EntityTooltip})
-                        (with-meta 'a {:hf/link `(AttributeDetail ~'a)
-                                       :hf/Render `Attribute
-                                       :hf/Tooltip `EntityTooltip})
-                        :v]
-             `EntityDetail ['*
-                            #_{(ground :country/GB) []}
-                            #_{'* '...}
-                            #_(with-meta '* {:hf/link `(EntityDetail ~'*)})]
-             `SiteMap ['*]})))
+                        `(summarize-attr* ~'%)
+                        #_'*]
+           `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
+           ; TODO custom key/value renderers - conflict with treelister
+           `AttributeDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
+                                            :hf/Tooltip `EntityTooltip})
+                             :v
+                             (with-meta 'tx {:hf/link `(TxDetail ~'tx)
+                                             :hf/Tooltip `EntityTooltip})
+                             #_:added]
+           `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
+                                     :hf/Tooltip `EntityTooltip})
+                      (with-meta 'a {:hf/link `(AttributeDetail ~'a)
+                                     :hf/Render `Attribute
+                                     :hf/Tooltip `EntityTooltip})
+                      :v]
+           `EntityDetail ['*
+                          #_{(ground :country/GB) []}
+                          #_{'* '...}
+                          #_(with-meta '* {:hf/link `(EntityDetail ~'*)})]
+           `SiteMap ['*]}))
 
 (e/defn SiteMap []
   (r/pop
-    (BrowsePath (e/server (map-entry `(SiteMap) (e/watch !sitemap))))))
-
-(comment
-  (swap! !sitemap update-in [`Attributes] conj :db/id)
-  (swap! !sitemap update-in [`Attributes] (constantly [:db/ident]))
-  (swap! !sitemap update-in [`Attributes] (constantly [:db/ident `(summarize-attr* ~'%)]))
-  (-> @!sitemap (get `Attributes) first meta :hf/link)
-  )
+    (BrowsePath (e/server (map-entry `(SiteMap) sitemap)))))
 
 (e/defn Index [_sitemap]
   ;; TODO auto-derive from sitemap, only for top-level, non-partial links.
@@ -204,7 +196,7 @@
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))]
     (dom/style (dom/text css tooltip/css))
-    (let [sitemap (e/server (e/watch !sitemap))]
+    (let [sitemap (e/server sitemap)]
       (Index sitemap)
       (TooltipArea (e/fn []
                      (Tooltip)
