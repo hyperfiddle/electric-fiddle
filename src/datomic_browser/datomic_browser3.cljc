@@ -104,9 +104,7 @@
       (when-some [F (e/server (case (infer-block-type x) :tree TreeBlock :table TableBlock2 :string MarkdownBlock :scalar nil nil))]
         (Interpreter {::select (e/fn [path] (r/Navigate! ['. (if path [path] [])])
                                  [:hyperfiddle.electric-forms4/ok])}
-          (do
-            ;; (e/server (prn "Block" (infer-block-type x) kv))
-            (F ::select kv locus :cols ['*])))))))
+          (F ::select kv locus :cols *hfql-spec))))))
 
 
 #_
