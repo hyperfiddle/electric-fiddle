@@ -83,12 +83,6 @@
   PersonIdent
   (datafy [^PersonIdent x] (clj-jgit.util/person-ident x)))
 
-(extend-protocol Navigable
-  FileRepository (nav [^FileRepository o k v]
-                   (case k
-                     :dir (.getDirectory o)
-                     v)))
-
 (comment
   (require '[clojure.datafy :refer [datafy]])
   (as-> (load-repo "./") x
