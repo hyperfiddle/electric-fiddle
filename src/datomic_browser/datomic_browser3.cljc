@@ -18,7 +18,7 @@
             [hyperfiddle.electric-forms4 :refer [Interpreter]]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3]])
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3 hf-nav2]])
             #?(:clj [markdown.core :as md])))
 
 (e/declare conn)
@@ -55,25 +55,6 @@
                                  [:hyperfiddle.electric-forms4/ok])}
           (F ::select kv locus *hfql-spec))))))
 
-
-#_
-(defn nav-in [m path]
-  (loop [m m, path path]
-    (if-some [[p & ps] (seq path)]
-      (let [v (get m p)]
-        (recur (datafy (nav m p v)) ps)) ; todo revisit
-      m)))
-
-(defn datafy-nav-in [x path] ; datafy enables generic descent as an associative, self-describing tree
-  #_(map-entry path)
-  (loop [x x, path path]
-    (if-some [[p & ps] (seq path)]
-      (recur (nav x p (get x p)) ps)
-      x)))
-
-(defn datafy-pull-1 [x path] ; weirdo, hfql will be better
-  (map-entry path (datafy-nav-in x path)))
-
 (defn- id->index [id xs!]
   (first (eduction (map-indexed vector)
            (keep (fn [[i v]] (when (= id (identify v)) i)))
@@ -91,8 +72,8 @@
                                (case (infer-block-type (val kv))
                                  :table (let [value (vec (val kv))
                                               index (id->index (first locus) (datafy value))]
-                                          (map-entry locus (datafy-nav-in value [index])))
-                                 (datafy-pull-1 (val kv) locus)))]
+                                          (map-entry locus (hf-nav2 value index)))
+                                 (map-entry locus (reduce hf-nav2 (val kv) locus))))]
               ;; stacked views should get '*. First `Block` renders above
               (binding [*hfql-spec (e/server ['*])]
                 (BrowsePath kv)))))))))
