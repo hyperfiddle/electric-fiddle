@@ -152,6 +152,7 @@
                     `(fs/dir-list ~'%)
                     #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))]
              `Clojure-all-ns [:name :publics '*
+                              #_(with-meta '% {:hf/link `(Clojure-ns-detail ~'%)})
                               #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
                               `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
              `ThreadMX ['*]
