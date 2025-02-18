@@ -24,13 +24,6 @@
 (e/declare conn)
 (e/declare db)
 
-;; ----------------------------------------------------------------------
-
-#?(:clj (defmulti title (fn [m] (some-> m meta :clojure.datafy/class))))
-#?(:clj (defmethod title :default [m]
-          (or (some-> m meta :clojure.datafy/obj identify)
-            (some-> m meta :clojure.datafy/class str))))
-
 (e/defn MarkdownBlock [field-name kv _selected & _]
   (dom/fieldset
     (dom/legend (dom/text (e/server (pr-str (key kv)))))
