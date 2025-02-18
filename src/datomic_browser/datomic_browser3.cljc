@@ -170,7 +170,12 @@
              `EntityDetail ['*
                             #_{(ground :country/GB) []}
                             #_{'* '...}
-                            #_(with-meta '* {:hf/link `(EntityDetail ~'*)})]})))
+                            #_(with-meta '* {:hf/link `(EntityDetail ~'*)})]
+             `SiteMap ['*]})))
+
+(e/defn SiteMap []
+  (r/pop
+    (BrowsePath (e/server (map-entry `(SiteMap) (e/watch !sitemap))))))
 
 (comment
   (swap! !sitemap update-in [`Attributes] conj :db/id)
@@ -187,6 +192,7 @@
     (dom/text "Nav: ")
     (r/link ['. [[`Attributes]]] (dom/text "Attributes"))
     (r/link ['. [[`DbStats]]] (dom/text "DbStats"))
+    (r/link ['. [[`SiteMap]]] (dom/text "SiteMap"))
     (dom/text " — Datomic Browser")))
 
 (declare css)
@@ -195,7 +201,8 @@
                    `AttributeDetail AttributeDetail
                    `DbStats DbStats
                    `TxDetail TxDetail
-                   `EntityDetail EntityDetail}
+                   `EntityDetail EntityDetail
+                   `SiteMap SiteMap}
             eb/whitelist {`Attribute Attribute
                           `EntityTooltip EntityTooltip}
             conn conn
