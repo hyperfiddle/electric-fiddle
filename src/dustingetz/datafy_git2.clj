@@ -1,7 +1,7 @@
 (ns dustingetz.datafy-git2
   (:require [clj-jgit.porcelain :as git]
             clj-jgit.util
-            [clojure.core.protocols :refer [nav Datafiable]]
+            [clojure.core.protocols :refer [nav Datafiable Navigable]]
             [dustingetz.datafy-fs :as fs]
             [dustingetz.identify :refer [Identifiable]])
   (:import (org.eclipse.jgit.api Git)
@@ -82,6 +82,12 @@
 
   PersonIdent
   (datafy [^PersonIdent x] (clj-jgit.util/person-ident x)))
+
+(extend-protocol Navigable
+  FileRepository (nav [^FileRepository o k v]
+                   (case k
+                     :dir (.getDirectory o)
+                     v)))
 
 (comment
   (require '[clojure.datafy :refer [datafy]])
