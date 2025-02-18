@@ -1,24 +1,23 @@
 (ns datomic-browser.datomic-browser3
-  (:require clojure.string
-            [contrib.data :refer [map-entry unqualify]]
+  (:require [clojure.datafy :refer [datafy]]
+            clojure.string
+            [contrib.data :refer [map-entry]]
             [contrib.debug :refer [dbg-ok]]
             contrib.str
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
-            [dustingetz.easy-table :refer [Load-css]]
-            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec TableBlock TableBlock2 TreeBlock Render]]
+            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec TableBlock2 TreeBlock Render]]
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3 hf-nav2]])
             [dustingetz.identify :refer [identify]]
             #?(:clj dustingetz.mbrainz)
-            [electric-fiddle.fiddle-index :refer [pages NotFoundPage]]
-            [clojure.datafy :refer [datafy nav]]
+            [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms4 :refer [Interpreter]]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3 hf-nav2]])
             #?(:clj [markdown.core :as md])))
 
 (e/declare conn)
