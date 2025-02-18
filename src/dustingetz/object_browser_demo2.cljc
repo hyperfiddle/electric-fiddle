@@ -1,8 +1,7 @@
 (ns dustingetz.object-browser-demo2
   #?(:clj (:import org.eclipse.jgit.api.Git))
   (:require [contrib.data :refer [map-entry]]
-            [dustingetz.entity-browser1 :refer [HfqlRoot *hfql-spec]]
-            [dustingetz.entity-browser3 :refer [TableBlock TreeBlock Render]]
+            [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TableBlock TreeBlock]]
             [datomic-browser.datomic-browser3 :refer [BrowsePath]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
@@ -17,41 +16,30 @@
 
 (e/defn GitRepo [repo-path]
   (e/client
-    (let [kv (e/server (e/server (map-entry `GitRepo (dustingetz.datafy-git2/load-repo repo-path))))]
-      #_(r/pop (BrowsePath kv))
-      (TreeBlock ::select-git kv nil :cols *hfql-spec))))
+    (r/pop (BrowsePath (e/server (map-entry `GitRepo (dustingetz.datafy-git2/load-repo repo-path)))))))
 
 (e/defn File [file-path]
   (e/client
-    (let [kv (e/server (map-entry `File (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))]
-      #_(r/pop (BrowsePath kv))
-      (TreeBlock ::select kv nil :cols *hfql-spec))))
+    (r/pop (BrowsePath (e/server (map-entry `File (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))))))
 
 (e/defn Clojure-all-ns []
   (e/client
-    #_(r/pop (BrowsePath (e/server (map-entry `Clojure-all-ns (vec (sort-by ns-name (all-ns)))))))
-    (let [kv (e/server (map-entry `Clojure-all-ns (fn [search] (vec (sort-by ns-name (all-ns))))))]
-      (TableBlock ::select kv nil *hfql-spec))))
+    (r/pop (BrowsePath (e/server (map-entry `Clojure-all-ns (vec (sort-by ns-name (all-ns)))))))))
 
 (e/defn ThreadMX []
   (e/client
-    (let [kv (e/server (map-entry `ThreadMX (dustingetz.datafy-jvm2/resolve-thread-manager)))]
-      #_(r/pop (BrowsePath kv))
-      (TreeBlock ::select kv nil :cols *hfql-spec))))
+    (r/pop (BrowsePath (e/server (map-entry `ThreadMX (dustingetz.datafy-jvm2/resolve-thread-manager)))))))
 
 (e/defn Class_ [class-name]
   (e/client
     (let [kv (e/server (map-entry `Class_ (dustingetz.datafy-jvm2/resolve-class
                                             #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
                                             class-name)))]
-      #_(r/pop (BrowsePath kv))
-      (TreeBlock ::select-git kv nil :cols *hfql-spec))))
+      (r/pop (BrowsePath kv)))))
 
 (e/defn Thread_ [thread-id]
   (e/client
-    (let [kv (e/server (e/server (map-entry `Thread_ (dustingetz.datafy-jvm2/resolve-thread thread-id))))]
-      #_(r/pop (BrowsePath kv))
-      (TreeBlock ::select-git kv nil :cols *hfql-spec))))
+    (r/pop (BrowsePath (e/server (map-entry `Thread_ (dustingetz.datafy-jvm2/resolve-thread thread-id)))))))
 
 (e/defn Tap [])
 
@@ -59,13 +47,13 @@
   (e/client
     (dom/props {:class "Index"})
     (dom/text "Nav: ")
-    (r/link ['. [`Clojure-all-ns]] (dom/text "clojure.core"))
-    (r/link ['. [`GitRepo "./"]] (dom/text "git"))
-    (r/link ['. [`File "./"]] (dom/text "file"))
-    (r/link ['. [`ThreadMX]] (dom/text "thread-mx"))
-    #_(r/link ['. [`Thread_ 0]] (dom/text "Thread 0"))
-    (r/link ['. [`Class_ 'java.lang.management.ThreadMXBean]] (dom/text "class"))
-    (r/link ['. [`Tap]] (dom/text "Tap"))))
+    (r/link ['. [[`Clojure-all-ns]]] (dom/text "clojure.core"))
+    (r/link ['. [[`GitRepo "./"]]] (dom/text "git"))
+    (r/link ['. [[`File "./"]]] (dom/text "file"))
+    (r/link ['. [[`ThreadMX]]] (dom/text "thread-mx"))
+    #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
+    (r/link ['. [[`Class_ 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
+    (r/link ['. [[`Tap]]] (dom/text "Tap"))))
 
 (comment
   (require '[clojure.datafy :refer [datafy nav]]
@@ -159,13 +147,15 @@
                     `(fs/file-kind ~'%)
                     `(fs/file-created ~'%)
                     #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))
-                    {`(fs/dir-list ~'%) 2}]
+                    #_{`(fs/dir-list ~'%) 2}]
              `Clojure-all-ns [:name :publics '*
+                              #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
                               `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
              `ThreadMX ['*]
              `Thread_ ['*]
              `Class_ ['*]
-             `Tap ['*]})))
+             `Tap ['*]
+             #_#_`Entity ['{* [*]}]})))
 
 (declare css)
 
@@ -180,7 +170,7 @@
     (dom/style (dom/text css))
     (let [sitemap (e/server (e/watch !sitemap))]
       (Index sitemap)
-      (HfqlRoot sitemap :default `(Clojure-all-ns)))))
+      (HfqlRoot sitemap :default `[(Clojure-all-ns)]))))
 
 
 (def css "
