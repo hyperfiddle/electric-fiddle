@@ -90,20 +90,19 @@
   (r/pop
     (BrowsePath (e/server (map-entry `Attributes (attributes db *hfql-spec ""))))))
 
-#?(:clj (defn aevt [a]
-          (let [db @dustingetz.mbrainz/test-db]
-            (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]]
-                                                           (with-meta
-                                                             {:e e, :a a, :v v, :tx tx, :added added}
-                                                             {`dustingetz.identify/-identify (constantly e)})))))))
+#?(:clj (defn aevt [db a] ; todo inline
+          (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]]
+                                                         (with-meta
+                                                           {:e e, :a a, :v v, :tx tx, :added added}
+                                                           {`dustingetz.identify/-identify (constantly e)}))))))
 
 (comment
-  (time (count (aevt :abstractRelease/name))) := 10180
-  (clojure.datafy/datafy (first (aevt :abstractRelease/name))))
+  (time (count (aevt @test-db :abstractRelease/name))) := 10180
+  (clojure.datafy/datafy (first (aevt @test-db :abstractRelease/name))))
 
 (e/defn AttributeDetail [a]
   (r/pop
-    (BrowsePath (e/server (map-entry `(AttributeDetail ~a) (aevt a))))))
+    (BrowsePath (e/server (map-entry `(AttributeDetail ~a) (aevt db a))))))
 
 (e/defn DbStats []
   (r/pop
