@@ -41,8 +41,7 @@
   ;; (prn "infer-block-type" (type x) x)
   (cond
     (or (set? x) ; align with explorer-seq which indexes sets
-      (sequential? x)
-      (fn? x)) :table ; datafy does not alter cardinality, do not need to call it
+      (sequential? x)) :table ; datafy does not alter cardinality, do not need to call it
     (string? x) :string
     (map? (datafy x)) :tree ; fixme gross, how to detect scalars? Can we not emit selection on scalars instead?
     () :scalar))
@@ -67,11 +66,10 @@
 
 (defn datafy-nav-in [x path] ; datafy enables generic descent as an associative, self-describing tree
   #_(map-entry path)
-  (loop [m (datafy x), path path]
+  (loop [x x, path path]
     (if-some [[p & ps] (seq path)]
-      (let [v (get m p)]
-        (recur (nav m p v) ps))
-      m)))
+      (recur (nav x p (get x p)) ps)
+      x)))
 
 (defn datafy-pull-1 [x path] ; weirdo, hfql will be better
   (map-entry path (datafy-nav-in x path)))

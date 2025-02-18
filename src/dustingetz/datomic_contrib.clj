@@ -273,16 +273,30 @@
   (invert-attribute :abstractRelease/artists) := :abstractRelease/_artists
   (invert-attribute (invert-attribute :abstractRelease/artists)) := :abstractRelease/artists)
 
-(defn back-references [db eid] ; returns a map, not entity, but all deep refs are entity
-  (contrib.data/group-by
-    (comp invert-attribute first)
-    (fn [coll x] (conj (or coll #{}) (datomic.api/entity db (second x))))
-    (datomic.api/q '[:find ?ident ?e
-                     :in $ ?target
-                     :where
-                     [?e ?a ?target]
-                     [?a :db/ident ?ident]]
-      db eid)))
+(defn find-attr-ident [db attribute-id] ; faster than (:db/ident (d/entity …))
+  (:v (first (datomic.api/datoms db :eavt attribute-id))))
+
+(defn reverse-refs
+  ([db target] (reverse-refs db target false))
+  ([db target include-system-refs?]
+   (->> (datomic.api/datoms db :vaet target)
+     (eduction (if include-system-refs? ; single conditional check
+                 (map identity) ; noop
+                 (remove #(zero? ^long (:e %)))) ; should byte-compile to `==`
+       (map (fn [datom] [(find-attr-ident db (:a datom)) (:e datom)]))))))
+
+;; (reverse-refs @test-db 527765581346058)
+
+(defn back-references [db eid] ; optimized for speed – returns a map {:reverse/_ref #{entity entity ...}
+  (as-> (reverse-refs db eid) % ; return eduction of vector pairs
+    (contrib.data/group-by
+      #(get % 0) ; fast `first`
+      (fn [coll x] (conj! (or coll (transient #{})) (datomic.api/entity db (get x 1)))) ; fast `second`
+      %)
+    ;; single-pass invert-key + freeze entity sets
+    (reduce-kv (fn [r k v] (-> (dissoc! r k) (assoc! (invert-attribute k) (persistent! v))))
+      (transient %) %)
+    (persistent! %)))
 
 (tests
   (datomic.api/touch (datomic.api/entity @test-db yanne))
@@ -333,7 +347,7 @@
     (let [db (.-db entity)]
       (-> {:db/id (:db/id entity)}
         (into (datomic.api/touch entity))
-        (into (back-references db (:db/id entity))) ; G: should this be always on?
+        (into (back-references db (:db/id entity))) ; G: not more expansive than d/touch - heavily optimized.
         (with-meta (nav-context entity))
         ))))
 
