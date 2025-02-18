@@ -24,56 +24,6 @@
 (e/declare conn)
 (e/declare db)
 
-#?(:clj (defn attributes [db hfql-spec search]
-          (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            (eduction
-              (map #(d/entity db %))
-              (map (fn [!e] [!e (hf-pull3 hfql-spec !e)])) ; pull everything for search
-              (filter #(contrib.str/includes-str? (nth % 1) search)) ; search all pulled cols
-              (map first)) ; unpull so we can datafy entity in view to infer cols
-            sequence
-            (sort-by (first hfql-spec)))))
-
-(comment
-  (require '[dustingetz.mbrainz :refer [test-db]])
-  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "ref one"))) := 18
-  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "sys"))) := 3)
-
-(e/defn Attributes []
-  (e/client
-    (TableBlock ::select-user
-      (e/server (map-entry `Attributes #(attributes db *hfql-spec %)))
-      nil *hfql-spec)))
-
-#?(:clj (defn aevt [a]
-          (let [db @dustingetz.mbrainz/test-db]
-            (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]] {:e e, :a a, :v v, :tx tx, :added added}))))))
-
-(comment
-  (time (count (aevt :abstractRelease/name))) := 10180
-  (clojure.datafy/datafy (first (aevt :abstractRelease/name))))
-
-(e/defn AttributeDetail [a]
-  (e/client
-    (TableBlock ::select-user
-      (e/server (map-entry `(AttributeDetail ~a) (fn [search] (when a (aevt a)))))
-      nil *hfql-spec
-      #_#_:Row (e/fn [hfql-spec cols x]
-             (e/server
-               (let [[e _ v tx op] x]
-                 (dom/td (r/link ['.. [`EntityDetail e]]
-                           (dom/text e)
-                           (dom/props {:data-tooltip (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] e))))})))
-                 (dom/td (some-> v str dom/text)) ; todo when a is ref, render link
-                 (dom/td (r/link ['.. [`TxDetail tx]] (dom/text tx)))))))))
-
-(e/defn DbStats []
-  (e/client
-    (TreeBlock ::db-stats
-      (e/server (map-entry `DbStats (d/db-stats db)))
-      nil
-      :cols *hfql-spec)))
-
 ;; ----------------------------------------------------------------------
 
 #?(:clj (defmulti title (fn [m] (some-> m meta :clojure.datafy/class))))
@@ -149,18 +99,44 @@
               (binding [*hfql-spec (e/server ['*])]
                 (BrowsePath kv)))))))))
 
+#?(:clj (defn attributes [db hfql-spec search]
+          (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
+            (eduction
+              (map #(d/entity db %))
+              (map (fn [!e] [!e (hf-pull3 hfql-spec !e)])) ; pull everything for search
+              (filter #(contrib.str/includes-str? (nth % 1) search)) ; search all pulled cols
+              (map first)) ; unpull so we can datafy entity in view to infer cols
+            sequence
+            (sort-by (first hfql-spec)))))
+
+(comment
+  (require '[dustingetz.mbrainz :refer [test-db]])
+  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "ref one"))) := 18
+  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "sys"))) := 3)
+
+(e/defn Attributes []
+  (r/pop
+    (BrowsePath (e/server (map-entry `Attributes (attributes db *hfql-spec ""))))))
+
+#?(:clj (defn aevt [a]
+          (let [db @dustingetz.mbrainz/test-db]
+            (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]] {:e e, :a a, :v v, :tx tx, :added added}))))))
+
+(comment
+  (time (count (aevt :abstractRelease/name))) := 10180
+  (clojure.datafy/datafy (first (aevt :abstractRelease/name))))
+
+(e/defn AttributeDetail [a]
+  (r/pop
+    (BrowsePath (e/server (map-entry `(AttributeDetail ~a) (aevt a))))))
+
+(e/defn DbStats []
+  (r/pop
+    (BrowsePath (e/server (map-entry `DbStats (d/db-stats db))))))
+
 (e/defn EntityDetail [e]
   (r/pop
-    (BrowsePath (e/server (map-entry `(EntityDetail ~e) (d/entity db e)))))
-  #_(e/client
-    (TreeBlock ::select-user
-      (e/server (map-entry `(EntityDetail ~e) (d/entity db e)))
-      nil
-      :cols *hfql-spec)))
-
-
-;; ----------------------------------------------------------------------
-
+    (BrowsePath (e/server (map-entry `(EntityDetail ~e) (d/entity db e))))))
 
 ;; TODO mismacth, Datoms are vector-like
 ;; TODO e a should be refs so we can render them as links
@@ -173,10 +149,8 @@
               (filter #(contrib.str/includes-str? % search))))))
 
 (e/defn TxDetail [e]
-  (e/client
-    (TableBlock ::select-user
-      (e/server (map-entry `(TxDetail ~e) (fn [search] (when e (tx-detail conn e *hfql-spec search)))))
-      nil *hfql-spec)))
+  (r/pop
+    (BrowsePath (e/server (map-entry `(TxDetail ~e) (tx-detail conn e *hfql-spec ""))))))
 
 #?(:clj (defn summarize-attr* [?!a]
           (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
@@ -184,8 +158,9 @@
 
 #?(:clj (defn attributes-count [{:keys [datoms attrs] :as m}]
           (->> (update-vals attrs :count)
-            (clojure.set/map-invert)
-            (into (sorted-map-by #(compare %2 %1))))))
+            (into [] (map (fn [[k v]] {:key k, :count v})))
+            (sort-by :count #(compare %2 %))
+            vec)))
 
 (e/defn Attribute [?e a v pull-expr]
   (Render ?e a (e/server (:db/ident (d/entity db v))) pull-expr))
