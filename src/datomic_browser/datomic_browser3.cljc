@@ -127,7 +127,8 @@
             (eduction (mapcat :data)
               (map (fn [[e a v tx op]]
                      (let [m {:e e, :a a, :v v, :tx tx, :op op}]
-                       ((hf-pull hfql-spec) {'% m}))))
+                       (with-meta ((hf-pull hfql-spec) {'% m})
+                         {`dustingetz.identify/-identify (constantly e)}))))
               (filter #(contrib.str/includes-str? % search))))))
 
 (e/defn TxDetail [e]
