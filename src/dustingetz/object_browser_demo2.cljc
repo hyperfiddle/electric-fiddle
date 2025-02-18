@@ -134,20 +134,23 @@
 
 #?(:clj (def !sitemap
           (atom
-            {`GitRepo [`(git/repo-repo ~'%)
+            {`GitRepo [#_'*
+                       `(git/repo-repo ~'%)
                        `(git/status ~'%)
                        `(git/branch-current ~'%)
                        `(git/branch-list ~'%)
-                       `(git/log ~'%)
+                       `(git/log ~'%) ; navigable; :log is not
                        #_{`(git/log ~'%)
                         [`(git/commit-short-name ~'%)]}]
-             `File [`(fs/file-name ~'%)
+             `File ['*
+                    #_#_#_#_#_#_
+                    `(fs/file-name ~'%)
                     `(fs/file-hidden? ~'%)
                     `(fs/file-name ~'%)
                     `(fs/file-kind ~'%)
                     `(fs/file-created ~'%)
-                    #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))
-                    #_{`(fs/dir-list ~'%) 2}]
+                    `(fs/dir-list ~'%)
+                    #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))]
              `Clojure-all-ns [:name :publics '*
                               #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
                               `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
