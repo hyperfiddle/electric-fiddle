@@ -23,53 +23,6 @@
 (e/declare conn)
 (e/declare db)
 
-(e/defn MarkdownBlock [field-name kv _selected & _]
-  (dom/fieldset
-    (dom/legend (dom/text (e/server (pr-str (key kv)))))
-    (dom/div
-      (set! (.-innerHTML dom/node) (e/server (md/md-to-html-string (val kv)))))))
-
-(defn infer-block-type [x]
-  ;; (prn "infer-block-type" (type x) x)
-  (cond
-    (or (set? x) ; align with explorer-seq which indexes sets
-      (sequential? x)) :table ; datafy does not alter cardinality, do not need to call it
-    (string? x) :string
-    (map? (datafy x)) :tree ; fixme gross, how to detect scalars? Can we not emit selection on scalars instead?
-    () :scalar))
-
-(e/defn Block [kv locus]
-  ;; (e/server (prn 'Block {:locus locus, :kv kv}))
-  (e/client
-    (let [x (e/server #_datafy (val kv))]
-      (when-some [F (e/server (case (infer-block-type x) :tree TreeBlock :table TableBlock2 :string MarkdownBlock :scalar nil nil))]
-        (Interpreter {::select (e/fn [path] (r/Navigate! ['. (if path [path] [])])
-                                 [:hyperfiddle.electric-forms4/ok])}
-          (F ::select kv locus *hfql-spec))))))
-
-(defn- id->index [id xs!]
-  (first (eduction (map-indexed vector)
-           (keep (fn [[i v]] (when (= id (identify v)) i)))
-           (take 1)
-           xs!)))
-
-(e/defn BrowsePath [kv]
-  (e/client
-    (let [locus (first r/route)]
-      (Block kv locus)
-      (when (some? locus)
-        (r/pop
-          (e/for [locus (e/diff-by identity (e/as-vec locus))] ; don't reuse DOM/IO frames across different objects
-            (let [kv (e/server #_(ex/Offload-reset (fn []))
-                               (case (infer-block-type (val kv))
-                                 :table (let [value (vec (val kv))
-                                              index (id->index (first locus) (datafy value))]
-                                          (map-entry locus (hf-nav2 value index)))
-                                 (map-entry locus (reduce hf-nav2 (val kv) locus))))]
-              ;; stacked views should get '*. First `Block` renders above
-              (binding [*hfql-spec (e/server ['*])]
-                (BrowsePath kv)))))))))
-
 #?(:clj (defn attributes [db hfql-spec search]
           (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             (eduction
@@ -87,7 +40,7 @@
 
 (e/defn Attributes []
   (r/pop
-    (BrowsePath (e/server (map-entry `Attributes (attributes db *hfql-spec ""))))))
+    (eb/BrowsePath (e/server (map-entry `Attributes (attributes db *hfql-spec ""))))))
 
 #?(:clj (defn datom->map [[e a v tx added]]
           (with-meta
@@ -102,15 +55,15 @@
 
 (e/defn AttributeDetail [a]
   (r/pop
-    (BrowsePath (e/server (map-entry `(AttributeDetail ~a) (aevt db a))))))
+    (eb/BrowsePath (e/server (map-entry `(AttributeDetail ~a) (aevt db a))))))
 
 (e/defn DbStats []
   (r/pop
-    (BrowsePath (e/server (map-entry `DbStats (d/db-stats db))))))
+    (eb/BrowsePath (e/server (map-entry `DbStats (d/db-stats db))))))
 
 (e/defn EntityDetail [e]
   (r/pop
-    (BrowsePath (e/server (map-entry `(EntityDetail ~e) (d/entity db e))))))
+    (eb/BrowsePath (e/server (map-entry `(EntityDetail ~e) (d/entity db e))))))
 
 ;; TODO mismacth, Datoms are vector-like
 ;; TODO e a should be refs so we can render them as links
@@ -125,7 +78,7 @@
 
 (e/defn TxDetail [e]
   (r/pop
-    (BrowsePath (e/server (map-entry `(TxDetail ~e) (tx-detail conn e *hfql-spec ""))))))
+    (eb/BrowsePath (e/server (map-entry `(TxDetail ~e) (tx-detail conn e *hfql-spec ""))))))
 
 #?(:clj (defn summarize-attr* [?!a]
           (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
@@ -149,7 +102,7 @@
 
 (e/defn EntityHistory [e]
   (r/pop
-    (BrowsePath (e/server (map-entry `(EntityHistory ~e) (entity-history db e))))))
+    (eb/BrowsePath (e/server (map-entry `(EntityHistory ~e) (entity-history db e))))))
 
 #?(:clj (def sitemap
           {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
@@ -180,7 +133,7 @@
 
 (e/defn SiteMap []
   (r/pop
-    (BrowsePath (e/server (map-entry `(SiteMap) sitemap)))))
+    (eb/BrowsePath (e/server (map-entry `(SiteMap) sitemap)))))
 
 (e/defn Index [_sitemap]
   ;; TODO auto-derive from sitemap, only for top-level, non-partial links.
