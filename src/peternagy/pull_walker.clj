@@ -12,6 +12,9 @@
   ([path p] (with-meta (conj path p) (meta p)))
   ([path p o] (with-meta (conj path p) (merge (meta o) (meta p)))))
 
+(defn row [path v branch? metao]
+  (with-meta [path v branch?] (meta metao)))
+
 (defn ?expand-star [pull v]
   (if (some #{'*} pull)
     (-> (into [] (comp cat (distinct)) [(eduction (remove #{'*}) pull) (keys v)])
@@ -28,10 +31,10 @@
                                                 (let [nv (get v k), npath (next-path path k p)]
                                                   (if (map? nv)
                                                     (when-some [recv (seq (rec nv npull npath))]
-                                                      (cons [npath nv true] recv))
-                                                    (when (keep? k nv) [[npath nv false]])))))
+                                                      (cons (row npath nv true k) recv))
+                                                    (when (keep? k nv) [(row npath nv false k)])))))
                               p)
                             (let [nv (get v p)]
-                              (when (keep? p nv) [[(next-path path p) nv false]])))))
+                              (when (keep? p nv) [(row (next-path path p) nv false p)])))))
         (?expand-star pull v)))
     v pull [])))
