@@ -2,7 +2,7 @@
   #?(:clj (:import org.eclipse.jgit.api.Git))
   (:require [contrib.data :refer [map-entry]]
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TableBlock TreeBlock]]
-            [datomic-browser.datomic-browser3 :refer [BrowsePath]]
+            [dustingetz.entity-browser3 :refer [BrowsePath]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj [dustingetz.datafy-fs :as fs])
