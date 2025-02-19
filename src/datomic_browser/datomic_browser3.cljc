@@ -89,11 +89,12 @@
   (r/pop
     (BrowsePath (e/server (map-entry `Attributes (attributes db *hfql-spec ""))))))
 
+#?(:clj (defn datom->map [[e a v tx added]]
+          (with-meta
+            {:e e, :a a, :v v, :tx tx, :added added}
+            {`dustingetz.identify/-identify (constantly e)})))
 #?(:clj (defn aevt [db a] ; todo inline
-          (->> (d/datoms db :aevt a) (sort-by :v) (map (fn [[e a v tx added]]
-                                                         (with-meta
-                                                           {:e e, :a a, :v v, :tx tx, :added added}
-                                                           {`dustingetz.identify/-identify (constantly e)}))))))
+          (->> (d/datoms db :aevt a) (sort-by :v) (map datom->map))))
 
 (comment
   (time (count (aevt @test-db :abstractRelease/name))) := 10180
@@ -142,6 +143,14 @@
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
 
+#?(:clj (defn entity-history [db e]
+          (let [history (d/history db)]
+            (eduction cat (map datom->map) [(d/datoms history :eavt e) (d/datoms history :vaet e)]))))
+
+(e/defn EntityHistory [e]
+  (r/pop
+    (BrowsePath (e/server (map-entry `(EntityHistory ~e) (entity-history db e))))))
+
 #?(:clj (def sitemap
           {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
                                               :hf/Tooltip `EntityTooltip})
@@ -161,10 +170,12 @@
                                      :hf/Render `Attribute
                                      :hf/Tooltip `EntityTooltip})
                       :v]
-           `EntityDetail ['*
+           `EntityDetail [(with-meta 'db/id {:hf/link `(EntityHistory ~'db/id)})
+                          '*
                           #_{(ground :country/GB) []}
                           #_{'* '...}
                           #_(with-meta '* {:hf/link `(EntityDetail ~'*)})]
+           `EntityHistory ['*]
            `SiteMap ['*]}))
 
 (e/defn SiteMap []
@@ -189,7 +200,8 @@
                    `DbStats DbStats
                    `TxDetail TxDetail
                    `EntityDetail EntityDetail
-                   `SiteMap SiteMap}
+                   `SiteMap SiteMap
+                   `EntityHistory EntityHistory}
             eb/whitelist {`Attribute Attribute
                           `EntityTooltip EntityTooltip}
             conn conn
