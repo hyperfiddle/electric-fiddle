@@ -1,12 +1,14 @@
 (ns dustingetz.object-browser-demo2
   #?(:clj (:import org.eclipse.jgit.api.Git))
   (:require [contrib.data :refer [map-entry]]
+            #?(:clj [datomic.api :as d])
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TableBlock TreeBlock]]
             [dustingetz.entity-browser3 :refer [BrowsePath]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj [dustingetz.datafy-fs :as fs])
             #?(:clj dustingetz.datafy-clj)
+            #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
@@ -41,6 +43,10 @@
   (e/client
     (r/pop (BrowsePath (e/server (map-entry `Thread_ (dustingetz.datafy-jvm2/resolve-thread thread-id)))))))
 
+(e/defn DatomicEntity [e]
+  (e/client
+    (r/pop (BrowsePath (e/server (map-entry `DatomicEntity (d/entity @dustingetz.mbrainz/test-db e)))))))
+
 (e/defn Tap [])
 
 (e/defn Index [_sitemap]
@@ -51,6 +57,7 @@
     (r/link ['. [[`GitRepo "./"]]] (dom/text "git"))
     (r/link ['. [[`File "./"]]] (dom/text "file"))
     (r/link ['. [[`ThreadMX]]] (dom/text "thread-mx"))
+    (r/link ['. [[`DatomicEntity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
     #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
     (r/link ['. [[`Class_ 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
@@ -155,6 +162,7 @@
                               #_(with-meta '% {:hf/link `(Clojure-ns-detail ~'%)})
                               #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
                               `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
+             `DatomicEntity ['*]
              `ThreadMX ['*]
              `Thread_ ['*]
              `Class_ ['*]
@@ -167,6 +175,7 @@
   (binding [pages {`Clojure-all-ns Clojure-all-ns
                    `GitRepo GitRepo
                    `File File
+                   `DatomicEntity DatomicEntity
                    `ThreadMX ThreadMX
                    `Class_ Class_
                    `Thread_ Thread_
