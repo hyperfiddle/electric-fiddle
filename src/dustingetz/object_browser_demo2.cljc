@@ -4,6 +4,7 @@
             [contrib.debug :as dbg]
             [clojure.string :as str]
             #?(:clj [datomic.api :as d])
+            [dustingetz.identify :refer [identify]]
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TableBlock TreeBlock]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
@@ -28,9 +29,14 @@
 
 (e/defn Clojure-ns-detail [x] (e/server (find-ns x)))
 #?(:clj (defn ns-doc [ns] (-> ns meta :doc)))
-#?(:clj (defn public-vars [ns] (ns-name ns)))
+#?(:clj (defn public-vars [?ns] (when ?ns (->> ?ns #_find-ns ns-publics vals (sort-by symbol)))))
+#?(:clj (defn public-vars* [ns] (identify ns))) ; this value fills the link, todo hfql scopes
 
-(e/defn Clojure-ns-vars [sym] (e/server (->> sym find-ns ns-publics vals (sort-by symbol))))
+(comment
+  (public-vars 'clojure.core)
+  (public-vars (find-ns 'clojure.core)))
+
+(e/defn Clojure-ns-vars [sym] (e/server (public-vars sym)))
 #?(:clj (defn var-name [vr] (-> vr symbol name symbol)))
 #?(:clj (defn var-doc [vr] (-> vr meta :doc)))
 #?(:clj (defn var-macro? [vr] (.isMacro ^clojure.lang.Var vr)))
@@ -86,13 +92,18 @@
                     `(fs/file-created ~'%)
                     `(fs/dir-list ~'%)
                     #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))]
-             `Clojure-all-ns (with-meta [`(ns-name ~'%) `(meta ~'%)]
+             `Clojure-all-ns (with-meta [`(ns-name ~'%) `(ns-doc ~'%)]
                                {:hf/select `(Clojure-ns-detail ~'%)})
              `Clojure-ns-detail [`(ns-name ~'%) `(ns-doc ~'%) `(meta ~'%)
-                                 (with-meta `(public-vars ~'%) {:hf/select `(Clojure-ns-vars ~'%)})]
+                                 #_`(ns-publics ~'%)
+                                 (with-meta `(public-vars* ~'%) {:hf/select `(Clojure-ns-vars ~'%)})
+                                 `(ns-imports ~'%)
+                                 `(ns-interns ~'%)]
              `Clojure-ns-vars (with-meta [`(var-name ~'%) `(var-doc ~'%)]
                                 {:hf/select `(Clojure-var-detail ~'%)})
-             `Clojure-var-detail [`(var-name ~'%) `(var-doc ~'%) `(var-macro? ~'%) `(var-arglists ~'%)]
+             `Clojure-var-detail [`(var-name ~'%) `(var-doc ~'%)
+                                  `(meta ~'%)
+                                  `(var-macro? ~'%) `(var-arglists ~'%)]
              `DatomicEntity ['*]
              `ThreadMX ['*]
              `Thread_ ['*]
