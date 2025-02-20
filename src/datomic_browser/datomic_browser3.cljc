@@ -90,12 +90,15 @@
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
 
-#?(:clj (defn entity-history [db e]
+#?(:clj (defn entity-history [e] #_[db]
           (let [history (d/history db)]
-            (eduction cat (map datom->map) [(d/datoms history :eavt e) (d/datoms history :vaet e)]))))
+            (eduction cat (map datom->map)
+              [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
+               (d/datoms history :vaet (:db/id e e))]))))
 
 (e/defn EntityHistory [e]
-  (e/server (entity-history db e)))
+  (e/server (with-bindings {(find-var `db) db}
+              (entity-history e)))) ; dynamic db
 
 (e/defn EntityDbidCell [?e a v pull-expr] #_(Render ?e a v pull-expr)
   (dom/text v " ") (r/link ['.. [`(EntityHistory ~v)]] (dom/text "entity history")))
