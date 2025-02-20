@@ -107,7 +107,8 @@
           {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
                                               :hf/Tooltip `EntityTooltip})
                         `(summarize-attr* ~'%)
-                        #_'*]
+                        :db/doc
+                        '*]
            `DbStats [:datoms `(attributes-count ~'%)] ; TODO render shorter name for `(attributes-count %)`
            ; TODO custom key/value renderers - conflict with treelister
            `AttributeDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
@@ -115,6 +116,7 @@
                              :v
                              (with-meta 'tx {:hf/link `(TxDetail ~'tx)
                                              :hf/Tooltip `EntityTooltip})
+                             '*
                              #_:added]
            `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
                                      :hf/Tooltip `EntityTooltip})
