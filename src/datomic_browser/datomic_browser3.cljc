@@ -7,7 +7,7 @@
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
-            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec TableBlock2 TreeBlock Render]]
+            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec *hfql-bindings TableBlock2 TreeBlock Render]]
             #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3 hf-nav2]])
             [dustingetz.identify :refer [identify]]
             #?(:clj dustingetz.mbrainz)
@@ -21,13 +21,13 @@
             #?(:clj [markdown.core :as md])))
 
 (e/declare conn)
-(e/declare db)
+(e/declare ^:dynamic db)
 
 #?(:clj (defn attributes [db hfql-spec search]
           (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             (eduction
               (map #(d/entity db %))
-              (map (fn [!e] [!e (hf-pull3 hfql-spec !e)])) ; pull everything for search
+              (map (fn [!e] [!e (hf-pull3 {#'db db} hfql-spec !e)])) ; pull everything for search
               (filter #(contrib.str/includes-str? (nth % 1) search)) ; search all pulled cols
               (map first)) ; unpull so we can datafy entity in view to infer cols
             sequence
@@ -80,9 +80,8 @@
   (r/pop
     (eb/BrowsePath (e/server (map-entry `(TxDetail ~e) (tx-detail conn e *hfql-spec ""))))))
 
-#?(:clj (defn summarize-attr* [?!a]
-          (let [db @dustingetz.mbrainz/test-db] ; todo hfql binding conveyance
-            (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " "))))))
+#?(:clj (defn summarize-attr* [?!a] ; db comes from hfql dynamic binding conveyance
+          (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
 
 #?(:clj (defn attributes-count [{:keys [datoms attrs] :as m}]
           (->> (update-vals attrs :count)
@@ -159,12 +158,13 @@
                           `EntityTooltip EntityTooltip}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))]
-    (dom/style (dom/text css tooltip/css))
-    (let [sitemap (e/server sitemap)]
-      (Index sitemap)
-      (TooltipArea (e/fn []
-                     (Tooltip)
-                     (HfqlRoot sitemap :default `[[Attributes]]))))))
+    (binding [eb/*hfql-bindings (e/server {(find-var `db) db})]
+      (dom/style (dom/text css tooltip/css))
+      (let [sitemap (e/server sitemap)]
+        (Index sitemap)
+        (TooltipArea (e/fn []
+                       (Tooltip)
+                       (HfqlRoot sitemap :default `[[Attributes]])))))))
 
 (def css "
 .Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
