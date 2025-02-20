@@ -97,6 +97,9 @@
 (e/defn EntityHistory [e]
   (e/server (entity-history db e)))
 
+(e/defn EntityDbidCell [?e a v pull-expr] #_(Render ?e a v pull-expr)
+  (dom/text v " ") (r/link ['.. [`(EntityHistory ~v)]] (dom/text "entity history")))
+
 #?(:clj (def sitemap
           {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
                                               :hf/Tooltip `EntityTooltip})
@@ -116,11 +119,10 @@
                                      :hf/Render `Attribute
                                      :hf/Tooltip `EntityTooltip})
                       :v]
-           `EntityDetail [(with-meta 'db/id {:hf/link `(EntityHistory ~'db/id)})
+           `EntityDetail [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
+                                             #_#_:hf/link `(EntityHistory ~'db/id)})
                           '*
-                          #_{(ground :country/GB) []}
-                          #_{'* '...}
-                          #_(with-meta '* {:hf/link `(EntityDetail ~'*)})]
+                          #_(with-meta `(entity-history ~'db/id) {:hf/link `(EntityHistory ~'db/id)})]
            `EntityHistory ['*]
            `SiteMap ['*]}))
 
@@ -148,7 +150,8 @@
                    `SiteMap SiteMap
                    `EntityHistory EntityHistory}
             eb/whitelist {`Attribute Attribute
-                          `EntityTooltip EntityTooltip}
+                          `EntityTooltip EntityTooltip
+                          `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))]
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db})]
