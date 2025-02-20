@@ -12,6 +12,8 @@
    (extend-protocol Identifiable
      clojure.lang.Namespace
      (-identify [ns] (ns-name ns))
+     clojure.lang.Var
+     (-identify [vr] (symbol vr))
      Object
      (-identify [x] x) ; value is its own identity
      nil

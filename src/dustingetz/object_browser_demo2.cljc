@@ -1,6 +1,8 @@
 (ns dustingetz.object-browser-demo2
   #?(:clj (:import org.eclipse.jgit.api.Git))
   (:require [contrib.data :refer [map-entry]]
+            [contrib.debug :as dbg]
+            [clojure.string :as str]
             #?(:clj [datomic.api :as d])
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TableBlock TreeBlock]]
             #?(:clj [dustingetz.datafy-git2 :as git])
@@ -26,6 +28,15 @@
 
 (e/defn Clojure-ns-detail [x] (e/server (find-ns x)))
 #?(:clj (defn ns-doc [ns] (-> ns meta :doc)))
+#?(:clj (defn public-vars [ns] (ns-name ns)))
+
+(e/defn Clojure-ns-vars [sym] (e/server (->> sym find-ns ns-publics vals (sort-by symbol))))
+#?(:clj (defn var-name [vr] (-> vr symbol name symbol)))
+#?(:clj (defn var-doc [vr] (-> vr meta :doc)))
+#?(:clj (defn var-macro? [vr] (.isMacro ^clojure.lang.Var vr)))
+#?(:clj (defn var-arglists [vr] (->> vr meta :arglists (str/join " ") symbol))) ; lol
+
+(e/defn Clojure-var-detail [sym] (e/server (->> sym resolve)))
 
 (e/defn ThreadMX []
   (e/server (dustingetz.datafy-jvm2/resolve-thread-manager)))
@@ -75,12 +86,13 @@
                     `(fs/file-created ~'%)
                     `(fs/dir-list ~'%)
                     #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))]
-             `Clojure-ns-detail [`(ns-name ~'%) `(ns-doc ~'%) `(meta ~'%)]
-             `Clojure-all-ns (with-meta [:name :publics '*
-                                         #_(with-meta '% {:hf/link `(Clojure-ns-detail ~'%)})
-                                         #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
-                                         `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
+             `Clojure-all-ns (with-meta [`(ns-name ~'%) `(meta ~'%)]
                                {:hf/select `(Clojure-ns-detail ~'%)})
+             `Clojure-ns-detail [`(ns-name ~'%) `(ns-doc ~'%) `(meta ~'%)
+                                 (with-meta `(public-vars ~'%) {:hf/select `(Clojure-ns-vars ~'%)})]
+             `Clojure-ns-vars (with-meta [`(var-name ~'%) `(var-doc ~'%)]
+                                {:hf/select `(Clojure-var-detail ~'%)})
+             `Clojure-var-detail [`(var-name ~'%) `(var-doc ~'%) `(var-macro? ~'%) `(var-arglists ~'%)]
              `DatomicEntity ['*]
              `ThreadMX ['*]
              `Thread_ ['*]
@@ -93,6 +105,8 @@
 (e/defn ObjectBrowserDemo2 []
   (binding [pages {`Clojure-all-ns Clojure-all-ns
                    `Clojure-ns-detail Clojure-ns-detail
+                   `Clojure-ns-vars Clojure-ns-vars
+                   `Clojure-var-detail Clojure-var-detail
                    `GitRepo GitRepo
                    `File File
                    `DatomicEntity DatomicEntity
