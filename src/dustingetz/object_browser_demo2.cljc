@@ -24,6 +24,9 @@
 (e/defn Clojure-all-ns []
   (e/server (vec (sort-by ns-name (all-ns)))))
 
+(e/defn Clojure-ns-detail [x] (e/server (find-ns x)))
+#?(:clj (defn ns-doc [ns] (-> ns meta :doc)))
+
 (e/defn ThreadMX []
   (e/server (dustingetz.datafy-jvm2/resolve-thread-manager)))
 
@@ -76,6 +79,7 @@
                               #_(with-meta '% {:hf/link `(Clojure-ns-detail ~'%)})
                               #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
                               `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
+             `Clojure-ns-detail [`(ns-name ~'%) `(ns-doc ~'%) `(meta ~'%)]
              `DatomicEntity ['*]
              `ThreadMX ['*]
              `Thread_ ['*]
@@ -87,6 +91,7 @@
 
 (e/defn ObjectBrowserDemo2 []
   (binding [pages {`Clojure-all-ns Clojure-all-ns
+                   `Clojure-ns-detail Clojure-ns-detail
                    `GitRepo GitRepo
                    `File File
                    `DatomicEntity DatomicEntity
