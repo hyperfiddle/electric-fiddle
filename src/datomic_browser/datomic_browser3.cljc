@@ -39,8 +39,7 @@
   (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "sys"))) := 3)
 
 (e/defn Attributes []
-  (r/pop
-    (eb/BrowsePath (e/server (map-entry `Attributes (attributes db *hfql-spec ""))))))
+  (e/server (attributes db *hfql-spec "")))
 
 #?(:clj (defn datom->map [[e a v tx added]]
           (with-meta
@@ -54,16 +53,13 @@
   (clojure.datafy/datafy (first (aevt @test-db :abstractRelease/name))))
 
 (e/defn AttributeDetail [a]
-  (r/pop
-    (eb/BrowsePath (e/server (map-entry `(AttributeDetail ~a) (aevt db a))))))
+  (e/server (aevt db a)))
 
 (e/defn DbStats []
-  (r/pop
-    (eb/BrowsePath (e/server (map-entry `DbStats (d/db-stats db))))))
+  (e/server (d/db-stats db)))
 
 (e/defn EntityDetail [e]
-  (r/pop
-    (eb/BrowsePath (e/server (map-entry `(EntityDetail ~e) (d/entity db e))))))
+  (e/server (d/entity db e)))
 
 ;; TODO mismacth, Datoms are vector-like
 ;; TODO e a should be refs so we can render them as links
@@ -77,8 +73,7 @@
               (filter #(contrib.str/includes-str? % search))))))
 
 (e/defn TxDetail [e]
-  (r/pop
-    (eb/BrowsePath (e/server (map-entry `(TxDetail ~e) (tx-detail conn e *hfql-spec ""))))))
+  (e/server (tx-detail conn e *hfql-spec "")))
 
 #?(:clj (defn summarize-attr* [?!a] ; db comes from hfql dynamic binding conveyance
           (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
@@ -100,8 +95,7 @@
             (eduction cat (map datom->map) [(d/datoms history :eavt e) (d/datoms history :vaet e)]))))
 
 (e/defn EntityHistory [e]
-  (r/pop
-    (eb/BrowsePath (e/server (map-entry `(EntityHistory ~e) (entity-history db e))))))
+  (e/server (entity-history db e)))
 
 #?(:clj (def sitemap
           {`Attributes [(with-meta 'db/ident {:hf/link `(AttributeDetail ~'db/ident)
@@ -131,8 +125,7 @@
            `SiteMap ['*]}))
 
 (e/defn SiteMap []
-  (r/pop
-    (eb/BrowsePath (e/server (map-entry `(SiteMap) sitemap)))))
+  (e/server sitemap))
 
 (e/defn Index [_sitemap]
   ;; TODO auto-derive from sitemap, only for top-level, non-partial links.
