@@ -3,7 +3,6 @@
   (:require [contrib.data :refer [map-entry]]
             #?(:clj [datomic.api :as d])
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TableBlock TreeBlock]]
-            [dustingetz.entity-browser3 :refer [BrowsePath]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj [dustingetz.datafy-fs :as fs])
@@ -17,35 +16,27 @@
             [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]))
 
 (e/defn GitRepo [repo-path]
-  (e/client
-    (r/pop (BrowsePath (e/server (map-entry `GitRepo (dustingetz.datafy-git2/load-repo repo-path)))))))
+  (e/server (dustingetz.datafy-git2/load-repo repo-path)))
 
 (e/defn File [file-path]
-  (e/client
-    (r/pop (BrowsePath (e/server (map-entry `File (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))))))
+  (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))
 
 (e/defn Clojure-all-ns []
-  (e/client
-    (r/pop (BrowsePath (e/server (map-entry `Clojure-all-ns (vec (sort-by ns-name (all-ns)))))))))
+  (e/server (vec (sort-by ns-name (all-ns)))))
 
 (e/defn ThreadMX []
-  (e/client
-    (r/pop (BrowsePath (e/server (map-entry `ThreadMX (dustingetz.datafy-jvm2/resolve-thread-manager)))))))
+  (e/server (dustingetz.datafy-jvm2/resolve-thread-manager)))
 
 (e/defn Class_ [class-name]
-  (e/client
-    (let [kv (e/server (map-entry `Class_ (dustingetz.datafy-jvm2/resolve-class
-                                            #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
-                                            class-name)))]
-      (r/pop (BrowsePath kv)))))
+  (e/server (dustingetz.datafy-jvm2/resolve-class
+              #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
+              class-name)))
 
 (e/defn Thread_ [thread-id]
-  (e/client
-    (r/pop (BrowsePath (e/server (map-entry `Thread_ (dustingetz.datafy-jvm2/resolve-thread thread-id)))))))
+  (e/server (dustingetz.datafy-jvm2/resolve-thread thread-id)))
 
 (e/defn DatomicEntity [e]
-  (e/client
-    (r/pop (BrowsePath (e/server (map-entry `DatomicEntity (d/entity @dustingetz.mbrainz/test-db e)))))))
+  (e/server (d/entity @dustingetz.mbrainz/test-db e)))
 
 (e/defn Tap [])
 
