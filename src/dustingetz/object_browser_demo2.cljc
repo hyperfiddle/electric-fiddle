@@ -53,6 +53,59 @@
     (r/link ['. [[`Class_ 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
 
+#?(:clj (def !sitemap
+          (atom
+            {`GitRepo [#_'*
+                       `(git/repo-repo ~'%)
+                       `(git/status ~'%)
+                       `(git/branch-current ~'%)
+                       `(git/branch-list ~'%)
+                       `(git/log ~'%) ; navigable; :log is not
+                       #_{`(git/log ~'%)
+                        [`(git/commit-short-name ~'%)]}]
+             `File ['*
+                    #_#_#_#_#_#_
+                    `(fs/file-name ~'%)
+                    `(fs/file-hidden? ~'%)
+                    `(fs/file-name ~'%)
+                    `(fs/file-kind ~'%)
+                    `(fs/file-created ~'%)
+                    `(fs/dir-list ~'%)
+                    #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))]
+             `Clojure-all-ns [:name :publics '*
+                              #_(with-meta '% {:hf/link `(Clojure-ns-detail ~'%)})
+                              #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
+                              `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
+             `DatomicEntity ['*]
+             `ThreadMX ['*]
+             `Thread_ ['*]
+             `Class_ ['*]
+             `Tap ['*]
+             #_#_`Entity ['{* [*]}]})))
+
+(declare css)
+
+(e/defn ObjectBrowserDemo2 []
+  (binding [pages {`Clojure-all-ns Clojure-all-ns
+                   `GitRepo GitRepo
+                   `File File
+                   `DatomicEntity DatomicEntity
+                   `ThreadMX ThreadMX
+                   `Class_ Class_
+                   `Thread_ Thread_
+                   `Tap Tap}]
+    (dom/style (dom/text css))
+    (let [sitemap (e/server (e/watch !sitemap))]
+      (Index sitemap)
+      (HfqlRoot sitemap :default `[(Clojure-all-ns)]))))
+
+
+(def css "
+.Index > a+a { margin-left: .5em; }
+.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
+.Browser fieldset.entity table { grid-template-columns: 20em auto; }
+")
+
 (comment
   (require '[clojure.datafy :refer [datafy nav]]
     '[dustingetz.hfql11 :refer [hf-pull hf-pull2 hf-pull3]])
@@ -127,58 +180,4 @@
     (clojure.java.io/file (dustingetz.datafy-fs/absolute-path "./src")))
 
   nil ; don't print tons of files at the REPL
-
   )
-
-#?(:clj (def !sitemap
-          (atom
-            {`GitRepo [#_'*
-                       `(git/repo-repo ~'%)
-                       `(git/status ~'%)
-                       `(git/branch-current ~'%)
-                       `(git/branch-list ~'%)
-                       `(git/log ~'%) ; navigable; :log is not
-                       #_{`(git/log ~'%)
-                        [`(git/commit-short-name ~'%)]}]
-             `File ['*
-                    #_#_#_#_#_#_
-                    `(fs/file-name ~'%)
-                    `(fs/file-hidden? ~'%)
-                    `(fs/file-name ~'%)
-                    `(fs/file-kind ~'%)
-                    `(fs/file-created ~'%)
-                    `(fs/dir-list ~'%)
-                    #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))]
-             `Clojure-all-ns [:name :publics '*
-                              #_(with-meta '% {:hf/link `(Clojure-ns-detail ~'%)})
-                              #_(with-meta `(identify ~'%) {:hf/select `(Clojure-ns-detail ~'%)})
-                              `(ns-name ~'%) `(ns-publics ~'%) `(ns-imports ~'%) `(ns-interns ~'%)]
-             `DatomicEntity ['*]
-             `ThreadMX ['*]
-             `Thread_ ['*]
-             `Class_ ['*]
-             `Tap ['*]
-             #_#_`Entity ['{* [*]}]})))
-
-(declare css)
-
-(e/defn ObjectBrowserDemo2 []
-  (binding [pages {`Clojure-all-ns Clojure-all-ns
-                   `GitRepo GitRepo
-                   `File File
-                   `DatomicEntity DatomicEntity
-                   `ThreadMX ThreadMX
-                   `Class_ Class_
-                   `Thread_ Thread_
-                   `Tap Tap}]
-    (dom/style (dom/text css))
-    (let [sitemap (e/server (e/watch !sitemap))]
-      (Index sitemap)
-      (HfqlRoot sitemap :default `[(Clojure-all-ns)]))))
-
-
-(def css "
-.Index > a+a { margin-left: .5em; }
-.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
-.Browser fieldset.entity table { grid-template-columns: 20em auto; }
-")
