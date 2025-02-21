@@ -124,11 +124,11 @@
                                      :hf/Render `Attribute
                                      :hf/Tooltip `EntityTooltip})
                       :v]
-           `EntityDetail (with-meta [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
-                                                        #_#_:hf/link `(EntityHistory ~'db/id)})
-                                     '*
-                                     #_(with-meta `(entity-history ~'db/id) {:hf/link `(EntityHistory ~'db/id)})]
-                           {:hf/select `(EntityDetail ~'%)})
+           `EntityDetail [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
+                                             #_#_:hf/link `(EntityHistory ~'db/id)
+                                             :hf/select `(EntityDetail ~'%)})
+                          '*]
+
            `EntityHistory ['*]
            `SiteMap ['*]}))
 
