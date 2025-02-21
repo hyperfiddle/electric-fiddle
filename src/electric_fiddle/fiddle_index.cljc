@@ -1,7 +1,7 @@
 (ns electric-fiddle.fiddle-index
-  (:require [contrib.data :refer [subgroup-by]]
-            [datomic-browser.contrib :refer
-             [clamp-left treelister includes-str?]]
+  (:require [contrib.data :refer [clamp-left subgroup-by]]
+            [contrib.str :refer [includes-str?]]
+            [dustingetz.treelister1 :refer [treelister]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input*]]
@@ -70,10 +70,10 @@
   (e/client (dom/style (dom/text css)) (dom/props {:class "Explorer FiddleIndex"})
     #_(dom/pre (dom/text (pr-str r/route)))
     (SearchGrid (str `FiddleIndex)
-      (e/fn [search] (vec ((treelister
-                             (fn children [[k v]] (if (map? v) (into (sorted-map) v) nil))
-                             (fn search [[k v] s] (or (includes-str? k s) (includes-str? v s)))
-                             (fiddles-by-ns-segments pages)) search)))
+      (e/fn [search] (vec (treelister
+                            (fn children [[k v]] (if (map? v) (into (sorted-map) v) nil))
+                            (fn keep? [[k v]] (or (includes-str? k search) (includes-str? v search)))
+                            (fiddles-by-ns-segments pages))))
       (e/fn Row [i [?tab [k v :as ?x]]]
         (when ?x
           (dom/tr (dom/props {:style {:--order (inc i)} :data-row-stripe (mod i 2)})
