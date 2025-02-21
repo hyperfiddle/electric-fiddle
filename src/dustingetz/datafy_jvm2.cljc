@@ -56,7 +56,7 @@
              v))}))))
 
 (extend-type java.lang.management.ThreadInfo/1
-  Identifiable (-identify [x] (assert false (str "-identify unimplemented, x: " x)))
+  Identifiable (-identify [x] (assert false (str "-identify unimplemented, x: " x))) ; why is this implemented at all? Isn't it because default impl for Identifiable is `identity`?
   Datafiable (datafy [x] (vec x)))
 
 (extend-type java.lang.StackTraceElement

@@ -5,7 +5,7 @@
             [clojure.string :as str]
             #?(:clj [datomic.api :as d])
             [dustingetz.identify :refer [identify]]
-            [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TableBlock TreeBlock]]
+            [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TreeBlock]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj [dustingetz.datafy-fs :as fs])

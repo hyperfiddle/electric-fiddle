@@ -4,24 +4,24 @@
   :extend-via-metadata true
   (-identify [o]))
 
-(defn identify [?o] (-identify ?o))
+(defn identify [obj]
+  "
+Produces a symbolic identity for `obj`, or nil if `obj` does not explicitly
+implement `Identifiable`. Serializable and uniquely resolvable symbolic
+identities should be favored.
+All values being self-identical, `(or (identify x) x)` always yields a valid
+identifier, though it might not be serializable."
+  (-identify obj))
 
-(comment (identify nil) := nil)
+(comment
+  (identify (Object.)) := nil
+  (let [obj (Object.)] (pr-str (or (identify obj) obj))) := "#object[java.lang.Object 0x75bf525d \"java.lang.Object@75bf525d\"]"
+  (identify nil) := nil
+  )
 
 #?(:clj
    (extend-protocol Identifiable
-     clojure.lang.Namespace
-     (-identify [ns] (ns-name ns))
-     clojure.lang.Var
-     (-identify [vr] (symbol vr))
-     Object
-     (-identify [x] x) ; value is its own identity
-     nil
-     (-identify [_])))
-
-#?(:cljs
-   (extend-protocol Identifiable
-     object
-     (-identify [x] x) ; value is its own identity
+     #?(:clj Object :cljs default)
+     (-identify [_])
      nil
      (-identify [_])))

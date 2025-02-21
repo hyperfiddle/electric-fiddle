@@ -97,7 +97,7 @@
 (def ... `...) ; define a value for easy test assertions
 
 (extend-type java.nio.file.attribute.FileTime
-  Identifiable (-identify [o] (-> o .toInstant java.util.Date/from)) ; value semantics
+  Identifiable (-identify [o] (-> o .toInstant java.util.Date/from)) ; value semantics ; why is this implemented at all? If so shouldn't it just call datafy on itself?
   Datafiable (datafy [o] (-> o .toInstant java.util.Date/from)))
 
 (defonce TIKA (org.apache.tika.Tika.))
@@ -127,7 +127,7 @@
 (defn file-created [^File x] (-> x file-attrs .creationTime .toInstant java.util.Date/from))
 
 (extend-type java.io.File
-  Identifiable (-identify [^File x] (.getName x)) ; locally unique in its folder
+  Identifiable (-identify [^File x] (.getName x)) ; locally unique in its folder ; if this is LOCALLY unique, is it a unique identity? In not, should nav only be defined in the local folder?
   NavContext
   (-nav-context [^File f] {`ccp/nav (fn [^File _ k v] (nav f k v))})
   Navigable

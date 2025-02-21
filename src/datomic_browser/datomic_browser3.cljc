@@ -67,7 +67,7 @@
           (->> (d/tx-range (d/log conn) e (inc e))
             (eduction (mapcat :data)
               (map (fn [[e a v tx op]]
-                     (let [m {:e e, :a a, :v v, :tx tx, :op op}]
+                     (let [m {:e e, :a a, :v v, :tx tx, :op op}] ; FIXME use datom->map
                        (with-meta ((hf-pull hfql-spec) {'% m})
                          {`dustingetz.identify/-identify (constantly e)}))))
               (filter #(contrib.str/includes-str? % search))))))

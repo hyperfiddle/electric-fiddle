@@ -2,10 +2,8 @@
   (:require [clojure.core.protocols :refer [Datafiable]]
             [dustingetz.identify :refer [Identifiable]]))
 
-(ns-unmap *ns* 'nav)
-
 (extend-type clojure.lang.Var
-  Identifiable (-identify [^clojure.lang.Var x] (.toSymbol x))
+  Identifiable (-identify [^clojure.lang.Var x] (symbol x))
   Datafiable
   (datafy [^clojure.lang.Var x]
     {::toSymbol (.toSymbol x)
@@ -14,7 +12,13 @@
      ::isMacro (.isMacro x)
      #_#_::deref (str @x)}))
 
+(extend-type clojure.lang.Namespace
+  Identifiable (-identify [^clojure.lang.Namespace ns] (ns-name ns))
+  ;; Datafy already implemented in clojure.datafy
+  )
+
 (comment
+  (ns-unmap *ns* 'nav)
   (require '[clojure.datafy :refer [datafy nav]] '[dustingetz.identify :refer [identify]])
   (def x #'dev/DevMain)
   (def x #'*)
