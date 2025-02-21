@@ -30,7 +30,7 @@
 (e/defn Clojure-ns-detail [x] (e/server (find-ns x)))
 #?(:clj (defn ns-doc [ns] (-> ns meta :doc)))
 #?(:clj (defn public-vars [?ns] (when ?ns (->> ?ns #_find-ns ns-publics vals (sort-by symbol)))))
-#?(:clj (defn public-vars* [ns] (identify ns))) ; this value fills the link, todo hfql scopes
+#?(:clj (defn public-vars* [ns] (identify ns))) ; HACK this value fills the link, TODO hfql scopes conveyance into walker, TreeBlock and TableBlock
 
 (comment
   (public-vars 'clojure.core)
