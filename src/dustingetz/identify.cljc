@@ -9,7 +9,7 @@
 Produces a symbolic identity for `obj`, or nil if `obj` does not explicitly
 implement `Identifiable`. Serializable and uniquely resolvable symbolic
 identities should be favored.
-All values being self-identical, `(or (identify x) x)` always yields a valid
+All values being self-identical, `(or (identify x) x)` always yields a valid
 identifier, though it might not be serializable."
   (-identify obj))
 
