@@ -1,5 +1,5 @@
 (ns datomic-browser.datomic-browser3
-  (:require [clojure.datafy :refer [datafy]]
+  (:require clojure.core.protocols
             clojure.string
             [contrib.data :refer [map-entry]]
             [contrib.debug :refer [dbg-ok]]
@@ -24,14 +24,21 @@
 (e/declare ^:dynamic db)
 
 #?(:clj (defn attributes [db hfql-spec search]
-          (->> (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            (eduction
-              (map #(d/entity db %))
-              (map (fn [!e] [!e (hf-pull3 {#'db db} hfql-spec !e)])) ; pull everything for search
-              (filter #(contrib.str/includes-str? (nth % 1) search)) ; search all pulled cols
-              (map first)) ; unpull so we can datafy entity in view to infer cols
-            sequence
-            (sort-by (first hfql-spec)))))
+          (with-meta
+            (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
+            {`dustingetz.identify/-identify (fn [ctx v] v)
+             #_#_`factory (partial d/entity db)
+             `clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
+
+(comment
+  (require '[clojure.datafy :refer [nav]])
+  (clojure.repl/doc nav)
+  (def xs (with-meta [123 125 lennon] ; polymorphic not by type but by meta
+            {`clojure.core.protocols/nav (fn [xs k v] (d/entity @test-db v))}))
+  ; k is optional actually, use it if it helps you enrich the object but you don't have to
+  ; G: I think it was a mistake for Rich to make nav look like get and get-in
+  (nav xs nil lennon) := (d/entity @test-db lennon)
+  )
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db]])
