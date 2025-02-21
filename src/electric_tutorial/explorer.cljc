@@ -6,7 +6,6 @@
             [contrib.data :refer [clamp-left]]
             [contrib.str :refer [includes-str?]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
-            [dustingetz.treelister1 :refer [treelister]]
             [dustingetz.treelister3 :as tl3]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
