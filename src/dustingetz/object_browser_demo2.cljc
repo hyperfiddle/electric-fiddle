@@ -1,11 +1,9 @@
 (ns dustingetz.object-browser-demo2
   #?(:clj (:import org.eclipse.jgit.api.Git))
-  (:require [contrib.data :refer [map-entry]]
-            [contrib.debug :as dbg]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             #?(:clj [datomic.api :as d])
             [dustingetz.identify :refer [identify]]
-            [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec TreeBlock]]
+            [dustingetz.entity-browser3 :refer [HfqlRoot]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)
             #?(:clj [dustingetz.datafy-fs :as fs])
@@ -13,10 +11,8 @@
             #?(:clj dustingetz.mbrainz)
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]
-            [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]))
+            [hyperfiddle.router4 :as r]))
 
 (e/defn GitRepo [repo-path]
   (e/server (dustingetz.datafy-git2/load-repo repo-path)))
