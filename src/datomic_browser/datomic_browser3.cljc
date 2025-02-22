@@ -192,3 +192,20 @@
 .Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
 .Browser .-datomic-browser-dbob-db-stats table { grid-template-columns: 36ch auto;}
 ")
+
+(e/defn Inject [?x #_& {:keys [Busy Failed Ok]}]
+  ; todo needs to be a lot more sophisticated to inject many dependencies concurrently and report status in batch
+  (cond
+    (ex/None? ?x) Busy
+    (or (some? (ex-message ?x)) (nil? ?x)) (Failed ?x)
+    () (e/Partial Ok ?x)))
+
+(e/defn Inject-datomic [datomic-uri F]
+  (e/server
+    (Inject (e/Task (m/via m/blk
+                      (try #_(check) (datomic.api/connect datomic-uri)
+                           (catch Exception e #_(log/error e) e))))
+      {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
+       :Failed (e/fn [err] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
+                 (dom/pre (dom/text (pr-str err))))
+       :Ok F})))
