@@ -1,12 +1,11 @@
 (ns electric-tutorial.explorer
   (:require [clojure.datafy :refer [datafy]]
-            [clojure.core.protocols :refer [nav]]
             #?(:clj clojure.java.io)
             [contrib.assert :refer [check]]
             [contrib.data :refer [clamp-left]]
             [contrib.str :refer [includes-str?]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
-            [dustingetz.treelister3 :as tl3]
+            [dustingetz.treelister3 :refer [treelist]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
@@ -57,7 +56,7 @@
 #?(:clj (defn fs-tree-seq [x search]
           ; linear search over 10k+ records is too slow w/o a search index, so remove node_modules and .git
           (->> (check x)
-            (tl3/treelist ; bug - elides empty folders (which you want only when search is not "")
+            (treelist ; bug - elides empty folders (which you want only when search is not "")
               (fn children [x]
                 (when-not (hidden-or-node-modules x) (map-indexed vector (fs/dir-list x))))
               (fn keep? [x] (and (not (hidden-or-node-modules x)) (includes-str? (.getName x) search)))))))
