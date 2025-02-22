@@ -6,7 +6,7 @@
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj dustingetz.datomic-contrib) ; datafy entity
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec *hfql-bindings Render]]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3]])
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull3]])
             dustingetz.identify
             #?(:clj dustingetz.mbrainz)
             electric-fiddle.fiddle-index
@@ -71,7 +71,7 @@
             (eduction (mapcat :data)
               (map (fn [[e a v tx op]]
                      (let [m {:e e, :a a, :v v, :tx tx, :op op}] ; FIXME use datom->map
-                       (with-meta ((hf-pull hfql-spec) {'% m})
+                       (with-meta (hf-pull3 *hfql-bindings hfql-spec m)
                          {`dustingetz.identify/-identify (constantly e)}))))
               (filter #(includes-str? % search))))))
 
