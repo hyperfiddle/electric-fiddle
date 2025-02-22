@@ -62,7 +62,7 @@
 
 ; TODO e a should be refs so we can render them as links
 (e/defn TxDetail [e] (e/server (->> (d/tx-range (d/log conn) e (inc e))
-                                 (eduction (mapcat :data) (map datom->map)))))
+                                 (eduction (mapcat :data) (map datom->map))))) ; really hydrate here? can we delay?
 
 #?(:clj (defn summarize-attr* [?!a] #_[db]
           (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
@@ -78,6 +78,15 @@
 
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (pprint-str (e/server (d/pull db ['*] v)))))
+
+(e/defn TxDetailValueTooltip [x col v pull-expr]
+  (e/server
+    (let [a (get x 'a) ; symbolic why
+          [typ _ unique?] (easy-attr db a)]
+      (cond
+        (= :ref typ) (pprint-str (d/pull db ['*] v))
+        (= :identity unique?) (pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
+        () nil))))
 
 #?(:clj (defn entity-history [e] #_[db]
           (let [history (d/history db)]
@@ -110,7 +119,7 @@
                       (with-meta 'a {:hf/link `(AttributeDetail ~'a)
                                      :hf/Render `AttributeCell
                                      :hf/Tooltip `EntityTooltip})
-                      :v]
+                      (with-meta 'v {:hf/Tooltip `TxDetailValueTooltip})]
            `EntityDetail [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
                                              #_#_:hf/link `(EntityHistory ~'db/id)
                                              :hf/select `(EntityDetail ~'%)})
@@ -137,6 +146,7 @@
             dustingetz.entity-browser3/whitelist
             {`AttributeCell AttributeCell
              `EntityTooltip EntityTooltip
+             `TxDetailValueTooltip TxDetailValueTooltip
              `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
