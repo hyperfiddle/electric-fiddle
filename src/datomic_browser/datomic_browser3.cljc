@@ -168,12 +168,10 @@
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))]
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db})]
-      (dom/style (dom/text css tooltip/css))
+      (dom/style (dom/text css))
       (let [sitemap (e/server sitemap)]
         (Index sitemap)
-        (TooltipArea (e/fn []
-                       (Tooltip)
-                       (HfqlRoot sitemap :default `[[Attributes]])))))))
+        (HfqlRoot sitemap :default `[[Attributes]])))))
 
 (def css "
 .Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
