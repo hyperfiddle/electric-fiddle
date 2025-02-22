@@ -224,11 +224,23 @@
       nil]
   nil)
 
-(defn easy-attr [schema k]
+(defn easy-attr [schema k] ; bad, deprecate, unused?
   ((juxt
      (comp unqualify identify :db/valueType)
      (comp unqualify identify :db/cardinality))
    (k schema)))
+
+(defn easy-attr2 [db ?a] ; better, copied from datomic-browser.datomic-model
+  (when ?a
+    (let [!e (datomic.api/entity db ?a)]
+      [(unqualify (:db/valueType !e))
+       (unqualify (:db/cardinality !e))
+       (unqualify (:db/unique !e))
+       (if (:db/isComponent !e) :component)])))
+
+(tests
+  (easy-attr2 @test-db :db/ident) := [:keyword :one :identity nil]
+  (easy-attr2 @test-db :artist/name) := [:string :one nil nil])
 
 (defn includes-lowercase? [v needle]
   (clojure.string/includes?
@@ -336,12 +348,14 @@
   NavContext (-nav-context [entity] {`ccp/nav (fn [e k v] (clojure.datafy/nav entity k v))})
   ccp/Navigable
   (nav [^datomic.query.EntityMap entity k v]
-    (cond
-      (#{:db/id :db/ident} k) entity
-      (and (keyword? v) (ref? (index-schema (query-schema (.-db entity))) k)) ; TODO cache schema?
-      (datomic.api/entity (.-db entity) v) ; traverse ident refs
-      () (k entity v) ; traverse refs or return value
-      ))
+    (let [[typ card unique? comp?] (easy-attr2 (.-db entity) k)]
+      (cond
+        (#{:db/id :db/ident} k) entity
+        ; TODO cache schema?
+        (and (keyword? v) (ref? (index-schema (query-schema (.-db entity))) k)) (datomic.api/entity (.-db entity) v) ; traverse ident refs
+        (= :identity unique?) (datomic.api/entity (.-db entity) [k v]) ; resolve lookup ref, todo cleanup
+        () (k entity v) ; traverse refs or return value
+        )))
   ccp/Datafiable
   (datafy [^datomic.query.EntityMap entity]
     (let [db (.-db entity)]
@@ -350,6 +364,8 @@
         (into (back-references db (:db/id entity))) ; G: not more expansive than d/touch - heavily optimized.
         (with-meta (nav-context entity))
         ))))
+
+(comment (datomic.api/entity @test-db [:abstractRelease/gid #uuid "320eeca0-a5ff-383f-a66e-b2f559ed0ab6"]))
 
 ;; Patch EntityMap printing to differentiate it from regular maps
 (defonce original-entity-map-print-method (get-method print-method datomic.query.EntityMap))
