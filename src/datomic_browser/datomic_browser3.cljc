@@ -129,14 +129,16 @@
                                      :hf/Render `AttributeCell
                                      :hf/Tooltip `EntityTooltip})
                       (with-meta 'v {:hf/Tooltip `TxDetailValueTooltip})]
-           `EntityDetail [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
-                                             #_#_:hf/link `(EntityHistory ~'db/id) ; fixme ignored by render override
-                                             #_#_:hf/Tooltip `SemanticTooltip ; fixme ignored by render override
-                                             :hf/select `(EntityDetail ~'%)})
-                          '* #_(with-meta '* {:hf/Tooltip `SemanticTooltip}) ; todo semantic tooltips
-                          #_(with-meta 'abstractRelease/gid {:hf/Tooltip `SemanticTooltip})
-                          #_(with-meta 'abstractRelease/name {:hf/Tooltip `SemanticTooltip})
-                          #_(with-meta 'abstractRelease/type {:hf/Tooltip `SemanticTooltip})]
+           `EntityDetail (with-meta
+                           [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
+                                               #_#_:hf/link `(EntityHistory ~'db/id) ; fixme ignored by render override
+                                               #_#_:hf/Tooltip `SemanticTooltip ; fixme ignored by render override
+                                               :hf/select `(EntityDetail ~'%)})
+                            '* #_(with-meta '* {:hf/Tooltip `SemanticTooltip}) ; todo semantic tooltips
+                            #_(with-meta 'abstractRelease/gid {:hf/Tooltip `SemanticTooltip})
+                            #_(with-meta 'abstractRelease/name {:hf/Tooltip `SemanticTooltip})
+                            #_(with-meta 'abstractRelease/type {:hf/Tooltip `SemanticTooltip})]
+                           {:hf/Tooltip `SemanticTooltip})
 
            `EntityHistory ['*]}))
 
