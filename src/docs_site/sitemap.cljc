@@ -3,9 +3,7 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
             [electric-essay.tutorial-app :refer [Tutorial]]
             [electric-essay.essay-app :refer [Essay]]
-            [datomic-browser.datomic-browser :refer [Inject-datomic DatomicBrowser]]
-            [datomic-browser.datomic-browser2 :refer [DatomicBrowser2]]
-            [datomic-browser.datomic-browser3 :refer [DatomicBrowser3]]
+            [datomic-browser.datomic-browser3 :refer [Inject-datomic DatomicBrowser3]]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [dustingetz.threaddump :refer [ThreadDump]]
@@ -15,6 +13,7 @@
             [docs-site.blog.waveform0 :refer [Waveform0]]
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
+            [hyperfiddle.router4 :as r]
             staffly.staffly
             #?(:clj dustingetz.mbrainz)))
 
@@ -42,9 +41,8 @@
     ))
 
 (e/defn ListedDemos []
-  {'datomic-browser.mbrainz-browser/DatomicBrowser (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser)
-   'datomic-browser.mbrainz-browser/DatomicBrowser2 (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser2)
-   'datomic-browser.mbrainz-browser/DatomicBrowser3 (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser3)
+  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser3)]))
+   `DatomicBrowser3 (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser3)
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
