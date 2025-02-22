@@ -1,24 +1,20 @@
 (ns datomic-browser.datomic-browser3
   (:require clojure.core.protocols
             clojure.string
-            [contrib.data :refer [map-entry]]
-            [contrib.debug :refer [dbg-ok]]
-            contrib.str
+            [contrib.str :refer [includes-str? pprint-str]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
-            #?(:clj [dustingetz.datomic-contrib :as dx]) ; datafy entity
-            [dustingetz.entity-browser3 :as eb :refer [HfqlRoot *hfql-spec *hfql-bindings TableBlock2 TreeBlock Render]]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3 hf-nav2]])
-            [dustingetz.identify :refer [identify]]
+            #?(:clj dustingetz.datomic-contrib) ; datafy entity
+            [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec *hfql-bindings Render]]
+            #?(:clj [dustingetz.hfql11 :refer [hf-pull hf-pull3]])
+            dustingetz.identify
             #?(:clj dustingetz.mbrainz)
-            [electric-fiddle.fiddle-index :refer [pages]]
+            electric-fiddle.fiddle-index
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms4 :refer [Interpreter]]
             [hyperfiddle.router4 :as r]
-            [hyperfiddle.ui.tooltip :as tooltip :refer [TooltipArea Tooltip]]
-            #?(:clj [markdown.core :as md])))
+            ))
 
 (e/declare conn)
 (e/declare ^:dynamic db)
@@ -77,7 +73,7 @@
                      (let [m {:e e, :a a, :v v, :tx tx, :op op}] ; FIXME use datom->map
                        (with-meta ((hf-pull hfql-spec) {'% m})
                          {`dustingetz.identify/-identify (constantly e)}))))
-              (filter #(contrib.str/includes-str? % search))))))
+              (filter #(includes-str? % search))))))
 
 (e/defn TxDetail [e]
   (e/server (tx-detail conn e *hfql-spec "")))
@@ -95,7 +91,7 @@
   (Render ?e a (e/server (:db/ident (d/entity db v))) pull-expr))
 
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
-  (e/server (contrib.str/pprint-str (e/server (d/pull db ['*] v)))))
+  (e/server (pprint-str (e/server (d/pull db ['*] v)))))
 
 #?(:clj (defn entity-history [e] #_[db]
           (let [history (d/history db)]
@@ -155,19 +151,21 @@
 
 (declare css)
 (e/defn DatomicBrowser3 [conn]
-  (binding [pages {`Attributes Attributes
-                   `AttributeDetail AttributeDetail
-                   `DbStats DbStats
-                   `TxDetail TxDetail
-                   `EntityDetail EntityDetail
-                   `SiteMap SiteMap
-                   `EntityHistory EntityHistory}
-            eb/whitelist {`Attribute Attribute
-                          `EntityTooltip EntityTooltip
-                          `EntityDbidCell EntityDbidCell}
+  (binding [electric-fiddle.fiddle-index/pages
+            {`Attributes Attributes
+             `AttributeDetail AttributeDetail
+             `DbStats DbStats
+             `TxDetail TxDetail
+             `EntityDetail EntityDetail
+             `SiteMap SiteMap
+             `EntityHistory EntityHistory}
+            dustingetz.entity-browser3/whitelist
+            {`Attribute Attribute
+             `EntityTooltip EntityTooltip
+             `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))]
-    (binding [eb/*hfql-bindings (e/server {(find-var `db) db})]
+    (binding [*hfql-bindings (e/server {(find-var `db) db})]
       (dom/style (dom/text css))
       (let [sitemap (e/server sitemap)]
         (Index sitemap)
