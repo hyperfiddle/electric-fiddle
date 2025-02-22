@@ -1,14 +1,12 @@
 (ns dustingetz.unifhir1
   (:require [clojure.string :as str]
-            [contrib.data :refer [subgroup-by]]
+            [contrib.data :refer [clamp-left subgroup-by]]
             [contrib.template :refer [comptime-resource]]
-            [datomic-browser.contrib :refer [clamp-left treelister includes-str?]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
-            [hyperfiddle.router4 :as router]
-            [missionary.core :as m]))
+            [hyperfiddle.router4 :as router]))
 
 #?(:clj (def data (comptime-resource "dustingetz/unifhir.edn")))
 
