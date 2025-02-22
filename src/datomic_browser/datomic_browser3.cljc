@@ -1,84 +1,70 @@
 (ns datomic-browser.datomic-browser3
   (:require clojure.core.protocols
             clojure.string
-            [contrib.str :refer [includes-str? pprint-str]]
+            [contrib.str :refer [pprint-str]]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
             #?(:clj dustingetz.datomic-contrib) ; datafy entity
-            [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-spec *hfql-bindings Render]]
-            #?(:clj [dustingetz.hfql11 :refer [hf-pull3]])
+            [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-bindings Render]]
             dustingetz.identify
             #?(:clj dustingetz.mbrainz)
             electric-fiddle.fiddle-index
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]
-            ))
+            [hyperfiddle.rcf :refer [tests]]
+            [hyperfiddle.router4 :as r]))
 
 (e/declare conn)
 (e/declare ^:dynamic db)
 
-#?(:clj (defn attributes [db hfql-spec search]
+#?(:clj (tests (require '[clojure.datafy :refer [datafy nav]]
+                 '[dustingetz.mbrainz :refer [test-db lennon]])))
+
+#?(:clj (tests "insight: nav on dehydrated collection with nil key can be used to hydrate an object in context"
+          #_(clojure.repl/doc nav) ; big idea: k is optional actually!
+          ; nav can use k if it helps you enrich the object but you don't have to!
+          ; G: I think it was a mistake for Rich to make nav look like get and get-in
+          (def xs (with-meta [123 125 lennon] ; attach polymorphic context to the resultset not the element
+                    {`clojure.core.protocols/nav ; polymorphic not by type but by meta
+                     (fn [xs k v] (d/entity @test-db v))}))
+          "nav can resolve a hydrated object from a dehydrated resultset"
+          (nav xs nil lennon) := (d/entity @test-db lennon)))
+
+#?(:clj (defn attributes [db]
           (with-meta
             (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             {`dustingetz.identify/-identify (fn [ctx v] v)
              #_#_`factory (partial d/entity db)
              `clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
 
-(comment
-  (require '[clojure.datafy :refer [nav]])
-  (clojure.repl/doc nav)
-  (def xs (with-meta [123 125 lennon] ; polymorphic not by type but by meta
-            {`clojure.core.protocols/nav (fn [xs k v] (d/entity @test-db v))}))
-  ; k is optional actually, use it if it helps you enrich the object but you don't have to
-  ; G: I think it was a mistake for Rich to make nav look like get and get-in
-  (nav xs nil lennon) := (d/entity @test-db lennon)
-  )
+#?(:clj (tests
+          (require '[dustingetz.hfql11 :refer [hfql-search-sort]])
+          (time (count (->> (attributes @dustingetz.mbrainz/test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "ref one")))) := 18
+          (time (count (->> (attributes @dustingetz.mbrainz/test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
 
-(comment
-  (require '[dustingetz.mbrainz :refer [test-db]])
-  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "ref one"))) := 18
-  (time (count (attributes @dustingetz.mbrainz/test-db [:db/ident `(summarize-attr* ~'%) #_'*] "sys"))) := 3)
-
-(e/defn Attributes []
-  (e/server (attributes db *hfql-spec "")))
+(e/defn Attributes [] (e/server (attributes db)))
 
 #?(:clj (defn datom->map [[e a v tx added]]
-          (with-meta
-            {:e e, :a a, :v v, :tx tx, :added added}
+          (with-meta {:e e, :a a, :v v, :tx tx, :added added}
             {`dustingetz.identify/-identify (constantly e)})))
-#?(:clj (defn aevt [db a] ; todo inline
-          (->> (d/datoms db :aevt a) (sort-by :v) (map datom->map))))
 
-(comment
-  (time (count (aevt @test-db :abstractRelease/name))) := 10180
-  (clojure.datafy/datafy (first (aevt @test-db :abstractRelease/name))))
+#?(:clj (defn aevt [db a] (->> (d/datoms db :aevt a) (sort-by :v) (map datom->map)))) ; todo inline
 
-(e/defn AttributeDetail [a]
-  (e/server (aevt db a)))
+#?(:clj (tests
+          (time (count (aevt @test-db :abstractRelease/name))) := 10180
+          (datafy (first (aevt @test-db :abstractRelease/name)))
+          := {:e 17592186061094, :a 79, :v "!Revolucion con Brasilia!", :tx 13194139549804, :added true}))
 
-(e/defn DbStats []
-  (e/server (d/db-stats db)))
+(e/defn AttributeDetail [a] (e/server (aevt db a)))
+(e/defn DbStats [] (e/server (d/db-stats db)))
+(e/defn EntityDetail [e] (e/server (d/entity db e)))
 
-(e/defn EntityDetail [e]
-  (e/server (d/entity db e)))
+; TODO e a should be refs so we can render them as links
+(e/defn TxDetail [e] (e/server (->> (d/tx-range (d/log conn) e (inc e))
+                                 (eduction (mapcat :data) (map datom->map)))))
 
-;; TODO mismacth, Datoms are vector-like
-;; TODO e a should be refs so we can render them as links
-#?(:clj (defn tx-detail [conn e hfql-spec search]
-          (->> (d/tx-range (d/log conn) e (inc e))
-            (eduction (mapcat :data)
-              (map (fn [[e a v tx op]]
-                     (let [m {:e e, :a a, :v v, :tx tx, :op op}] ; FIXME use datom->map
-                       (with-meta (hf-pull3 *hfql-bindings hfql-spec m)
-                         {`dustingetz.identify/-identify (constantly e)}))))
-              (filter #(includes-str? % search))))))
-
-(e/defn TxDetail [e]
-  (e/server (tx-detail conn e *hfql-spec "")))
-
-#?(:clj (defn summarize-attr* [?!a] ; db comes from hfql dynamic binding conveyance
+#?(:clj (defn summarize-attr* [?!a] #_[db]
           (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
 
 #?(:clj (defn attributes-count [{:keys [datoms attrs] :as m}]
@@ -87,7 +73,7 @@
             (sort-by :count #(compare %2 %))
             vec)))
 
-(e/defn Attribute [?e a v pull-expr]
+(e/defn AttributeCell [?e a v pull-expr]
   (Render ?e a (e/server (:db/ident (d/entity db v))) pull-expr))
 
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
@@ -99,9 +85,7 @@
               [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
                (d/datoms history :vaet (:db/id e e))]))))
 
-(e/defn EntityHistory [e]
-  (e/server (with-bindings {(find-var `db) db}
-              (entity-history e)))) ; dynamic db
+(e/defn EntityHistory [e] (e/server (with-bindings *hfql-bindings (entity-history e))))
 
 (e/defn EntityDbidCell [?e a v pull-expr] #_(Render ?e a v pull-expr)
   (dom/text v " ") (r/link ['.. [`(EntityHistory ~v)]] (dom/text "entity history")))
@@ -124,7 +108,7 @@
            `TxDetail [(with-meta 'e {:hf/link `(EntityDetail ~'e)
                                      :hf/Tooltip `EntityTooltip})
                       (with-meta 'a {:hf/link `(AttributeDetail ~'a)
-                                     :hf/Render `Attribute
+                                     :hf/Render `AttributeCell
                                      :hf/Tooltip `EntityTooltip})
                       :v]
            `EntityDetail [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
@@ -132,21 +116,13 @@
                                              :hf/select `(EntityDetail ~'%)})
                           '*]
 
-           `EntityHistory ['*]
-           `SiteMap ['*]}))
+           `EntityHistory ['*]}))
 
-(e/defn SiteMap []
-  (e/server sitemap))
-
-(e/defn Index [_sitemap]
-  ;; TODO auto-derive from sitemap, only for top-level, non-partial links.
-  ;;      or provide a picker to fulfill missing args
-  (e/client
-    (dom/props {:class "Index"})
+(e/defn Index [_sitemap] ; todo infer non-partial routes from sitemap
+  (e/client (dom/props {:class "Index"})
     (dom/text "Nav: ")
     (r/link ['. [[`Attributes]]] (dom/text "Attributes"))
     (r/link ['. [[`DbStats]]] (dom/text "DbStats"))
-    (r/link ['. [[`SiteMap]]] (dom/text "SiteMap"))
     (dom/text " — Datomic Browser")))
 
 (declare css)
@@ -157,15 +133,14 @@
              `DbStats DbStats
              `TxDetail TxDetail
              `EntityDetail EntityDetail
-             `SiteMap SiteMap
              `EntityHistory EntityHistory}
             dustingetz.entity-browser3/whitelist
-            {`Attribute Attribute
+            {`AttributeCell AttributeCell
              `EntityTooltip EntityTooltip
              `EntityDbidCell EntityDbidCell}
             conn conn
-            db (e/server (ex/Offload-latch #(d/db conn)))]
-    (binding [*hfql-bindings (e/server {(find-var `db) db})]
+            db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
+    (binding [*hfql-bindings (e/server {(find-var `db) db})] ; clojure binding
       (dom/style (dom/text css))
       (let [sitemap (e/server sitemap)]
         (Index sitemap)
