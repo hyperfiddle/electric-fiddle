@@ -34,7 +34,7 @@
 #?(:clj (defn attributes [db]
           (with-meta
             (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            {`dustingetz.identify/-identify (fn [ctx v] v)
+            {`dustingetz.identify/-identify (fn [#_ctx v] v)
              #_#_`factory (partial d/entity db)
              `clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
 
