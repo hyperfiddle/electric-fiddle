@@ -79,6 +79,15 @@
 (e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
   (e/server (pprint-str (e/server (d/pull db ['*] v)))))
 
+(e/defn SemanticTooltip [x col v pull-expr]
+  (e/server
+    (let [a col ; cast col to datomic attr
+          [typ _ unique?] (easy-attr db a)]
+      (cond
+        (= :ref typ) (pprint-str (d/pull db ['*] v))
+        (= :identity unique?) (pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
+        () nil))))
+
 (e/defn TxDetailValueTooltip [x col v pull-expr]
   (e/server
     (let [a (get x 'a) ; symbolic why
@@ -121,9 +130,13 @@
                                      :hf/Tooltip `EntityTooltip})
                       (with-meta 'v {:hf/Tooltip `TxDetailValueTooltip})]
            `EntityDetail [(with-meta 'db/id {:hf/Render `EntityDbidCell ; todo strengthen hfql links
-                                             #_#_:hf/link `(EntityHistory ~'db/id)
+                                             #_#_:hf/link `(EntityHistory ~'db/id) ; fixme ignored by render override
+                                             #_#_:hf/Tooltip `SemanticTooltip ; fixme ignored by render override
                                              :hf/select `(EntityDetail ~'%)})
-                          '*]
+                          '* #_(with-meta '* {:hf/Tooltip `SemanticTooltip}) ; todo semantic tooltips
+                          #_(with-meta 'abstractRelease/gid {:hf/Tooltip `SemanticTooltip})
+                          #_(with-meta 'abstractRelease/name {:hf/Tooltip `SemanticTooltip})
+                          #_(with-meta 'abstractRelease/type {:hf/Tooltip `SemanticTooltip})]
 
            `EntityHistory ['*]}))
 
@@ -147,6 +160,7 @@
             {`AttributeCell AttributeCell
              `EntityTooltip EntityTooltip
              `TxDetailValueTooltip TxDetailValueTooltip
+             `SemanticTooltip SemanticTooltip
              `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
