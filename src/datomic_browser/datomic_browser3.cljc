@@ -3,8 +3,7 @@
             clojure.string
             [contrib.str :refer [pprint-str]]
             #?(:clj [datomic.api :as d])
-            #?(:clj [datomic-browser.datomic-model :refer [easy-attr]])
-            #?(:clj dustingetz.datomic-contrib) ; datafy entity
+            #?(:clj [dustingetz.datomic-contrib :refer [easy-attr2]]) ; datafy entity
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-bindings Render]]
             dustingetz.identify
             #?(:clj dustingetz.mbrainz)
@@ -13,7 +12,8 @@
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.rcf :refer [tests]]
-            [hyperfiddle.router4 :as r]))
+            [hyperfiddle.router4 :as r]
+            [missionary.core :as m]))
 
 (e/declare conn)
 (e/declare ^:dynamic db)
@@ -65,7 +65,7 @@
                                  (eduction (mapcat :data) (map datom->map))))) ; really hydrate here? can we delay?
 
 #?(:clj (defn summarize-attr* [?!a] #_[db]
-          (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
+          (when ?!a (->> (easy-attr2 db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
 
 #?(:clj (defn attributes-count [{:keys [datoms attrs] :as m}]
           (->> (update-vals attrs :count)
@@ -82,7 +82,7 @@
 (e/defn SemanticTooltip [x col v pull-expr]
   (e/server
     (let [a col ; cast col to datomic attr
-          [typ _ unique?] (easy-attr db a)]
+          [typ _ unique?] (easy-attr2 db a)]
       (cond
         (= :ref typ) (pprint-str (d/pull db ['*] v))
         (= :identity unique?) (pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
@@ -91,7 +91,7 @@
 (e/defn TxDetailValueTooltip [x col v pull-expr]
   (e/server
     (let [a (get x 'a) ; symbolic why
-          [typ _ unique?] (easy-attr db a)]
+          [typ _ unique?] (easy-attr2 db a)]
       (cond
         (= :ref typ) (pprint-str (d/pull db ['*] v))
         (= :identity unique?) (pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
