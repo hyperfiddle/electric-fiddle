@@ -5,7 +5,6 @@
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib2 :refer [easy-attr]]) ; datafy entity
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-bindings Render]]
-            #?(:clj dustingetz.mbrainz)
             electric-fiddle.fiddle-index
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
@@ -30,8 +29,8 @@
              `clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
 
 #?(:clj (tests
-          (time (count (->> (attributes @dustingetz.mbrainz/test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "ref one")))) := 18
-          (time (count (->> (attributes @dustingetz.mbrainz/test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
+          (time (count (->> (attributes @test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "ref one")))) := 18
+          (time (count (->> (attributes @test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
 
 (e/defn Attributes [] (e/server (attributes db)))
 
