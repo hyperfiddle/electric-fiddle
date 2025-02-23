@@ -114,6 +114,7 @@
 (defn file-absolute-path [^File x] (-> x .toPath .normalize .toAbsolutePath str))
 (defn file-order-compare [^File x] [(not (.isDirectory x)) (.getName x)])
 (defn dir-list [^File x] (some->> x .listFiles (sort-by file-order-compare)))
+(defn dir-parent [^File x] (some-> x file-path .getParent .toFile))
 (defn file-name [^File x] (.getName x))
 (defn file-kind [^File x]
   (let [attrs (file-attrs x)]
@@ -161,7 +162,7 @@
              ::mime-type mime-type} %
             (merge % (if (= ::dir (::kind %))
                        {::children #() ; fns are hyperlinks - experiment - use nav to call it - should probably be elided entirely
-                        ::parent (-> f file-path .getParent .toFile)}))
+                        ::parent (dir-parent f)}))
         (with-meta % (nav-context f))))))
 
 (tests
