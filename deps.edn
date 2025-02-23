@@ -106,8 +106,7 @@
    :extra-deps
    {clj-python/libpython-clj {:mvn/version "2.026"}
     com.pitch/uix.core {:mvn/version "1.0.1"}
-    com.pitch/uix.dom {:mvn/version "1.0.1"}
-    meander/epsilon {:mvn/version "0.0.650"}}}
+    com.pitch/uix.dom {:mvn/version "1.0.1"}}}
 
   :xtdb
   {:extra-deps
