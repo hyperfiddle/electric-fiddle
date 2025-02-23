@@ -3,7 +3,7 @@
             clojure.string
             [contrib.str :refer [pprint-str]]
             #?(:clj [datomic.api :as d])
-            #?(:clj [dustingetz.datomic-contrib :refer [easy-attr2]]) ; datafy entity
+            #?(:clj [dustingetz.datomic-contrib2 :refer [easy-attr]]) ; datafy entity
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-bindings Render]]
             #?(:clj dustingetz.mbrainz)
             electric-fiddle.fiddle-index
@@ -65,7 +65,7 @@
                                  (eduction (mapcat :data) (map datom->map))))) ; really hydrate here? can we delay?
 
 #?(:clj (defn summarize-attr* [?!a] #_[db]
-          (when ?!a (->> (easy-attr2 db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
+          (when ?!a (->> (easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (clojure.string/join " ")))))
 
 #?(:clj (defn attributes-count [{:keys [datoms attrs] :as m}]
           (->> (update-vals attrs :count)
@@ -82,7 +82,7 @@
 (e/defn SemanticTooltip [x col v pull-expr]
   (e/server
     (let [a col ; cast col to datomic attr
-          [typ _ unique?] (easy-attr2 db a)]
+          [typ _ unique?] (easy-attr db a)]
       (cond
         (= :ref typ) (pprint-str (d/pull db ['*] v))
         (= :identity unique?) (pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
@@ -91,7 +91,7 @@
 (e/defn TxDetailValueTooltip [x col v pull-expr]
   (e/server
     (let [a (get x 'a) ; symbolic why
-          [typ _ unique?] (easy-attr2 db a)]
+          [typ _ unique?] (easy-attr db a)]
       (cond
         (= :ref typ) (pprint-str (d/pull db ['*] v))
         (= :identity unique?) (pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
