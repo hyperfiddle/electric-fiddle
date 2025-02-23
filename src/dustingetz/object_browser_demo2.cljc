@@ -2,7 +2,7 @@
   #?(:clj (:import org.eclipse.jgit.api.Git))
   (:require [clojure.string :as str]
             #?(:clj [datomic.api :as d])
-            [dustingetz.identify :refer [identify]]
+            [hyperfiddle.nav0 :refer [identify]]
             [dustingetz.entity-browser3 :refer [HfqlRoot]]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj dustingetz.datafy-jvm2)

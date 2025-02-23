@@ -5,12 +5,12 @@
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib :refer [easy-attr2]]) ; datafy entity
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-bindings Render]]
-            dustingetz.identify
             #?(:clj dustingetz.mbrainz)
             electric-fiddle.fiddle-index
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.nav0 :refer [-identify]]
             [hyperfiddle.rcf :refer [tests]]
             [hyperfiddle.router4 :as r]
             [missionary.core :as m]))
@@ -34,7 +34,7 @@
 #?(:clj (defn attributes [db]
           (with-meta
             (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            {`dustingetz.identify/-identify (fn [#_ctx v] v)
+            {`-identify (fn [#_ctx v] v)
              #_#_`factory (partial d/entity db)
              `clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
 
@@ -47,7 +47,7 @@
 
 #?(:clj (defn datom->map [[e a v tx added]]
           (with-meta {:e e, :a a, :v v, :tx tx, :added added}
-            {`dustingetz.identify/-identify (constantly e)})))
+            {`-identify (constantly e)})))
 
 #?(:clj (defn aevt [db a] (->> (d/datoms db :aevt a) (sort-by :v) (map datom->map)))) ; todo inline
 

@@ -3,7 +3,7 @@
            java.lang.management.ThreadInfo
            com.sun.management.ThreadMXBean)
   (:require [clojure.core.protocols :refer [Datafiable]]
-            [dustingetz.identify :refer [Identifiable]]))
+            [hyperfiddle.nav0 :refer [Identifiable]]))
 
 (defn resolve-thread [id] (apply com.sun.management.ThreadMXBean/.getThreadInfo
                             (ManagementFactory/getThreadMXBean) [id]))

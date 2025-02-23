@@ -3,7 +3,7 @@
             clj-jgit.util
             [clojure.core.protocols :refer [nav Datafiable Navigable]]
             [dustingetz.datafy-fs :as fs]
-            [dustingetz.identify :refer [Identifiable]])
+            [hyperfiddle.nav0 :refer [Identifiable]])
   (:import (org.eclipse.jgit.api Git)
            (org.eclipse.jgit.internal.storage.file FileRepository)
            (org.eclipse.jgit.revwalk RevCommit)
@@ -105,7 +105,7 @@
   PersonIdent (-identify [^PersonIdent x] (.getEmailAddress x)))
 
 (comment
-  (require '[dustingetz.identify :refer [identify]])
+  (require '[hyperfiddle.nav0 :refer [identify]])
   (def x (load-repo "./"))
   (identify x) := "./.git"
 

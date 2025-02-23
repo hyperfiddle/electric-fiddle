@@ -3,8 +3,7 @@
   (:require [clojure.core.protocols :refer [nav Datafiable Navigable]]
             [clojure.spec.alpha :as s]
             [contrib.assert :refer [check]]
-            [dustingetz.identify :refer [Identifiable]]
-            [dustingetz.nav-context :refer [NavContext nav-context]]
+            [hyperfiddle.nav0 :refer [Identifiable NavContext nav-context]]
             [hyperfiddle.rcf :refer [tests]]
             [clojure.java.io :as io]
             [clojure.core.protocols :as ccp])
