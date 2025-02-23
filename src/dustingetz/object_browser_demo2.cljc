@@ -54,6 +54,8 @@
 (e/defn DatomicEntity [e]
   (e/server (d/entity @dustingetz.mbrainz/test-db e)))
 
+(e/defn Edn [x] x)
+
 (e/defn Tap [])
 
 (e/defn Index [_sitemap]
@@ -79,28 +81,39 @@
                        `(git/log ~'%) ; navigable; :log is not
                        #_{`(git/log ~'%)
                         [`(git/commit-short-name ~'%)]}]
-             `File ['*
-                    #_#_#_#_#_#_
-                    `(fs/file-name ~'%)
-                    `(fs/file-hidden? ~'%)
-                    `(fs/file-name ~'%)
-                    `(fs/file-kind ~'%)
-                    `(fs/file-created ~'%)
-                    `(fs/dir-list ~'%)
-                    #_`(fs/dir-list ~'%) #_(with-meta {:hf/Render .} `(fs/dir-list ~'%))]
+
+             `File (with-meta
+                     [#_'*
+                      `(fs/file-name ~'%)
+                      `(fs/file-hidden? ~'%)
+                      `(fs/file-name ~'%)
+                      `(fs/file-kind ~'%)
+                      `(fs/file-created ~'%)
+                      `(fs/dir-list ~'%) #_(with-meta `(fs/dir-list ~'%) {:hf/select `(File ~'%)}) ; buggy, wrong scope?
+                      `(fs/dir-parent ~'%) #_(with-meta `(fs/dir-parent ~'%) {:hf/select `(File ~'%)}) ; buggy, wrong scope?
+                      #_{`(fs/dir-list ~'%) ...} ; todo tree-seq
+                      ] {})
+
              `Clojure-all-ns (with-meta [`(ns-name ~'%) `(ns-doc ~'%)]
                                {:hf/select `(Clojure-ns-detail ~'%)})
-             `Clojure-ns-detail [`(ns-name ~'%) `(ns-doc ~'%) `(meta ~'%)
-                                 #_`(ns-publics ~'%)
-                                 (with-meta `(public-vars* ~'%) {:hf/select `(Clojure-ns-vars ~'%)})
-                                 `(ns-imports ~'%)
-                                 `(ns-interns ~'%)]
+             `Clojure-ns-detail (with-meta
+                                  [`(ns-name ~'%)
+                                   `(ns-doc ~'%)
+                                   `(meta ~'%) ; nav to TreeView
+                                   #_`(ns-publics ~'%)
+                                   (with-meta `(public-vars* ~'%) {:hf/select `(Clojure-ns-vars ~'%)})
+                                   `(ns-imports ~'%)
+                                   `(ns-interns ~'%)]
+                                  {:hf/select `(Edn ~'%)}) ; todo bypass HFQL, link to special page
              `Clojure-ns-vars (with-meta [`(var-name ~'%) `(var-doc ~'%)]
                                 {:hf/select `(Clojure-var-detail ~'%)})
              `Clojure-var-detail [`(var-name ~'%) `(var-doc ~'%)
                                   `(meta ~'%)
                                   `(var-macro? ~'%) `(var-arglists ~'%)]
-             `DatomicEntity ['*]
+             `DatomicEntity (with-meta
+                              ['*]
+                              {:hf/select `(DatomicEntity ~'%)})
+             `Edn ['*] ; hack
              `ThreadMX ['*]
              `Thread_ ['*]
              `Class_ ['*]
@@ -120,6 +133,7 @@
                    `ThreadMX ThreadMX
                    `Class_ Class_
                    `Thread_ Thread_
+                   `Edn Edn
                    `Tap Tap}]
     (dom/style (dom/text css))
     (let [sitemap (e/server (e/watch !sitemap))]
