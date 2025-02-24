@@ -147,22 +147,23 @@
     ; datafy is partial display view of an object as value records
     ; nav is ability to resolve back to the underlying object pointers
     ; they compose to navigate display views of objects like a link
-    (let [attrs (file-attrs f)
-          n (.getName f)
-          mime-type (detect-mime-type-no-access n)]
-      (as-> {::name n
-             ::hidden (file-hidden? f)
-             ::kind (file-kind f)
-             ::absolute-path (file-absolute-path f)
-             ::created (file-created f)
-             ::accessed (-> attrs .lastAccessTime .toInstant java.util.Date/from)
-             ::modified (-> attrs .lastModifiedTime .toInstant java.util.Date/from)
-             ::size (.size attrs)
-             ::mime-type mime-type} %
-            (merge % (if (= ::dir (::kind %))
-                       {::children #() ; fns are hyperlinks - experiment - use nav to call it - should probably be elided entirely
-                        ::parent (dir-parent f)}))
-        (with-meta % (nav-context f))))))
+    (when (.exists f)
+      (let [attrs (file-attrs f)
+            n (.getName f)
+            mime-type (detect-mime-type-no-access n)]
+        (as-> {::name n
+               ::hidden (file-hidden? f)
+               ::kind (file-kind f)
+               ::absolute-path (file-absolute-path f)
+               ::created (file-created f)
+               ::accessed (-> attrs .lastAccessTime .toInstant java.util.Date/from)
+               ::modified (-> attrs .lastModifiedTime .toInstant java.util.Date/from)
+               ::size (.size attrs)
+               ::mime-type mime-type} %
+          (merge % (if (= ::dir (::kind %))
+                     {::children #() ; fns are hyperlinks - experiment - use nav to call it - should probably be elided entirely
+                      ::parent (dir-parent f)}))
+          (with-meta % (nav-context f)))))))
 
 (tests
   (require '[clojure.datafy :refer [datafy]])
