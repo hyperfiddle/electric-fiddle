@@ -1,6 +1,6 @@
 {:deps  {com.hyperfiddle/electric       {:mvn/version "v3-alpha-SNAPSHOT"}
          com.hyperfiddle/hyperfiddle    {:mvn/version "v0-alpha-SNAPSHOT"}
-         com.hyperfiddle/hyperfiddle-contrib {:local/root "vendor/hyperfiddle-contrib"}
+         com.hyperfiddle/hyperfiddle-contrib {:mvn/version "v0-alpha-SNAPSHOT"}
          com.hyperfiddle/rcf            {:git/url "https://github.com/hyperfiddle/rcf" :git/sha "7105b43231140de6f2f39ce38611c9f6c9dfc976"}
          org.clojure/clojure            {:mvn/version "1.12.0"}
          org.clojure/clojurescript      {:mvn/version "1.11.121"}
@@ -70,7 +70,8 @@
     }
    #_#_:override-deps ; uberjar sees only this one alias
    {com.hyperfiddle/electric {:local/root "vendor/electric"}
-    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}}}
+    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
+    com.hyperfiddle/hyperfiddle-contrib {:local/root "vendor/hyperfiddle-contrib"}}}
 
   :dustingetz
   {:extra-deps
@@ -102,6 +103,7 @@
   {:extra-paths ["src-private"]
    :override-deps {com.hyperfiddle/electric {:local/root "vendor/electric"}
                    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
+                   com.hyperfiddle/hyperfiddle-contrib {:local/root "vendor/hyperfiddle-contrib"}
                    com.hyperfiddle/hfql {:local/root "vendor/hfql"}
                    com.hyperfiddle/rcf {:local/root "vendor/rcf"}}
    :extra-deps
