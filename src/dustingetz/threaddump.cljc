@@ -1,7 +1,7 @@
 (ns dustingetz.threaddump
   #?(:clj (:import [java.lang.management ManagementFactory]))
   (:require clojure.string
-            [contrib.str :refer [includes-str?]]
+            [dustingetz.str :refer [includes-str?]]
             [dustingetz.easy-table :refer [EasyTable]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))

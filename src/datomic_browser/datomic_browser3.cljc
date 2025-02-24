@@ -1,7 +1,7 @@
 (ns datomic-browser.datomic-browser3
   (:require clojure.core.protocols
             clojure.string
-            [contrib.str :refer [pprint-str]]
+            [dustingetz.str :refer [pprint-str]]
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib2 :refer [easy-attr]]) ; datafy entity
             [dustingetz.entity-browser3 :refer [HfqlRoot *hfql-bindings Render]]

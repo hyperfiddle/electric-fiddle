@@ -1,5 +1,5 @@
 (ns dustingetz.teeshirt-orders-datascript
-  (:require contrib.str
+  (:require dustingetz.str
             [datascript.core :as d]
             [datascript.impl.entity :refer [entity?]]
             [hyperfiddle.rcf :refer [tests % tap]]))
@@ -93,11 +93,11 @@
                :where
                [?s :order/type :order/shirt-size]
                [?s :order/gender ?g]
-               [?s :db/ident ?ss] [(contrib.str/includes-str? ?ss ?search)]]
+               [?s :db/ident ?ss] [(dustingetz.str/includes-str? ?ss ?search)]]
           db gender (or search ""))
         (d/q '[:in $ ?search :find [?ss ...] :where
                [?s :order/type :order/shirt-size]
-               [?s :db/ident ?ss] [(contrib.str/includes-str? ?ss ?search)]]
+               [?s :db/ident ?ss] [(dustingetz.str/includes-str? ?ss ?search)]]
           db (or search ""))))))
 
 (tests

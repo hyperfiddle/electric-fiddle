@@ -3,7 +3,7 @@
             #?(:clj clojure.java.io)
             [contrib.assert :refer [check]]
             [contrib.data :refer [clamp-left]]
-            [contrib.str :refer [includes-str?]]
+            [dustingetz.str :refer [includes-str?]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [dustingetz.treelister3 :refer [treelist]]
             [hyperfiddle.electric3 :as e]

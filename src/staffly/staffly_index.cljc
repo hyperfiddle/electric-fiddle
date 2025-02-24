@@ -3,7 +3,7 @@
             [clojure.core.match :refer [match]]
             clojure.set
             [contrib.data :refer [unqualify]]
-            contrib.str
+            dustingetz.str
             #?(:clj [datomic.api :as d])
             [dustingetz.easy-table :refer [EasyTable]]
             [hyperfiddle.electric3 :as e]
@@ -34,7 +34,7 @@
                  [:find [?e ...] :where
                   ~@(list (type->filter type_))
                   (or [?e :staff/name ?name] [?e :venue/name ?name])
-                  [(contrib.str/includes-str? ?name ?search)]
+                  [(dustingetz.str/includes-str? ?name ?search)]
                   :in $ ?search])
             model/*db* search)))
 
@@ -43,7 +43,7 @@
                  [:find [?e ...] :where
                   ~@(list (type->filter type_))
                   (or [?e :staff/email ?email] [?e :venue/email ?email])
-                  [(contrib.str/includes-str? ?email ?needle)]
+                  [(dustingetz.str/includes-str? ?email ?needle)]
                   :in $ ?needle])
             model/*db* search)))
 

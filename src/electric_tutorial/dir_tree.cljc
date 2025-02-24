@@ -1,6 +1,6 @@
 (ns electric-tutorial.dir-tree
   (:require #?(:clj clojure.java.io)
-            [contrib.str :refer [includes-str?]]
+            [dustingetz.str :refer [includes-str?]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
