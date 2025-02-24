@@ -22,3 +22,6 @@
 [submodule "vendor/electric-datomic-browser"]
 	path = vendor/electric-datomic-browser
 	url = git@gitlab.com:hyperfiddle/electric-datomic-browser.git
+[submodule "vendor/hyperfiddle-contrib"]
+	path = vendor/hyperfiddle-contrib
+	url = git@gitlab.com:hyperfiddle/hyperfiddle-contrib.git
