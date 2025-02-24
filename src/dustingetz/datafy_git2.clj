@@ -23,8 +23,8 @@
 (defn repo-path [^Git x] (-> x .getRepository .getDirectory fs/file-absolute-path))
 (defn repo-repo [^Git x] (-> x .getRepository))
 (defn status [^Git x] (git/git-status x))
-(defn branch-current [^Git x] (git/git-branch-current x))
-(defn branch-list [^Git x] (vec (git/git-branch-list x :jgit? true :list-mode :all))) ; arraylist
+(def branch-current (memoize (fn [^Git x] (git/git-branch-current x))))
+(def branch-list (memoize (fn [^Git x] (vec (git/git-branch-list x :jgit? true :list-mode :all))))) ; arraylist
 (defn log [^Git x] (vec (git/git-log x :until "HEAD" :jgit? true)))
 
 (defn commit-name [^RevCommit o] (.getName o))
