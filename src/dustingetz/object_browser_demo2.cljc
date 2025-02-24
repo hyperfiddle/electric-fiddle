@@ -74,23 +74,23 @@
 #?(:clj (def !sitemap
           (atom
             {`GitRepo [#_'*
-                       `(git/repo-repo ~'%)
-                       `(git/status ~'%)
-                       `(git/branch-current ~'%)
-                       `(git/branch-list ~'%)
-                       `(git/log ~'%) ; navigable; :log is not
+                       `git/repo-repo
+                       `git/status
+                       `git/branch-current
+                       `git/branch-list
+                       `git/log ; navigable; :log is not
                        #_{`(git/log ~'%)
                         [`(git/commit-short-name ~'%)]}]
 
              `File (with-meta
                      [#_'*
-                      `(fs/file-name ~'%)
-                      `(fs/file-hidden? ~'%)
-                      `(fs/file-name ~'%)
-                      `(fs/file-kind ~'%)
-                      `(fs/file-created ~'%)
-                      `(fs/dir-list ~'%) #_(with-meta `(fs/dir-list ~'%) {:hf/select `(File ~'%)}) ; buggy, wrong scope?
-                      `(fs/dir-parent ~'%) #_(with-meta `(fs/dir-parent ~'%) {:hf/select `(File ~'%)}) ; buggy, wrong scope?
+                      `fs/file-name
+                      `fs/file-hidden?
+                      `fs/file-name
+                      `fs/file-kind
+                      `fs/file-created
+                      `fs/dir-list #_(with-meta `(fs/dir-list ~'%) {:hf/select `(File ~'%)}) ; buggy, wrong scope?
+                      `fs/dir-parent #_(with-meta `(fs/dir-parent ~'%) {:hf/select `(File ~'%)}) ; buggy, wrong scope?
                       #_{`(fs/dir-list ~'%) ...} ; todo tree-seq
                       ] {})
 
