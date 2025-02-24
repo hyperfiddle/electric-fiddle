@@ -39,6 +39,7 @@
 (extend-protocol Datafiable
   Git
   (datafy [^Git o]
+    #_(hf-pull3 {} [`repo-repo `status `branch-current `branch-list `log] o) ; stackoverflow, hfql calls datafy
     (->
       {:status (git/git-status o) ; keep :log above the fold in blog3 demo
        :repo (.getRepository o)
