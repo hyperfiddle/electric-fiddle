@@ -133,11 +133,13 @@
            `EntityHistory ['*]}))
 
 (e/defn Index [_sitemap] ; todo infer non-partial routes from sitemap
-  (e/client (dom/props {:class "Index"})
-    (dom/text "Nav: ")
-    (r/link ['. [[`Attributes]]] (dom/text "Attributes"))
-    (r/link ['. [[`DbStats]]] (dom/text "DbStats"))
-    (dom/text " — Datomic Browser")))
+  (e/client
+    (dom/nav (dom/props {:class "Index"})
+      (dom/text "Nav: ")
+      (r/link ['. [[`Attributes]]] (dom/text "Attributes"))
+      (dom/text " ")
+      (r/link ['. [[`DbStats]]] (dom/text "DbStats"))
+      (dom/text " — Datomic Browser"))))
 
 (declare css)
 (e/defn DatomicBrowser3 [conn]
@@ -163,24 +165,26 @@
         (HfqlRoot sitemap :default `[[Attributes]])))))
 
 (def css "
-.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
-.Browser fieldset { position: relative; height: 25em; }
-:where(.Browser fieldset.entity)          table { grid-template-columns: 15em auto; }
-.Browser fieldset.entity-children table { grid-template-columns: repeat(var(--col-count), 1fr); }
 
-/* table cell tooltips */
-.Browser td {position: relative;}
-.Browser .dustingetz-tooltip >       span { visibility: hidden; }
-.Browser .dustingetz-tooltip:hover > span { visibility: visible; pointer-events: none; }
-.Browser .dustingetz-tooltip > span {
-  position: absolute; top: 20px; left: 10px; z-index: 2; /* interaction with row selection z=1 */
-  margin-top: 4px; padding: 4px; font-size: smaller;
-  box-shadow: 0 0 .5rem gray; border: 1px whitesmoke solid; border-radius: 3px; background-color: white; }
-.Index > a+a { margin-left: .5em; }
-.ThreadDump3 > a + a { margin-left: .5em; }
-.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
-.Browser .-datomic-browser-dbob-db-stats table { grid-template-columns: 36ch auto;}
-")
+/* Explicit table height - there are alternatives */
+.Browser fieldset.dustingetz-entity-browser3__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
+.Browser fieldset.dustingetz-entity-browser3__block { height: fit-content; }
+
+/* Progressive enhancement */
+.Browser fieldset.entity table { grid-template-columns: 15em auto; }
+.Browser.datomic-browser-datomic-browser3-DbStats .entity-children table { grid-template-columns: 36ch auto;}
+
+"
+)
+
+;; /*
+;;  Let table pickers fill available vertical space.
+;;  Table pickers will expand to fill available vertical space by default, unless given an explicit CSS height or max-height.
+;;  Here we make sure their parent containers do provide available space for pickers to expand in.
+;; */
+;; body.electric-fiddle { height: 100dvh; box-sizing: border-box; }
+;; :not(body):has(.hyperfiddle-electric-forms4__table-picker) { height: 100%; }
+
 
 (e/defn Inject [?x #_& {:keys [Busy Failed Ok]}]
   ; todo needs to be a lot more sophisticated to inject many dependencies concurrently and report status in batch

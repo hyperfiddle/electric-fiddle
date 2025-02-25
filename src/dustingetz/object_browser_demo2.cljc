@@ -149,8 +149,13 @@
 
 (def css "
 .Index > a+a { margin-left: .5em; }
-.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */
 .Browser fieldset.entity table { grid-template-columns: 20em auto; }
+
+/* Explicit table height - there are alternatives */
+.Browser fieldset.dustingetz-entity-browser3__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
+.Browser fieldset.dustingetz-entity-browser3__block { height: fit-content; }
+
+
 ")
 
 (comment
