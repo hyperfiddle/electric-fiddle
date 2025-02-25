@@ -114,7 +114,7 @@
              `Clojure-var-detail [`(var-name ~'%) `(var-doc ~'%)
                                   `(meta ~'%)
                                   `(var-macro? ~'%) `(var-arglists ~'%)]
-             `Sakila [:film/film_id :film/language_id :film/actors]
+             `Sakila ['*]
              `DatomicEntity (with-meta
                               ['*]
                               {:hf/select `(DatomicEntity ~'%)})
