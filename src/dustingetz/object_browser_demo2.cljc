@@ -9,6 +9,7 @@
             #?(:clj [dustingetz.datafy-fs :as fs])
             #?(:clj dustingetz.datafy-clj)
             #?(:clj dustingetz.mbrainz)
+            #?(:clj dustingetz.pg-sakila)
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
@@ -54,6 +55,8 @@
 (e/defn DatomicEntity [e]
   (e/server (d/entity @dustingetz.mbrainz/test-db e)))
 
+(e/defn Sakila [] (e/server (dustingetz.pg-sakila/query-films @dustingetz.pg-sakila/test-conn)))
+
 (e/defn Edn [x] x)
 
 (e/defn Tap [])
@@ -66,6 +69,7 @@
     (r/link ['. [[`GitRepo "./"]]] (dom/text "git"))
     (r/link ['. [[`File "./"]]] (dom/text "file"))
     (r/link ['. [[`ThreadMX]]] (dom/text "thread-mx"))
+    (r/link ['. [[`Sakila]]] (dom/text "Sakila"))
     (r/link ['. [[`DatomicEntity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
     #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
     (r/link ['. [[`Class_ 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
@@ -110,6 +114,7 @@
              `Clojure-var-detail [`(var-name ~'%) `(var-doc ~'%)
                                   `(meta ~'%)
                                   `(var-macro? ~'%) `(var-arglists ~'%)]
+             `Sakila [:film/film_id :film/language_id :film/actors]
              `DatomicEntity (with-meta
                               ['*]
                               {:hf/select `(DatomicEntity ~'%)})
@@ -127,6 +132,7 @@
                    `Clojure-ns-detail Clojure-ns-detail
                    `Clojure-ns-vars Clojure-ns-vars
                    `Clojure-var-detail Clojure-var-detail
+                   `Sakila Sakila
                    `GitRepo GitRepo
                    `File File
                    `DatomicEntity DatomicEntity
