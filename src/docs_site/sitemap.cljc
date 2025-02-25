@@ -42,7 +42,7 @@
 
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser3)]))
-   `DatomicBrowser3 (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser3)
+   `DatomicBrowser3 (e/fn [] (e/call (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser3)))
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
