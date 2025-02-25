@@ -48,12 +48,13 @@
             (t res)))))))
 
 (e/defn Inject-datomic [F]
-  (e/server
-    (Inject (e/Task (model/init-datomic))
-      {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
-       :Failed (e/fn [err] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
-                 (dom/pre (dom/text (pr-str err))))
-       :Ok F})))
+  (e/fn []
+    (e/server
+      (Inject (e/Task (model/init-datomic))
+        {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
+         :Failed (e/fn [err] (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
+                   (dom/pre (dom/text (pr-str err))))
+         :Ok F}))))
 
 (e/defn Staffly
   ([] (e/call (Inject-datomic Staffly))) ; wait until runtime to inject
