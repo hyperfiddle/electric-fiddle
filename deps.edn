@@ -142,4 +142,7 @@
     com.xtdb/xtdb-rocksdb {:mvn/version "1.23.0"}}
    :jvm-opts [;; the following option is required for JDK 16 and 17 (https://github.com/xtdb/xtdb/issues/1462)
               "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED"]}
-  }}
+  }
+
+ :mvn/repos
+ {"clojars" {:url "https://repo.clojars.org/" :snapshots {:enabled true :update :always}}}}
