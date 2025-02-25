@@ -118,7 +118,7 @@
              `Thread_ ['*]
              `Class_ ['*]
              `Tap ['*]
-             #_#_`Entity ['{* [*]}]})))
+             #_#_`Entity (with-meta ['{* [*]}] {:hf/select `(Entity ~'%)})})))
 
 (declare css)
 
