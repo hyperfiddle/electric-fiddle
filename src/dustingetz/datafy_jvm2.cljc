@@ -37,7 +37,7 @@
 
   (def as (threadmx-get-all-thread-ids x))
   (count as)
-  (def a (nav xs 0 (nth xs 0)))
+  (def a (nav as 0 (nth as 0)))
   (type a) := java.lang.management.ThreadInfo
   (hfql [`type] a)
   (hfql [`threadinfo-name
