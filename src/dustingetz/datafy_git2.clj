@@ -45,8 +45,8 @@
        :repo (.getRepository o)
        :branch-current (git/git-branch-current o)
        ; return jgit objects for user to datafy
-       :branches (memoize branch-list)
-       :log (memoize log)}
+       :branches (partial branch-list o)
+       :log (partial log o)}
       (with-meta {`nav
                   (fn [xs k v]
                     (case k
