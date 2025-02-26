@@ -119,6 +119,10 @@
   (identify film) := 854
   (select-keys film [:film/film_id :film/language_id :film/actors])
   := {:film/film_id 854 :film/language_id 1 :film/actors '...}
+  "nav one"
+  (def language (nav film :film/language_id (get film :film/language_id)))
+  (:language/name language) := "English             "
+  "nav many"
   (def actors (nav film :film/actors (get film :film/actors)))
   (count actors) := 5
   (identify actors) := [`actors-for-film 854]
