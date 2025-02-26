@@ -4,7 +4,7 @@
              [#?(:clj ensure-conn!) #?(:clj transact-unreliable)]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Form! Checkbox* Input! Checkbox!]]))
+            [hyperfiddle.electric-forms5 :refer [Form! Checkbox* Input! Checkbox!]]))
 
 (e/declare debug*)
 (e/declare slow*)
@@ -12,19 +12,21 @@
 
 (e/defn UserFormServer [db id]
   (dom/fieldset (dom/legend (dom/text "UserFormServer"))
-    (let [{:keys [user/str1 user/num1 user/bool1] :as m}
-          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
+    (let [initial-form-fields
+          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))] ; query
       (Form! ; buffer and batch edits into an atomic form
-        (dom/dl
-          (e/amb
-            (dom/dt (dom/text "str1")) (dom/dd (Input! :user/str1 str1))
-            (dom/dt (dom/text "num1")) (dom/dd (Input! :user/num1 num1 :type "number" :parse parse-long))
-            (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! :user/bool1 bool1))))
-        :commit (fn [dirty-form]
-                  (let [{:keys [user/str1 user/num1 user/bool1] :as m}
-                        (merge m dirty-form)]
-                    [[`User-form-submit id str1 num1 bool1] ; command
-                     {id m}])) ; prediction
+          initial-form-fields ; {:field value, ...}
+          (e/fn Fields [{:keys [user/str1 user/num1 user/bool1] :as form-fields}]
+            (dom/dl
+              (e/amb
+                (dom/dt (dom/text "str1")) (dom/dd (Input! :user/str1 str1 :required true)) ; try to clear it
+                (dom/dt (dom/text "num1")) (dom/dd (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str))))
+                (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! :user/bool1 bool1)))))
+        :Parse (e/fn [dirty-form-fields]
+                 (let [{:keys [user/str1 user/num1 user/bool1] :as m}
+                       (merge initial-form-fields dirty-form-fields)]
+                   [`User-form-submit id str1 num1 bool1] ; command
+                   ))
         :debug debug*))))
 
 (e/declare !conn)
@@ -38,6 +40,7 @@
 
 (e/defn UserService [edits]
   (e/client ; client bias, t doesn't transfer
+    (prn "edits" edits)
     (e/for [[t [effect & args :as form] guess] edits] ; concurrent edits
       (let [res (case effect
                   `User-form-submit (e/apply User-form-submit args)
@@ -60,4 +63,6 @@
 
 (def css "
 [aria-busy=true] {background-color: yellow;}
-[aria-invalid=true] {background-color: pink;}")
+[aria-invalid=true] {background-color: pink;}
+form dt:has(+ dd input:required)::after {content: \"*\"; color: crimson; font-weight: 400;}
+")

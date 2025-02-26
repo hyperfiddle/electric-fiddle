@@ -1,9 +1,7 @@
 (ns electric-tutorial.inputs-local
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer
-             [Input Input* Input!
-             Checkbox Checkbox* Checkbox!]]))
+            [hyperfiddle.electric-forms5 :refer [Input Input* Checkbox]]))
 
 (e/defn InputCicruit []) ; boilerplate
 

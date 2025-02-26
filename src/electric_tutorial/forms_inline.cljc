@@ -2,7 +2,7 @@
   (:require #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :as forms :refer
+            [hyperfiddle.electric-forms5 :as forms :refer
              [Input! Checkbox! Checkbox* Form! Service try-ok effects*]]
             [dustingetz.trivial-datascript-form :refer
              [#?(:clj ensure-conn!) #?(:clj transact-unreliable)]]))
@@ -31,33 +31,36 @@
 
 (e/defn UserForm [db id]
   (dom/fieldset (dom/legend (dom/text "UserForm"))
-    (let [{:keys [user/str1 user/num1 user/bool1]}
-          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))]
+    (let [initial-form-fields
+          (e/server (d/pull db [:user/str1 :user/num1 :user/bool1] id))] ; query
       (dom/dl
         (e/amb
           (dom/dt (dom/text "str1"))
-          (dom/dd (Form! (Input! :user/str1 str1)
-                    :commit (fn [{v :user/str1}]
-                              [[`Str1FormSubmit id v] ; command
-                               {id {:user/str1 v}}]) ; prediction
+          (dom/dd (Form! initial-form-fields
+                      (e/fn Fields [{:keys [user/str1] :as form-fields}]
+                        (Input! :user/str1 str1))
+                    :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields}]
+                             [`Str1FormSubmit id str1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
 
           (dom/dt (dom/text "num1"))
-          (dom/dd (Form! (Input! :user/num1 num1 :type "number" :parse parse-long)
-                    :commit (fn [{v :user/num1}]
-                              [[`Num1FormSubmit id v]
-                               {id {:user/num1 v}}])
+          (dom/dd (Form! initial-form-fields
+                      (e/fn Fields [{:keys [user/num1] :as form-fields}]
+                        (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str))))
+                    :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields}]
+                             [`Num1FormSubmit id num1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
 
           (dom/dt (dom/text "bool1"))
-          (dom/dd (Form! (Checkbox! :user/bool1 bool1)
-                    :commit (fn [{v :user/bool1}]
-                              [[`Bool1FormSubmit id v]
-                               {id {:user/bool1 v}}])
+          (dom/dd (Form! initial-form-fields
+                      (e/fn Fields [{:keys [user/bool1] :as form-fields}]
+                        (Checkbox! :user/bool1 bool1))
+                    :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields}]
+                             [`Bool1FormSubmit id bool1])
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*)))))))

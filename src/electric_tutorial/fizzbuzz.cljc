@@ -1,7 +1,7 @@
 (ns electric-tutorial.fizzbuzz
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Input*]]))
+            [hyperfiddle.electric-forms5 :refer [Input*]]))
 
 (defn clamp [n min max] (Math/min (Math/max n min) max))
 

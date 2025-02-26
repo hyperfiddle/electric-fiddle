@@ -14,7 +14,9 @@
 
 * Try it above! select the numeric field, `up`/`down`, `enter` to submit, `esc` to discard.
 * Go to the top of the page - toggle the checkbox - esc to discard - space to toggle again - enter in any field to submit form - button turns yellow and disabled.
-* Note: yes, enter in *any* field will submit *all* fields in the form.
-* But - you're actually used to that! We use tab to navigate a form, and we use enter to submit it at the end.
-* These are in fact the native browser semantics being exposed, i.e. we didn't implement this behavior! We just setup the DOM properly. I believe the only think we implemented is to submit when buttons are hidden, i.e. there is no `<button type="submit">` in the form.
-* If you want to prevent premature submit, add validation.
+
+<!-- TODO this doesn't match deployed tutorials behavior - revisit -->
+<!-- * Note: yes, enter in *any* field will submit *all* fields in the form. -->
+<!-- * But - you're actually used to that! We use tab to navigate a form, and we use enter to submit it at the end. -->
+<!-- * These are in fact the native browser semantics being exposed, i.e. we didn't implement this behavior! We just setup the DOM properly. I believe the only think we implemented is to submit when buttons are hidden, i.e. there is no `&lt;button type="submit"&gt;` in the form. -->
+<!-- * If you want to prevent premature submit, add validation. -->
