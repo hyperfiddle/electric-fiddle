@@ -60,19 +60,19 @@
 
 ; Ok, next.jdbc doesn't support many-many nav throughjoin tables, so let's do it ourselves.
 
-(defn query-language [conn id]
+(defn hydrate-language [conn id]
   (with-meta
     (jdbc/execute-one! conn ["SELECT * FROM language where language_id = ?" id])
     {`-identify :language/language_id
      `-nav (fn [o k v] v)}))
 
 (tests
-  (query-language @test-conn 1)
+  (hydrate-language @test-conn 1)
   := #:language{:language_id 1, :name "English             ",
                 :last_update #inst"2006-02-15T10:02:19.000000000-00:00"}
-  (identify (query-language @test-conn 1)) := 1)
+  (identify (hydrate-language @test-conn 1)) := 1)
 
-(defn query-actor [conn actor-id]
+(defn hydrate-actor [conn actor-id]
   (with-meta
     (jdbc/execute-one! conn ["select * from actor where actor_id = ?;" actor-id])
     {`-identify :actor/actor_id
@@ -86,20 +86,20 @@
     WHERE film.film_id = ?" film-id])
       (mapv :actor/actor_id))
     {`-identify (fn [xs] `(actors-for-film ~film-id))
-     `-nav (fn [xs k v] (query-actor conn v))}))
+     `-nav (fn [xs k v] (hydrate-actor conn v))}))
 
 (tests
   (count (actors-for-film @test-conn 854)) := 5
   (identify (actors-for-film @test-conn 854)) := [`actors-for-film 854])
 
-(defn query-film [conn film-id]
+(defn hydrate-film [conn film-id]
   (with-meta
     (-> (jdbc/execute-one! conn ["select * from film where film_id = ?;" film-id])
       (assoc :film/actors '...)) ; advertise virtual attr
     {`-identify :film/film_id
      `-nav (fn [m k v]
              (case k
-               :film/language_id (query-language conn v)
+               :film/language_id (hydrate-language conn v)
                :film/actors (actors-for-film conn (:film/film_id m))
                v))}))
 
@@ -108,7 +108,7 @@
     (->> (jdbc/execute! conn ["select film_id from film;"] #_{:schema {:film/language_id :language/language_id}})
       (mapv :film/film_id))
     {`-identify (fn [xs] `query-films)
-     `-nav (fn [xs k v] (query-film conn v))}))
+     `-nav (fn [xs k v] (hydrate-film conn v))}))
 
 (tests
   (def films (query-films @test-conn))
