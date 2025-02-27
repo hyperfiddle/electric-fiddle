@@ -1,0 +1,20 @@
+{attributes            [(hfql/props :db/ident {::hfql/link    (attribute-detail :db/ident)
+                                               ::hfql/Tooltip EntityTooltip})
+                        (summarize-attr* %)
+                        :db/doc]
+ db-stats              [:datoms
+                        (attributes-count %)]
+ (attribute-detail :a) [(hfql/props :e {::hfql/link    (entity-detail :e)
+                                        ::hfql/Tooltip EntityTooltip})
+                        :v
+                        (hfql/props :tx {::hfql/link    (tx-detail :tx)
+                                         ::hfql/Tooltip EntityTooltip})]
+ (tx-detail :tx)       [(hfql/props :e {::hfql/link    (entity-detail :e)
+                                        ::hfql/Tooltip EntityTooltip})
+                        (hfql/props :a {::hfql/link    (attribute-detail :a)
+                                        ::hfql/Render  AttributeCell
+                                        ::hfql/Tooltip EntityTooltip})
+                        (hfql/props :v {::hfql/Tooltip TxDetailValueTooltip})]
+ (entity-detail :e)    [(hfql/props :db/id {::hfql/Render EntityDbidCell}) ; TODO want link and Tooltip instead
+                        *]
+ (entity-history :e)   [*]}
