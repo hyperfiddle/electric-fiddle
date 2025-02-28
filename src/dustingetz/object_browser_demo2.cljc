@@ -66,7 +66,7 @@
     (dom/props {:class "Index"})
     (dom/text "Nav: ")
     (r/link ['. [[`Clojure-all-ns]]] (dom/text "clojure.core"))
-    (r/link ['. [[`GitRepo "./"]]] (dom/text "git"))
+    (r/link ['. [[`GitRepo "../"]]] (dom/text "git"))
     (r/link ['. [[`File "./"]]] (dom/text "file"))
     (r/link ['. [[`ThreadMX]]] (dom/text "thread-mx"))
     (r/link ['. [[`Sakila]]] (dom/text "Sakila"))
