@@ -69,9 +69,9 @@
     clj-jgit/clj-jgit {:mvn/version "1.0.2"} ; blog
     }
    #_#_:override-deps ; uberjar sees only this one alias
-   {com.hyperfiddle/electric {:local/root "vendor/electric"}
-    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
-    com.hyperfiddle/hyperfiddle-contrib {:local/root "vendor/hyperfiddle-contrib"}}}
+   {com.hyperfiddle/electric {:local/root "../electric"}
+    com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}
+    com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}}}
 
   :dustingetz
   {:extra-deps
@@ -96,18 +96,18 @@
     com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"}
     org.postgresql/postgresql {:mvn/version "42.7.3"}
     #_#_com.datomic/peer {:mvn/version "1.0.7075"}
-    #_#_com.hyperfiddle/hfql {:local/root "vendor/hfql"}
+    #_#_com.hyperfiddle/hfql {:local/root "../hfql"}
     #_#_cheshire/cheshire {:mvn/version "5.12.0"}
     #_#_markdown-clj/markdown-clj {:mvn/version "1.11.7"}
     #_#_io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}}}
 
   :private
   {:extra-paths ["src-private"]
-   :override-deps {com.hyperfiddle/electric {:local/root "vendor/electric"}
-                   com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
-                   com.hyperfiddle/hyperfiddle-contrib {:local/root "vendor/hyperfiddle-contrib"}
-                   com.hyperfiddle/hfql {:local/root "vendor/hfql"}
-                   com.hyperfiddle/rcf {:local/root "vendor/rcf"}}
+   :override-deps {com.hyperfiddle/electric {:local/root "../electric"}
+                   com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}
+                   com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}
+                   com.hyperfiddle/hfql {:local/root "../hfql"}
+                   com.hyperfiddle/rcf {:local/root "../rcf"}}
    :extra-deps
    {clj-python/libpython-clj {:mvn/version "2.026"}
     com.pitch/uix.core {:mvn/version "1.0.1"}
