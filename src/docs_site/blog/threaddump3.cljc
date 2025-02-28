@@ -7,7 +7,7 @@
             #?(:clj dustingetz.datafy-git2)
             #?(:clj dustingetz.datafy-fs)))
 
-#?(:clj (dustingetz.datafy-git/load-repo "./")) ; warm memo cache on startup - optimize blog perf
+#_#?(:clj (dustingetz.datafy-git/load-repo "./")) ; warm memo cache on startup - optimize blog perf
 
 (declare css)
 (e/defn ThreadDump3 []
