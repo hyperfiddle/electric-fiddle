@@ -7,10 +7,13 @@
             [peternagy.hfql #?(:clj :as :cljs :as-alias) hfql]
             [clojure.string :as str]
             [clojure.walk]
+            [clojure.datafy :as datafy]
+            [clojure.core.protocols :as ccp]
             [dustingetz.entity-browser4 :as eb]
             [dustingetz.str :as strx]
             [missionary.core :as m]
             [edamame.core :as eda]
+            [contrib.debug :as dbg]
             [clojure.tools.reader :as ctr]
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib2 :as datomicx])))
@@ -21,28 +24,24 @@
 #?(:clj
    (extend-protocol hfql/Suggestable
      datomic.query.EntityMap
-     (-suggest [!e] (keys (d/touch !e)))))
+     (-suggest [!e] (into [:db/id] cat [(keys (d/touch !e))
+                                        (into [] (comp (map first) (distinct) (map datomicx/invert-attribute))
+                                          (datomicx/reverse-refs (d/entity-db !e) (:db/id !e)))]))))
+
+;;;;;;;;;;;;;
+;; QUERIES ;;
+;;;;;;;;;;;;;
 
 #?(:clj (defn attributes []
-          (let [db db]
-            ;; search comes from block
-            ;; sort-spec can come statically from HFQL
-            ;; or dynamically from a block
-            (fn [search sort-spec]
-              (vec                      ; TODO sort and count fully realize, but also we need efficient `nth`
-                (sort (eb/->sort-comparator sort-spec)
-                  (eduction (map #(d/entity db %))
-                    (d/q '[:find [?e ...] :in $ ?search :where
-                           [?e :db/valueType]
-                           [?e :db/ident ?v]
-                           [(dustingetz.str/includes-str? ?v ?search)]]
-                      db search))))))))
+          (with-meta
+            (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
+            {`clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
 
 #?(:clj
    (comment
      (require '[dustingetz.mbrainz :refer [test-db lennon pour-lamour yanne cobblestone]])
-     (binding [db @test-db] (attributes))
-     ((binding [db @test-db] (attributes)) "artists" [[:db/ident :asc]])
+     (datafy/nav (d/entity @test-db pour-lamour) :abstractRelease/type :abstractRelease/type)
+     (first ((binding [db @test-db] (attributes)) "artists" [[:db/ident :asc]]))
      (eb/->sort-comparator [[:db/ident :asc]])
      (time (count (->> (attributes @test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
 
@@ -65,19 +64,29 @@
             (sort-by :count #(compare %2 %))
             vec)))
 
-(e/defn AttributeCell [?e a v pull-expr]
-  (eb/Render ?e a (e/server (:db/ident (d/entity db v))) pull-expr))
+#?(:clj (defn entity-history [e] #_[db]
+          (let [history (d/history db)]
+            (sequence (comp cat (map datom->map))
+              [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
+               (d/datoms history :vaet (:db/id e e))]))))
+
+#?(:clj (defn entity-detail [e] (d/entity db e)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PROGRESSIVE ENHANCEMENTS ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (e/defn EntityTooltip [v o spec]
   (e/server (strx/pprint-str (e/server (d/pull db ['*] v)))))
 
 (e/defn SemanticTooltip [v o spec]
   (e/server
-    (let [[typ _ unique?] (datomicx/easy-attr db (hfql/unwrap spec))]
-      (cond
-        (= :ref typ) (strx/pprint-str (d/pull db ['*] v))
-        (= :identity unique?) (strx/pprint-str (d/pull db ['*] [(hfql/unwrap spec) #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
-        () nil))))
+    (when-not (coll? v)
+      (let [[typ _ unique?] (datomicx/easy-attr db (hfql/unwrap spec))]
+        (cond
+          (= :ref typ) (strx/pprint-str (d/pull db ['*] v))
+          (= :identity unique?) (strx/pprint-str (d/pull db ['*] [(hfql/unwrap spec) #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
+          () nil)))))
 
 (e/defn TxDetailValueTooltip [v o spec]
   (e/server
@@ -88,93 +97,16 @@
         (= :identity unique?) (strx/pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
         () nil))))
 
-#?(:clj (defn entity-history [e] #_[db]
-          (let [history (d/history db)]
-            (sequence (comp cat (map datom->map))
-              [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
-               (d/datoms history :vaet (:db/id e e))]))))
-
-#?(:clj (defn entity-detail [e] (d/entity db e)))
-
 (e/defn EntityDbidCell [v o spec]
   (dom/text v " ") (r/link ['. [`(entity-history ~v)]] (dom/text "entity history")))
 
-;; #?(:clj (def sitemap
-;;           (hfql/template
-;;             {attributes           [(hfql/props :db/ident {::hfql/link    (attribute-detail :db/ident)
-;;                                                           ::hfql/Tooltip EntityTooltip})
-;;                                    (summarize-attr* %)
-;;                                    :db/doc]
-;;              db-stats             [:datoms
-;;                                    (attributes-count %)]
-;;              (attribute-detail a) [(hfql/props :e {::hfql/link    (entity-detail e)
-;;                                                    ::hfql/Tooltip EntityTooltip})
-;;                                    :v
-;;                                    (hfql/props :tx {::hfql/link    (tx-detail tx)
-;;                                                     ::hfql/Tooltip EntityTooltip})]
-;;              (tx-detail tx)       [(hfql/props :e {::hfql/link    (entity-detail e)
-;;                                                    ::hfql/Tooltip EntityTooltip})
-;;                                    (hfql/props :a {::hfql/link    (attribute-detail a)
-;;                                                    ::hfql/Render  AttributeCell
-;;                                                    ::hfql/Tooltip EntityTooltip})
-;;                                    (hfql/props :v {::hfql/Tooltip TxDetailValueTooltip})]
-;;              (entity-detail e)    (hfql/props [(hfql/props :db/id {::hfql/Render EntityDbidCell}) ; TODO want link and Tooltip instead
-;;                                                *]
-;;                                     {::hfql/Tooltip SemanticTooltip
-;;                                      ;; ::hf/select (entity-detail %)  not a thing right now
-;;                                      })
-;;              (entity-history e)   [*]})))
-
-;; ;; alternative syntax with hf/props inlined as a map
-;; #?(:clj (def sitemap2
-;;           (hfql/template
-;;             {attributes           [:db/ident {::hfql/link (attribute-detail :db/ident) ::hfql/Tooltip EntityTooltip}
-;;                                    (summarize-attr* %)
-;;                                    :db/doc]
-;;              db-stats             [:datoms
-;;                                    (attributes-count %)]
-;;              (attribute-detail a) [:e {::hfql/link (entity-detail e) ::hfql/Tooltip EntityTooltip}
-;;                                    :v
-;;                                    :tx {::hfql/link (tx-detail tx) ::hfql/Tooltip EntityTooltip}]
-;;              (tx-detail tx)       [:e {::hfql/link (entity-detail e) ::hfql/Tooltip EntityTooltip}
-;;                                    :a {::hfql/link (attribute-detail a) ::hfql/Render AttributeCell ::hfql/Tooltip EntityTooltip}
-;;                                    :v {::hfql/Tooltip TxDetailValueTooltip}]
-;;              (entity-detail e)    [{::hfql/Tooltip SemanticTooltip ; first map is global hf/props
-;;                                     ;; ::hf/select (entity-detail %)  not a thing right now
-;;                                     }
-;;                                    :db/id {::hfql/Render EntityDbidCell} ; TODO want link and Tooltip instead
-;;                                    *]
-;;              (entity-history e)   [*]})))
-
-;; works today
-#?(:clj (def sitemap3
-          {`attributes            [(hfql/props :db/ident {::hfql/link    `(attribute-detail :db/ident)
-                                                          ::hfql/Tooltip `EntityTooltip})
-                                   `(summarize-attr* ~'%)
-                                   :db/doc]
-           `db-stats              [:datoms
-                                   `(attributes-count ~'%)]
-           `(attribute-detail :a) [(hfql/props :e {::hfql/link    `(entity-detail :e)
-                                                   ::hfql/Tooltip `EntityTooltip})
-                                   :v
-                                   (hfql/props :tx {::hfql/link    `(tx-detail :tx)
-                                                    ::hfql/Tooltip `EntityTooltip})]
-           `(tx-detail :tx)       [(hfql/props :e {::hfql/link    `(entity-detail :e)
-                                                   ::hfql/Tooltip `EntityTooltip})
-                                   (hfql/props :a {::hfql/link    `(attribute-detail :a)
-                                                   ::hfql/Render  `AttributeCell
-                                                   ::hfql/Tooltip `EntityTooltip})
-                                   (hfql/props :v {::hfql/Tooltip `TxDetailValueTooltip})]
-           `(entity-detail :e)    (hfql/props [(hfql/props :db/id {::hfql/Render `EntityDbidCell}) ; TODO want link and Tooltip instead
-                                               '*]
-                                    {::hfql/Tooltip `SemanticTooltip
-                                     ;; ::hf/select (entity-detail %)  not a thing right now
-                                     })
-           `(entity-history :e)   ['*]}))
+;;;;;;;;;;;;;
+;; SITEMAP ;;
+;;;;;;;;;;;;;
 
 #?(:clj
    (defn normalize-sitemap [sitemap]
-     (let [qualify #(symbol (resolve %))]
+     (let [qualify #(symbol (hfql/resolve! %))]
        (update-keys sitemap
          (fn [k]
            (if (symbol? k)
@@ -185,14 +117,10 @@
           (clojure.walk/postwalk
             (fn [x] (cond
                       (= `% x) '%
+                      (= `%v x) '%v
                       (and (seq? x) (= `hfql/props (first x))) (apply hfql/props (next x))
                       :else    x))
             (eval (read-string (str "`" (slurp file-path)))))))
-
-;; #?(:clj (def sitemap4 (normalize-sitemap
-;;                         (eda/parse-string (str "`" (slurp "./src/datomic_browser/datomic_browser4.edn"))
-;;                           {:auto-resolve (fn [x] (if (= :current x) *ns* (get (ns-aliases *ns*) x)))
-;;                            :syntax-quote {:resolve-symbol (fn [sym] (if (= sym '%) '% (ctr/resolve-symbol sym)))}}))))
 
 #?(:clj (def sitemap-path "./src/datomic_browser/datomic_browser4.edn"))
 
@@ -210,6 +138,10 @@
   (eval (read-string (str "`" edn)))
   )
 
+;;;;;;;;;;;;;;;;
+;; ENTRYPOINT ;;
+;;;;;;;;;;;;;;;;
+
 (defn find-context-free-pages [sitemap]
   (filterv #(not (next %)) (keys sitemap)))
 
@@ -223,20 +155,10 @@
 
 (declare css)
 (e/defn DatomicBrowser4 [conn]
-  (binding [electric-fiddle.fiddle-index/pages {} ; TODO these don't exist, is this needed?
-            #_
-            {`Attributes Attributes
-             `AttributeDetail AttributeDetail
-             `DbStats DbStats
-             `TxDetail TxDetail
-             `EntityDetail EntityDetail
-             `EntityHistory EntityHistory}
-            eb/whitelist
-            {`AttributeCell AttributeCell
-             `EntityTooltip EntityTooltip
-             `TxDetailValueTooltip TxDetailValueTooltip
-             `SemanticTooltip SemanticTooltip
-             `EntityDbidCell EntityDbidCell}
+  (binding [eb/whitelist {`EntityTooltip EntityTooltip
+                          `TxDetailValueTooltip TxDetailValueTooltip
+                          `SemanticTooltip SemanticTooltip
+                          `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn})
@@ -246,7 +168,7 @@
       (let [sitemap eb/*sitemap]
         (dom/style (dom/text css))
         (Index sitemap)
-        (eb/HfqlRoot sitemap `[(db-stats)])))))
+        (eb/HfqlRoot sitemap `[(attributes)])))))
 
 (def css "
 
