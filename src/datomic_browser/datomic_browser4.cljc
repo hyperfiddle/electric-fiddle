@@ -12,18 +12,39 @@
             [missionary.core :as m]
             [edamame.core :as eda]
             [clojure.tools.reader :as ctr]
-            #?(:clj [clojure.core.protocols :as ccp])
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib2 :as datomicx])))
 
-(e/declare conn)
+(e/declare ^:dynamic conn)
 (e/declare ^:dynamic db)
 
+#?(:clj
+   (extend-protocol hfql/Suggestable
+     datomic.query.EntityMap
+     (-suggest [!e] (keys (d/touch !e)))))
+
 #?(:clj (defn attributes []
-          (with-meta
-            (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            {`ccp/nav (fn [_xs _k v] (d/entity db v))
-             `hfql/-suggest (fn [o] (keys (d/touch (ccp/nav o nil (first o)))))})))
+          (let [db db]
+            ;; search comes from block
+            ;; sort-spec can come statically from HFQL
+            ;; or dynamically from a block
+            (fn [search sort-spec]
+              (vec                      ; TODO sort and count fully realize, but also we need efficient `nth`
+                (sort (eb/->sort-comparator sort-spec)
+                  (eduction (map #(d/entity db %))
+                    (d/q '[:find [?e ...] :in $ ?search :where
+                           [?e :db/valueType]
+                           [?e :db/ident ?v]
+                           [(dustingetz.str/includes-str? ?v ?search)]]
+                      db search))))))))
+
+#?(:clj
+   (comment
+     (require '[dustingetz.mbrainz :refer [test-db lennon pour-lamour yanne cobblestone]])
+     (binding [db @test-db] (attributes))
+     ((binding [db @test-db] (attributes)) "artists" [[:db/ident :asc]])
+     (eb/->sort-comparator [[:db/ident :asc]])
+     (time (count (->> (attributes @test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
 
 #?(:clj (defn datom->map [[e a v tx added]]
           (with-meta {:e e, :a a, :v v, :tx tx, :added added}
@@ -33,7 +54,7 @@
 
 #?(:clj (defn db-stats [] (d/db-stats db)))
 
-#?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (eduction (mapcat :data) (map datom->map)))))
+#?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (sequence (comp (mapcat :data) (map datom->map))))))
 
 #?(:clj (defn summarize-attr* [?!a] #_[db]
           (when ?!a (->> (datomicx/easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (str/join " ")))))
@@ -47,20 +68,20 @@
 (e/defn AttributeCell [?e a v pull-expr]
   (eb/Render ?e a (e/server (:db/ident (d/entity db v))) pull-expr))
 
-(e/defn EntityTooltip [_?e _a v _pull-expr] ; questionable, oddly similar to hf/Render signature
+(e/defn EntityTooltip [v o spec]
   (e/server (strx/pprint-str (e/server (d/pull db ['*] v)))))
 
-(e/defn SemanticTooltip [_?e a v _pull-expr]
+(e/defn SemanticTooltip [v o spec]
   (e/server
-    (let [[typ _ unique?] (datomicx/easy-attr db a)]
+    (let [[typ _ unique?] (datomicx/easy-attr db (hfql/unwrap spec))]
       (cond
         (= :ref typ) (strx/pprint-str (d/pull db ['*] v))
-        (= :identity unique?) (strx/pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
+        (= :identity unique?) (strx/pprint-str (d/pull db ['*] [(hfql/unwrap spec) #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
         () nil))))
 
-(e/defn TxDetailValueTooltip [?e _a v _pull-expr]
+(e/defn TxDetailValueTooltip [v o spec]
   (e/server
-    (let [a (get ?e 'a) ; symbolic why
+    (let [a (get v :a)
           [typ _ unique?] (datomicx/easy-attr db a)]
       (cond
         (= :ref typ) (strx/pprint-str (d/pull db ['*] v))
@@ -69,14 +90,14 @@
 
 #?(:clj (defn entity-history [e] #_[db]
           (let [history (d/history db)]
-            (eduction cat (map datom->map)
+            (sequence (comp cat (map datom->map))
               [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
                (d/datoms history :vaet (:db/id e e))]))))
 
 #?(:clj (defn entity-detail [e] (d/entity db e)))
 
-(e/defn EntityDbidCell [_?e _a v _pull-expr]
-  (dom/text v " ") (r/link ['.. [`(EntityHistory ~v)]] (dom/text "entity history")))
+(e/defn EntityDbidCell [v o spec]
+  (dom/text v " ") (r/link ['. [`(entity-history ~v)]] (dom/text "entity history")))
 
 ;; #?(:clj (def sitemap
 ;;           (hfql/template
@@ -174,6 +195,7 @@
 ;;                            :syntax-quote {:resolve-symbol (fn [sym] (if (= sym '%) '% (ctr/resolve-symbol sym)))}}))))
 
 #?(:clj (def sitemap-path "./src/datomic_browser/datomic_browser4.edn"))
+
 #?(:clj (def sitemap5 (normalize-sitemap (read-sitemap sitemap-path))))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 #?(:clj (def !sitemap (atom sitemap5)))
@@ -187,6 +209,9 @@
   (read-sitemap "./src/datomic_browser/datomic_browser4.edn")
   (eval (read-string (str "`" edn)))
   )
+
+(defn find-context-free-pages [sitemap]
+  (filterv #(not (next %)) (keys sitemap)))
 
 (e/defn Index [sitemap]
   (dom/nav
@@ -214,7 +239,7 @@
              `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
-    (binding [eb/*hfql-bindings (e/server {(find-var `db) db})
+    (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn})
               eb/!sitemap !sitemap
               eb/*sitemap (e/watch !sitemap)
               eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))]

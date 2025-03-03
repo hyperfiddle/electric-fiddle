@@ -16,5 +16,5 @@
                                         ::hfql/Tooltip EntityTooltip})
                         (hfql/props :v {::hfql/Tooltip TxDetailValueTooltip})]
  (entity-detail :e)    [(hfql/props :db/id {::hfql/Render EntityDbidCell}) ; TODO want link and Tooltip instead
-                        *]
- (entity-history :e)   [*]}
+                        (clojure.datafy/datafy %)]
+ (entity-history :e)   [:e :a :v :tx :added]}
