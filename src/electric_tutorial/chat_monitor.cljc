@@ -31,8 +31,13 @@
 #?(:clj (defn send-message! [msg] (swap! !db #(take 10 (cons msg %)))))
 (defn ->msg-record [id username msg] {::id id ::username username ::msg msg})
 
+(e/defn Unparse [[cmd & args]] ; locally guess command result
+  (case cmd
+    `SendMessage (let [[id username msg] args] (->msg-record id username msg))
+    (e/amb)))
+
 (e/defn Message [record]
-  (forms/TrackTx
+  (forms/TrackTx ; ugly, should come for free
     (e/fn [err]
       (Form! ; models an entity
           (::forms/command record) ; nil for server message
@@ -41,16 +46,12 @@
             (dom/fieldset
               (dom/props {:disabled true}) ; read-only entity - messages are not editable in this demo
               (dom/span (dom/strong (dom/text username)))
-              (Output ::msg msg))) ; would be `Input!` for an editable message
+              (Output ::msg msg))) ; would be `Input!` for an editable message - see HTML's <output>
         :show-buttons (some? err)
         :tempid random-uuid
         :Unparse (e/fn [command] [record (::id record)])
-        :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg])))))
-
-(e/defn Unparse [[cmd & args]] ; locally guess command result
-  (case cmd
-    `SendMessage (let [[id username msg] args] (->msg-record id username msg))
-    (e/amb)))
+        :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg]))))
+  )
 
 (e/defn Channel [server-messages commands]
   (dom/ul (dom/props {:class "channel"})
