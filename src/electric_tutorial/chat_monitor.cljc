@@ -32,22 +32,20 @@
 (defn ->msg-record [id username msg] {::id id ::username username ::msg msg})
 
 (e/defn Message [record]
-  (let [command (::forms/command record)]
-    #_(e/with-cycle* second [command (::forms/command record)]
-      (prn "command cycle" command))
-    (Form! ; models an entity
-        command ; nil for server message
-        (e/fn [{:keys [::username ::msg] :as record}]
-          (dom/props {:class "message"})
-          (dom/fieldset
-            (dom/props {:disabled true}) ; read-only entity - messages are not editable in this demo
-            (dom/span (dom/strong (dom/text username)) #_(dom/text " " msg))
-            (Output ::msg msg)))
-      :show-buttons true
-      :tempid random-uuid
-      :Unparse (e/fn [command] [record (::id record)])
-      :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg])))
-)
+  (forms/TrackTx
+    (e/fn [err]
+      (Form! ; models an entity
+          (::forms/command record) ; nil for server message
+          (e/fn [{:keys [::username ::msg] :as record}]
+            (dom/props {:class "message"})
+            (dom/fieldset
+              (dom/props {:disabled true}) ; read-only entity - messages are not editable in this demo
+              (dom/span (dom/strong (dom/text username)))
+              (Output ::msg msg))) ; would be `Input!` for an editable message
+        :show-buttons (some? err)
+        :tempid random-uuid
+        :Unparse (e/fn [command] [record (::id record)])
+        :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg])))))
 
 (e/defn Unparse [[cmd & args]] ; locally guess command result
   (case cmd
@@ -109,6 +107,7 @@
 .channel form[aria-invalid] {background-color: red;}
 .channel form.message fieldset {display: contents;}
 .channel form.message {display: grid; grid-template-columns: auto 1fr auto auto}
+.channel form.message output {text-align: end; padding: 0 1rem;}
 
 .channel form.message fieldset:disabled input {display:none;}
 .channel form.message fieldset:not(:disabled) output {display:none;}
