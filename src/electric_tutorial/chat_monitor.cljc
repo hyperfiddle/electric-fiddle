@@ -1,7 +1,7 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output Button! OptimisticView Checkbox]]))
+            [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output]]))
 
 (e/defn Login [username]
   (dom/div
@@ -26,7 +26,7 @@
       (dom/li (dom/text username)))))
 
 ;; (def !db nil)
-#?(:clj (def !db (atom ()))) ; multiplayer
+#?(:clj (defonce !db (atom ()))) ; multiplayer
 (e/defn Query-chats [] (e/server (e/diff-by ::id (e/watch !db))))
 #?(:clj (defn send-message! [msg] (swap! !db #(take 10 (cons msg %)))))
 (defn ->msg-record [id username msg] {::id id ::username username ::msg msg})
@@ -39,19 +39,19 @@
 (e/defn Message [record]
   (forms/TrackTx ; ugly, should come for free
     (e/fn [err]
-      (Form! ; models an entity
-          (::forms/command record) ; nil for server message
+      (Form! record                   ; models an entity
           (e/fn [{:keys [::username ::msg] :as record}]
             (dom/props {:class "message"})
             (dom/fieldset
               (dom/props {:disabled true}) ; read-only entity - messages are not editable in this demo
               (dom/span (dom/strong (dom/text username)))
               (Output ::msg msg))) ; would be `Input!` for an editable message - see HTML's <output>
-        :show-buttons (some? err)
-        :tempid random-uuid
-        :Unparse (e/fn [command] [record (::id record)])
-        :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg]))))
-  )
+        :show-buttons true #_(some? err)
+        :auto-submit (some? (::forms/command record))
+        :attach (::forms/command record)
+        :Unparse (e/fn [record] [record (::id record)])
+        :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg]))
+      )))
 
 (e/defn Channel [server-messages commands]
   (dom/ul (dom/props {:class "channel"})
@@ -59,18 +59,20 @@
             (dom/li (Message record)))))
 
 (e/defn SendMessageInput [username]
-  (Form! {} ; initial form state
-      (e/fn Fields [fields]
-        (Input! ::msg "" :disabled (nil? username) :placeholder (if username "Send message" "Login to chat")))
+  (Form! {} (e/fn [_]
+              (dom/props {:class "new-message"})
+              (Input! ::msg "" :disabled (nil? username) :placeholder (if username "Send message" "Login to chat")))
     :genesis true ; immediately consume form, ready for next submit, each message get a globaly unique id
     :tempid random-uuid
-    :Parse (e/fn [{msg ::msg} unique-id] [`SendMessage unique-id username msg]))) ; command - with globaly unique correlation id
+    :Parse (e/fn [{:keys [::msg]} unique-id] [`SendMessage unique-id username msg]))) ; command - with globaly unique correlation id
 
-(e/defn ChatApp [username present commands]
+(e/defn ChatApp [username present]
   (Present present)
   (dom/hr)
   (e/amb
-    (Channel (e/server (Query-chats)) (SendMessageInput username))
+    (dom/div
+      (dom/props {:class "chat-view"})
+      (Channel (e/server (Query-chats)) (SendMessageInput username)))
     (Login username)))
 
 (def next-toggle (partial swap! (atom false) not))
@@ -89,10 +91,9 @@
   (dom/style (dom/text css))
   (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
         present (e/server (Presence! !present username))
-        commands (e/with-cycle* first [commands (e/amb)] ; loop in-flight commands – e.g. SendMessage
-                   (ChatApp username present commands))]
+        commands (ChatApp username present)]
     (prn 'commands (e/as-vec commands))
-    (e/for [[t [cmd & args]] commands]
+    (e/for [[t [cmd & args]] (e/diff-by first (e/as-vec commands))] ; FIXME reboot branch on new token for = tx retry
       (let [res (e/server
                   (case cmd
                     `SendMessage (e/apply SendMessage args)
@@ -104,17 +105,29 @@
 ; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
 (def css "
 
-.channel form[aria-busy=true] {background-color: yellow;}
-.channel form[aria-invalid] {background-color: red;}
-.channel form.message fieldset {display: contents;}
-.channel form.message {display: grid; grid-template-columns: auto 1fr auto auto}
-.channel form.message output {text-align: end; padding: 0 1rem;}
+.chat-view { display: grid; grid-template-areas: \"channel\" \"new-message\"}
 
-.channel form.message fieldset:disabled input {display:none;}
-.channel form.message fieldset:not(:disabled) output {display:none;}
+.chat-view .channel { grid-area: channel; transition: height 0.5s ease; z-index: 1;}
+
+.chat-view .channel .message[aria-busy=true] {background-color: yellow;}
+.chat-view .channel .message[aria-invalid] {background-color: pink;}
+
+.chat-view .channel form.message fieldset {display: contents;}
+.chat-view .channel form.message {display: grid; grid-template-columns: auto 1fr auto auto}
+.chat-view .channel form.message output {text-align: end; padding: 0 1rem;}
+
+.chat-view .channel form.message fieldset:disabled input {display:none;}
+.chat-view .channel form.message fieldset:not(:disabled) output {display:none;}
+
+.chat-view .channel form.message { animation: slide-in 0.5s 0.1s ease-in forwards; }
+
+@keyframes slide-in {
+  from { transform: translateY(2.5rem); }
+  to   { transform: translate(0); }
+}
 
 
-.channel form.message fieldset:disabled input:readonly{  }
+.chat-view .new-message {grid-area: new-message;}
 
 .user-examples-target.ChatMonitor ul.channel li,
 .user-examples-target.Chat ul.channel li { display: grid; }
@@ -122,7 +135,7 @@
 .user-examples-target.ChatMonitor ul.channel {
     display: flex; flex-direction: column;
     justify-content: end; /* bottom up */
-    height: 220px; overflow-y: clip; /* pending pushes up server records */
+    height: 220px; /* overflow-y: clip;*/ /* pending pushes up server records */
     padding: 0; /* remove room for bullet in grid layout */ }
 
 
