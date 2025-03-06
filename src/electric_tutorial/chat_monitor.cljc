@@ -37,21 +37,20 @@
     (e/amb)))
 
 (e/defn Message [record]
-  (forms/TrackTx ; ugly, should come for free
-    (e/fn [err]
-      (Form! record                   ; models an entity
-          (e/fn [{:keys [::username ::msg] :as record}]
-            (dom/props {:class "message"})
-            (dom/fieldset
-              (dom/props {:disabled true}) ; read-only entity - messages are not editable in this demo
-              (dom/span (dom/strong (dom/text username)))
-              (Output ::msg msg))) ; would be `Input!` for an editable message - see HTML's <output>
-        :show-buttons true #_(some? err)
-        :auto-submit (some? (::forms/command record))
-        :attach (::forms/command record)
-        :Unparse (e/fn [record] [record (::id record)])
-        :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg]))
-      )))
+  (let [command (::forms/command record)]
+    (Form! command                   ; models an entity
+        (e/fn [{:keys [::username ::msg] :as record}]
+          (dom/props {:class ["message" (when command "pending")]})
+          (dom/fieldset
+            (dom/props {:disabled true}) ; read-only entity - messages are not editable in this demo
+            (dom/span (dom/strong (dom/text username)))
+            (Output ::msg msg) ; would be `Input!` for an editable message - see HTML's <output>
+            ))
+      :show-buttons true ; TODO make customizable
+      :auto-submit (some? command)
+      :attach command
+      :Unparse (e/fn [command] [record (::id record)]) ; already unparsed - is this right?
+      :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg]))))
 
 (e/defn Channel [server-messages commands]
   (dom/ul (dom/props {:class "channel"})
@@ -105,12 +104,16 @@
 ; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
 (def css "
 
-.chat-view { display: grid; grid-template-areas: \"channel\" \"new-message\"}
+.chat-view { display: grid; grid-template-areas: \"channel\" \"new-message\"; overflow: hidden;}
 
-.chat-view .channel { grid-area: channel; transition: height 0.5s ease; z-index: 1;}
+.chat-view .channel {
+ grid-area: channel;
+ min-height: 230px; /* 10 messages */
+ transition: height 0.5s ease;
+ z-index: 1;}
 
-.chat-view .channel .message[aria-busy=true] {background-color: yellow;}
-.chat-view .channel .message[aria-invalid] {background-color: pink;}
+.chat-view .channel form.message:has([aria-busy=true]) {--background-color: yellow;}
+.chat-view .channel form.message:has([aria-invalid=true]) {--background-color: pink;}
 
 .chat-view .channel form.message fieldset {display: contents;}
 .chat-view .channel form.message {display: grid; grid-template-columns: auto 1fr auto auto}
@@ -119,13 +122,32 @@
 .chat-view .channel form.message fieldset:disabled input {display:none;}
 .chat-view .channel form.message fieldset:not(:disabled) output {display:none;}
 
-.chat-view .channel form.message { animation: slide-in 0.5s 0.1s ease-in forwards; }
-
-@keyframes slide-in {
-  from { transform: translateY(2.5rem); }
-  to   { transform: translate(0); }
+.chat-view .channel form.message {
+  height: 23px;
+  position:relative;
+  --background-color: white;
 }
 
+.chat-view .channel form.message.pending{
+  animation: slide-in 0.5s ease-in forwards;
+}
+
+.chat-view .channel form.message::after{ /* background */
+   z-index: -1;
+   content: \"\";
+   position: absolute;
+   width: 100%; height: 23px;
+   background-color: var(--background-color);
+}
+
+
+@keyframes slide-in {
+  from {
+    height: 0;
+    transform: translateY(1rem) scale(0.99);
+    box-shadow: 0 0 1rem lightgray;
+  }
+}
 
 .chat-view .new-message {grid-area: new-message;}
 
