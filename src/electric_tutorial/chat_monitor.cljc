@@ -1,7 +1,7 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output Button! #_SubmitButton!]]))
+            [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output Button! SubmitButton! DiscardButton!]]))
 
 (e/defn Login [username]
   (dom/div
@@ -37,18 +37,21 @@
     (e/amb)))
 
 (e/defn Message [record]
-  (let [command (::forms/command record)]
+  (let [command (::forms/command record)
+        optimistic? (some? command)]
     (Form! command                   ; models an entity
         (e/fn [{:keys [::username ::msg] :as record}]
-          (dom/props {:class ["message" (when command "pending")]})
+          (dom/props {:class ["message" (when optimistic? "pending")]})
           (dom/fieldset
-            (dom/props {:disabled false #_true}) ; read-only entity - messages are not editable in this demo
+            (dom/props {:disabled (not optimistic?)}) ; read-only entity
             (dom/span (dom/strong (dom/text username)))
-            (Output ::msg msg) ; would be `Input!` for an editable message - see HTML's <output>
             (e/amb
-              #_(SubmitButton! :label "Retry" :disabled false)
-              (Button! [::forms/discard] :label "cancel" :disabled false))))
-      :auto-submit (some? command)
+              (if optimistic? ; showcase "edit message" – out of scope
+                (Input! ::msg msg)
+                (Output ::msg msg))
+              (SubmitButton! :label "Retry" :disabled false)
+              (DiscardButton! :label "x"))))
+      ;; :auto-submit (some? command)
       :attach command
       :Unparse (e/fn [command] [record (::id record)]) ; already unparsed - is this right?
       :Parse (e/fn [{:keys [::username ::msg]} unique-id] [`SendMessage unique-id username msg]))))
