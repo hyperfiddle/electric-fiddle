@@ -1,7 +1,7 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output]]))
+            [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output Button! #_SubmitButton!]]))
 
 (e/defn Login [username]
   (dom/div
@@ -26,7 +26,7 @@
       (dom/li (dom/text username)))))
 
 ;; (def !db nil)
-#?(:clj (defonce !db (atom ()))) ; multiplayer
+#?(:clj (def !db (atom ()))) ; multiplayer
 (e/defn Query-chats [] (e/server (e/diff-by ::id (e/watch !db))))
 #?(:clj (defn send-message! [msg] (swap! !db #(take 10 (cons msg %)))))
 (defn ->msg-record [id username msg] {::id id ::username username ::msg msg})
@@ -42,11 +42,12 @@
         (e/fn [{:keys [::username ::msg] :as record}]
           (dom/props {:class ["message" (when command "pending")]})
           (dom/fieldset
-            (dom/props {:disabled true}) ; read-only entity - messages are not editable in this demo
+            (dom/props {:disabled false #_true}) ; read-only entity - messages are not editable in this demo
             (dom/span (dom/strong (dom/text username)))
             (Output ::msg msg) ; would be `Input!` for an editable message - see HTML's <output>
-            ))
-      :show-buttons true ; TODO make customizable
+            (e/amb
+              #_(SubmitButton! :label "Retry" :disabled false)
+              (Button! [::forms/discard] :label "cancel" :disabled false))))
       :auto-submit (some? command)
       :attach command
       :Unparse (e/fn [command] [record (::id record)]) ; already unparsed - is this right?
