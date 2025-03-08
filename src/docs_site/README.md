@@ -26,4 +26,5 @@ fly scale count 1 --region sjc
 fly scale count 1 --region gru
 fly scale count 1 --region hkg
 fly platform vm-sizes
+fly machine restart --skip-health-checks=false
 ```
