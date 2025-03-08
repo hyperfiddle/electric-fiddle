@@ -20,5 +20,6 @@
                           io.github.clojure/tools.build {:mvn/version "0.9.6"
                                                          :exclusions  [com.google.guava/guava  ; tools.build / clojurescript Guava dep conflict.
                                                                        org.slf4j/slf4j-nop ; clashes with app logger
-                                                                       ]}}}
-           }}
+                                                                       ]}}}}
+ :mvn/repos
+ {"clojars" {:url "https://repo.clojars.org/" :snapshots {:enabled true :update :always}}}}
