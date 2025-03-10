@@ -53,8 +53,8 @@
 
 (e/defn Channel [server-messages local-commands]
   (dom/ul (dom/props {:class "channel"})
-    (e/for [[record command] (Reconcile-by ::id (fn [[_SendMessage id username msg]] id)
-                               ::created-at (fn [_command] (add-years 100 (now!))) ; ensure local pending messages do not interleave with server messages
+    (e/for [[record command] (Reconcile-by ::id (fn [[_SendMessage id username msg]] id) ; correlate server record with local command
+                               ::created-at (fn [_command] (add-years 100 (now!))) ; sort - ensuring local messages do not interleave with server messages (can't send a message in the past)
                                server-messages local-commands)]
       (dom/li (Message record command)))))
 
@@ -62,8 +62,8 @@
   (Form! nil (e/fn [_] (dom/props {:class "new-message"})
                (Input! ::msg "" :disabled (nil? username) :placeholder (if username "Send message" "Login to chat")))
     :genesis true ; immediately consume form, ready for next submit, each message get a globally unique id
-    :tempid random-uuid
-    :Parse (e/fn [{:keys [::msg]} unique-id] [`SendMessage unique-id username msg]))) ; command - with globally unique correlation id
+    :tempid random-uuid ; globally unique correlation id
+    :Parse (e/fn [{:keys [::msg]} unique-id] [`SendMessage unique-id username msg]))) ; form fields + generated globally unique id -> command
 
 (e/defn ChatApp [username present]
   (Present present)
