@@ -12,7 +12,9 @@ body.electric-fiddle{
     box-sizing: content-box;
     position: relative;
     background-color:white;
-    
+}
+
+body > div.Tutorial /* includes Essay-app */ {
     padding-bottom: 10vh; /* add space, for mobile especially */
 }
 
