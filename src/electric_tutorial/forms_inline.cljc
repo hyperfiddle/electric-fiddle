@@ -38,8 +38,8 @@
           (dom/dt (dom/text "str1"))
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/str1] :as form-fields}]
-                        (Input! :user/str1 str1))
-                    :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields}]
+                        (Input! :user/str1 str1 :required true))
+                    :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields} _unique-id]
                              [`Str1FormSubmit id str1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
@@ -49,7 +49,7 @@
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/num1] :as form-fields}]
                         (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str))))
-                    :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields}]
+                    :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields} _unique-id]
                              [`Num1FormSubmit id num1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
@@ -59,13 +59,16 @@
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/bool1] :as form-fields}]
                         (Checkbox! :user/bool1 bool1))
-                    :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields}]
-                             [`Bool1FormSubmit id bool1])
+                    :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields} _unique-id]
+                             [`Bool1FormSubmit id bool1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*)))))))
 
+(declare css)
+
 (e/defn Forms-inline []
+  (dom/style (dom/text css))
   (binding [effects* {`Str1FormSubmit Str1FormSubmit
                       `Num1FormSubmit Num1FormSubmit
                       `Bool1FormSubmit Bool1FormSubmit}
@@ -79,3 +82,11 @@
       (let [db (e/server (e/watch !conn))]
         (Service
           (UserForm db 42))))))
+
+
+(def css "
+[aria-busy=true] {background-color: yellow;}
+[aria-invalid=true] {background-color: pink;}
+dt:has(+ dd input:required)::after {content: \"*\"; color: crimson; font-weight: 400;}
+dd:has(:invalid:required)::after {content: \"required\"; color: red; font-size: 0.85rem; padding: 0 0.75rem;}
+")

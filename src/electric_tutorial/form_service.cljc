@@ -22,7 +22,7 @@
                 (dom/dt (dom/text "str1")) (dom/dd (Input! :user/str1 str1 :required true)) ; try to clear it
                 (dom/dt (dom/text "num1")) (dom/dd (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str))))
                 (dom/dt (dom/text "bool1")) (dom/dd (Checkbox! :user/bool1 bool1)))))
-        :Parse (e/fn [dirty-form-fields]
+        :Parse (e/fn [dirty-form-fields _unique-id]
                  (let [{:keys [user/str1 user/num1 user/bool1] :as m}
                        (merge initial-form-fields dirty-form-fields)]
                    [`User-form-submit id str1 num1 bool1] ; command
