@@ -24,9 +24,12 @@
 #?(:clj
    (extend-protocol hfql/Suggestable
      datomic.query.EntityMap
-     (-suggest [!e] (into [:db/id] cat [(keys (d/touch !e))
-                                        (into [] (comp (map first) (distinct) (map datomicx/invert-attribute))
-                                          (datomicx/reverse-refs (d/entity-db !e) (:db/id !e)))]))))
+     (-suggest [!e]
+       (mapv (fn [k]
+               {:label k, :entry k})
+         (into [:db/id] cat [(keys (d/touch !e))
+                             (into [] (comp (map first) (distinct) (map datomicx/invert-attribute))
+                               (datomicx/reverse-refs (d/entity-db !e) (:db/id !e)))])))))
 
 ;;;;;;;;;;;;;
 ;; QUERIES ;;
