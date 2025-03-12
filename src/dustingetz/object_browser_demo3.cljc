@@ -119,6 +119,8 @@
 
 (declare css)
 
+#?(:clj (defn route-ns [o] (when (instance? clojure.lang.Namespace o) (list `find-ns (ns-name o)))))
+
 (e/defn ObjectBrowserDemo3 []
   (binding [pages {`Clojure-ns-vars Clojure-ns-vars
                    `Sakila Sakila
@@ -132,7 +134,8 @@
             eb/*hfql-bindings (e/server {})
             eb/!sitemap !sitemap
             eb/*sitemap (e/server (e/watch !sitemap))
-            eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))]
+            eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
+            eb/*page-defaults (e/server [route-ns])]
     (dom/style (dom/text css))
     (let [sitemap eb/*sitemap]
       (dom/style (dom/text css))
