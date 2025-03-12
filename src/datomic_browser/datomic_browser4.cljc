@@ -3,6 +3,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric3-contrib :as ex]
+            [hyperfiddle.nav0 :as hfp]
             electric-fiddle.fiddle-index
             [peternagy.hfql #?(:clj :as :cljs :as-alias) hfql]
             [clojure.string :as str]
@@ -50,7 +51,7 @@
 
 #?(:clj (defn datom->map [[e a v tx added]]
           (with-meta {:e e, :a a, :v v, :tx tx, :added added}
-            {`-identify (fn [_] e)})))
+            {`hfp/-identify hash})))
 
 #?(:clj (defn attribute-detail [a] (->> (d/datoms db :aevt a) (sort-by :v) (map datom->map)))) ; todo inline
 
