@@ -102,15 +102,15 @@
     #_#_io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}}}
 
   :private
-  {:extra-paths ["../scratch/src"]
-   :override-deps {com.hyperfiddle/electric {:local/root "../electric"}
+  {:override-deps {com.hyperfiddle/electric {:local/root "../electric"}
                    com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}
                    com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}
                    com.hyperfiddle/electric-secret {:local/root "../electric-secret"}
                    com.hyperfiddle/hfql {:local/root "../hfql"}
                    com.hyperfiddle/rcf {:local/root "../rcf"}}
    :extra-deps
-   {clj-python/libpython-clj {:mvn/version "2.026"}
+   {com.hyperfiddle/scratch {:local/root "../scratch"}
+    clj-python/libpython-clj {:mvn/version "2.026"}
     com.pitch/uix.core {:mvn/version "1.0.1"}
     com.pitch/uix.dom {:mvn/version "1.0.1"}}}
 
