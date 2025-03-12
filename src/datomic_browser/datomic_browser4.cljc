@@ -104,6 +104,9 @@
 (e/defn EntityDbidCell [v o spec]
   (dom/text v " ") (r/link ['. [`(entity-history ~v)]] (dom/text "entity history")))
 
+(e/defn AttributeCell [v o pull-expr]
+  (eb/Render (e/server (:db/ident (d/entity db v))) o pull-expr))
+
 ;;;;;;;;;;;;;
 ;; SITEMAP ;;
 ;;;;;;;;;;;;;
@@ -162,6 +165,7 @@
   (binding [eb/whitelist {`EntityTooltip EntityTooltip
                           `TxDetailValueTooltip TxDetailValueTooltip
                           `SemanticTooltip SemanticTooltip
+                          `AttributeCell AttributeCell
                           `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
