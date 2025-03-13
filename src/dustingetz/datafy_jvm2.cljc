@@ -84,7 +84,7 @@
 (defn threadinfo-cpu-time [^java.lang.management.ThreadInfo x] (.getThreadCpuTime (ManagementFactory/getThreadMXBean) (.getThreadId x))) ; ?
 
 (extend-type java.lang.management.ThreadInfo
-  Identifiable (-identify [^java.lang.management.ThreadInfo x] (.getThreadName x))
+  Identifiable (-identify [^java.lang.management.ThreadInfo x] (.getThreadId x))
   Datafiable
   (datafy [^java.lang.management.ThreadInfo x]
     (-> {::name (threadinfo-name x)

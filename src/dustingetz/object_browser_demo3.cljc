@@ -4,6 +4,7 @@
                    [java.lang.management ThreadInfo]
                    [com.sun.management ThreadMXBean]))
   (:require [clojure.string :as str]
+            [contrib.debug :as dbg]
             #?(:clj [datomic.api :as d])
             [hyperfiddle.nav0 :refer [identify]]
             [dustingetz.entity-browser4 :as eb]
@@ -13,6 +14,7 @@
             #?(:clj dustingetz.datafy-clj)
             #?(:clj dustingetz.mbrainz)
             #?(:clj dustingetz.pg-sakila)
+            [clojure.core.protocols :as ccp]
             [dustingetz.str :as strx]
             [clojure.walk]
             #?(:clj [peternagy.hfql :as hfql])
@@ -51,15 +53,19 @@
 #?(:clj (defn thread-mx [] (ManagementFactory/getThreadMXBean)))
 #?(:clj (defn thread-count [^ThreadMXBean tmxb] (.getThreadCount tmxb)))
 #?(:clj (defn get-all-threads [_] '...))
-#?(:clj (defn ls-thread-info [_]
-          (fn [search _sort-spec]
-            (let [tmxb (thread-mx)]
-              (mapv #(.getThreadInfo tmxb %) (.getAllThreadIds (thread-mx)))))))
+#?(:clj (defn threads-info []
+          (let [tmxb (thread-mx)]
+            (with-meta (vec (.getAllThreadIds (thread-mx)))
+              {`ccp/nav (fn [_this _k v] (.getThreadInfo tmxb v))}))))
+#?(:clj (defn thread-info [id]
+          (let [tmxb (thread-mx)]
+            (.getThreadInfo tmxb id))))
+#?(:clj (defn get-stack-trace [_] '...))
+#?(:clj (defn thread-stack-trace
+          [id] (let [tmxb (thread-mx)]
+                 (vec (.getStackTrace (.getThreadInfo tmxb id Integer/MAX_VALUE))))))
 #?(:clj (defn thread-cpu-time [^ThreadInfo x]
           (.getThreadCpuTime (ManagementFactory/getThreadMXBean) x)))
-#?(:clj (defn dump-all-threads [^ThreadMXBean tmxb]
-          (->> (.dumpAllThreads tmxb true true)
-            (sort-by #(- (thread-cpu-time (.getThreadId %)))) vec)))
 #?(:clj (defn get-deadlocked-threads [^ThreadMXBean tmxb]
           (vec (.findDeadlockedThreads tmxb))))
 

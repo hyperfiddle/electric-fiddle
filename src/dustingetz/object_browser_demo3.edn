@@ -13,37 +13,60 @@
        #_{(fs/dir-list %) ...}          ; todo tree-seq
        ]
 
+;;;;;;;;;;;;;;;;
+ ;; ns browser ;;
+;;;;;;;;;;;;;;;;
  clojure-all-ns (hfql/props [(ns-name %) (ns-doc %)]
                   {::hfql/select (find-ns %)})
  find-ns [(ns-name %)
           (ns-doc %)
-          (meta %) ; nav to TreeView
+          (meta %)                      ; nav to TreeView
           (hfql/props (ns-publics* %) {::hfql/select (public-vars %)})
           (ns-imports %)
           (ns-interns %)]
  public-vars (hfql/props [(var-name %) (var-doc %)]
-                   {::hfql/select (var-detail %)})
+               {::hfql/select (var-detail %)})
  var-detail [(var-name %) (var-doc %)
              (meta %)
              (var-macro? %) (var-arglists %)]
+
+;;;;;;;;;;;;;;
+ ;; threadmx ;;
+;;;;;;;;;;;;;;
+ thread-mx [(thread-count %)
+            (hfql/props (get-all-threads %) {::hfql/select (threads-info)})
+            (get-deadlocked-threads %)
+            ]
+ threads-info (hfql/props
+                [(.getThreadName %)
+                 (.getThreadState %)
+                 (.getThreadId %)
+                 (.getBlockedTime %)
+                 (.getWaitedTime %)
+                 (.getLockInfo %)
+                 (dustingetz.datafy-jvm2/threadinfo-cpu-time %)]
+                {::hfql/select (thread-info %)})
+ thread-info [(.getThreadName %)
+              (.getThreadState %)
+              (.getThreadId %)
+              (hfql/props (get-stack-trace %) {::hfql/select (thread-stack-trace %)})
+              (.getBlockedTime %)
+              (.getWaitedTime %)
+              (.getLockInfo %)
+              (dustingetz.datafy-jvm2/threadinfo-cpu-time %)]
+
+ thread-stack-trace [(.getClassName %)
+                     (.getMethodName %)
+                     (.getLineNumber %)]
+
+;;;;;;;;;;
+ ;; misc ;;
+;;;;;;;;;;
  Sakila [*]
  DatomicEntity (hfql/props
                  [*]
                  {::hfql/select (DatomicEntity %)})
- Edn [*] ; hack
- thread-mx [(thread-count %)
-            (hfql/props (get-all-threads %) {::hfql/select (ls-thread-info %)})
-            (get-deadlocked-threads %)
-            (dump-all-threads %)
-            ]
- (ls-thread-info %) [(dustingetz.datafy-jvm2/threadinfo-name %)
-                     (dustingetz.datafy-jvm2/threadinfo-state %)
-                     (dustingetz.datafy-jvm2/threadinfo-id %)
-                     (dustingetz.datafy-jvm2/threadinfo-stacktrace %)
-                     (dustingetz.datafy-jvm2/threadinfo-blocked-time %)
-                     (dustingetz.datafy-jvm2/threadinfo-waited-time %)
-                     (dustingetz.datafy-jvm2/threadinfo-lock-info %)
-                     (dustingetz.datafy-jvm2/threadinfo-cpu-time %)]
+ Edn [*]                                ; hack
  Thread_ [*]
  Class_ [*]
  Tap [*]
