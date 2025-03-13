@@ -5,12 +5,12 @@
 
 (e/defn UserFormServer1 [initial-form-fields]
   (Form! initial-form-fields
-    (e/fn Fields [{:keys [user/str1 user/num1 user/bool1] :as form-fields}]
+    (e/fn [{:keys [user/str1 user/num1 user/bool1] :as form-fields}]
       (e/amb ; concurrent individual edits!
         (Input! :user/str1 str1) ; fields are named
         (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str)))
         (Checkbox! :user/bool1 bool1)))
-    :Pommit (e/fn [dirty-form-fields] dirty-form-fields)))
+    :show-buttons true))
 
 (def state0 {:user/str1 "hello" :user/num1 42 :user/bool1 true})
 

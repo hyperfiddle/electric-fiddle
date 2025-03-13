@@ -39,7 +39,7 @@
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/str1] :as form-fields}]
                         (Input! :user/str1 str1 :required true))
-                    :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields} _unique-id]
+                    :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields} unique-id]
                              [`Str1FormSubmit id str1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
@@ -49,7 +49,7 @@
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/num1] :as form-fields}]
                         (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str))))
-                    :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields} _unique-id]
+                    :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields} unique-id]
                              [`Num1FormSubmit id num1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
@@ -59,7 +59,7 @@
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/bool1] :as form-fields}]
                         (Checkbox! :user/bool1 bool1))
-                    :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields} _unique-id]
+                    :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields} unique-id]
                              [`Bool1FormSubmit id bool1]) ; command
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
@@ -75,7 +75,7 @@
             debug* (Checkbox* false :label "debug")
             slow* (Checkbox* true :label "latency")
             fail* (Checkbox* true :label "failure")
-            show-buttons* (or (Checkbox* false :label "show-buttons") ::forms/smart)
+            show-buttons* (Checkbox* true :label "show-buttons")
             auto-submit* (Checkbox* false :label "auto-submit")]
     debug* fail* slow* auto-submit* show-buttons*
     (binding [!conn (e/server (ensure-conn!))]

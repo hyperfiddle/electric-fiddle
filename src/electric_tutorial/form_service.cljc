@@ -27,7 +27,8 @@
                        (merge initial-form-fields dirty-form-fields)]
                    [`User-form-submit id str1 num1 bool1] ; command
                    ))
-        :debug debug*))))
+        :debug debug*
+        :show-buttons true))))
 
 (e/declare !conn)
 
