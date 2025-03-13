@@ -5,6 +5,7 @@
                    [com.sun.management ThreadMXBean]))
   (:require [clojure.string :as str]
             [contrib.debug :as dbg]
+            [contrib.assert :as ca]
             #?(:clj [datomic.api :as d])
             [hyperfiddle.nav0 :refer [identify]]
             [dustingetz.entity-browser4 :as eb]
@@ -75,6 +76,11 @@
 
 #?(:clj (defn datomic-entity [e] (d/entity @dustingetz.mbrainz/test-db e)))
 
+#?(:clj (defn class-view [class$]
+          (dustingetz.datafy-jvm2/resolve-class
+            #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
+            class$)))
+
 (e/defn Class_ [class-name]
   (e/server (dustingetz.datafy-jvm2/resolve-class
               #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
@@ -103,12 +109,12 @@
     (r/link ['. [[`Sakila]]] (dom/text "Sakila"))
     (r/link ['. [[`datomic-entity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
     #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
-    (r/link ['. [[`Class_ 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
+    (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
 
 #?(:clj
    (defn normalize-sitemap [sitemap]
-     (let [qualify #(symbol (resolve %))]
+     (let [qualify #(symbol (ca/is (resolve %) some? (str "cannot resolve [" % "]")))]
        (update-keys sitemap
          (fn [k]
            (if (symbol? k)

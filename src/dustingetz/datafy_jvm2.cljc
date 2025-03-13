@@ -3,6 +3,7 @@
            java.lang.management.ThreadInfo
            com.sun.management.ThreadMXBean)
   (:require [clojure.core.protocols :refer [Datafiable nav] :rename {nav -nav}]
+            [peternagy.hfql :as hfql]
             [hyperfiddle.nav0 :refer [Identifiable -identify]]))
 
 (defn resolve-thread [id] (apply com.sun.management.ThreadMXBean/.getThreadInfo
@@ -111,3 +112,25 @@
 (extend-type java.lang.StackTraceElement
   Identifiable (-identify [^java.lang.StackTraceElement x] (hash x)) ; better to use local index fallback
   Datafiable (datafy [^java.lang.StackTraceElement x] {::toString (.toString x)})) ; members are private
+
+#?(:clj (defn class-fields [^Class clazz] (vec (.getFields clazz))))
+#?(:clj (defn class-methods [^Class clazz] (vec (.getMethods clazz))))
+#?(:clj (defn method-parameter-types [^java.lang.reflect.Method m] (vec (.getParameterTypes m))))
+#?(:clj
+   (extend-protocol hfql/Suggestable
+     Class
+     (-suggest [_]
+       [{:label 'full-name, :entry `(.getCanonicalName ~'%)}
+        {:label 'fields, :entry `(class-fields ~'%)}
+        {:label 'methods, :entry `(class-methods ~'%)}])
+     java.lang.reflect.Method
+     (-suggest [_]
+       [{:label 'name, :entry `(.getName ~'%)}
+        {:label 'parameters, :entry `(method-parameter-types ~'%)}])
+     ))
+
+#?(:clj
+   (extend-protocol Identifiable
+     Class (-identify [^Class c] (.getCanonicalName c))
+     java.lang.reflect.Method (-identify [^java.lang.reflect.Method m] (cons (.getName m) (mapv #(.getTypeName %) (.getParameterTypes m))))
+     ))
