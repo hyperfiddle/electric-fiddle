@@ -73,6 +73,7 @@
 #?(:clj (defn get-deadlocked-threads [^ThreadMXBean tmxb]
           (vec (.findDeadlockedThreads tmxb))))
 
+#?(:clj (defn datomic-entity [e] (d/entity @dustingetz.mbrainz/test-db e)))
 
 (e/defn Class_ [class-name]
   (e/server (dustingetz.datafy-jvm2/resolve-class
@@ -100,7 +101,7 @@
     (r/link ['. [[`File "./"]]] (dom/text "file"))
     (r/link ['. [[`thread-mx]]] (dom/text "thread-mx"))
     (r/link ['. [[`Sakila]]] (dom/text "Sakila"))
-    (r/link ['. [[`DatomicEntity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
+    (r/link ['. [[`datomic-entity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
     #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
     (r/link ['. [[`Class_ 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
