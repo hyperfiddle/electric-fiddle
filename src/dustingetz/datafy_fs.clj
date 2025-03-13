@@ -6,6 +6,7 @@
             [hyperfiddle.nav0 :refer [Identifiable NavContext nav-context]]
             [hyperfiddle.rcf :refer [tests]]
             [clojure.java.io :as io]
+            [peternagy.hfql :as hfql]
             [clojure.core.protocols :as ccp])
   (:import [java.nio.file Path Paths Files]
            java.io.File
@@ -112,7 +113,7 @@
 (defn file-hidden? [^File x] (= "." (subs (.getName x) 0 1)))
 (defn file-absolute-path [^File x] (-> x .toPath .normalize .toAbsolutePath str))
 (defn file-order-compare [^File x] [(not (.isDirectory x)) (.getName x)])
-(defn dir-list [^File x] (some->> x .listFiles (sort-by file-order-compare)))
+(defn dir-list [^File x] (some->> x .listFiles (sort-by file-order-compare) vec))
 (defn dir-parent [^File x] (some-> x file-path .getParent .toFile))
 (defn file-name [^File x] (.getName x))
 (defn file-kind [^File x]
@@ -125,6 +126,10 @@
                                    ::unknown-kind)
           () ::unknown-kind)))
 (defn file-created [^File x] (-> x file-attrs .creationTime .toInstant java.util.Date/from))
+(defn file-accessed [^File x] (let [attrs (file-attrs x)] (-> attrs .lastAccessTime .toInstant java.util.Date/from)))
+(defn file-modified [^File x] (let [attrs (file-attrs x)] (-> attrs .lastModifiedTime .toInstant java.util.Date/from)))
+(defn file-size [^File x] (.size (file-attrs x)))
+(defn file-mime-type [^File x] (detect-mime-type-no-access (.getName x)))
 
 (extend-type java.io.File
   Identifiable (-identify [^File x] (.getName x)) ; locally unique in its folder ; if this is LOCALLY unique, is it a unique identity? In not, should nav only be defined in the local folder?
@@ -163,7 +168,21 @@
           (merge % (if (= ::dir (::kind %))
                      {::children #() ; fns are hyperlinks - experiment - use nav to call it - should probably be elided entirely
                       ::parent (dir-parent f)}))
-          (with-meta % (nav-context f)))))))
+          (with-meta % (nav-context f))))))
+  hfql/Suggestable
+  (-suggest [_]
+    [{:label 'name, :entry `(.getName ~'%)}
+     {:label 'hidden, :entry `(file-hidden? ~'%)}
+     {:label 'kind, :entry `(file-kind ~'%)}
+     {:label 'absolute-path, :entry `(file-absolute-path ~'%)}
+     {:label 'created, :entry `(file-created ~'%)}
+     {:label 'accessed, :entry `(file-accessed ~'%)}
+     {:label 'modified, :entry `(file-modified ~'%)}
+     {:label 'size, :entry `(file-size ~'%)}
+     {:label 'mime-type, :entry `(file-mime-type ~'%)}
+     {:label 'children, :entry `(dir-list ~'%)}
+     {:label 'parent, :entry `(dir-parent ~'%)}])
+)
 
 (tests
   (require '[clojure.datafy :refer [datafy]])

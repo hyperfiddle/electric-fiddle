@@ -11,6 +11,7 @@
             [dustingetz.entity-browser4 :as eb]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj [dustingetz.datafy-jvm2])
+            #?(:clj [clojure.java.io])
             #?(:clj [dustingetz.datafy-fs :as fs])
             #?(:clj dustingetz.datafy-clj)
             #?(:clj dustingetz.mbrainz)
@@ -104,7 +105,7 @@
     (dom/text "Nav: ")
     (r/link ['. [[`clojure-all-ns]]] (dom/text "clojure.core"))
     (r/link ['. [[`dustingetz.datafy-git2/load-repo "../"]]] (dom/text "git"))
-    (r/link ['. [[`File "./"]]] (dom/text "file"))
+    (r/link ['. [['clojure.java.io/file "./"]]] (dom/text "file"))
     (r/link ['. [[`thread-mx]]] (dom/text "thread-mx"))
     (r/link ['. [[`Sakila]]] (dom/text "Sakila"))
     (r/link ['. [[`datomic-entity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
