@@ -3,6 +3,7 @@
             clj-jgit.util
             [clojure.core.protocols :refer [nav Datafiable Navigable]]
             [dustingetz.datafy-fs :as fs]
+            [peternagy.hfql :as hfql]
             [hyperfiddle.nav0 :refer [Identifiable]])
   (:import (org.eclipse.jgit.api Git)
            (org.eclipse.jgit.internal.storage.file FileRepository)
@@ -139,3 +140,41 @@
     (datafy x) (nav x 0 (nth x 0)) ; log record
     (datafy x) (nav x :object-id (:object-id x))
     (identify x)) := "12b7acf4d68519b8fa98a31828b5f725abaf80e0")
+
+(defn ref-short-name [^Ref o] (Repository/shortenRefName (.getName o)))
+(defn ref-commit [^Ref o] (-> o .getObjectId .getName))
+(defn ref-commit-short [^Ref o] (-> o .getObjectId .getName short-commit-id))
+
+(extend-protocol hfql/Suggestable
+  Git
+  (-suggest [_]
+    [{:label 'repo, :entry `(.getRepository ~'%)}
+     {:label 'status, :entry `(git/git-status ~'%)}
+     {:label 'branch, :entry `(git/git-branch-current ~'%)}
+     {:label 'branch-list, :entry `(branch-list ~'%)}
+     {:label 'log, :entry `(log ~'%)}])
+  RevCommit
+  (-suggest [_]
+    [{:label 'name, :entry `(.getName ~'%)}
+     {:label 'short-name, :entry `(commit-short-name ~'%)}
+     {:label 'msg, :entry `(.getShortMessage ~'%)}
+     {:label 'author, :entry `(.getAuthorIdent ~'%)}
+     {:label 'committer, :entry `(.getCommitterIdent ~'%)}])
+  PersonIdent
+  (-suggest [_]
+    [{:label 'name, :entry `(.getName ~'%)}
+     {:label 'email, :entry `(.getEmailAddress ~'%)}
+     {:label 'date, :entry `(.getWhen ~'%)}
+     {:label 'timezone, :entry `(.getTimeZone ~'%)}])
+  Ref
+  (-suggest [_]
+    [{:label 'short-name, :entry `(ref-short-name ~'%)}
+     {:label 'commit, :entry `(ref-commit ~'%)}
+     {:label 'commit-short, :entry `(ref-commit-short ~'%)}
+     {:label 'type, :entry `(ref-type ~'%)}
+     {:label 'object-id, :entry `(.getObjectId ~'%)}])
+  ObjectId
+  (-suggest [_]
+    [{:label 'toString, :entry `(str ~'%)}
+     {:label 'name, :entry `(.getName ~'%)}])
+  )

@@ -29,6 +29,10 @@
 (e/defn File [file-path]
   (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))
 
+;;;;;;;;
+;; NS ;;
+;;;;;;;;
+
 #?(:clj (defn clojure-all-ns [] (vec (sort-by ns-name (all-ns)))))
 
 #?(:clj (defn ns-doc [ns] (-> ns meta :doc)))
@@ -69,6 +73,7 @@
 #?(:clj (defn get-deadlocked-threads [^ThreadMXBean tmxb]
           (vec (.findDeadlockedThreads tmxb))))
 
+
 (e/defn Class_ [class-name]
   (e/server (dustingetz.datafy-jvm2/resolve-class
               #{'org.eclipse.jgit.api.Git 'java.lang.management.ThreadMXBean}
@@ -91,7 +96,7 @@
     (dom/props {:class "Index"})
     (dom/text "Nav: ")
     (r/link ['. [[`clojure-all-ns]]] (dom/text "clojure.core"))
-    (r/link ['. [[`GitRepo "../"]]] (dom/text "git"))
+    (r/link ['. [[`dustingetz.datafy-git2/load-repo "../"]]] (dom/text "git"))
     (r/link ['. [[`File "./"]]] (dom/text "file"))
     (r/link ['. [[`thread-mx]]] (dom/text "thread-mx"))
     (r/link ['. [[`Sakila]]] (dom/text "Sakila"))

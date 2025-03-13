@@ -59,6 +59,12 @@
                      (.getMethodName %)
                      (.getLineNumber %)]
 
+;;;;;;;;;
+ ;; git ;;
+;;;;;;;;;
+
+ dustingetz.datafy-git2/load-repo []
+
 ;;;;;;;;;;
  ;; misc ;;
 ;;;;;;;;;;
