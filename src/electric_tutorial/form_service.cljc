@@ -37,6 +37,7 @@
     (let [tx [{:db/id id :user/str1 str1 :user/num1 num1 :user/bool1 bool1}]]
       (e/Offload #(try (transact-unreliable !conn tx :fail fail* :slow slow*)
                     ::ok ; sentinel
+                    (catch InterruptedException e ::interrupted)
                     (catch Exception e (doto ::fail (prn e))))))))
 
 (e/defn UserService [edits]
@@ -47,7 +48,8 @@
                   `User-form-submit (e/apply User-form-submit args)
                   (prn 'unmatched effect))]
         (case res
-          ::ok (t) ; sentinel, any other value is an error
+          ::ok (t) ; sentinel
+          ::interrupted (prn "Interrupted:" effect) ; leave tx up
           (t res)))))) ; feed error back into control to prompt for retry
 
 (declare css)
