@@ -152,7 +152,7 @@
 ;;;;;;;;;;;;;;;;
 
 (defn find-context-free-pages [sitemap]
-  (filterv #(not (next %)) (keys sitemap)))
+  (sort-by first (filterv #(not (next %)) (keys sitemap))))
 
 (e/defn Index [sitemap]
   (dom/nav
