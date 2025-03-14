@@ -13,10 +13,15 @@
  (tx-detail :tx)       [(hfql/props :e {::hfql/link    (entity-detail :e)
                                         ::hfql/Tooltip EntityTooltip})
                         (hfql/props :a {::hfql/link    (attribute-detail :a)
-                                        ::hfql/Render  AttributeCell
                                         ::hfql/Tooltip EntityTooltip})
                         (hfql/props :v {::hfql/Tooltip TxDetailValueTooltip})]
  (entity-detail :e)    (hfql/props [(hfql/props :db/id {::hfql/Render EntityDbidCell})] ; TODO want link and Tooltip instead
                          {::hfql/mode :browse
                           ::hfql/Tooltip SemanticTooltip})
- (entity-history :e)   [:e :a :v :tx :added]}
+ (entity-history :e)   [:e
+                        (hfql/props :a {::hfql/link    (attribute-detail :a)
+                                        ::hfql/Tooltip EntityTooltip})
+                        :v
+                        (hfql/props :tx {::hfql/link    (tx-detail :tx)
+                                         ::hfql/Tooltip EntityTooltip})
+                        :added]}

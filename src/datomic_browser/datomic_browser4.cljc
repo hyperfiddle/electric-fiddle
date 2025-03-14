@@ -52,14 +52,14 @@
      (time (count (->> (attributes @test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
 
 #?(:clj (defn datom->map [[e a v tx added]]
-          (with-meta {:e e, :a a, :v v, :tx tx, :added added}
+          (with-meta {:e e, :a (:db/ident (d/entity db a)), :v v, :tx tx, :added added}
             {`hfp/-identify hash})))
 
-#?(:clj (defn attribute-detail [a] (->> (d/datoms db :aevt a) (sort-by :v) (map datom->map)))) ; todo inline
+#?(:clj (defn attribute-detail [a] (->> (d/datoms db :aevt a) (sort-by :v) (mapv datom->map)))) ; todo inline
 
 #?(:clj (defn db-stats [] (d/db-stats db)))
 
-#?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (sequence (comp (mapcat :data) (map datom->map))))))
+#?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
 #?(:clj (defn summarize-attr* [?!a] #_[db]
           (when ?!a (->> (datomicx/easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (str/join " ")))))
@@ -72,7 +72,7 @@
 
 #?(:clj (defn entity-history [e] #_[db]
           (let [history (d/history db)]
-            (sequence (comp cat (map datom->map))
+            (into [] (comp cat (map datom->map))
               [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
                (d/datoms history :vaet (:db/id e e))]))))
 
@@ -105,9 +105,6 @@
 
 (e/defn EntityDbidCell [v o spec]
   (dom/text v " ") (r/link ['. [`(entity-history ~v)]] (dom/text "entity history")))
-
-(e/defn AttributeCell [v o pull-expr]
-  (eb/Render (e/server (:db/ident (d/entity db v))) o pull-expr))
 
 ;;;;;;;;;;;;;
 ;; SITEMAP ;;
@@ -167,7 +164,6 @@
   (binding [eb/whitelist {`EntityTooltip EntityTooltip
                           `TxDetailValueTooltip TxDetailValueTooltip
                           `SemanticTooltip SemanticTooltip
-                          `AttributeCell AttributeCell
                           `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
