@@ -40,12 +40,14 @@
           (with-meta
             (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             {`clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
+#?(:clj (defn attribute-count [!e] (d/q '[:find (count ?e) . :in $ ?attr :where [?e ?attr]] (d/entity-db !e) (:db/ident !e))))
 
 #?(:clj
    (comment
      (require '[dustingetz.mbrainz :refer [test-db lennon pour-lamour yanne cobblestone]])
      (datafy/nav (d/entity @test-db pour-lamour) :abstractRelease/type :abstractRelease/type)
      (first ((binding [db @test-db] (attributes)) "artists" [[:db/ident :asc]]))
+     (attribute-count (d/entity @test-db :abstractRelease/type))
      (eb/->sort-comparator [[:db/ident :asc]])
      (time (count (->> (attributes @test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
 

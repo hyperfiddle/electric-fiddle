@@ -1,5 +1,6 @@
 {attributes            [(hfql/props :db/ident {::hfql/link    (attribute-detail :db/ident)
                                                ::hfql/Tooltip EntityTooltip})
+                        (attribute-count %)
                         (summarize-attr* %)
                         :db/doc]
  db-stats              [:datoms
