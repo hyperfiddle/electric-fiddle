@@ -136,9 +136,11 @@
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 #?(:clj (def !sitemap (atom sitemap)))
 
+(comment (reset! !sitemap (normalize-sitemap (read-sitemap sitemap-path))))
+
 (declare css)
 
-#?(:clj (defn route-ns [o] (when (instance? clojure.lang.Namespace o) (list `find-ns (ns-name o)))))
+#?(:clj (defn route-ns [o] (when (instance? clojure.lang.Namespace o) (list `find-ns (ns-name o))))) ; page affinity
 
 (e/defn ObjectBrowserDemo3 []
   (binding [pages {`Clojure-ns-vars Clojure-ns-vars
