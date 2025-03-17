@@ -57,18 +57,10 @@
 
 #?(:clj (defn attribute-detail [a] (->> (d/datoms db :aevt a) (sort-by :v) (mapv datom->map)))) ; todo inline
 
-#?(:clj (defn db-stats [] (d/db-stats db)))
-
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
 #?(:clj (defn summarize-attr* [?!a] #_[db]
           (when ?!a (->> (datomicx/easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (str/join " ")))))
-
-#?(:clj (defn attributes-count [{:keys [attrs]}]
-          (->> (update-vals attrs :count)
-            (into [] (map (fn [[k v]] {:key k, :count v})))
-            (sort-by :count #(compare %2 %))
-            vec)))
 
 #?(:clj (defn entity-history [e] #_[db]
           (let [history (d/history db)]

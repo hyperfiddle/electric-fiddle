@@ -3,8 +3,6 @@
                         (attribute-count %)
                         (summarize-attr* %)
                         :db/doc]
- db-stats              [:datoms
-                        (attributes-count %)]
  (attribute-detail :a) [(hfql/props :e {::hfql/link    (entity-detail :e)
                                         ::hfql/Tooltip EntityTooltip})
                         :v
