@@ -1,6 +1,7 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.electric3-contrib :refer [Offload-reset]]
             [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output SubmitButton! DiscardButton! Reconcile-by]]))
 
 (e/defn Login [username]
@@ -54,7 +55,7 @@
 (e/defn Channel [server-messages local-commands]
   (dom/ul (dom/props {:class "channel"})
     (e/for [[record command] (Reconcile-by ::id (fn [[_SendMessage id username msg]] id) ; correlate server record with local command
-                               ::created-at (fn [_command] (add-years 100 (now!))) ; sort - ensuring local messages do not interleave with server messages (can't send a message in the past)
+                               ::created-at (fn [_command] (add-years 100 (now!))) ; sort - ensure local messages do not interleave with server messages (can't send a message in the past)
                                server-messages local-commands)]
       (dom/li (Message record command)))))
 
@@ -78,11 +79,11 @@
 (e/defn SendMessage [id username msg]
   (e/server ; secure, validate command here
     (let [record (->msg-record id username msg)] ; secure
-      (e/Offload #(try (Thread/sleep 1000) ; artificial latency
-                       (if (next-toggle)
-                         (throw (ex-info "failure" {}))
-                         (send-message! record)) ::ok
-                    (catch Exception e (doto ::rejected (prn e))))))))
+      (Offload-reset #(try (Thread/sleep 1000) ; artificial latency
+                            (if (next-toggle)
+                              (throw (ex-info "failure" {}))
+                              (send-message! record)) ::ok
+                            (catch Exception e (doto ::rejected (prn e))))))))
 
 (declare css)
 (e/defn ChatMonitor []
@@ -98,7 +99,7 @@
                     (prn ::unmatched-cmd)))]
         (case res
           ::ok (t) ; command accepted, queries will update
-          ::rejected (t ::rejected)))))) ; for retry, we're not done yet - todo finish demo
+          ::rejected (t ::rejected))))))
 
 (def css "
 
