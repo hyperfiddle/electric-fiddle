@@ -113,30 +113,12 @@
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
 
-#?(:clj
-   (defn normalize-sitemap [sitemap]
-     (let [qualify #(symbol (ca/is (resolve %) some? (str "cannot resolve [" % "]")))]
-       (update-keys sitemap
-         (fn [k]
-           (if (symbol? k)
-             (seq (list (qualify k)))
-             (cons (qualify (first k)) (next k))))))))
-
-#?(:clj (defn read-sitemap [file-path]
-          (clojure.walk/postwalk
-            (fn [x] (cond
-                      (= `% x) '%
-                      (and (seq? x) (= `hfql/props (first x))) (apply hfql/props (next x))
-                      :else    x))
-            (eval (read-string (str "`" (slurp file-path)))))))
-
 #?(:clj (def sitemap-path "./src/dustingetz/object_browser_demo3.edn"))
-
-#?(:clj (def sitemap (normalize-sitemap (read-sitemap sitemap-path))))
+#?(:clj (def sitemap (eb/read-sitemap sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 #?(:clj (def !sitemap (atom sitemap)))
 
-(comment (reset! !sitemap (normalize-sitemap (read-sitemap sitemap-path))))
+(comment (reset! !sitemap (eb/read-sitemap sitemap-path)))
 
 (declare css)
 

@@ -104,39 +104,10 @@
 ;; SITEMAP ;;
 ;;;;;;;;;;;;;
 
-#?(:clj
-   (defn normalize-sitemap [sitemap]
-     (let [qualify #(symbol (hfql/resolve! %))]
-       (update-keys sitemap
-         (fn [k]
-           (if (symbol? k)
-             (seq (list (qualify k)))
-             (cons (qualify (first k)) (next k))))))))
-
-#?(:clj (defn read-sitemap [file-path]
-          (clojure.walk/postwalk
-            (fn [x] (cond
-                      (= `% x) '%
-                      (= `%v x) '%v
-                      (and (seq? x) (= `hfql/props (first x))) (apply hfql/props (next x))
-                      :else    x))
-            (eval (read-string (str "`" (slurp file-path)))))))
-
 #?(:clj (def sitemap-path "./src/datomic_browser/datomic_browser4.edn"))
-
-#?(:clj (def sitemap5 (normalize-sitemap (read-sitemap sitemap-path))))
+#?(:clj (def sitemap5 (eb/read-sitemap sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 #?(:clj (def !sitemap (atom sitemap5)))
-
-(comment
-  (do sitemap5)
-  (def edn (slurp "./src/datomic_browser/datomic_browser4.edn"))
-  (eval (eda/parse-string (str "`" (slurp "./src/datomic_browser/datomic_browser4.edn"))
-     {:auto-resolve (fn [x] (if (= :current x) *ns* (get (ns-aliases *ns*) x)))
-      :syntax-quote {:resolve-symbol (fn [sym] (if (= sym '%) '% (ctr/resolve-symbol sym)))}}))
-  (read-sitemap "./src/datomic_browser/datomic_browser4.edn")
-  (eval (read-string (str "`" edn)))
-  )
 
 ;;;;;;;;;;;;;;;;
 ;; ENTRYPOINT ;;
