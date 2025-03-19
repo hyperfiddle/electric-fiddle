@@ -11,7 +11,7 @@
         (.isDirectory h)
         (dom/li (dom/text name_)
           (dom/ul
-            (e/for-by hash [x (.listFiles h)]
+            (e/for-by hash [x (e/Offload #(.listFiles h))]
               (Dir-tree* x s))))
 
         (and (.isFile h) (includes-str? name_ s))

@@ -9,9 +9,9 @@
 #?(:clj (defn get-thread-dump [] ; claude
           (let [thread-bean (ManagementFactory/getThreadMXBean)
                 thread-infos (.dumpAllThreads thread-bean true true)]
-            (apply str
-              (for [thread-info thread-infos]
-                (.toString thread-info))))))
+            (with-out-str
+              (doseq [thread-info thread-infos]
+                (print (.toString thread-info)))))))
 
 (declare css)
 (e/defn ThreadDump1 []
