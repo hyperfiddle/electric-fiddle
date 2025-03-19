@@ -11,7 +11,7 @@
           ns-imports
           ns-interns]
  public-vars (hfql/props [var-name var-doc]
-               {::hfql/select var-detail})
+               {::hfql/select (var-detail %)})
  var-detail [var-name var-doc meta var-macro? var-arglists]
 
 ;;;;;;;;;;;;;;
