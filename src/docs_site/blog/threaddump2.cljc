@@ -24,6 +24,6 @@
           (case selected
             :thread (ManagementFactory/getThreadMXBean)
             :thread-meta java.lang.management.ThreadMXBean
-            :git (dustingetz.datafy-git/load-repo "./")
+            :git (dustingetz.datafy-git/load-repo "../")
             :git-meta org.eclipse.jgit.api.Git
             (e/amb)))))))
