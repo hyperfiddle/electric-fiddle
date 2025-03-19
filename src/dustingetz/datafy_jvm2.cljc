@@ -120,13 +120,13 @@
    (extend-protocol hfql/Suggestable
      Class
      (-suggest [_]
-       [{:label 'full-name, :entry `(.getCanonicalName ~'%)}
-        {:label 'fields, :entry `(class-fields ~'%)}
-        {:label 'methods, :entry `(class-methods ~'%)}])
+       [{:label 'full-name, :entry '.getCanonicalName}
+        {:label 'fields, :entry `class-fields}
+        {:label 'methods, :entry `class-methods}])
      java.lang.reflect.Method
      (-suggest [_]
-       [{:label 'name, :entry `(.getName ~'%)}
-        {:label 'parameters, :entry `(method-parameter-types ~'%)}])
+       [{:label 'name, :entry '.getName}
+        {:label 'parameters, :entry `method-parameter-types}])
      ))
 
 #?(:clj

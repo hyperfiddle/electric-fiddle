@@ -148,33 +148,33 @@
 (extend-protocol hfql/Suggestable
   Git
   (-suggest [_]
-    [{:label 'repo, :entry `(.getRepository ~'%)}
-     {:label 'status, :entry `(git/git-status ~'%)}
-     {:label 'branch, :entry `(git/git-branch-current ~'%)}
-     {:label 'branch-list, :entry `(branch-list ~'%)}
-     {:label 'log, :entry `(log ~'%)}])
+    [{:label 'repo, :entry '.getRepository}
+     {:label 'status, :entry `git/git-status}
+     {:label 'branch, :entry `git/git-branch-current}
+     {:label 'branch-list, :entry `branch-list}
+     {:label 'log, :entry `log}])
   RevCommit
   (-suggest [_]
-    [{:label 'name, :entry `(.getName ~'%)}
-     {:label 'short-name, :entry `(commit-short-name ~'%)}
-     {:label 'msg, :entry `(.getShortMessage ~'%)}
-     {:label 'author, :entry `(.getAuthorIdent ~'%)}
-     {:label 'committer, :entry `(.getCommitterIdent ~'%)}])
+    [{:label 'name, :entry `.getName}
+     {:label 'short-name, :entry `commit-short-name}
+     {:label 'msg, :entry '.getShortMessage}
+     {:label 'author, :entry '.getAuthorIdent}
+     {:label 'committer, :entry '.getCommitterIdent}])
   PersonIdent
   (-suggest [_]
-    [{:label 'name, :entry `(.getName ~'%)}
-     {:label 'email, :entry `(.getEmailAddress ~'%)}
-     {:label 'date, :entry `(.getWhen ~'%)}
-     {:label 'timezone, :entry `(.getTimeZone ~'%)}])
+    [{:label 'name, :entry '.getName}
+     {:label 'email, :entry '.getEmailAddress}
+     {:label 'date, :entry '.getWhen}
+     {:label 'timezone, :entry '.getTimeZone}])
   Ref
   (-suggest [_]
-    [{:label 'short-name, :entry `(ref-short-name ~'%)}
-     {:label 'commit, :entry `(ref-commit ~'%)}
-     {:label 'commit-short, :entry `(ref-commit-short ~'%)}
-     {:label 'type, :entry `(ref-type ~'%)}
-     {:label 'object-id, :entry `(.getObjectId ~'%)}])
+    [{:label 'short-name, :entry `ref-short-name}
+     {:label 'commit, :entry `ref-commit}
+     {:label 'commit-short, :entry `ref-commit-short}
+     {:label 'type, :entry `ref-type}
+     {:label 'object-id, :entry '.getObjectId}])
   ObjectId
   (-suggest [_]
-    [{:label 'toString, :entry `(str ~'%)}
-     {:label 'name, :entry `(.getName ~'%)}])
+    [{:label 'toString, :entry `str}
+     {:label 'name, :entry '.getName}])
   )

@@ -1,63 +1,45 @@
-{GitRepo [git/repo-repo
-          git/status
-          git/branch-current
-          git/branch-list
-          git/log]
- File [fs/file-name
-       fs/file-hidden?
-       fs/file-name
-       fs/file-kind
-       fs/file-created
-       fs/dir-list #_(with-meta (fs/dir-list %) {::hfql/select (File %)}) ; buggy, wrong scope?
-       fs/dir-parent #_(with-meta (fs/dir-parent %) {::hfql/select (File %)}) ; buggy, wrong scope?
-       #_{(fs/dir-list %) ...}          ; todo tree-seq
-       ]
-
+{
 ;;;;;;;;;;;;;;;;
  ;; ns browser ;;
 ;;;;;;;;;;;;;;;;
- clojure-all-ns (hfql/props [(ns-name %) (ns-doc %)]
+ clojure-all-ns (hfql/props [ns-name ns-doc]
                   {::hfql/select (find-ns %)})
- find-ns [(ns-name %)
-          (ns-doc %)
-          (meta %)                      ; nav to TreeView
-          (hfql/props (ns-publics* %) {::hfql/select (public-vars %)})
-          (ns-imports %)
-          (ns-interns %)]
- public-vars (hfql/props [(var-name %) (var-doc %)]
-               {::hfql/select (var-detail %)})
- var-detail [(var-name %) (var-doc %)
-             (meta %)
-             (var-macro? %) (var-arglists %)]
+ find-ns [ns-name
+          ns-doc
+          meta                          ; nav to TreeView
+          (hfql/props ns-publics* {::hfql/select (public-vars %)})
+          ns-imports
+          ns-interns]
+ public-vars (hfql/props [var-name var-doc]
+               {::hfql/select var-detail})
+ var-detail [var-name var-doc meta var-macro? var-arglists]
 
 ;;;;;;;;;;;;;;
  ;; threadmx ;;
 ;;;;;;;;;;;;;;
- thread-mx [(thread-count %)
-            (hfql/props (get-all-threads %) {::hfql/select (threads-info)})
-            (get-deadlocked-threads %)
+ thread-mx [thread-count
+            (hfql/props get-all-threads {::hfql/select (threads-info)})
+            get-deadlocked-threads
             ]
  threads-info (hfql/props
-                [(.getThreadName %)
-                 (.getThreadState %)
-                 (.getThreadId %)
-                 (.getBlockedTime %)
-                 (.getWaitedTime %)
-                 (.getLockInfo %)
-                 (dustingetz.datafy-jvm2/threadinfo-cpu-time %)]
+                [.getThreadName
+                 {.getThreadState str}
+                 .getThreadId
+                 .getBlockedTime
+                 .getWaitedTime
+                 .getLockInfo
+                 dustingetz.datafy-jvm2/threadinfo-cpu-time]
                 {::hfql/select (thread-info %)})
- thread-info [(.getThreadName %)
-              (.getThreadState %)
-              (.getThreadId %)
-              (hfql/props (get-stack-trace %) {::hfql/select (thread-stack-trace %)})
-              (.getBlockedTime %)
-              (.getWaitedTime %)
-              (.getLockInfo %)
-              (dustingetz.datafy-jvm2/threadinfo-cpu-time %)]
+ thread-info [.getThreadName
+              {.getThreadState str}
+              .getThreadId
+              (hfql/props get-stack-trace {::hfql/select (thread-stack-trace %)})
+              .getBlockedTime
+              .getWaitedTime
+              .getLockInfo
+              dustingetz.datafy-jvm2/threadinfo-cpu-time]
 
- thread-stack-trace [(.getClassName %)
-                     (.getMethodName %)
-                     (.getLineNumber %)]
+ thread-stack-trace [.getClassName .getMethodName .getLineNumber]
 
 ;;;;;;;;;
  ;; git ;;
@@ -82,16 +64,4 @@
 ;;;;;;;;;;
 
  clojure.java.io/file []
-
-;;;;;;;;;;
- ;; misc ;;
-;;;;;;;;;;
- Sakila [*]
- DatomicEntity (hfql/props
-                 [*]
-                 {::hfql/select (DatomicEntity %)})
- Edn [*]                                ; hack
- Thread_ [*]
- Class_ [*]
- Tap [*]
- #_#_Entity (with-meta ['{* [*]}] {::hfql/select (Entity %)})}
+ }

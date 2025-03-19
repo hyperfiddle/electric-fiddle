@@ -171,17 +171,17 @@
           (with-meta % (nav-context f))))))
   hfql/Suggestable
   (-suggest [_]
-    [{:label 'name, :entry `(.getName ~'%)}
-     {:label 'hidden, :entry `(file-hidden? ~'%)}
-     {:label 'kind, :entry `(file-kind ~'%)}
-     {:label 'absolute-path, :entry `(file-absolute-path ~'%)}
-     {:label 'created, :entry `(file-created ~'%)}
-     {:label 'accessed, :entry `(file-accessed ~'%)}
-     {:label 'modified, :entry `(file-modified ~'%)}
-     {:label 'size, :entry `(file-size ~'%)}
-     {:label 'mime-type, :entry `(file-mime-type ~'%)}
-     {:label 'children, :entry `(dir-list ~'%)}
-     {:label 'parent, :entry `(dir-parent ~'%)}])
+    [{:label 'name, :entry '.getName}
+     {:label 'hidden, :entry `file-hidden?}
+     {:label 'kind, :entry `file-kind}
+     {:label 'absolute-path, :entry `file-absolute-path}
+     {:label 'created, :entry `file-created}
+     {:label 'accessed, :entry `file-accessed}
+     {:label 'modified, :entry `file-modified}
+     {:label 'size, :entry `file-size}
+     {:label 'mime-type, :entry `file-mime-type}
+     {:label 'children, :entry `dir-list}
+     {:label 'parent, :entry `dir-parent}])
 )
 
 (tests
