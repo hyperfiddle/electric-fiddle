@@ -52,8 +52,10 @@
      (time (count (->> (attributes @test-db) (hfql-search-sort {#'db @test-db} [:db/ident `(summarize-attr* ~'%) #_'*] "sys")))) := 3))
 
 #?(:clj (defn datom->map [[e a v tx added]]
-          (with-meta {:e e, :a (:db/ident (d/entity db a)), :v v, :tx tx, :added added}
-            {`hfp/-identify hash})))
+          (let [db db]
+            (with-meta {:e e, :a a, :v v, :tx tx, :added added}
+              {`hfp/-identify hash
+               `ccp/nav (fn [_this k v] (if (= :a k) (d/entity db a) v))}))))
 
 #?(:clj (defn attribute-detail [a] (->> (d/datoms db :aevt a) (sort-by :v) (mapv datom->map)))) ; todo inline
 
