@@ -1,7 +1,6 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric3-contrib :refer [Offload-reset]]
             [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output SubmitButton! DiscardButton! Reconcile-by]]))
 
 (e/defn Login [username]
@@ -81,11 +80,11 @@
 (e/defn SendMessage [id username msg]
   (e/server ; secure, validate command here
     (let [record (->msg-record id username msg)] ; secure
-      (Offload-reset #(try (Thread/sleep 1000) ; artificial latency
-                            (if (next-toggle)
-                              (throw (ex-info "failure" {}))
-                              (send-message! record)) ::ok
-                            (catch Exception e (doto ::rejected (prn e))))))))
+      (e/Offload #(try (Thread/sleep 1000) ; artificial latency
+                       (if (next-toggle)
+                         (throw (ex-info "failure" {}))
+                         (send-message! record)) ::ok
+                       (catch Exception e (doto ::rejected (prn e))))))))
 
 (declare css)
 (e/defn ChatMonitor []
