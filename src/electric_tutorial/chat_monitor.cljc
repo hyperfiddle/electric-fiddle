@@ -35,6 +35,8 @@
   {::id id ::username username ::msg msg
    ::created-at (now!)}) ; sort key
 
+(defn globally-unique-id [tempid] (if (uuid? tempid) tempid (random-uuid))) ; reuse SendMessageInput's id if possible
+
 (e/defn Message [server-message local-command]
   (Form! (or server-message local-command) ; render message as-is, or guess from command
       (e/fn [{:keys [::username ::msg]}]
@@ -45,8 +47,8 @@
             (Output ::msg msg) ; would use `Input!` for an editable form - out of scope - <p> is valid too
             (SubmitButton! :label "Retry")
             (DiscardButton! :label "x"))))
-    :Parse (e/fn [{:keys [::username ::msg]} unique-id] ; form fields + id -> command
-             [`SendMessage unique-id username msg])
+    :Parse (e/fn [{:keys [::username ::msg]} tempid] ; form fields + id -> command
+             [`SendMessage (globally-unique-id tempid) username msg])
     :Unparse (when local-command ; must guess
                (e/fn [[_SendMessage id username msg]] [(->msg-record id username msg) id])))) ; opposite of :Parse
 
@@ -63,8 +65,8 @@
   (Form! nil (e/fn [_] (dom/props {:class "new-message"})
                (Input! ::msg "" :disabled (nil? username) :placeholder (if username "Send message" "Login to chat")))
     :genesis true ; immediately consume form, ready for next submit, each message get a globally unique id
-    :tempid random-uuid ; globally unique correlation id
-    :Parse (e/fn [{:keys [::msg]} unique-id] [`SendMessage unique-id username msg]))) ; form fields + generated globally unique id -> command
+    :Parse (e/fn [{:keys [::msg]} tempid]
+             [`SendMessage (globally-unique-id tempid) username msg]))) ; form fields + generated globally unique id -> command
 
 (e/defn ChatApp [username present]
   (Present present)
