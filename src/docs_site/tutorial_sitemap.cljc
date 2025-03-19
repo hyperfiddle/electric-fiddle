@@ -32,6 +32,7 @@
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
+            [electric-tutorial.explorer2 :refer [DirectoryExplorer2]]
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
 
 (def tutorial-sitemap
@@ -112,6 +113,7 @@
      `Counter Counter
      `SVG SVG
      `DirectoryExplorer DirectoryExplorer
+     `DirectoryExplorer2 DirectoryExplorer2
      #_#_`Heroicons Heroicons
      #_#_`ReagentInterop ReagentInterop
      }))
