@@ -138,6 +138,7 @@
 
 
 (def css "
+html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/hide */
 .Index > a+a { margin-left: .5em; }
 .Browser fieldset.entity table { grid-template-columns: 20em auto; }
 
