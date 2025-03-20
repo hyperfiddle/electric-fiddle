@@ -100,6 +100,8 @@
 (e/defn EntityDbidCell [v o spec]
   (dom/text v " ") (r/link ['. [`(entity-history ~v)]] (dom/text "entity history")))
 
+#?(:clj (defn route-to-entity-detail [o] (when (instance? datomic.query.EntityMap o) (list `entity-detail (:db/id o)))))
+
 ;;;;;;;;;;;;;
 ;; SITEMAP ;;
 ;;;;;;;;;;;;;
@@ -135,7 +137,8 @@
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn})
               eb/!sitemap !sitemap
               eb/*sitemap (e/watch !sitemap)
-              eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))]
+              eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
+              eb/*page-defaults (e/server [route-to-entity-detail])]
       (let [sitemap eb/*sitemap]
         (dom/style (dom/text css))
         (Index sitemap)
