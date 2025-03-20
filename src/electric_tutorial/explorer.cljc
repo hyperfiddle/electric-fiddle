@@ -65,7 +65,7 @@
     (let [!search (atom "") search (e/watch !search)
           xs! (e/Offload #(vec (when ?x (fs-tree-seq ?x search)))) ; glitch
           n (count xs!)] ; bug: CSS layout breaks on FF when n > 9999 - todo
-      (dom/fieldset (dom/legend (dom/text (fs/file-absolute-path ?x) " ")
+      (dom/fieldset (dom/legend (dom/text (some-> ?x fs/file-absolute-path) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
         (dom/div ; viewport is underneath the dom/legend and must have pixel perfect height
           (TableScroll n xs!))))))
