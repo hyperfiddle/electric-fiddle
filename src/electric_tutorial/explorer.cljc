@@ -7,7 +7,6 @@
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [dustingetz.treelister3 :refer [treelist]]
             [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
@@ -64,7 +63,7 @@
 (e/defn Dir [?x] ; glitch
   (e/server
     (let [!search (atom "") search (e/watch !search)
-          xs! (ex/Offload-latch #(vec (when ?x (fs-tree-seq ?x search)))) ; glitch
+          xs! (e/Offload #(vec (when ?x (fs-tree-seq ?x search)))) ; glitch
           n (count xs!)] ; bug: CSS layout breaks on FF when n > 9999 - todo
       (dom/fieldset (dom/legend (dom/text (fs/file-absolute-path ?x) " ")
                       (do (reset! !search (e/client (Input* ""))) nil) (dom/text " (" n " items)"))
