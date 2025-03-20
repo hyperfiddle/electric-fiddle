@@ -137,24 +137,12 @@
   --background-color: white;
 }
 
-.chat-view .channel form.message:has([aria-busy=true]){
-  animation: slide-in 0.5s ease-in forwards;
-}
-
 .chat-view .channel form.message::after{ /* background */
    z-index: -1;
    content: \"\";
    position: absolute;
    width: 100%; height: 23px;
    background-color: var(--background-color);
-}
-
-@keyframes slide-in {
-  from {
-    height: 0;
-    transform: translateY(1rem) scale(0.99);
-    box-shadow: 0 0 1rem lightgray;
-  }
 }
 
 .channel form {display: unset;} /* address css conflict */
