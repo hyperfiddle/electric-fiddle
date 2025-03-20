@@ -6,11 +6,11 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
-            [hyperfiddle.electric-forms4 :as forms]
+            [hyperfiddle.electric-forms5 :as forms]
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
             [staffly.staff-detail :refer [StaffDetail]]
-            [staffly.restrict-staff-from-venue :refer
+            [staffly.restrict-staff-from-venue2 :refer
              [RestrictStaffFromVenueForm Restrict-staff-from-venue!]]))
 
 (e/defn Nav []
@@ -31,22 +31,6 @@
         :restrict-staff-from-venue (RestrictStaffFromVenueForm)
         (dom/text "page not found")))))
 
-(e/declare *effects)
-
-(e/defn Service [edits]
-  (e/client
-    (let [fail false #_(dom/div (dom/props {:class "fixed bottom-0"}) (Checkbox* true :label "failure"))
-          edits (e/Filter some? edits)]
-      (println 'edits (e/Count edits) (e/as-vec edits))
-      (e/for [[t [cmd & args] guess] edits]
-        (let [Effect (get *effects cmd (e/fn [& args] (e/server (e/Offload #(do (Thread/sleep 500) (doto ::ok (prn cmd)))))))
-              res (e/server (if fail (e/Offload #(do (Thread/sleep 2000) ::rejected)) (e/Apply Effect args)))]
-          (prn "tx" res)
-          (case res
-            nil (prn 'res-was-nil-stop!)
-            ::ok (t)
-            (t res)))))))
-
 (e/defn Inject-datomic [F]
   (e/fn []
     (e/server
@@ -63,8 +47,8 @@
      (bindx [model/datomic-conn (check datomic-conn)
              model/db (check model/*db*)
              model/schema (check model/*schema*)]
-       (forms/Interpreter {`Restrict-staff-from-venue! Restrict-staff-from-venue!}
-         (e/client
+       (e/client
+         (forms/Service {`Restrict-staff-from-venue! Restrict-staff-from-venue!}
            (Page)))))))
 
 (e/defn Fiddles []
