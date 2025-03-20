@@ -5,10 +5,9 @@
             [contrib.data :refer [unqualify]]
             dustingetz.str
             #?(:clj [datomic.api :as d])
-            [dustingetz.easy-table :refer [EasyTable]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Input]]
+            [hyperfiddle.electric-forms5 :as forms :refer [TablePicker! Input]]
             [hyperfiddle.ui.typeahead :refer [Typeahead]]
             [hyperfiddle.router4 :as r]
             [staffly.staffly-model :as model]))
@@ -87,28 +86,35 @@
       (let [type_ (dom/dl
                     (Field "type" (Typeahead ::staff ; initial value for fast load
                                     :Options (e/fn [s] (e/server (e/diff-by identity (entity-type-options s))))
-                                    :option-label (fn [x] (some-> x name)))))]
-        #_(e/server (prn 'q search type_)) ; search is too slow, todo filter in memory w/ treelister
-        (e/server
-          (EasyTable "Index"
-            (fn query [search] (index search type_ :limit nil))
-            (e/fn [e]
-              (e/server
-                (let [type_ (e/server (some-> e entity-type))]
-                  (e/for [a (e/diff-by {} [:db/id ::entity-type])]
-                    (let [v (a e)]
-                      (dom/td
-                        (case a
-                          :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
-                          ::entity-type (dom/text (some-> type_ name))
-                          (dom/text (pr-str v)))))))))))))))
+                                    :option-label (fn [x] (some-> x name)))))
+            search (Input "" :placeholder "Sarah...")
+            data (e/server (e/Offload #(index search type_ :limit nil)))]
+        (TablePicker! ::_ nil (e/server (count data)) ; TODO no need for a picker, use fast virtual scroll
+          (e/fn [index]
+            (e/server
+              (let [e (nth data index nil)
+                    type_ (e/server (some-> e entity-type))]
+                (e/for [a (e/diff-by {} [:db/id ::entity-type])]
+                  (let [v (a e)]
+                    (dom/td
+                      (case a
+                        :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
+                        ::entity-type (dom/text (some-> type_ name))
+                        (dom/text (pr-str v)))))))))
+          :row-height 24
+          :column-count 2)))))
 
 
-(def css "
+(def css (str forms/css "
+
 html:has(.staffly.dustingetz-EasyTable){height:100%; box-sizing: border-box;}
 .staffly.dustingetz-EasyTable{ position:relative; height:100%; }
 
 .staffly.dustingetz-EasyTable fieldset:has(> .Viewport) {flex: 1; max-height: 22rem;}
 .staffly.dustingetz-EasyTable .Viewport {height: 22rem}
 .staffly.dustingetz-EasyTable fieldset .Viewport table {grid-template-columns: 1fr 1fr;}
-")
+
+.staffly .hyperfiddle-electric-forms5__table-picker { height: calc(15 * var(--row-height))}
+
+
+"))
