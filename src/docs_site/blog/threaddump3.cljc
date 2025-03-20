@@ -12,7 +12,7 @@
 (declare css)
 (e/defn ThreadDump3 []
   (e/client #_(dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
-    (let [x (e/server (dustingetz.datafy-git/load-repo "./"))]
+    (let [x (e/server (dustingetz.datafy-git/load-repo "../"))]
       (EntityBrowser0 x))))
 
 (def css "
