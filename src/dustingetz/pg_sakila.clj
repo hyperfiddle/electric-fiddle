@@ -26,6 +26,15 @@
 ;LIMIT 1;
 
 (def test-config {:dbtype "postgresql" :dbname "sakila" :host "localhost" :port 5432})
+
+(comment
+  ;; alternative, simpler setup with docker
+  ;; docker run -p 5432:5432 -d sakiladb/postgres:latest
+  ;; note, the DB seems a bit different, some tests fail because of ordering differences (e.g. limit 3 without sort)
+  (def test-config {:dbtype "postgresql" :dbname "sakila" :host "localhost" :port 5432 :user "sakila" :password "p_ssW0rd"})
+  ;; re-evaluate `test-conn` if you are changing this live
+  )
+
 (def test-conn (delay (jdbc/get-connection test-config)))
 
 (tests (require '[clojure.datafy :refer [datafy nav]]

@@ -93,7 +93,7 @@
 (e/defn DatomicEntity [e]
   (e/server (d/entity @dustingetz.mbrainz/test-db e)))
 
-(e/defn Sakila [] (e/server (dustingetz.pg-sakila/query-films @dustingetz.pg-sakila/test-conn)))
+#?(:clj (defn sakila [] (dustingetz.pg-sakila/query-films @dustingetz.pg-sakila/test-conn)))
 
 (e/defn Edn [x] x)
 
@@ -107,7 +107,7 @@
     (r/link ['. [[`dustingetz.datafy-git2/load-repo "../"]]] (dom/text "git"))
     (r/link ['. [['clojure.java.io/file "./"]]] (dom/text "file"))
     (r/link ['. [[`thread-mx]]] (dom/text "thread-mx"))
-    (r/link ['. [[`Sakila]]] (dom/text "Sakila"))
+    (r/link ['. [[`sakila]]] (dom/text "Sakila"))
     (r/link ['. [[`datomic-entity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
     #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
@@ -125,16 +125,7 @@
 #?(:clj (defn route-ns [o] (when (instance? clojure.lang.Namespace o) (list `find-ns (ns-name o))))) ; page affinity
 
 (e/defn ObjectBrowserDemo3 []
-  (binding [pages {`Clojure-ns-vars Clojure-ns-vars
-                   `Sakila Sakila
-                   `GitRepo GitRepo
-                   `File File
-                   `DatomicEntity DatomicEntity
-                   `Class_ Class_
-                   `Thread_ Thread_
-                   `Edn Edn
-                   `Tap Tap}
-            eb/*hfql-bindings (e/server {})
+  (binding [eb/*hfql-bindings (e/server {})
             eb/!sitemap !sitemap
             eb/*sitemap (e/server (e/watch !sitemap))
             eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
