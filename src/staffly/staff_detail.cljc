@@ -1,14 +1,12 @@
 (ns staffly.staff-detail
   (:require #?(:clj [datomic.api :as d])
-            [dustingetz.easy-table :refer [EasyTable]]
-            [dustingetz.ui :refer
-             [Text EasyForm TagPickerReadOnly Debug]]
+            [dustingetz.ui :refer [Text EasyForm TagPickerReadOnly Debug]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer
-             [Form! Checkbox!]]
+            [hyperfiddle.electric-forms3 :refer [Form! Checkbox!]]
             [hyperfiddle.router4 :as r]
-            [staffly.staffly-model :as model]))
+            [staffly.staffly-model :as model]
+            [staffly.utils :refer [Table]]))
 
 #?(:clj (defn staff-detail [e]
           (let [pat [:staff/id
@@ -84,8 +82,7 @@
 
            :staff/documents (e/fn [x]
                               (e/server
-                                (EasyTable "documents" ; :grid-template-columns "2fr 3fr 2fr 1fr"
-                                  (constantly x)
+                                (Table "documents" (constantly x)
                                   (e/fn [e]
                                     (e/for [a (e/diff-by {} [:document/type :document/name :document/expiry :document/status])]
                                       (let [v (a e)]
@@ -97,7 +94,7 @@
 
            :staff/restrictions (e/fn [x]
                                  (e/server
-                                   (EasyTable "restrictions" ; :grid-template-columns "2fr 2fr 2fr 2fr"
+                                   (Table "restrictions"
                                      (constantly x)
                                      (e/fn [e]
                                        (e/for [a (e/diff-by {} [:restriction/venue :restriction/reason :restriction/scope :restriction/expires-at])]
@@ -109,7 +106,7 @@
                                                  :restriction/venue (:venue/name v) v)))))))))
            :staff/shifts (e/fn [x]
                            (e/server
-                             (EasyTable "shifts" ; :grid-template-columns "2fr 2fr 2fr 1fr"
+                             (Table "shifts" ; :grid-template-columns "2fr 2fr 2fr 1fr"
                                (constantly x)
                                (e/fn [e]
                                  (e/for [a (e/diff-by {} [:shift/date :shift/venue :shift/role :shift/rating])]
@@ -128,11 +125,10 @@
         #_(Debug x))))
 
 
-(def css "
-html:has(.staffly dd.dustingetz-EasyTable){height:100%; box-sizing: border-box;}
-.staffly dd.dustingetz-EasyTable{ position:relative; height:100%; }
+(def css (str hyperfiddle.electric-forms5/css
+           staffly.utils/css
+           "
+.staffly .hyperfiddle-electric-forms5__virtual-scroll  { --min-row-count: 5; }
+.staffly .hyperfiddle-electric-forms5__virtual-scroll table  { --column-count: 4; }
 
-.staffly dd.dustingetz-EasyTable fieldset:has(> .Viewport) {height: 100%; max-height: 22rem;}
-.staffly dd.dustingetz-EasyTable .Viewport {height: 10rem; position: relative;}
-.staffly dd.dustingetz-EasyTable fieldset .Viewport table {grid-template-columns: 1fr 1fr 1fr 1fr;}
-")
+"))
