@@ -56,8 +56,7 @@
     (e/Offload-reset
       #(try-ok
           (Thread/sleep 1000)
-          (throw (ex-info "nope" {}))
-          #_(restrict-staff-from-venue! model/datomic-conn staff (:venue/id venue) (:db/ident block-reason) block-mode penalize)))))
+          (restrict-staff-from-venue! model/datomic-conn staff (:venue/id venue) (:db/ident block-reason) block-mode penalize)))))
 
 (e/defn Field [name value Control! & {::keys [label] :as props}]
   (let [control-id (random-uuid)]
@@ -109,7 +108,8 @@
     [t cmd]))
 
 (e/defn RestrictStaffFromVenueForm []
-  (Wizard {:steps ["restrict" "notify"]}
+  (RestrictStaffFromVenue-Step1)
+  #_(Wizard {:steps ["restrict" "notify"]}
     (e/fn [step [venue]]
       (case step
         "restrict" (-> (RestrictStaffFromVenue-Step1)
