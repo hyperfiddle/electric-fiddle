@@ -1,9 +1,9 @@
 (ns staffly.staff-detail
   (:require #?(:clj [datomic.api :as d])
-            [dustingetz.ui :refer [Text EasyForm TagPickerReadOnly Debug]]
+            [dustingetz.ui :refer [EasyForm TagPickerReadOnly]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Form! Checkbox!]]
+            [hyperfiddle.electric-forms5 :refer [Form! Checkbox! try-ok]]
             [hyperfiddle.router4 :as r]
             [staffly.staffly-model :as model]
             [staffly.utils :refer [Table]]))
@@ -17,6 +17,7 @@
                      :staff/events-worked
                      :staff/venue-rating
                      :staff/punctuality-score
+                     :staff/phone-confirmed
                      {:staff/roles ['*]}
                      {:staff/documents
                       [:document/id
@@ -52,6 +53,7 @@
    :staff/notify-method
    :staff/events-worked
    :staff/venue-rating
+   :staff/phone-confirmed
    :staff/punctuality-score
 
    ; tables
@@ -118,11 +120,17 @@
                                            :shift/venue (:venue/name v)
                                            :shift/role (e/client (some-> v :db/ident name)) v)))))))))
 
-           :sub/phone-confirmed (e/fn [x] (Form! (Checkbox! ::change-phone-confirmed x)
-                                            :commit (fn [{::keys []}] [])
-                                            :show-buttons :smart))
+           :staff/phone-confirmed (e/fn [x] (Form! {} (e/fn [_]  (Checkbox! ::phone-confirmed? x))
+                                              :Parse (e/fn [{::keys [phone-confirmed?]} _] [`Change-phone-confirmed! e phone-confirmed?])
+                                              :show-buttons true))
            }))
         #_(Debug x))))
+
+(e/defn Change-phone-confirmed! [e phone-confirmed?]
+  (e/server
+    (e/Offload-reset
+      #(try-ok (throw (ex-info "Not implemented yet" {}))
+         #_(change-phone-confirmed! e phone-confirmed?)))))
 
 
 (def css (str hyperfiddle.electric-forms5/css
@@ -130,5 +138,9 @@
            "
 .staffly .hyperfiddle-electric-forms5__virtual-scroll  { --min-row-count: 5; }
 .staffly .hyperfiddle-electric-forms5__virtual-scroll table  { --column-count: 4; }
+
+.staffly form:not(:has([aria-busy=true])) button {display: none;}
+.staffly form:not(:has([aria-invalid=true])) [data-role=errormessage] {display: none;}
+.staffly form [data-role=errormessage] {display: inline; margin: 0 1rem;}
 
 "))

@@ -9,8 +9,8 @@
             [hyperfiddle.electric-forms5 :as forms]
             [staffly.staffly-model :as model]
             [staffly.staffly-index :refer [Index]]
-            [staffly.staff-detail :refer [StaffDetail]]
-            [staffly.restrict-staff-from-venue2 :refer
+            [staffly.staff-detail :refer [StaffDetail Change-phone-confirmed!]]
+            [staffly.restrict-staff-from-venue :refer
              [RestrictStaffFromVenueForm Restrict-staff-from-venue!]]))
 
 (e/defn Nav []
@@ -48,7 +48,8 @@
              model/db (check model/*db*)
              model/schema (check model/*schema*)]
        (e/client
-         (forms/Service {`Restrict-staff-from-venue! Restrict-staff-from-venue!}
+         (forms/Service {`Restrict-staff-from-venue! Restrict-staff-from-venue!
+                         `Change-phone-confirmed! Change-phone-confirmed!}
            (Page)))))))
 
 (e/defn Fiddles []
