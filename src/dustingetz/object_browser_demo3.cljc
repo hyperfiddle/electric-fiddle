@@ -113,9 +113,12 @@
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
 
-#?(:clj (def sitemap-path "dustingetz/object_browser_demo3.edn"))
-#?(:clj (def sitemap-incseq (eb/sitemap-incseq sitemap-path *ns*)))
+#?(:clj (def sitemap-path "./src/dustingetz/object_browser_demo3.edn"))
+#?(:clj (def sitemap (eb/read-sitemap sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
+#?(:clj (def !sitemap (atom sitemap)))
+
+(comment (reset! !sitemap (eb/read-sitemap sitemap-path)))
 
 (declare css)
 
@@ -123,7 +126,8 @@
 
 (e/defn ObjectBrowserDemo3 []
   (binding [eb/*hfql-bindings (e/server {})
-            eb/*sitemap (e/server (e/join sitemap-incseq))
+            eb/!sitemap !sitemap
+            eb/*sitemap (e/server (e/watch !sitemap))
             eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
             eb/*page-defaults (e/server [route-ns])]
     (dom/style (dom/text css))
