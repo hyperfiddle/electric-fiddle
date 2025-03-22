@@ -1,29 +1,35 @@
+# run from from monorepo root so that build context contains .git,
+# for electric-fiddle's :hyperfiddle.electric-ring-adapter3/electric-user-version
+# e.g. docker build ... -f electric-fiddle/src/docs_site/Dockerfile ...
+
 FROM clojure:openjdk-11-tools-deps AS datomic-fixtures
 WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
 #COPY state/datomic-pro-1.0.6735.zip state/datomic-pro-1.0.6735.zip
 #COPY state/mbrainz.tar state/mbrainz.tar
-COPY src/datomic_browser/datomic_fixtures.sh datomic_fixtures.sh
+COPY electric-fiddle/src/datomic_browser/datomic_fixtures.sh datomic_fixtures.sh
 RUN ./datomic_fixtures.sh
 
 FROM node:14.7-stretch AS node-deps
 WORKDIR /app
-COPY package.json package.json
-RUN npm install
+COPY electric-fiddle/package.json package.json
+
+RUN PUPPETEER_SKIP_DOWNLOAD=true npm install
 
 FROM clojure:openjdk-11-tools-deps AS build
 WORKDIR /app
 COPY --from=node-deps /app/node_modules /app/node_modules
 # electric-user-version is computed from git sha during clj build
 COPY .git .git
+#RUN git clone --bare https://github.com/hyperfiddle/electric.git .git
 #COPY .m2 /root/.m2
-COPY shadow-cljs.edn shadow-cljs.edn
-COPY deps.edn deps.edn
-COPY src src
-COPY src-build src-build
-COPY src-prod src-prod
-COPY vendor vendor
-COPY resources resources
+COPY electric-fiddle/shadow-cljs.edn shadow-cljs.edn
+COPY electric-fiddle/deps.edn deps.edn
+COPY electric-fiddle/src src
+COPY electric-fiddle/src-build src-build
+COPY electric-fiddle/src-prod src-prod
+COPY electric-fiddle/resources resources
+#COPY published/electric/src published/electric/src
 
 ARG REBUILD=unknown
 ARG HYPERFIDDLE_FIDDLE_NS
@@ -44,10 +50,10 @@ COPY --from=build /app/git .git
 RUN echo -e "/state/\n/vendor/" > .gitignore
 COPY --from=build /app/target/app.jar app.jar
 COPY --from=datomic-fixtures /app/state state
-COPY src/datomic_browser/prod.sh prod.sh
+COPY electric-fiddle/src/datomic_browser/prod.sh prod.sh
 # add tutorial resources (md, css, dir trees used in demos)
 COPY --from=build /app/src src
-COPY --from=build /app/vendor/electric/src vendor/electric/src
+#COPY --from=build /app/vendor/electric/src vendor/electric/src
 
 EXPOSE 8080
 CMD ./prod.sh
