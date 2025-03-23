@@ -106,7 +106,7 @@
 ;; SITEMAP ;;
 ;;;;;;;;;;;;;
 
-#?(:clj (def sitemap-path "./src/datomic_browser/datomic_browser4.edn"))
+#?(:clj (def sitemap-path "./datomic_browser/datomic_browser4.edn"))
 #?(:clj (def sitemap5 (eb/read-sitemap sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 #?(:clj (def !sitemap (atom sitemap5)))

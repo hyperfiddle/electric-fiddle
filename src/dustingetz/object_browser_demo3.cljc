@@ -113,7 +113,7 @@
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
 
-#?(:clj (def sitemap-path "./src/dustingetz/object_browser_demo3.edn"))
+#?(:clj (def sitemap-path "./dustingetz/object_browser_demo3.edn"))
 #?(:clj (def sitemap (eb/read-sitemap sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 #?(:clj (def !sitemap (atom sitemap)))
