@@ -114,7 +114,7 @@
     (r/link ['. [[`Tap]]] (dom/text "Tap"))))
 
 #?(:clj (def sitemap-path "dustingetz/object_browser_demo3.edn"))
-#?(:clj (def sitemap-incseq (eb/sitemap-incseq sitemap-path *ns*)))
+#?(:clj (def sitemap (eb/read-sitemap sitemap-path *ns*)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 
 (declare css)
@@ -123,7 +123,7 @@
 
 (e/defn ObjectBrowserDemo3 []
   (binding [eb/*hfql-bindings (e/server {})
-            eb/*sitemap (e/server (e/join sitemap-incseq))
+            eb/*sitemap (e/server sitemap)
             eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
             eb/*page-defaults (e/server [route-ns])]
     (dom/style (dom/text css))

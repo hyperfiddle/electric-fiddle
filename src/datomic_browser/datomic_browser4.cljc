@@ -107,7 +107,7 @@
 ;;;;;;;;;;;;;
 
 #?(:clj (def sitemap-path "datomic_browser/datomic_browser4.edn"))
-#?(:clj (def sitemap-incseq (eb/sitemap-incseq sitemap-path *ns*)))
+#?(:clj (def sitemap (eb/read-sitemap sitemap-path *ns*)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 
 ;;;;;;;;;;;;;;;;
@@ -134,7 +134,7 @@
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn})
-              eb/*sitemap (e/server (e/join sitemap-incseq))
+              eb/*sitemap (e/server sitemap)
               eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
               eb/*page-defaults (e/server [route-to-entity-detail])]
       (let [sitemap eb/*sitemap]
