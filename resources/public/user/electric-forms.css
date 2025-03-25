@@ -213,3 +213,7 @@ _::-webkit-full-page-media, _:future, :root /* Safari detector – selector on n
 form input:is([type=checkbox],[type=radio])[aria-busy=true] {
     outline: 3px yellow solid;
 }
+
+/* Tablepicker row */
+[role=radio][aria-checked][aria-busy=true]     {background-color: yellow !important; color: inherit;}
+[role=radio][aria-checked][aria-busy=true] > * {background-color: yellow !important; color: inherit;}
