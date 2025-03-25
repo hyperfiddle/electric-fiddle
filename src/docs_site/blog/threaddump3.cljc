@@ -4,15 +4,18 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [dustingetz.entity-browser0 :refer [EntityBrowser0]]
+            #?(:clj [clojure.java.io :as io])
             #?(:clj dustingetz.datafy-git2)
             #?(:clj dustingetz.datafy-fs)))
 
 ;; #?(:clj (dustingetz.datafy-git/load-repo "./")) ; warm memo cache on startup - optimize blog perf
 
+#?(:clj (defn file-exists? [path] (.exists (clojure.java.io/file path))))
+
 (declare css)
 (e/defn ThreadDump3 []
   (e/client #_(dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
-    (let [x (e/server (dustingetz.datafy-git2/load-repo "../"))]
+    (let [x (e/server (dustingetz.datafy-git2/load-repo (first (filter file-exists? ["./.git" "../.git"]))))] ; load repo here or in parent folder
       (EntityBrowser0 x))))
 
 (def css "
