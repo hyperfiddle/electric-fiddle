@@ -14,6 +14,7 @@
             [docs-site.blog.waveform0 :refer [Waveform0]]
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
+            [dustingetz.object-browser-demo3 :as ob]
             [hyperfiddle.router4 :as r]
             staffly.staffly
             #?(:clj dustingetz.mbrainz)))
@@ -34,7 +35,8 @@
    `Waveform0 Waveform0})
 
 (e/defn Utilities []
-  {`ThreadDump ThreadDump})
+  {`ThreadDump ThreadDump
+   `ob/ObjectBrowserDemo3 ob/ObjectBrowserDemo3})
 
 (e/defn SecretDemos []
   (merge
