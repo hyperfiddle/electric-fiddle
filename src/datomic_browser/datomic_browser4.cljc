@@ -168,7 +168,7 @@ html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/h
 ;;  Here we make sure their parent containers do provide available space for pickers to expand in.
 ;; */
 ;; body.electric-fiddle { height: 100dvh; box-sizing: border-box; }
-;; :not(body):has(.hyperfiddle-electric-forms4__table-picker) { height: 100%; }
+;; :not(body):has(.hyperfiddle-electric-forms5__table-picker) { height: 100%; }
 
 
 (e/defn Inject [?x #_& {:keys [Busy Failed Ok]}]
