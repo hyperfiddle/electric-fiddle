@@ -152,8 +152,8 @@
 html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/hide */
 
 /* Explicit table height - there are alternatives */
-.Browser fieldset.dustingetz-entity-browser3__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
-.Browser fieldset.dustingetz-entity-browser3__block { height: fit-content; }
+.Browser fieldset.dustingetz-entity-browser4__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
+.Browser fieldset.dustingetz-entity-browser4__block { height: fit-content; }
 
 /* Progressive enhancement */
 .Browser fieldset.entity table { grid-template-columns: 15em auto; }
