@@ -4,7 +4,7 @@
             [contrib.template :refer [comptime-resource]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Input*]]
+            [hyperfiddle.electric-forms5 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
             [hyperfiddle.router4 :as router]))
 

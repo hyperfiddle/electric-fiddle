@@ -3,7 +3,7 @@
             [electric-tutorial.typeahead :refer [Typeahead]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Input*]]
+            [hyperfiddle.electric-forms5 :refer [Input*]]
             [dustingetz.london-talk-2024.webview-scroll :refer [TableScrollFixedCounted]]
             [dustingetz.london-talk-2024.webview-scroll :refer [Genders Shirt-sizes]]
             #?(:clj [dustingetz.teeshirt-orders-datascript :refer [teeshirt-orders]])
