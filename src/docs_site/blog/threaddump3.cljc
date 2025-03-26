@@ -3,7 +3,7 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
-            [dustingetz.entity-browser0 :refer [EntityBrowser0]]
+            [dustingetz.entity-browser4 :refer [HfqlRoot]]
             #?(:clj [clojure.java.io :as io])
             #?(:clj dustingetz.datafy-git2)
             #?(:clj dustingetz.datafy-fs)))
@@ -11,12 +11,13 @@
 ;; #?(:clj (dustingetz.datafy-git/load-repo "./")) ; warm memo cache on startup - optimize blog perf
 
 #?(:clj (defn file-exists? [path] (.exists (clojure.java.io/file path))))
+#?(:clj (defn load-repo [] (dustingetz.datafy-git2/load-repo (first (filter file-exists? ["./.git" "../.git"]))))) ; load repo here or in parent folder
 
 (declare css)
 (e/defn ThreadDump3 []
   (e/client #_(dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
-    (let [x (e/server (dustingetz.datafy-git2/load-repo (first (filter file-exists? ["./.git" "../.git"]))))] ; load repo here or in parent folder
-      (EntityBrowser0 x))))
+    (binding [dustingetz.entity-browser4/*hfql-bindings (e/server {})] ; cannot be seen by user - not good enough for blogpost
+      (HfqlRoot {`(load-repo) []} `[(load-repo)])))) ; not good enough for blogpost - must improve naming and args are not user friendly.
 
 (def css "
 .ThreadDump3 > a + a { margin-left: .5em; }
