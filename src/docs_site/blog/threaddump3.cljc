@@ -15,10 +15,10 @@
 
 (declare css)
 (e/defn ThreadDump3 []
-  (e/client #_(dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
+  (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
     (binding [dustingetz.entity-browser4/*hfql-bindings (e/server {})] ; cannot be seen by user - not good enough for blogpost
       (HfqlRoot {`(load-repo) []} `[(load-repo)])))) ; not good enough for blogpost - must improve naming and args are not user friendly.
 
 (def css "
-.ThreadDump3 > a + a { margin-left: .5em; }
-.Browser.dustingetz-EasyTable { position: relative; } /* re-hack easy-table.css hack */")
+ .ThreadDump3 .hyperfiddle-electric-forms5__table-picker { min-height: calc(10 * var(--row-height)); }
+")
