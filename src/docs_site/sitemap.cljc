@@ -3,7 +3,6 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
             [electric-essay.tutorial-app :refer [Tutorial]]
             [electric-essay.essay-app :refer [Essay]]
-            [datomic-browser.datomic-browser3 :refer [Inject-datomic DatomicBrowser3]]
             [datomic-browser.datomic-browser4 :as db4]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
@@ -47,9 +46,7 @@
           (or (System/getProperty "hyperfiddle.datomic.uri" dustingetz.mbrainz/mbrainz-uri))))
 
 (e/defn ListedDemos []
-  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser3)]))
-   `DatomicBrowser3 (Inject-datomic dustingetz.mbrainz/mbrainz-uri DatomicBrowser3)
-   `db4/DatomicBrowser4 (db4/Inject-datomic (e/server (get-datomic-uri)) db4/DatomicBrowser4)
+  {`db4/DatomicBrowser4 (db4/Inject-datomic (e/server (get-datomic-uri)) db4/DatomicBrowser4)
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})

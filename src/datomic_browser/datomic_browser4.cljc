@@ -157,7 +157,7 @@ html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/h
 
 /* Progressive enhancement */
 .Browser fieldset.entity table { grid-template-columns: 15em auto; }
-.Browser.datomic-browser-datomic-browser3-DbStats .entity-children table { grid-template-columns: 36ch auto;}
+.Browser.datomic-browser-datomic-browser4-DbStats .entity-children table { grid-template-columns: 36ch auto;}
 
 "
   )

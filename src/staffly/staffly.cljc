@@ -1,9 +1,9 @@
 (ns staffly.staffly
   (:require [contrib.assert :refer [check]]
             [contrib.clojurex :refer [bindx]]
-            [datomic-browser.datomic-browser3 :refer [Inject]]
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [hyperfiddle.electric3 :as e]
+            [hyperfiddle.electric3-contrib :as ex]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric-forms5 :as forms]
@@ -30,6 +30,13 @@
         :staff (StaffDetail)
         :restrict-staff-from-venue (RestrictStaffFromVenueForm)
         (dom/text "page not found")))))
+
+(e/defn Inject [?x #_& {:keys [Busy Failed Ok]}]
+  ; todo needs to be a lot more sophisticated to inject many dependencies concurrently and report status in batch
+  (cond
+    (ex/None? ?x) (Busy)
+    (or (some? (ex-message ?x)) (nil? ?x)) (Failed ?x)
+    () (Ok ?x)))
 
 (e/defn Inject-datomic [F]
   (e/fn []
