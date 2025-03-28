@@ -5,7 +5,8 @@
             #?(:clj [clojure.tools.logging :as log])
             [contrib.assert :refer [check]]
             electric-starter-app.main
-            #?(:clj [electric-starter-app.server-jetty :as jetty])
+            ;; #?(:clj [electric-starter-app.server-jetty :as jetty])
+            #?(:clj [datomic-browser.server-jetty9 :as jetty]) ; :jetty9 deps alias
             [hyperfiddle.electric3 :as e]
             #?(:cljs [hyperfiddle.electric-client3])))
 
@@ -26,16 +27,16 @@
      :manifest-path "public/electric_starter_app/js/manifest.edn"}))
 
 #?(:clj ; server entrypoint
-   (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
+   (defn -main [& {:strs [datomic-uri] :as args}] ; clojure.main entrypoint, args are strings
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
      (check string? (:hyperfiddle.electric-ring-adapter3/electric-user-version config))
      (jetty/start-server!
-       (fn [ring-req] (e/boot-server {} electric-starter-app.main/Main (e/server ring-req))) ; inject server-only ring-request - symmetric with e/boot-client
+       (fn [ring-req] (e/boot-server {} electric-starter-app.main/Main (e/server datomic-uri) (e/server ring-req))) ; inject server-only ring-request - symmetric with e/boot-client
        config)))
 
 #?(:cljs ; client entrypoint
    (defn ^:export start! []
-     ((e/boot-client {} electric-starter-app.main/Main (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request.
+     ((e/boot-client {} electric-starter-app.main/Main (e/server (e/amb)) (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request.
       #(js/console.log "Reactor success:" %)
       #(js/console.error "Reactor failure:" %))))
