@@ -30,4 +30,28 @@ fly scale count 1 --region gru
 fly scale count 1 --region hkg
 fly platform vm-sizes
 fly machine restart --skip-health-checks=false
+
 ```
+
+# Diagnose issues on a specific machine
+
+Fly.io route requests to the closest geographical region, and through load
+balancers. Sometimes a specific machine is misbehaving and it's not obvious how
+to detect or access it.
+
+From current folder run `fly machines list`.
+Then you have 3 options:
+- `fly ssh console --machine <machine-id>`
+  - `jps -l`
+  - `jstack <pid>`
+- Connect through a public VPN into the target region. You'll still go through
+  the Fly's load balancer, so while this is convenient, it only work reliably
+  for deployments with up to one machine per region.
+- Connect directly to the machine by ip, through a wireguard tunnel provided by fly.io:
+  1. `$> fly wireguard create` – store output in some .conf file
+  2. Install wireguard (e.g. from mac app store)
+  3. Import .conf file generated above into your wireguard client
+  4. Ensure the imported config (tunnel) is enabled
+  5. `$> fly machines list` – note the IPv6 column
+  6. Browse to `http://[<ipv6>]:8080` – url syntax for IPv6 uses square brackets
+  ```
