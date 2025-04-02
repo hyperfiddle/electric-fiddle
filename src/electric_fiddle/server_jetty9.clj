@@ -1,6 +1,6 @@
 (ns electric-fiddle.server-jetty9
   (:require [clojure.java.io :as io]
-            [hyperfiddle.electric-jetty9-ring-adapter :as adapter]
+            [hyperfiddle.electric-jetty9-ring-adapter :as electric-adapter]
             [clojure.tools.logging :as log]
             [ring.adapter.jetty :as ring]
             [ring.middleware.basic-authentication :as auth]
@@ -13,8 +13,6 @@
             [clojure.edn :as edn])
   (:import [java.io IOException]
            [java.net BindException]
-           [org.eclipse.jetty.server Handler]
-           [org.eclipse.jetty.server.handler ContextHandler HandlerList]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]))
 
 (defn authenticate [username password] username) ; demo (accept-all) authentication
@@ -28,6 +26,10 @@
             res)))
     (cookies/wrap-cookies)
     (auth/wrap-basic-authentication authenticate)))
+
+(defn wrap-add-basic-authentication-key [next-handler]
+  (fn [ring-req]
+    (next-handler (auth/basic-authentication-request ring-req authenticate))))
 
 (defn wrap-demo-router "A basic path-based routing middleware"
   [next-handler]
@@ -81,14 +83,15 @@
       (cond
         (nil? VERSION)             (next-handler ring-req)
         (= client-version VERSION) (next-handler ring-req)
-        :else (adapter/reject-websocket-handler 1008 "stale client") ; https://www.rfc-editor.org/rfc/rfc6455#section-7.4.1
+        :else (electric-adapter/reject-websocket-handler 1008 "stale client") ; https://www.rfc-editor.org/rfc/rfc6455#section-7.4.1
         ))))
 
-(def websocket-middleware
+(def wrap-websocket-middleware
   (fn [next-handler]
     (-> (cookies/wrap-cookies next-handler) ; makes cookies available to Electric app
       (wrap-reject-stale-client)
-      (wrap-params))))
+      (wrap-params)
+      (wrap-add-basic-authentication-key))))
 
 (defn not-found-handler [_ring-request]
   (-> (res/not-found "Not found")
@@ -112,22 +115,6 @@
       (.setMinGzipSize 1024)
       (.setHandler (.getHandler server)))))
 
-(defn create-websocket-handlers [websockets {:keys [allow-null-path-info]
-                                             :or {allow-null-path-info false}
-                                             :as options}]
-  (map (fn [[context-path handler]]
-         (doto (ContextHandler.)
-           (.setContextPath context-path)
-           (.setAllowNullPathInfo allow-null-path-info)
-           (.setHandler (adapter/proxy-ws-handler handler options))))
-    websockets))
-
-(defn add-websocket-handlers [server websockets options]
-  (.setHandler server
-    (doto (HandlerList.)
-      (.setHandlers
-        (into-array Handler (reverse (conj (create-websocket-handlers websockets options) (.getHandler server))))))))
-
 (defn start-server! [entrypoint {:keys [port resources-path manifest-path]
                                  :or {port 8080
                                       resources-path "public"
@@ -138,13 +125,9 @@
                    (merge {:port port
                            :join? false
                            :configurator (fn [server]
-                                           (comp (add-websocket-handlers server {"/" (websocket-middleware
-                                                                                       (fn [ring-req]
-                                                                                         (adapter/electric-ws-adapter
-                                                                                           (auth/basic-authentication-request ring-req authenticate)
-                                                                                           entrypoint)))}
-                                                   config)
-                                             add-gzip-handler))}
+                                           (electric-adapter/install-websocket server "/"
+                                             (-> entrypoint electric-adapter/build-electric-websocket-middleware wrap-websocket-middleware))
+                                           (add-gzip-handler server))}
                      config))
           final-port (-> server (.getConnectors) first (.getPort))]
       (println "\n👉 App server available at" (str "http://" (:host config) ":" final-port "\n"))

@@ -39,6 +39,9 @@
                 ring-basic-authentication/ring-basic-authentication {:mvn/version "1.1.1"}
                 org.eclipse.jetty.websocket/websocket-server {:mvn/version "9.4.31.v20200723"} ; matching jetty version from ring-jetty-adapter
                 org.eclipse.jetty.websocket/websocket-servlet {:mvn/version "9.4.31.v20200723"}
+                org.eclipse.jetty/jetty-client {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                org.eclipse.jetty/jetty-http {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                org.eclipse.jetty/jetty-util {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
                 }}
 
   :build
