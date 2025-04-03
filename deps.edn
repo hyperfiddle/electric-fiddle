@@ -2,7 +2,7 @@
            org.clojure/tools.logging      {:mvn/version "1.2.4"}
            ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
 
-           com.hyperfiddle/datomic-browser {:local/root "../publish/electric-datomic-browser/target/datomic-browser-abbc526-dirty.jar"} ; replace this with correct version. See Readme.md
+           com.hyperfiddle/electric-datomic-browser {:local/root "../publish/electric-datomic-browser/target/datomic-browser-16d7cb7-dirty.jar"} ; replace this with correct version. See Readme.md
 
            ring/ring {:mvn/version "1.9.6"}
            ring/ring-jetty-adapter {:mvn/version "1.8.2"}
