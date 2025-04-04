@@ -6,7 +6,6 @@
             [datomic-browser.datomic-browser4 :as db4]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
-            [dustingetz.threaddump :refer [ThreadDump]]
             [docs-site.blog.threaddump1 :refer [ThreadDump1]]
             [docs-site.blog.threaddump2 :refer [ThreadDump2]]
             [docs-site.blog.threaddump3 :refer [ThreadDump3]]
@@ -34,8 +33,7 @@
    `Waveform0 Waveform0})
 
 (e/defn Utilities []
-  {`ThreadDump ThreadDump
-   `ob/ObjectBrowserDemo3 ob/ObjectBrowserDemo3})
+  {`ob/ObjectBrowserDemo3 ob/ObjectBrowserDemo3})
 
 (e/defn SecretDemos []
   (merge
