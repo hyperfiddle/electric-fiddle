@@ -2,7 +2,7 @@
   #?(:clj (:import [java.lang.management ManagementFactory]))
   (:require clojure.string
             [dustingetz.str :refer [includes-str?]]
-            [dustingetz.easy-table :refer [EasyTable]]
+            [hyperfiddle.electric-forms5 :refer [TablePicker! Input*]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
@@ -13,19 +13,31 @@
               (doseq [thread-info thread-infos]
                 (print (.toString thread-info)))))))
 
+#?(:clj
+   (defn query [search]
+     (let [dump-str (get-thread-dump)]
+       (->> (clojure.string/split-lines dump-str)
+         (filter #(includes-str? % search))
+         vec))))
+
 (declare css)
+
 (e/defn ThreadDump1 []
   (e/client
-    (dom/div
-      (dom/props {:class "ThreadDump"}) (dom/style (dom/text css))
-      (EasyTable "Thread Dumper"
-        (e/server (fn query [search]
-                    (let [dump-str (get-thread-dump)]
-                      (->> (clojure.string/split-lines dump-str)
-                        (filter #(includes-str? % search))
-                        vec))))
-        (e/fn Row [x] (dom/td (dom/text x)))))))
+    (dom/div (dom/props {:class "ThreadDump"}) (dom/style (dom/text css))
+      (dom/fieldset
+        (let [xs! (dom/legend
+                    (dom/text "Thread Dumper" " ")
+                    (let [search (Input* "")
+                          xs! (e/server (e/Offload #(query search)))]
+                      (dom/text (str " (" (e/server (count xs!)) " items) "))
+                      xs!))]
+          (TablePicker! ::_ nil (e/server (count xs!))
+            (e/fn [i]
+              (e/server (when-some [x (nth xs! i nil)]
+                          (e/client (dom/td (dom/text x)))
+                          )))))))))
 
-(def css "
+(def css (str hyperfiddle.electric-forms5/css "
 .ThreadDump > fieldset { position:fixed; top:0em; bottom:0; left:0; right:0; }
-.ThreadDump table { grid-template-columns: 1fr; }")
+.ThreadDump table { grid-template-columns: 1fr; }"))

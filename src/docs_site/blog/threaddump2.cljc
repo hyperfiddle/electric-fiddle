@@ -12,6 +12,7 @@
 
 (e/defn ThreadDump2 []
   (e/client
+    (dom/style (dom/text dustingetz.edn-viewer0/css))
     (let [!selected (atom :thread), selected (e/watch !selected)]
       (dom/text "Target: ")
       (e/for [x (e/amb :thread :thread-meta :git :git-meta)]

@@ -1,7 +1,5 @@
 (ns dustingetz.dustingetz
   (:require [hyperfiddle.electric3 :as e]
-            [dustingetz.easy-table :refer [DemoEasyTable]]
-            [dustingetz.edn-viewer0 :refer [EdnViewer0]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.object-browser-demo3 :refer [ObjectBrowserDemo3]]
             [dustingetz.logic :refer [Logic]]
@@ -20,8 +18,6 @@
 
 (e/defn Fiddles []
   (merge
-    {`DemoEasyTable DemoEasyTable
-     `EdnViewer0 EdnViewer0}
     {`DemoMetaobject DemoMetaobject
      `Painter Painter
      `FileWatcherDemo FileWatcherDemo
