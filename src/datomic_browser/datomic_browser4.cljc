@@ -57,7 +57,10 @@
               {`hfp/-identify hash
                `ccp/nav (fn [_this k v] (if (= :a k) (d/entity db a) v))}))))
 
-#?(:clj (defn attribute-detail [a] (->> (d/datoms db :aevt a) (sort-by :v) (mapv datom->map)))) ; todo inline
+#?(:clj (defn attribute-detail [a]
+          (let [db db]
+            (with-meta (d/q '[:find [?e ...] :in $ ?a :where [?e ?a]] db a)
+              {`ccp/nav (fn [_this _k v] (d/entity db v))}))))
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
@@ -82,8 +85,10 @@
 (e/defn SemanticTooltip [v o spec]
   (e/server
     (when-not (coll? v)
-      (let [[typ _ unique?] (datomicx/easy-attr db (hfql/unwrap spec))]
+      (let [k (hfql/unwrap spec)
+            [typ _ unique?] (datomicx/easy-attr db k)]
         (cond
+          (= :db/id k) (EntityTooltip v o spec)
           (= :ref typ) (strx/pprint-str (d/pull db ['*] v))
           (= :identity unique?) (strx/pprint-str (d/pull db ['*] [(hfql/unwrap spec) #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
           () nil)))))
