@@ -10,6 +10,8 @@
 
 (def electric-user-version (b/git-process {:git-args "describe --tags --long --always --dirty"}))
 
+(defn clean [_opts] (b/delete {:path "target"}))
+
 (defn build-client "
 invoke like: clj -X:build:prod build-client`
 Note: do not use `clj -T`, because Electric shadow compilation requires
