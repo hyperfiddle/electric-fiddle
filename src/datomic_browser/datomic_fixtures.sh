@@ -13,7 +13,7 @@ set +e
 wget --no-clobber -O mbrainz.tar https://s3.amazonaws.com/mbrainz/datomic-mbrainz-1968-1973-backup-2017-07-20.tar
 set -e
 if [ ! -d "mbrainz" ]; then
-    tar -xvf mbrainz.tar
+    tar -xf mbrainz.tar
 fi
 
 datomic-pro/bin/transactor config/samples/dev-transactor-template.properties >>datomic.log 2>&1 &
