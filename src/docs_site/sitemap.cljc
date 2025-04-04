@@ -44,7 +44,8 @@
           (or (System/getProperty "hyperfiddle.datomic.uri" dustingetz.mbrainz/mbrainz-uri))))
 
 (e/defn ListedDemos []
-  {`db4/DatomicBrowser4 (db4/Inject-datomic (e/server (get-datomic-uri)) db4/DatomicBrowser4)
+  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(db4/DatomicBrowser4)]))
+   `db4/DatomicBrowser4 (db4/Inject-datomic (e/server (get-datomic-uri)) db4/DatomicBrowser4) ; default prod dataset is mbrainz
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
