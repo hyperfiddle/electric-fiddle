@@ -215,5 +215,7 @@ form input:is([type=checkbox],[type=radio])[aria-busy=true] {
 }
 
 /* Tablepicker row */
-[role=radio][aria-checked][aria-busy=true]     {background-color: yellow !important; color: inherit;}
-[role=radio][aria-checked][aria-busy=true] > * {background-color: yellow !important; color: inherit;}
+[role=radiogroup][aria-busy=true] > [aria-checked=true] {background-color: yellow; color: inherit;}
+[role=radiogroup][aria-busy=true] > [aria-checked=true] > * {background-color: yellow; color: inherit;}
+[role=radio][aria-checked][aria-busy=true]     {background-color: yellow !important; color: inherit;} /* is !important necessary here? why? */
+[role=radio][aria-checked][aria-busy=true] > * {background-color: yellow !important; color: inherit;} /* is !important necessary here? why? */

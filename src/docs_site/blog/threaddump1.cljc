@@ -2,7 +2,7 @@
   #?(:clj (:import [java.lang.management ManagementFactory]))
   (:require clojure.string
             [dustingetz.str :refer [includes-str?]]
-            [hyperfiddle.electric-forms5 :refer [TablePicker! Input*]]
+            [hyperfiddle.electric-forms5 :refer [TablePicker* Input*]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
@@ -32,7 +32,7 @@
                           xs! (e/server (e/Offload #(query search)))]
                       (dom/text (str " (" (e/server (count xs!)) " items) "))
                       xs!))]
-          (TablePicker! ::_ nil (e/server (count xs!))
+          (TablePicker* nil (e/server (count xs!))
             (e/fn [i]
               (e/server (when-some [x (nth xs! i nil)]
                           (e/client (dom/td (dom/text x)))
