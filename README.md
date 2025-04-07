@@ -24,7 +24,7 @@ clj -X:build:prod uberjar :build/jar-name "app.jar"
 java -cp target/app.jar clojure.main -m prod
 
 # Docker
-docker build -t electric3-starter-app:latest .
+docker build --build-arg VERSION=$(git rev-parse HEAD) -t electric3-starter-app:latest .
 docker run --rm -it -p 8080:8080 electric3-starter-app:latest
 ```
 
