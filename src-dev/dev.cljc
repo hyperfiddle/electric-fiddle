@@ -1,9 +1,6 @@
 (ns dev
   (:require
-   clojure.edn
    electric-starter-app.main
-   [hyperfiddle.electric3 :as e]
-   #?(:cljs hyperfiddle.electric-client3)
    #?(:clj [electric-starter-app.server-jetty :as jetty])
    #?(:clj [shadow.cljs.devtools.api :as shadow])
    #?(:clj [shadow.cljs.devtools.server :as shadow-server])
@@ -29,10 +26,7 @@
 
        (comment (shadow-server/stop!))
 
-       (def server (jetty/start-server!
-                     (fn [ring-request]
-                       (e/boot-server {} electric-starter-app.main/Main (e/server ring-request))) ; inject server-only ring-request - symmetric with e/boot-client
-                     config))
+       (def server (jetty/start-server! electric-starter-app.main/electric-boot config))
        (comment
          (.stop server) ; jetty
          (server)       ; httpkit
@@ -44,7 +38,7 @@
      (defonce reactor nil)
 
      (defn ^:dev/after-load ^:export start! []
-       (set! reactor ((e/boot-client {} electric-starter-app.main/Main (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request
+       (set! reactor ((electric-starter-app.main/electric-boot nil)
                        #(js/console.log "Reactor success:" %)
                        #(js/console.error "Reactor failure:" %))))
 

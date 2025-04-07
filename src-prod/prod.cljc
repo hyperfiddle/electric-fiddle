@@ -5,9 +5,7 @@
             #?(:clj [clojure.tools.logging :as log])
             [contrib.assert :refer [check]]
             electric-starter-app.main
-            #?(:clj [electric-starter-app.server-jetty :as jetty])
-            [hyperfiddle.electric3 :as e]
-            #?(:cljs [hyperfiddle.electric-client3])))
+            #?(:clj [electric-starter-app.server-jetty :as jetty])))
 
 (defmacro comptime-resource [filename]
   (some-> filename clojure.java.io/resource slurp clojure.edn/read-string))
@@ -30,12 +28,10 @@
      (alter-var-root #'config #(merge % args))
      (log/info (pr-str config))
      (check string? (:hyperfiddle.electric-ring-adapter3/electric-user-version config))
-     (jetty/start-server!
-       (fn [ring-req] (e/boot-server {} electric-starter-app.main/Main (e/server ring-req))) ; inject server-only ring-request - symmetric with e/boot-client
-       config)))
+     (jetty/start-server! electric-starter-app.main/electric-boot config)))
 
 #?(:cljs ; client entrypoint
    (defn ^:export start! []
-     ((e/boot-client {} electric-starter-app.main/Main (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request.
-      #(js/console.log "Reactor success:" %)
-      #(js/console.error "Reactor failure:" %))))
+     ((electric-starter-app.main/electric-boot nil)
+       #(js/console.log "Reactor success:" %)
+       #(js/console.error "Reactor failure:" %))))
