@@ -40,9 +40,10 @@
           (with-meta
             (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             {`clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
+#?(:clj (def memoized-db-stats (memoize d/db-stats)))
 #?(:clj (defn attribute-count [!e]
           (let [db (d/entity-db !e), a (:db/ident !e)]
-            (-> db d/db-stats :attrs (get a) :count))))
+            (-> db memoized-db-stats :attrs (get a) :count))))
 
 #?(:clj
    (comment
