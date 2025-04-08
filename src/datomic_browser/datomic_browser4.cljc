@@ -40,7 +40,9 @@
           (with-meta
             (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             {`clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
-#?(:clj (defn attribute-count [!e] (d/q '[:find (count ?e) . :in $ ?attr :where [?e ?attr]] (d/entity-db !e) (:db/ident !e))))
+#?(:clj (defn attribute-count [!e]
+          (let [db (d/entity-db !e), a (:db/ident !e)]
+            (-> db d/db-stats :attrs (get a) :count))))
 
 #?(:clj
    (comment
