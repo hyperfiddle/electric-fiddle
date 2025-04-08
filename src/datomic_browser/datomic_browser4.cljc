@@ -106,7 +106,7 @@
         () nil))))
 
 (e/defn EntityDbidCell [v o spec]
-  (dom/text v " ") (r/link ['. [`(entity-history ~v)]] (dom/text "entity history")))
+  (dom/span (dom/text v " ") (r/link ['. [`(entity-history ~v)]] (dom/text "entity history"))))
 
 #?(:clj (defn route-to-entity-detail [o] (when (instance? datomic.query.EntityMap o) (list `entity-detail (:db/id o)))))
 
