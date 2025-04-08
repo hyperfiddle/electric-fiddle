@@ -84,41 +84,42 @@
 
            :staff/documents (e/fn [x]
                               (e/server
-                                (Table "documents" (constantly x)
-                                  (e/fn [e]
-                                    (e/for [a (e/diff-by {} [:document/type :document/name :document/expiry :document/status])]
-                                      (let [v (a e)]
-                                        (dom/td
-                                          (dom/text
-                                            (case a
-                                              :document/expiry (e/client (some-> v .toLocaleDateString))
-                                              v)))))))))
+                                (Table "documents"
+                                  [:document/type :document/name :document/expiry :document/status]
+                                  (constantly x)
+                                  (e/fn [a e]
+                                    (let [v (a e)]
+                                      (dom/td
+                                        (dom/text
+                                          (case a
+                                            :document/expiry (e/client (some-> v .toLocaleDateString))
+                                            v))))))))
 
            :staff/restrictions (e/fn [x]
                                  (e/server
                                    (Table "restrictions"
+                                     [:restriction/venue :restriction/reason :restriction/scope :restriction/expires-at]
                                      (constantly x)
-                                     (e/fn [e]
-                                       (e/for [a (e/diff-by {} [:restriction/venue :restriction/reason :restriction/scope :restriction/expires-at])]
-                                         (let [v (a e)]
-                                           (dom/td
-                                             (dom/text
-                                               (case a
-                                                 :restriction/expires-at (e/client (some-> v .toLocaleDateString))
-                                                 :restriction/venue (:venue/name v) v)))))))))
+                                     (e/fn [a e]
+                                       (let [v (a e)]
+                                         (dom/td
+                                           (dom/text
+                                             (case a
+                                               :restriction/expires-at (e/client (some-> v .toLocaleDateString))
+                                               :restriction/venue (:venue/name v) v))))))))
            :staff/shifts (e/fn [x]
                            (e/server
                              (Table "shifts" ; :grid-template-columns "2fr 2fr 2fr 1fr"
+                               [:shift/date :shift/venue :shift/role :shift/rating]
                                (constantly x)
-                               (e/fn [e]
-                                 (e/for [a (e/diff-by {} [:shift/date :shift/venue :shift/role :shift/rating])]
-                                   (let [v (a e)]
-                                     (dom/td
-                                       (dom/text
-                                         (case a
-                                           :shift/date (e/client (some-> v .toLocaleDateString))
-                                           :shift/venue (:venue/name v)
-                                           :shift/role (e/client (some-> v :db/ident name)) v)))))))))
+                               (e/fn [a e]
+                                 (let [v (a e)]
+                                   (dom/td
+                                     (dom/text
+                                       (case a
+                                         :shift/date (e/client (some-> v .toLocaleDateString))
+                                         :shift/venue (:venue/name v)
+                                         :shift/role (e/client (some-> v :db/ident name)) v))))))))
 
            :staff/phone-confirmed (e/fn [x] (Form! {} (e/fn [_]  (Checkbox! ::phone-confirmed? x))
                                               :Parse (e/fn [{::keys [phone-confirmed?]} _] [`Change-phone-confirmed! e phone-confirmed?])
@@ -136,8 +137,8 @@
 (def css (str hyperfiddle.electric-forms5/css
            staffly.utils/css
            "
-.staffly .hyperfiddle-electric-forms5__virtual-scroll  { --min-row-count: 5; }
-.staffly .hyperfiddle-electric-forms5__virtual-scroll table  { --column-count: 4; }
+.staffly .hyperfiddle-electric-forms5__table-picker  { --min-row-count: 5; }
+.staffly .hyperfiddle-electric-forms5__table-picker table  { --column-count: 4; }
 
 .staffly form:not(:has([aria-busy=true])) button {display: none;}
 .staffly form:not(:has([aria-invalid=true])) [data-role=errormessage] {display: none;}

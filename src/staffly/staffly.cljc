@@ -18,8 +18,8 @@
     (r/link ['.. [:index]] (dom/text "home")) (dom/text " ")))
 
 (e/defn Page []
-  (dom/props {:class "staffly "})
-  #_(dom/link (dom/props {:rel :stylesheet, :href "/staffly.css"}))
+  (dom/props {:class "staffly"})
+  (dom/link (dom/props {:rel :stylesheet, :href "/user/staffly.css"}))
   (let [[page] r/route]
     (when-not page (r/ReplaceState! ['. [:index]]))
     (r/pop

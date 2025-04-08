@@ -88,22 +88,23 @@
                     (Field "type" (Typeahead ::staff ; initial value for fast load
                                     :Options (e/fn [s] (e/server (e/diff-by identity (entity-type-options s))))
                                     :option-label (fn [x] (some-> x name)))))]
-        (Table "Index" (e/server  #(index % type_ :limit nil))
-          (e/fn [e]
+        (Table "Index"
+          [:db/id ::entity-type]
+          (e/server  #(index % type_ :limit nil))
+          (e/fn [a e]
             (let [type_ (e/server (some-> e entity-type))]
-              (e/for [a (e/diff-by {} [:db/id ::entity-type])]
-                (let [v (a e)]
-                  (dom/td
-                    (case a
-                      :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
-                      ::entity-type (dom/text (some-> type_ name))
-                      (dom/text (pr-str v)))))))))))))
+              (let [v (a e)]
+                (dom/td
+                  (case a
+                    :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
+                    ::entity-type (dom/text (some-> type_ name))
+                    (dom/text (pr-str v))))))))))))
 
 
 (def css (str forms/css "
 
-.staffly .hyperfiddle-electric-forms5__virtual-scroll  { --min-row-count: 15; }
-.staffly .hyperfiddle-electric-forms5__virtual-scroll table  { --column-count: 2; }
+.staffly .hyperfiddle-electric-forms5__table-picker  { --min-row-count: 15; }
+.staffly .hyperfiddle-electric-forms5__table-picker table  { --column-count: 2; }
 
 
 "))
