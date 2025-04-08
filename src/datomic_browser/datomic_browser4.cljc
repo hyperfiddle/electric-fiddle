@@ -196,4 +196,13 @@ html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/h
   (require '[edamame.core :as eda])
   (eda/parse-string (slurp "./src/datomic_browser/datomic_browser4.edn")
     {:auto-resolve (fn [x] (if (= :current x) *ns* (get (ns-aliases *ns*) x)))})
+  (let [db @dustingetz.mbrainz/test-db]
+    (reduce (fn [[_e kc :as ac] nx]
+              (let [mp (d/touch (d/entity db nx))
+                    k* (keys mp)]
+                (if (> (count k*) kc)
+                  [nx (count k*)]
+                  ac)))
+      [0 0] (d/q '[:find [?e ...] :in $ :where [?e :release/name]] db)))
+  [17592186077296 15]
   )
