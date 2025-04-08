@@ -20,7 +20,6 @@
 (e/defn Page []
   (dom/props {:class "staffly "})
   #_(dom/link (dom/props {:rel :stylesheet, :href "/staffly.css"}))
-  (dom/link (dom/props {:rel :stylesheet, :href "/gridsheet-optional.css"}))
   (let [[page] r/route]
     (when-not page (r/ReplaceState! ['. [:index]]))
     (r/pop
