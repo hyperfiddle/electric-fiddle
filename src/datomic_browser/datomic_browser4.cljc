@@ -21,6 +21,7 @@
 
 (e/declare ^:dynamic conn)
 (e/declare ^:dynamic db)
+(e/declare ^:dynamic db-stats)
 
 #?(:clj
    (extend-protocol hfql/Suggestable
@@ -40,10 +41,7 @@
           (with-meta
             (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
             {`clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
-#?(:clj (def memoized-db-stats (memoize d/db-stats)))
-#?(:clj (defn attribute-count [!e]
-          (let [db (d/entity-db !e), a (:db/ident !e)]
-            (-> db memoized-db-stats :attrs (get a) :count))))
+#?(:clj (defn attribute-count [!e] (-> db-stats :attrs (get (:db/ident !e)) :count)))
 
 #?(:clj
    (comment
@@ -141,7 +139,7 @@
                           `EntityDbidCell EntityDbidCell}
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
-    (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn})
+    (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn, (find-var `db-stats) (e/server (d/db-stats db))})
               eb/*sitemap (e/server sitemap)
               eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
               eb/*page-defaults (e/server [route-to-entity-detail])]
