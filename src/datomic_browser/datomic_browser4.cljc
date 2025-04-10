@@ -86,7 +86,8 @@
 (e/defn SemanticTooltip [v o spec]
   (e/server
     (when-not (coll? v)
-      (let [k (hfql/unwrap spec)
+      ;; `and` is glitch guard, TODO remove
+      (let [k (and spec (hfql/unwrap spec))
             [typ _ unique?] (datomicx/easy-attr db k)]
         (cond
           (= :db/id k) (EntityTooltip v o spec)
