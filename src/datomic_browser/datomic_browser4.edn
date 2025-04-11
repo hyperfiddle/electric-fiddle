@@ -3,7 +3,8 @@
                         (attribute-count %)
                         (summarize-attr* %)
                         :db/doc]
- (attribute-detail :a) (hfql/props [(hfql/props :db/id {::hfql/link (entity-detail %v)})]
+ (attribute-detail :a) (hfql/props [(hfql/props :db/id {::hfql/link (entity-detail %v)})
+                                    {:user/email pr-str}]
                          {::hfql/Tooltip SemanticTooltip})
  (tx-detail :tx)       [(hfql/props :e {::hfql/link    (entity-detail :e)
                                         ::hfql/Tooltip EntityTooltip})
