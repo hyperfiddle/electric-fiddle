@@ -30,7 +30,7 @@
 
 (e/defn Custom-markdown [extensions md-content]
   (e/client
-    (e/for [[t v] (e/server (e/diff-by {} (e/Offload #(parse-sections md-content))))]
+    (e/for [[t v] (e/server (e/diff-by {} (e/Offload #(parse-sections (or md-content "")))))]
       (case t
         (::directive) (let [[extension args] (parse-md-directive v)]
                         (if-let [F (get extensions extension)]
