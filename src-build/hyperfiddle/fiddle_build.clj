@@ -17,13 +17,14 @@ invoke like: clj -X:build:prod build-client`
 Note: do not use `clj -T`, because Electric shadow compilation requires
 application classpath to be available"
   ; No point in sheltering shadow from app classpath, shadow loads it anyway!
-  [argmap] ; from clj -X
-  (let [{:keys [::fiddle-ns optimize debug verbose]
-         :or {optimize true, debug false, verbose false}
-         :as config}
-        (-> argmap 
+  [{:keys [::fiddle-ns optimize debug verbose ::version]
+    :or {optimize true, debug false, verbose false, version electric-user-version}
+    :as config}] ; from clj -X
+  (let [{:keys [::fiddle-ns] :as config}
+        (-> config
           (update ::fiddle-ns (comp not-empty str)) ; coerce, -X under bash evals as symbol unless shell quoted like '"'foo'"'
-          (assoc :hyperfiddle.electric-ring-adapter3/electric-user-version electric-user-version))]
+          (dissoc ::version)
+          (assoc :hyperfiddle.electric-ring-adapter3/electric-user-version version))]
     (log/info 'build-client (pr-str config #_argmap))
     (b/delete {:path "resources/public/js"})
     (b/delete {:path "resources/electric-manifest.edn"})
@@ -42,7 +43,7 @@ application classpath to be available"
            :verbose verbose,
            :config-merge
            [{:compiler-options {:optimizations (if optimize :advanced :simple)}
-             :closure-defines {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION electric-user-version}}]})
+             :closure-defines {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION version}}]})
         shadow-status (assert (= shadow-status :done) "shadow-api/release error"))) ; fail build on error
     (shadow-server/stop!)
     (log/info "client built for fiddle-ns: " fiddle-ns)))
@@ -55,8 +56,9 @@ application classpath to be available"
 (defn uberjar
   [{:keys [::fiddle-ns ; shell string read as symbol
            ::fiddle-deps-alias ; shell string read as symbol (NOT keyword)
-           optimize debug verbose ::jar-name, ::skip-client]
-    :or {optimize true, debug false, verbose false, skip-client false}
+           optimize debug verbose ::jar-name, ::skip-client
+           ::version]
+    :or {optimize true, debug false, verbose false, skip-client false, version electric-user-version}
     :as args}]
   ; careful, shell quote escaping combines poorly with clj -X arg parsing, strings read as symbols
   (log/info 'uberjar (pr-str args))
@@ -64,13 +66,14 @@ application classpath to be available"
 
   (when-not skip-client
     (build-client {::fiddle-ns (check some? fiddle-ns) ; pass unparsed, build-client also can be invoked from shell
-                   :optimize optimize, :debug debug, :verbose verbose}))
+                   :optimize optimize, :debug debug, :verbose verbose
+                   ::version version}))
 
   (b/copy-dir {:target-dir class-dir :src-dirs ["src-framework" "src-prod" "resources"
                                                 "src"]}) ; allow code sharing across fiddle domains
   #_(b/copy-dir {:target-dir (str class-dir "/" (domain->dir fiddle-domain)) :src-dirs [(str "src/" (domain->dir fiddle-domain))]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
-                   (format "electricfiddle-%s-%s.jar" (contrib.ednish/encode (str fiddle-ns)) electric-user-version))
+                   (format "electricfiddle-%s-%s.jar" (contrib.ednish/encode (str fiddle-ns)) version))
         aliases [:prod (keyword (name (check some? fiddle-deps-alias)))]]
     (log/info 'uberjar "included aliases:" aliases)
     (b/uber {:class-dir class-dir

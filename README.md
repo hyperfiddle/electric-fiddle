@@ -44,7 +44,7 @@ clojure -X:build:prod:electric-tutorial uberjar :hyperfiddle.fiddle-build/fiddle
 java -cp target/app.jar clojure.main -m prod
 
 # fiddle docker
-docker build -t electric-tutorial:latest . --build-arg HYPERFIDDLE_FIDDLE_NS=docs-site.sitemap --build-arg HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial
+docker build -t electric-tutorial:latest . --build-arg HYPERFIDDLE_FIDDLE_NS=docs-site.sitemap --build-arg HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial --build-arg ELECTRIC_USER_VERSION=$(git rev-parse HEAD)
 docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
 ```
