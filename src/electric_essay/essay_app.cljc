@@ -19,6 +19,6 @@
           #_(Consulting-banner)
           (if-some [md-content (e/server (slurp-safe (str essay-md-folder ?essay-filename ".md")))]
             (Custom-markdown (Fiddle-markdown-extensions) md-content)
-            (do (dom/h1 (dom/text "Blog page not found: " ?essay-filename))
-                (dom/p (dom/text "Probably we broke URLs, sorry! ")
-                  (r/link ['. []] (dom/text "blog index"))))))))))
+            (do (dom/h2 (dom/text "This blog post is not available, sorry." #_?essay-filename))
+                (dom/p #_(dom/text "Probably we broke URLs, sorry! ") ; Urls are not broken for /blog ATM, we temporarily disabled some blogposts.
+                  (r/link ['.. ['tutorial]] (dom/text "Tutorial index")))))))))) ; no redirect to /blog as there's only one article for now: Waveform. Tutorial is a better candidate.
