@@ -2,13 +2,7 @@
 
 * in-mem datomic database is automatic
 
-```shell
-npx tailwindcss -i src/staffly/staffly.css -o resources/public/staffly.css --watch
-```
-
 # Prod
-
-* in-mem datomic database is automatic
 
 ```
 # prod local

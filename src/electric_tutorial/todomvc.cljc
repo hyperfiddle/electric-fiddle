@@ -181,7 +181,7 @@
 
 (e/defn TodoMVC []
   (e/client
-    (dom/link (dom/props {:rel :stylesheet, :href "/todomvc.css"}))
+    (dom/link (dom/props {:rel :stylesheet, :href "/user/todomvc.css"}))
     (dom/props {:class "todomvc"})
     (binding [!state (atom state0)]
       (binding [state (e/watch !state)]

@@ -1,10 +1,4 @@
-/* TODO migrate to Tailwind */
-
-@import url('user/examples.css');
-@import url('user/tutorial.css');
-@import url('user/github-markdown.css');
-@import url('user/todomvc.css');
-@import url('user/electric-forms.css');
+@import url('user/electric-fiddle.css');
 
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
 

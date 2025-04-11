@@ -1,24 +1,5 @@
-/* body.hyperfiddle{
-    display: grid;
-    grid-template-areas: "title title"
-                         "nav nav"
-                         "lead lead"
-                         "code result"
-                         "readme readme"
-                         "footer-nav footer-nav";
-    grid-template-rows: auto 1.5rem auto auto min-content;
-    grid-template-columns: min-content auto;
-}
-
-.hyperfiddle.user-examples-demo {
-    grid-template-areas: "title"
-                         "nav"
-                         "lead"
-                         "result"
-                         "readme"
-                         "footer-nav";
-    grid-template-columns: auto;
-} */
+@import url('/hyperfiddle/electric-forms.css');
+@import url('user/github-markdown.css');
 
 .user-examples-nav{
     grid-area: nav;

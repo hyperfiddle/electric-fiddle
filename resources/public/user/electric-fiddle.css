@@ -1,3 +1,5 @@
+@import url('tutorial.css');
+
 body.electric-fiddle{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     -webkit-text-size-adjust: none;
@@ -39,19 +41,9 @@ body > div.Tutorial /* includes Essay-app */ {
     white-space: nowrap;
 }
 
-.user-examples-target{
+.electric-fiddle .user-examples-target{
     grid-area:result;
-    padding: 1rem;
     max-height: 40rem; /* it was 41 why ? */
-}
-
-.user-examples-code{
-    grid-area:code;
-    padding: 0;
-    height: fit-content;
-    max-width: 100%;
-    max-height: 40rem;
-    padding-right: 1rem;
 }
 
 .electric-fiddle .user-examples-readme{
@@ -61,7 +53,7 @@ body > div.Tutorial /* includes Essay-app */ {
 
 
 @media (max-width: 980px) and (hover: none) and (pointer: coarse) {
-    .user-examples-code{
+    .electric-fiddle .user-examples-code{
         overflow: scroll;
         margin:0;
     }
@@ -76,11 +68,11 @@ body > div.Tutorial /* includes Essay-app */ {
         grid-template-columns: 100%;
     }
 
-    .user-examples-code{
+    .electric-fiddle .user-examples-code{
         max-height: initial;
     }
 
-    .user-examples-target{
+    .electric-fiddle .user-examples-target{
         padding: 1rem;
         overflow:auto;
         max-height: 50vh;
@@ -100,14 +92,12 @@ body > div.Tutorial /* includes Essay-app */ {
         margin:0;
     }
 
-    .user-examples-code{
+    .electric-fiddle .user-examples-code{
         font-size: 1rem;
     }
-    .user-examples-target{
+    .electric-fiddle .user-examples-target{
         max-height: 13rem;
     }
 
 }
 
-@media (min-width: 981px) and (max-width: 1200px) {}
-@media (min-width: 1201px) {}
