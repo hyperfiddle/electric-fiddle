@@ -46,8 +46,8 @@
 
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(db4/DatomicBrowser4)]))
-   ;; `db4/DatomicBrowser4 (db4/Inject-datomic (e/server (get-datomic-uri)) db4/DatomicBrowser4) ; default prod dataset is mbrainz
-   `db4/DatomicBrowser4 (e/fn [] (db4/DatomicBrowser4 datomic-browser.users-with-email-db/conn))
+   `db4/DatomicBrowser4 (db4/Inject-datomic (e/server (get-datomic-uri)) db4/DatomicBrowser4) ; default prod dataset is mbrainz
+   ;; `db4/DatomicBrowser4 (e/fn [] (db4/DatomicBrowser4 datomic-browser.users-with-email-db/conn))
    `Unifhir1 Unifhir1
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
