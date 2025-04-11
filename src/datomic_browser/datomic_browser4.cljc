@@ -149,6 +149,7 @@
               eb/*page-defaults (e/server [route-to-entity-detail])]
       (let [sitemap eb/*sitemap]
         (dom/style (dom/text css))
+        (dom/link (dom/props {:href "/hyperfiddle/electric-forms.css"}))
         (Index sitemap)
         (eb/HfqlRoot sitemap `[(attributes)])))))
 
