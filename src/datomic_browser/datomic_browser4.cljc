@@ -115,8 +115,8 @@
 ;;;;;;;;;;;;;
 
 #?(:clj (def sitemap-path "datomic_browser/datomic_browser4.edn"))
-#?(:clj (def sitemap (eb/read-sitemap sitemap-path *ns*)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
+#?(:clj (def this-ns *ns*))
 
 ;;;;;;;;;;;;;;;;
 ;; ENTRYPOINT ;;
@@ -142,7 +142,7 @@
             conn conn
             db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn, (find-var `db-stats) (e/server (d/db-stats db))})
-              eb/*sitemap (e/server sitemap)
+              eb/*sitemap (e/server (eb/read-sitemap sitemap-path this-ns))
               eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
               eb/*page-defaults (e/server [route-to-entity-detail])]
       (let [sitemap eb/*sitemap]
