@@ -104,9 +104,11 @@
         (= :identity unique?) (strx/pprint-str (d/pull db ['*] [a #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
         () nil))))
 
+;; glitch guard, TODO remove
+#?(:clj (defn safe-long [v] (if (number? v) v 1)))
 (e/defn EntityDbidCell [v o spec]
-  (let [vstr (e/server (str v))]
-    (dom/span (dom/text vstr " ") (r/link ['. [`(entity-history ~vstr)]] (dom/text "entity history")))))
+  (let [v2 (e/server (safe-long v))]
+    (dom/span (dom/text v2 " ") (r/link ['. [`(entity-history ~v2)]] (dom/text "entity history")))))
 
 #?(:clj (defn route-to-entity-detail [o] (when (instance? datomic.query.EntityMap o) (list `entity-detail (:db/id o)))))
 
