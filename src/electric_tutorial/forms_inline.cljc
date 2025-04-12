@@ -73,8 +73,8 @@
                       `Num1FormSubmit Num1FormSubmit
                       `Bool1FormSubmit Bool1FormSubmit}
             debug* (Checkbox* false :label "debug")
-            slow* (Checkbox* true :label "latency")
-            fail* (Checkbox* true :label "failure")
+            slow* (Checkbox* false :label "latency")
+            fail* (Checkbox* false :label "failure")
             show-buttons* (Checkbox* true :label "show-buttons")
             auto-submit* (Checkbox* false :label "auto-submit")]
     debug* fail* slow* auto-submit* show-buttons*
