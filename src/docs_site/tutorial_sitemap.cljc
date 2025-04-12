@@ -40,22 +40,22 @@
     ['two_clocks ; hello world
      'system_properties ; simple query/view topology
      'dir_tree ; complex topology
-     'fizzbuzz ; differential
+     #_'fizzbuzz ; differential
      ]]
    ["Tables"
     ['webview1 ; diffs, IO encapsulation
      'webview2 ; abstraction, lambda demo
      'webview_column_picker
-     'webview_diffs
+     #_'webview_diffs
      'explorer
      #_'scroll-seek]]
    ["Language"
     ['lifecycle ; components
-     'backpressure
+     #_'backpressure
      ]]
    ["Forms"
     ['inputs_local ; self contained
-     'amb
+     #_'amb
      'temperature2
      'token_explainer ; supersedes Toggle, introduce token and service
      'form_explainer ; forms-from-scratch-form
