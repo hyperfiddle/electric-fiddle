@@ -152,8 +152,9 @@
       (println email "belongs to" name))))
 
 ;; Run the queries
-(query-users-with-email-details)
-(find-unverified-emails)
+(comment
+  (query-users-with-email-details)
+  (find-unverified-emails))
 
 ;; Example of updating an email verification status
 (defn verify-email [email-address]
@@ -165,8 +166,9 @@
       @(d/transact conn [[:db/add email-entity-id :email/verified true]])
       (println "Verified email:" email-address))))
 
-;; Verify Bob's email
-(verify-email "bob.johnson@example.com")
+(comment
+  ;; Verify Bob's email
+  (verify-email "bob.johnson@example.com")
 
-;; Check that it worked
-(find-unverified-emails)
+  ;; Check that it worked
+  (find-unverified-emails))
