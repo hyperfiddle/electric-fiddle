@@ -1,10 +1,12 @@
-{attributes            [(hfql/props :db/ident {::hfql/link    (attribute-detail :db/ident)
-                                               ::hfql/Tooltip EntityTooltip})
-                        (attribute-count %)
-                        (summarize-attr* %)
-                        :db/doc]
+{attributes            (hfql/props [(hfql/props :db/ident {::hfql/link    (attribute-detail :db/ident)
+                                                           ::hfql/Tooltip EntityTooltip})
+                                    (attribute-count %)
+                                    (summarize-attr* %)
+                                    :db/doc]
+                         {::hfql/TitleTooltip SummarizeDatomicAttribute})
  (attribute-detail :a) (hfql/props [(hfql/props :db/id {::hfql/link (entity-detail %v)})]
-                         {::hfql/Tooltip SemanticTooltip})
+                         {::hfql/TitleTooltip SummarizeDatomicAttribute
+                          ::hfql/Tooltip SemanticTooltip})
  (tx-detail :tx)       [(hfql/props :e {::hfql/link    (entity-detail :e)
                                         ::hfql/Tooltip EntityTooltip})
                         (hfql/props {:a :db/ident} {::hfql/link    (attribute-detail %v)

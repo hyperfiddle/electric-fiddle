@@ -65,8 +65,8 @@
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
-#?(:clj (defn summarize-attr* [?!a] #_[db]
-          (when ?!a (->> (datomicx/easy-attr db (:db/ident ?!a)) (remove nil?) (map name) (str/join " ")))))
+#?(:clj (defn summarize-attr [db k] (->> (datomicx/easy-attr db k) (remove nil?) (map name) (str/join " "))))
+#?(:clj (defn summarize-attr* [?!a] #_[db] (when ?!a (summarize-attr db (:db/ident ?!a)))))
 
 #?(:clj (defn entity-history [e] #_[db]
           (let [history (d/history db)]
@@ -94,6 +94,10 @@
           (= :ref typ) (strx/pprint-str (d/pull db ['*] v))
           (= :identity unique?) (strx/pprint-str (d/pull db ['*] [(hfql/unwrap spec) #_(:db/ident (d/entity db a)) v])) ; resolve lookup ref
           () nil)))))
+
+(e/defn SummarizeDatomicAttribute [v o spec]
+  (e/server
+    ((fn [spec] (try (summarize-attr db (hfql/unwrap spec)) (catch Throwable _))) spec)))
 
 (e/defn TxDetailValueTooltip [v o spec]
   (e/server
@@ -139,6 +143,7 @@
 (e/defn DatomicBrowser4 [conn]
   (binding [eb/whitelist {`EntityTooltip EntityTooltip
                           `TxDetailValueTooltip TxDetailValueTooltip
+                          `SummarizeDatomicAttribute SummarizeDatomicAttribute
                           `SemanticTooltip SemanticTooltip
                           `EntityDbidCell EntityDbidCell}
             conn conn
