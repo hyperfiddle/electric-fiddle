@@ -9,6 +9,7 @@
    [ring.middleware.content-type :refer [wrap-content-type]]
    [ring.middleware.cookies :as cookies]
    [ring.middleware.resource :refer [wrap-resource]]
+   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ring.util.response :as res]
    [ring.websocket :as ws]))
 
@@ -58,8 +59,7 @@ information."
     (if-let [response (res/resource-response (str (check string? (:resources-path config)) "/index.html"))]
       (if-let [bag (merge config (get-modules (check string? (:manifest-path config))))]
         (-> (res/response (template (slurp (:body response)) bag)) ; TODO cache in prod mode
-          (res/content-type "text/html") ; ensure `index.html` is not cached
-          (res/header "Cache-Control" "no-store")
+          (res/content-type "text/html") 
           (res/header "Last-Modified" (get-in response [:headers "Last-Modified"])))
         (-> (res/not-found (pr-str ::missing-shadow-build-manifest)) ; can't inject js modules
           (res/content-type "text/plain")))
@@ -70,11 +70,21 @@ information."
   (-> (res/not-found "Not found")
     (res/content-type "text/plain")))
 
+(defn wrap-always-revalidate [next-handler]
+  ;; https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#up-to-date_contents_always
+  (fn [ring-req]
+    (assoc-in (next-handler ring-req) [:headers "Cache-Control"]
+      ;; no-cache doesn't mean don't cache but rather "always revalidate".
+      ;; must-revalidate ensures all intermediate caches (not just proxies) will revalidate.
+      "no-cache, must-revalidate")))
+
 (defn http-middleware [config]
   ;; these compose as functions, so are applied bottom up
   (-> not-found-handler
     (wrap-index-page config) ; 4. otherwise fallback to default page file
     (wrap-resource (:resources-path config)) ; 3. serve static file from classpath
+    (wrap-always-revalidate)
+    (wrap-not-modified) ; 3. ensure cached resources are re-validated
     (wrap-content-type) ; 2. detect content (e.g. for index.html)
     (wrap-demo-router) ; 1. route
     ))

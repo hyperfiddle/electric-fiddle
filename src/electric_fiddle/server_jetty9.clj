@@ -8,6 +8,7 @@
             [ring.middleware.cookies :as cookies]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.resource :refer [wrap-resource]]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.response :as res]
             [clojure.string :as str]
             [clojure.edn :as edn])
@@ -62,8 +63,7 @@
     (if-let [response (res/resource-response (str resources-path "/index.html"))]
       (if-let [modules (get-modules manifest-path)]
         (-> (res/response (template (slurp (:body response)) modules)) ; TODO cache in prod mode
-          (res/content-type "text/html") ; ensure `index.html` is not cached
-          (res/header "Cache-Control" "no-store")
+          (res/content-type "text/html")
           (res/header "Last-Modified" (get-in response [:headers "Last-Modified"])))
         ;; No manifest found, can't inject js modules
         (-> (res/not-found "Missing client program manifest")
@@ -97,11 +97,21 @@
   (-> (res/not-found "Not found")
     (res/content-type "text/plain")))
 
+(defn wrap-always-revalidate [next-handler]
+  ;; https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#up-to-date_contents_always
+  (fn [ring-req]
+    (assoc-in (next-handler ring-req) [:headers "Cache-Control"]
+      ;; no-cache doesn't mean don't cache but rather "always revalidate".
+      ;; must-revalidate ensures all intermediate caches (not just proxies) will revalidate.
+      "no-cache, must-revalidate"))) ; no-cache doesn't mean don't cache!
+
 (defn http-middleware [resources-path manifest-path]
   ;; these compose as functions, so are applied bottom up
   (-> not-found-handler
-    (wrap-index-page resources-path manifest-path) ; 4. otherwise fallback to default page file
-    (wrap-resource resources-path) ; 3. serve static file from classpath
+    (wrap-index-page resources-path manifest-path) ; 5. otherwise fallback to default page file
+    (wrap-resource resources-path) ; 4. serve static file from classpath
+    (wrap-always-revalidate)
+    (wrap-not-modified) ; 3. ensure cached resources are re-validated
     (wrap-content-type) ; 2. detect content (e.g. for index.html)
     (wrap-demo-router) ; 1. route
     ))
