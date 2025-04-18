@@ -163,12 +163,20 @@
 html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/hide */
 
 /* Explicit table height - there are alternatives */
-.Browser fieldset.dustingetz-entity-browser4__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
+.Browser fieldset.dustingetz-entity-browser4__block:not(.entity-children) table { height: calc(16 * var(--row-height)); }  /* 15 rows + header row */
+.Browser fieldset.dustingetz-entity-browser4__block.entity-children tbody { height: calc(15 * var(--row-height)); }  /* 15 rows , header row outside */
 .Browser fieldset.dustingetz-entity-browser4__block { height: fit-content; }
 
 /* Progressive enhancement */
 .Browser fieldset.entity table { grid-template-columns: 15em auto; }
 .Browser.datomic-browser-datomic-browser4-DbStats .entity-children table { grid-template-columns: 36ch auto;}
+
+/* Resize handle */
+
+:where(.Browser fieldset.dustingetz-entity-browser4__block table) {height: inherit; resize: vertical; }
+:where(.Browser fieldset.dustingetz-entity-browser4__block.entity-children tbody) { height: inherit; resize: vertical; }
+
+/* Special full-screen pages */
 
 :is(:has(nav), :has(.Browser)){ display: flex; flex-direction: column; }
 
@@ -181,9 +189,9 @@ html:has(.datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-
      fieldset.dustingetz-entity-browser4__block
 { height: 100%; box-sizing: border-box; }
 
-:is(.datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-browser4-attribute-detail)
-    fieldset.dustingetz-entity-browser4__block table
- { height: 100%; }
+.Browser:is(.datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-browser4-attribute-detail)
+    fieldset.dustingetz-entity-browser4__block :is(table, tbody)
+ { height: inherit; resize: none;}
 
 "
   )
