@@ -170,6 +170,21 @@ html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/h
 .Browser fieldset.entity table { grid-template-columns: 15em auto; }
 .Browser.datomic-browser-datomic-browser4-DbStats .entity-children table { grid-template-columns: 36ch auto;}
 
+:is(:has(nav), :has(.Browser)){ display: flex; flex-direction: column; }
+
+html:has(.datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-browser4-attribute-detail)
+ {height: 100dvh; scrollbar-gutter: unset;}
+
+:has(.datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-browser4-attribute-detail)
+, .datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-browser4-attribute-detail
+, :is(.datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-browser4-attribute-detail)
+     fieldset.dustingetz-entity-browser4__block
+{ height: 100%; box-sizing: border-box; }
+
+:is(.datomic-browser-datomic-browser4-attributes, .datomic-browser-datomic-browser4-attribute-detail)
+    fieldset.dustingetz-entity-browser4__block table
+ { height: 100%; }
+
 "
   )
 
