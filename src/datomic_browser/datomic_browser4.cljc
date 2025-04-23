@@ -37,10 +37,16 @@
 ;; QUERIES ;;
 ;;;;;;;;;;;;;
 
+#?(:clj
+   (defn datomic-query [io-context query & args]
+     (assert (qualified-keyword? io-context))
+     (let [{:keys [ret io-stats]} (d/query {:io-context io-context, :args args, :query query})]
+       (with-meta ret {:io-stats io-stats}))))
+
 #?(:clj (defn attributes []
-          (with-meta
-            (d/q '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
-            {`clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
+          (vary-meta
+            (datomic-query ::attributes '[:find [?e ...] :in $ :where [?e :db/valueType]] db)
+            merge {`clojure.core.protocols/nav (fn [xs k v] (d/entity db v))})))
 #?(:clj (defn attribute-count [!e] (-> db-stats :attrs (get (:db/ident !e)) :count)))
 
 #?(:clj
