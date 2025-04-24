@@ -66,8 +66,8 @@
 
 #?(:clj (defn attribute-detail [a]
           (let [db db]
-            (with-meta (d/q '[:find [?e ...] :in $ ?a :where [?e ?a]] db a)
-              {`ccp/nav (fn [_this _k v] (d/entity db v))}))))
+            (vary-meta (datomic-query ::attribute-detail '[:find [?e ...] :in $ ?a :where [?e ?a]] db a)
+              merge {`ccp/nav (fn [_this _k v] (d/entity db v))}))))
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log conn) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
