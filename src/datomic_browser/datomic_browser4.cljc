@@ -153,7 +153,7 @@
                           `SemanticTooltip SemanticTooltip
                           `EntityDbidCell EntityDbidCell}
             conn conn
-            db (e/server (ex/Offload-latch #(d/db conn)))] ; electric binding
+            db (e/server (e/Offload #(d/db conn)))] ; electric binding
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn, (find-var `db-stats) (e/server (d/db-stats db))})
               eb/*sitemap (e/server (eb/read-sitemap sitemap-path this-ns))
               eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
