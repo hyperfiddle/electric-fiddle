@@ -16,6 +16,7 @@
             [edamame.core :as eda]
             [contrib.debug :as dbg]
             [clojure.tools.reader :as ctr]
+            [dustingetz.offload-ui]
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib2 :as datomicx])))
 
@@ -157,7 +158,8 @@
     (binding [eb/*hfql-bindings (e/server {(find-var `db) db, (find-var `conn) conn, (find-var `db-stats) (e/server (d/db-stats db))})
               eb/*sitemap (e/server (eb/read-sitemap sitemap-path this-ns))
               eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
-              eb/*page-defaults (e/server [route-to-entity-detail])]
+              eb/*page-defaults (e/server [route-to-entity-detail])
+              eb/Timing dustingetz.offload-ui/OffloadUI #_(e/fn [label f] (e/Offload f))]
       (let [sitemap eb/*sitemap]
         (dom/style (dom/text css))
         (dom/link (dom/props {:href "/hyperfiddle/electric-forms.css"}))
