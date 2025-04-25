@@ -40,8 +40,8 @@
 #?(:clj
    (defn datomic-query [io-context query & args]
      (assert (qualified-keyword? io-context))
-     (let [{:keys [ret io-stats]} (d/query {:io-context io-context, :args args, :query query})]
-       (with-meta ret {:io-stats io-stats}))))
+     (let [{:keys [ret] :as out} (d/query {:io-context io-context, :query-stats io-context, :args args, :query query})]
+       (with-meta ret (dissoc out :ret)))))
 
 #?(:clj (defn attributes []
           (vary-meta
