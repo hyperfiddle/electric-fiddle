@@ -61,8 +61,8 @@
      'form_explainer ; forms-from-scratch-form
      'forms_inline ; forms3b-inline-submit
      'form_list
-     'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
-     'todos ; create-new, optimistic updates, service
+     #_'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
+     #_'todos ; create-new, optimistic updates, service
      'todomvc
      'todomvc_composed
      ]]
