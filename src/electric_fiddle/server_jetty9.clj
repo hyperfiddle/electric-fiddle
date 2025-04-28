@@ -135,8 +135,7 @@
                    (merge {:port port
                            :join? false
                            :configurator (fn [server]
-                                           (electric-adapter/electric-jetty9-ws-install server "/"
-                                             (-> entrypoint electric-adapter/build-electric-websocket-middleware wrap-websocket-middleware))
+                                           (electric-adapter/electric-jetty9-ws-install server "/" entrypoint wrap-websocket-middleware)
                                            (add-gzip-handler server))}
                      config))
           final-port (-> server (.getConnectors) first (.getPort))]
