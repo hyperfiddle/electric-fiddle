@@ -127,7 +127,8 @@
   (binding [eb/*hfql-bindings (e/server {})
             eb/*sitemap (e/server sitemap)
             eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
-            eb/*page-defaults (e/server [route-ns])]
+            eb/*page-defaults (e/server [route-ns])
+            #_#_eb/Timing dustingetz.offload-ui/OffloadUI] ; enable long-running queries monitoring
     (dom/style (dom/text css))
     (let [sitemap eb/*sitemap]
       (dom/style (dom/text css))
