@@ -1,5 +1,5 @@
 @import url('/hyperfiddle/electric-forms.css');
-@import url('user/github-markdown.css');
+@import url('./github-markdown.css');
 
 .user-examples-nav{
     grid-area: nav;
