@@ -159,7 +159,7 @@
               eb/*sitemap (e/server (eb/read-sitemap sitemap-path this-ns))
               eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
               eb/*page-defaults (e/server [route-to-entity-detail])
-              eb/Timing dustingetz.offload-ui/OffloadUI #_(e/fn [label f] (e/Offload f))]
+              eb/Timing dustingetz.offload-ui/OffloadUI]
       (let [sitemap eb/*sitemap]
         (dom/style (dom/text css))
         (dom/link (dom/props {:href "/hyperfiddle/electric-forms.css"}))

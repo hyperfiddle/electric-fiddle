@@ -1,31 +1,11 @@
 (ns hello-fiddle.hello-fiddle
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]
-            [hyperfiddle.electric-forms5 :as forms]
-            [dustingetz.offload-ui :refer [Initialized OffloadUI]]))
-
-(declare css)
+            [hyperfiddle.router4 :as r]))
 
 (e/defn Scratch []
   (e/client
-    (dom/h1 (dom/text "Hello world"))
-    (dom/style (dom/text css))
-    (let [input (forms/Input* 0 :type :number)]
-      (dom/pre
-        (dom/text "value is " (Initialized (e/server (OffloadUI 'task-label #(do (Thread/sleep 2000) input))) "..."))))))
-
-(def css
-  (str dustingetz.offload-ui/css
-    "
-
-pre[data-timing-label]{
-  display: block;
-  width: fit-content;
-  margin: 2rem 0;
-}
-"))
-
+    (dom/h1 (dom/text "Hello world"))))
 
 ;; Dev entrypoint
 ;; Entries will be listed on the dev index page (http://localhost:8080)
