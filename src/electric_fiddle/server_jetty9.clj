@@ -1,6 +1,6 @@
 (ns electric-fiddle.server-jetty9
   (:require [clojure.java.io :as io]
-            [hyperfiddle.electric-jetty9-ring-adapter :as electric-adapter]
+            [hyperfiddle.electric-jetty9-ring-adapter3 :as electric-adapter]
             [clojure.tools.logging :as log]
             [ring.adapter.jetty :as ring]
             [ring.middleware.basic-authentication :as auth]
