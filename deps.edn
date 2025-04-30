@@ -13,6 +13,8 @@
            :prod {:extra-paths ["src-prod"]
                   :extra-deps {com.google.javascript/closure-compiler-unshaded {:mvn/version "v20230802"}}} ; deps conflict
 
+           :private {:override-deps {com.hyperfiddle/electric {:local/root "../electric"}}}
+
            :build ; use `clj -X:build build-client`, NOT -T!
            {:extra-paths ["src-build"]
             :ns-default  build
