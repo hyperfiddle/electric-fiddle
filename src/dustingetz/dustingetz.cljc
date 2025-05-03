@@ -3,12 +3,6 @@
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.object-browser-demo3 :refer [ObjectBrowserDemo3]]
             [dustingetz.logic :refer [Logic]]
-            [dustingetz.london-talk-2024.webview-concrete :refer [WebviewConcrete]]
-            [dustingetz.london-talk-2024.webview-generic :refer [WebviewGeneric]]
-            [dustingetz.london-talk-2024.webview-dynamic :refer [WebviewDynamic]]
-            [dustingetz.london-talk-2024.webview-scroll :refer [WebviewScroll]]
-            [dustingetz.london-talk-2024.webview-scroll-dynamic :refer [WebviewScrollDynamic]]
-            [dustingetz.london-talk-2024.differential-tricks :refer [DifferentialTricks]]
             [dustingetz.metaobject :refer [DemoMetaobject]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
@@ -27,9 +21,4 @@
      `MillionCheckboxes2 MillionCheckboxes2
      `Logic Logic
      `ObjectBrowserDemo3 ObjectBrowserDemo3}
-    {`WebviewConcrete WebviewConcrete
-     `WebviewGeneric WebviewGeneric
-     `WebviewDynamic WebviewDynamic
-     `WebviewScroll WebviewScroll
-     `WebviewScrollDynamic WebviewScrollDynamic
-     `DifferentialTricks DifferentialTricks}))
+    ))
