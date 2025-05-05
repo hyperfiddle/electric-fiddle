@@ -7,5 +7,6 @@
 
 (e/defn Lifecycle []
   (e/client
-    (when (zero? (mod (e/System-time-secs) 2))
-      (BlinkerComponent))))
+    (let [is-even (zero? (mod (e/System-time-secs) 2))]
+      (when is-even
+        (BlinkerComponent)))))
