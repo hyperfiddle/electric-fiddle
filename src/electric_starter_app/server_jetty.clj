@@ -8,7 +8,6 @@
    [contrib.assert :refer [check]]
    [hyperfiddle.electric-ring-adapter3 :as electric-ring]
    [ring.adapter.jetty :as ring]
-   [ring.middleware.basic-authentication :as auth]
    [ring.middleware.content-type :refer [wrap-content-type]]
    [ring.middleware.cookies :as cookies]
    [ring.middleware.params :refer [wrap-params]]
@@ -17,32 +16,6 @@
   (:import
    (org.eclipse.jetty.server.handler.gzip GzipHandler)
    (org.eclipse.jetty.websocket.server.config JettyWebSocketServletContainerInitializer JettyWebSocketServletContainerInitializer$Configurator)))
-
-;;; Demo middlewares
-
-(defn authenticate [username _password] username) ; demo (accept-all) authentication
-
-(defn wrap-demo-authentication "A Basic Auth example. Accepts any username/password and store the username in a cookie."
-  [next-handler]
-  (-> (fn [ring-req]
-        (let [res (next-handler ring-req)]
-          (if-let [username (:basic-authentication ring-req)]
-            (res/set-cookie res "username" username {:http-only true})
-            res)))
-    (cookies/wrap-cookies)
-    (auth/wrap-basic-authentication authenticate)))
-
-(defn wrap-demo-router "A basic path-based routing middleware"
-  [next-handler]
-  (fn [ring-req]
-    (case (:uri ring-req)
-      "/auth" (let [response  ((wrap-demo-authentication next-handler) ring-req)]
-                (if (= 401 (:status response)) ; authenticated?
-                  response                     ; send response to trigger auth prompt
-                  (-> (res/status response 302) ; redirect
-                    (res/header "Location" (get-in ring-req [:headers "referer"]))))) ; redirect to where the auth originated
-      ;; For any other route, delegate to next middleware
-      (next-handler ring-req))))
 
 ;;; Electric integration
 
@@ -106,7 +79,6 @@ information."
     (wrap-index-page config) ; 4. otherwise fallback to default page file
     (wrap-resource (:resources-path config)) ; 3. serve static file from classpath
     (wrap-content-type) ; 2. detect content (e.g. for index.html)
-    (wrap-demo-router) ; 1. route
     ))
 
 (defn middleware [config entrypoint]
