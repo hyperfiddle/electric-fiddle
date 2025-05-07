@@ -3,10 +3,10 @@
          :devtools {:loader-mode :default, :watch-dir "resources/public/electric_starter_app"}
          :output-dir "resources/public/electric_starter_app/js"
          :asset-path "/js"
-         :modules {:main {:entries [dev] :init-fn dev/start!}}
+         :modules {:main {:entries [dev] :init-fn dev/-main}}
          :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)]}
   :prod {:target :browser
          :output-dir "resources/public/electric_starter_app/js"
          :asset-path "/js"
-         :modules {:main {:entries [prod] :init-fn prod/start!}}
+         :modules {:main {:entries [prod] :init-fn prod/-main}}
          :module-hash-names true}}}

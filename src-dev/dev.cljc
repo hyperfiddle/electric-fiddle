@@ -1,47 +1,59 @@
 (ns dev
   (:require
    electric-starter-app.main
-   #?(:clj [electric-starter-app.server-jetty :as jetty])
-   #?(:clj [shadow.cljs.devtools.api :as shadow])
-   #?(:clj [shadow.cljs.devtools.server :as shadow-server])
-   #?(:clj [clojure.tools.logging :as log])))
+
+   #?(:clj [shadow.cljs.devtools.api :as shadow-cljs-compiler])
+   #?(:clj [shadow.cljs.devtools.server :as shadow-cljs-compiler-server])
+   #?(:clj [clojure.tools.logging :as log])
+
+   #?(:clj [ring.adapter.jetty :as ring])
+   #?(:clj [ring.util.response :as ring-response])
+   #?(:clj [ring.middleware.params :refer [wrap-params]])
+   #?(:clj [ring.middleware.resource :refer [wrap-resource]])
+   #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
+   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   ))
 
 (comment (-main)) ; repl entrypoint
 
 #?(:clj ; server entrypoint
-   (do
-     (def config
-       (merge
-         {:host "localhost"
-          :port 8080
-          :resources-path "public/electric_starter_app"
-          :manifest-path ; contains Electric compiled program's version so client and server stays in sync
-          "public/electric_starter_app/js/manifest.edn"}))
+   (defn -main [& args]
+     (log/info "Starting Electric compiler and server...")
 
-     (defn -main [& args]
-       (log/info "Starting Electric compiler and server...")
+     (shadow-cljs-compiler-server/start!) ; no-op in calva shadow-cljs configuration which starts this out of band
+     (shadow-cljs-compiler/watch :dev)
 
-       (shadow-server/start!) ; no-op in calva shadow-cljs configuration which starts this out of band
-       (shadow/watch :dev)
+     (def server (ring/run-jetty
+                   (-> (fn [ring-request] (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_starter_app"}) (ring-response/content-type "text/html")))
+                     (wrap-resource "public/electric_starter_app")
+                     (wrap-content-type)
+                     (electric-ring/wrap-electric-websocket (fn [ring-request] (electric-starter-app.main/electric-boot ring-request)))
+                     (wrap-params))
+                   {:host "localhost", :port 8080, :join? false
+                    :configurator (fn [server] ; tune jetty
+                                    (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
+                                      (.getHandler server)
+                                      (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
+                                        (accept [_this _servletContext wsContainer]
+                                          (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60))
+                                          (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024)) ; 100M - temporary
+                                          (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))))}))  ; 100M - temporary
+     (log/info "👉 http://localhost:8080")))
 
-       (comment (shadow-server/stop!))
-
-       (def server (jetty/start-server! electric-starter-app.main/electric-boot config))
-       (comment
-         (.stop server) ; jetty
-         (server)       ; httpkit
-         )
-       )))
-
+(declare browser-process)
 #?(:cljs ; client entrypoint
-   (do
-     (defonce reactor nil)
+   (defn ^:dev/after-load ^:export -main []
+     (set! browser-process
+       ((electric-starter-app.main/electric-boot nil)
+        #(js/console.log "Reactor success:" %)
+        #(js/console.error "Reactor failure:" %)))))
 
-     (defn ^:dev/after-load ^:export start! []
-       (set! reactor ((electric-starter-app.main/electric-boot nil)
-                       #(js/console.log "Reactor success:" %)
-                       #(js/console.error "Reactor failure:" %))))
+#?(:cljs
+   (defn ^:dev/before-load stop! []
+     (when browser-process (browser-process)) ; tear down electric browser process
+     (set! browser-process nil)))
 
-     (defn ^:dev/before-load stop! []
-       (when reactor (reactor)) ; stop the reactor
-       (set! reactor nil))))
+(comment
+  (shadow-cljs-compiler-server/stop!)
+  (.stop server) ; stop jetty server
+  )
