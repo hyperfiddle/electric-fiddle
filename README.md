@@ -3,7 +3,7 @@
 ## Links
 
 * Electric github with source code: https://github.com/hyperfiddle/electric
-* Tutorial: https://electric.hyperfiddle.net/ (we'll be fleshing out this as a full docs site asap)
+* Tutorial: https://electric.hyperfiddle.net/
 
 ## Getting started
 
