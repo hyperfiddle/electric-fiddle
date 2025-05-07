@@ -18,7 +18,7 @@ application classpath to be available"
   (b/delete {:path "resources/electric-manifest.edn"})
 
   ; bake electric-user-version into artifact, cljs and clj
-  (b/write-file {:path "resources/electric-manifest.edn" :content (-> config (dissoc :version) (assoc :hyperfiddle.electric-ring-adapter3/electric-user-version version))})
+  (b/write-file {:path "resources/electric-manifest.edn" :content (-> config (dissoc :version) (assoc :hyperfiddle/electric-user-version version))})
 
   ; "java.lang.NoClassDefFoundError: com/google/common/collect/Streams" is fixed by
   ; adding com.google.guava/guava {:mvn/version "31.1-jre"} to deps,
