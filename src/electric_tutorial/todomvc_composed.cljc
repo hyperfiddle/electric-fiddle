@@ -1,4 +1,4 @@
-(ns electric-tutorial.todomvc-composed
+(ns electric-tutorial.todomvc-composed "http://localhost:8080/electric-tutorial.todomvc-composed!TodoMVC-composed/"
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Service effects*]]

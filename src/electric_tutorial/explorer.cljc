@@ -1,4 +1,4 @@
-(ns electric-tutorial.explorer
+(ns electric-tutorial.explorer "http://localhost:8080/electric-tutorial.explorer!DirectoryExplorer/''"
   (:require [clojure.datafy :refer [datafy]]
             #?(:clj clojure.java.io)
             [contrib.assert :refer [check]]
