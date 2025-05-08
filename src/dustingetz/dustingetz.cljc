@@ -8,10 +8,19 @@
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
             [dustingetz.painter :refer [Painter]]
             [dustingetz.y-fac :refer [Y-Fac]]
-            [dustingetz.y-dir :refer [Y-dir]]))
+            [dustingetz.y-dir :refer [Y-dir]]
+
+            [dustingetz.talks.two-clocks :refer [TwoClocks]]
+            [dustingetz.talks.dir-tree :refer [DirTree]]
+            [dustingetz.talks.webview-concrete :refer [WebviewConcrete]]
+            [dustingetz.talks.lifecycle :refer [Lifecycle]]))
 
 (e/defn Fiddles []
   (merge
+    {`TwoClocks TwoClocks
+     `DirTree DirTree
+     `WebviewConcrete WebviewConcrete
+     `Lifecycle Lifecycle}
     {`DemoMetaobject DemoMetaobject
      `Painter Painter
      `FileWatcherDemo FileWatcherDemo
