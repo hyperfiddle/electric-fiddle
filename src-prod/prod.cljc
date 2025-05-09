@@ -40,6 +40,8 @@
            (wrap-prod-index-page config)
            (wrap-resource (:resources-path config))
            (wrap-content-type)
+           ;; electric middleware that configures the app's websocket connection
+           ;; server-side electric process boot happens in this middleware
            (electric-ring/wrap-electric-websocket (fn [ring-request] (electric-starter-app.main/electric-boot ring-request)))
            (electric-ring/wrap-reject-stale-client config)
            (wrap-params))
@@ -60,6 +62,7 @@
 
 #?(:cljs ; client entrypoint
    (defn ^:export -main []
+     ;; client-side electric process boot happens here
      ((electric-starter-app.main/electric-boot nil)
       #(js/console.log "Reactor success:" %)
       #(js/console.error "Reactor failure:" %))))

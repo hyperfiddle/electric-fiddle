@@ -4,10 +4,11 @@
 
 (e/defn Main [ring-request]
   (e/client
-    (binding [dom/node js/document.body]
-      (dom/div ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
+    (binding [dom/node js/document.body] ; DOM nodes will mount under this one
+      (dom/div ; mandatory wrapper div to ensure node ordering - https://github.com/hyperfiddle/electric/issues/74
         (let [server? (dom/label (dom/text "Toggle client/server:")
                         (dom/input (dom/props {:type "checkbox", :checked true})
+                          ;; return checked state of input, start `true`
                           (dom/On "change" (fn [js-event] (-> js-event .-target .-checked)) true)))]
           (dom/pre (dom/text (if server?
                                (e/server (str "`1` on server is `" (class 1) "`"))

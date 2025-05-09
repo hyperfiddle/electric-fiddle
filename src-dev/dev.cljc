@@ -24,9 +24,13 @@
      (shadow-cljs-compiler/watch :dev)
 
      (def server (ring/run-jetty
-                   (-> (fn [ring-request] (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_starter_app"}) (ring-response/content-type "text/html")))
+                   (-> (fn [ring-request] ; return the dev version of index.html which has no stale client checks
+                         (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_starter_app"})
+                           (ring-response/content-type "text/html")))
                      (wrap-resource "public/electric_starter_app")
                      (wrap-content-type)
+                     ;; electric middleware that configures the app's websocket connection
+                     ;; server-side electric process boot happens in this middleware
                      (electric-ring/wrap-electric-websocket (fn [ring-request] (electric-starter-app.main/electric-boot ring-request)))
                      (wrap-params))
                    {:host "localhost", :port 8080, :join? false
@@ -44,6 +48,7 @@
 #?(:cljs ; client entrypoint
    (defn ^:dev/after-load ^:export -main []
      (set! browser-process
+       ;; client-side electric process boot happens here
        ((electric-starter-app.main/electric-boot nil)
         #(js/console.log "Reactor success:" %)
         #(js/console.error "Reactor failure:" %)))))
