@@ -88,3 +88,15 @@
                 (dom/p (dom/text "Probably we broke URLs, sorry! ")
                   (r/link ['. []] (dom/text "tutorial index")))))
           #_(Nav essay-config ?essay-filename true))))))
+
+(e/defn Examples ; Fork of Tutorial with no navigation and no chrome.
+  [essay-config essay-md-folder]
+  (e/client
+    (dom/props {:class "Tutorial"})
+    (dom/style (dom/text (e/server (some-> (io/resource "electric_essay/tutorial.css") slurp-safe))))
+    (let [[?essay-filename & _] r/route]
+      (if-not ?essay-filename
+        (r/ReplaceState! ['. [(first (second (first essay-config)))]]) ; "two_clocks.md" encodes to /'two_clocks.md'
+        (if-some [md-content (e/server (slurp-safe (str essay-md-folder ?essay-filename ".md")))]
+          (Custom-markdown (Fiddle-markdown-extensions) md-content)
+          (dom/h1 (dom/text "Example not found: " ?essay-filename)))))))
