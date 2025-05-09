@@ -120,9 +120,9 @@
                    com.hyperfiddle/electric-secret {:local/root "../electric-secret"}
                    com.hyperfiddle/hfql {:local/root "../hfql"}
                    com.hyperfiddle/rcf {:local/root "../rcf"}}
+   :extra-paths ["../scratch/src" "../scratch/resources"]
    :extra-deps
-   {com.hyperfiddle/scratch {:local/root "../scratch"}
-    clj-python/libpython-clj {:mvn/version "2.026"}
+   {clj-python/libpython-clj {:mvn/version "2.026"}
     com.pitch/uix.core {:mvn/version "1.0.1"}
     com.pitch/uix.dom {:mvn/version "1.0.1"}}}
 
