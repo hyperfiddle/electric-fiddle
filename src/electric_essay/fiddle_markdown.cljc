@@ -37,7 +37,8 @@
                           (e/Apply F args)
                           (dom/div (dom/text "Unsupported markdown directive: " (pr-str v)))))
         (::html) (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-                   (set! (.-innerHTML dom/node) v))))))
+                   (set! (.-innerHTML dom/node) v)
+                   (e/amb))))))
 
 ; Extensions - optional
 

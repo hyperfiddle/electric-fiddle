@@ -82,11 +82,12 @@
           (when-some [e (dom/Await-element dom/node "#nav")]
             (binding [dom/node e]
               (Nav essay-config ?essay-filename false)))
-          (if-some [md-content (e/server (slurp-safe (str essay-md-folder ?essay-filename ".md")))]
-            (Custom-markdown (Fiddle-markdown-extensions) md-content)
-            (do (dom/h1 (dom/text "Tutorial page not found: " ?essay-filename))
-                (dom/p (dom/text "Probably we broke URLs, sorry! ")
-                  (r/link ['. []] (dom/text "tutorial index")))))
+          (e/server
+            (if-some [md-content (slurp-safe (str essay-md-folder ?essay-filename ".md"))]
+              (Custom-markdown (Fiddle-markdown-extensions) md-content)
+              (e/client (do (dom/h1 (dom/text "Tutorial page not found: " ?essay-filename))
+                            (dom/p (dom/text "Probably we broke URLs, sorry! ")
+                                   (r/link ['. []] (dom/text "tutorial index")))))))
           #_(Nav essay-config ?essay-filename true))))))
 
 (e/defn Examples ; Fork of Tutorial with no navigation and no chrome.
