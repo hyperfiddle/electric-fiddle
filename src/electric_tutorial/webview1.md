@@ -10,4 +10,3 @@ What's happening
 * The webview is subscribed to the database, which updates with each transaction.
 * filtering (happens on server side)
 * differential collection updates - differential wire traffic
-* see diffs in console

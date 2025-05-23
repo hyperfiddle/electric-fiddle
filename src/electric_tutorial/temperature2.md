@@ -7,6 +7,6 @@
 !ns[electric-tutorial.temperature2/Temperature2]()
 
 What's happening
-* We've removed the atom, and particularly the `reset!` from all three places. **Now there is only one `reset!`**
+* We've removed the atom, and particularly the `reset!` from all three places. **Now there is only one `reset!`**. Compare with previous "inputs local" demo.
 * Instead of `reset!`, "events" (kinda) flow upwards towards the app root as *values*
 * `e/amb` is being used inside dom containers (e.g. `dl`) to gather concurrent states from concurrent input controls (i.e., **concurrent processes!**)
