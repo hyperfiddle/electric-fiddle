@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <!-- {:hyperfiddle/electric-user-version "$:hyperfiddle/electric-user-version$"} -->
         <meta charset="utf-8"/>
         <title>Hyperfiddle</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/index.css" type="text/css" media="screen" />
+        <!-- Ensure cache busting on deployment – inject main.BUILD-HASH.js -->
         <!-- $key$ is a template string. See src-prod/prod.cljc/wrap-prod-index-page -->
         <script defer type="text/javascript" src="$:hyperfiddle.client.module/main$"></script>
     </head>
