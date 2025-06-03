@@ -13,6 +13,10 @@
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
             [dustingetz.object-browser-demo3 :as ob]
+            [dustingetz.talks.two-clocks]
+            [dustingetz.talks.dir-tree]
+            [dustingetz.talks.webview-concrete]
+            [dustingetz.talks.lifecycle]
             [hyperfiddle.router4 :as r]
             staffly.staffly
             #?(:clj dustingetz.mbrainz)
@@ -53,6 +57,12 @@
    `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
 
+(e/defn TalkDemos-LC2025 [] ; works without :dustingetz alias
+  {`dustingetz.talks.two-clocks/TwoClocks dustingetz.talks.two-clocks/TwoClocks
+   `dustingetz.talks.dir-tree/DirTree dustingetz.talks.dir-tree/DirTree
+   `dustingetz.talks.webview-concrete/WebviewConcrete dustingetz.talks.webview-concrete/WebviewConcrete
+   `dustingetz.talks.lifecycle/Lifecycle dustingetz.talks.lifecycle/Lifecycle})
+
 (e/defn Fiddles []
   (merge
     {'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
@@ -64,6 +74,7 @@
     (BlogFiddles)
     (ListedDemos)
     (SecretDemos)
+    (TalkDemos-LC2025)
     (Utilities)))
 
 (e/defn ProdMain [ring-req]
