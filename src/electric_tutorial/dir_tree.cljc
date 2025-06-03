@@ -4,22 +4,25 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
-(e/defn Dir-tree* [h s]
+(e/defn Dir-tree* [handle search]
   (e/server
-    (let [name_ (.getName h)]
-      (cond
-        (.isDirectory h)
-        (dom/li (dom/text name_)
+    (cond
+      (.isDirectory handle)
+      (e/client
+        (dom/li (dom/text (e/server (.getName handle)))
           (dom/ul
-            (e/for-by hash [x (e/Offload #(.listFiles ^java.io.File h))]
-              (Dir-tree* x s))))
+            (e/server
+              (let [children (.listFiles handle)]
+                (e/for [handle (e/diff-by identity children)]
+                  (Dir-tree* handle search)))))))
 
-        (and (.isFile h) (includes-str? name_ s))
-        (dom/li (dom/text name_))))))
+      (and (.isFile handle) (includes-str? (.getName handle) search))
+      (e/client
+        (dom/li (dom/text (e/server (.getName handle))))))))
 
 (e/defn DirTree []
   (e/client
-    (let [s (dom/input (dom/On "input" #(-> % .-target .-value) ""))
-          h (e/server (clojure.java.io/file "src/docs_site"))]
+    (let [search (dom/input (dom/On "input" #(-> % .-target .-value) ""))
+          handle (e/server (clojure.java.io/file "src/docs_site"))]
       (dom/ul
-        (Dir-tree* h s)))))
+        (Dir-tree* handle search)))))
