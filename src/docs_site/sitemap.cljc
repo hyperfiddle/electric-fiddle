@@ -17,6 +17,8 @@
             [dustingetz.talks.dir-tree]
             [dustingetz.talks.webview-concrete]
             [dustingetz.talks.lifecycle]
+            [electric-examples.inputs-basic]
+            [electric-examples.reactive-collections]
             [hyperfiddle.router4 :as r]
             staffly.staffly
             #?(:clj dustingetz.mbrainz)
@@ -63,6 +65,12 @@
    `dustingetz.talks.webview-concrete/WebviewConcrete dustingetz.talks.webview-concrete/WebviewConcrete
    `dustingetz.talks.lifecycle/Lifecycle dustingetz.talks.lifecycle/Lifecycle})
 
+(e/defn DocsExamples []
+  {
+   `electric-examples.inputs-basic/BasicInput electric-examples.inputs-basic/BasicInput
+   `electric-examples.reactive-collections/ReactiveCollections electric-examples.reactive-collections/ReactiveCollections
+   })
+
 (e/defn Fiddles []
   (merge
     {'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
@@ -75,6 +83,7 @@
     (ListedDemos)
     (SecretDemos)
     (TalkDemos-LC2025)
+    (DocsExamples)
     (Utilities)))
 
 (e/defn ProdMain [ring-req]
