@@ -23,7 +23,9 @@
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]))
+            [hyperfiddle.router4 :as r]
+            #_[dustingetz.loader]
+            #?(:clj [clojure.tools.logging :as log])))
 
 (e/defn GitRepo [repo-path]
   (e/server (dustingetz.datafy-git2/load-repo repo-path)))
@@ -101,6 +103,10 @@
 
 #?(:clj (defn file-exists? [path] (.exists (clojure.java.io/file path))))
 #?(:clj (def git-repo-path (first (filter file-exists? ["./.git" "../.git"]))))
+
+#?(:clj ;; preload git repo on jvm start to speed up prod. May fail harmlessly on local machines.
+   (try (dustingetz.datafy-git2/load-repo git-repo-path) ; memoized
+        (catch Throwable _ (log/debug "Failed to preload git repo."))))
 
 (e/defn Index [_sitemap]
   (e/client
