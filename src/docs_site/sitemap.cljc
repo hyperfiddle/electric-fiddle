@@ -19,6 +19,11 @@
             [dustingetz.talks.lifecycle]
             [electric-examples.inputs-basic]
             [electric-examples.reactive-collections]
+            [electric-examples.discrete-events]
+            [electric-examples.transaction]
+            [electric-examples.http-request]
+            [electric-examples.simple-form-controls]
+            [electric-examples.simple-form]
             [hyperfiddle.router4 :as r]
             staffly.staffly
             #?(:clj dustingetz.mbrainz)
@@ -69,6 +74,11 @@
   {
    `electric-examples.inputs-basic/BasicInput electric-examples.inputs-basic/BasicInput
    `electric-examples.reactive-collections/ReactiveCollections electric-examples.reactive-collections/ReactiveCollections
+   `electric-examples.discrete-events/ButtonClick electric-examples.discrete-events/ButtonClick
+   `electric-examples.transaction/Transaction electric-examples.transaction/Transaction
+   `electric-examples.http-request/HttpRequest electric-examples.http-request/HttpRequest
+   `electric-examples.simple-form-controls/SimpleFormControls electric-examples.simple-form-controls/SimpleFormControls
+   `electric-examples.simple-form/SimpleForm electric-examples.simple-form/SimpleForm
    })
 
 (e/defn Fiddles []
