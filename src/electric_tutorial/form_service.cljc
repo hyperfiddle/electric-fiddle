@@ -27,6 +27,7 @@
                        (merge initial-form-fields dirty-form-fields)]
                    [`User-form-submit id str1 num1 bool1] ; command
                    ))
+        :type :entity
         :debug debug*
         :show-buttons true))))
 

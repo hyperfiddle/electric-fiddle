@@ -41,6 +41,7 @@
                         (Input! :user/str1 str1 :required true))
                     :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields} unique-id]
                              [`Str1FormSubmit id str1]) ; command
+                    :type :entity
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
@@ -51,6 +52,7 @@
                         (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str))))
                     :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields} unique-id]
                              [`Num1FormSubmit id num1]) ; command
+                    :type :entity
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
@@ -61,6 +63,7 @@
                         (Checkbox! :user/bool1 bool1))
                     :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields} unique-id]
                              [`Bool1FormSubmit id bool1]) ; command
+                    :type :entity
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*)))))))

@@ -10,6 +10,7 @@
         (Input! :user/str1 str1) ; fields are named
         (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str)))
         (Checkbox! :user/bool1 bool1)))
+    :type :entity
     :show-buttons true))
 
 (def state0 {:user/str1 "hello" :user/num1 42 :user/bool1 true})
