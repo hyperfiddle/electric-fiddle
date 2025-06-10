@@ -77,7 +77,7 @@
                 (Field ::block-reason block-reason Typeahead! ::label "block-reason", :required true,
                   :Options Block-reason-picklist
                   :option-label #(some-> % :db/ident name))
-                (Field ::penalize penalize Checkbox! ::label "penalize?", :label (constantly "Penalize the staff for any last-minute cancellations"))
+                (Field ::penalize penalize Checkbox! ::label "penalize?", :label "Penalize the staff for any last-minute cancellations")
                 (Field ::block-mode block-mode RadioPicker! ::label "block-mode", :required true,
                     :Options (e/fn [] (e/amb :force-cancel :leave-commitments))
                     :option-label #(case %
