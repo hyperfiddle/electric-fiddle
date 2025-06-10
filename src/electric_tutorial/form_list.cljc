@@ -26,7 +26,7 @@
     fail
     (e/for [[t dirty-form] edits] ; concurrent edit processing
       (let [res (e/server
-                  (if fail ::rejected (do (swap! !x merge dirty-form) ::ok)))]
+                  (if fail ::rejected (e/Offload #(do (swap! !x merge dirty-form) ::ok))))]
         (case res
           ::ok (t)
           (t res))))
