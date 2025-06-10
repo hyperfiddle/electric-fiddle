@@ -32,7 +32,7 @@
 
 (e/defn ConnectDatomic []
   (e/server
-    (Loader #(model/init-datomic)
+    (Loader #(missionary.core/? (model/init-datomic))
       {:Busy (e/fn [] (dom/h1 (dom/text "Waiting for Datomic connection ...")))
        :Failed (e/fn [error]
                  (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
