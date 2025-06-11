@@ -15,7 +15,7 @@
             #?(:clj [dustingetz.datafy-fs :as fs])
             #?(:clj dustingetz.datafy-clj)
             #?(:clj dustingetz.mbrainz)
-            ;; #?(:clj dustingetz.pg-sakila)
+            #?(:clj dustingetz.pg-sakila)
             [clojure.core.protocols :as ccp]
             [dustingetz.str :as strx]
             [clojure.walk]
@@ -95,7 +95,7 @@
 (e/defn DatomicEntity [e]
   (e/server (d/entity @dustingetz.mbrainz/test-db e)))
 
-;; #?(:clj (defn sakila [] (dustingetz.pg-sakila/query-films @dustingetz.pg-sakila/test-conn)))
+#?(:clj (defn sakila [] (dustingetz.pg-sakila/query-films @dustingetz.pg-sakila/test-conn)))
 
 (e/defn Edn [x] x)
 
@@ -116,7 +116,7 @@
     (r/link ['. [[`dustingetz.datafy-git2/load-repo git-repo-path]]] (dom/text "git"))
     (r/link ['. [['clojure.java.io/file "./"]]] (dom/text "file"))
     (r/link ['. [[`thread-mx]]] (dom/text "thread-mx"))
-    ;; (r/link ['. [[`sakila]]] (dom/text "Sakila"))
+    (r/link ['. [[`sakila]]] (dom/text "Sakila"))
     (r/link ['. [[`datomic-entity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
     #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))))
