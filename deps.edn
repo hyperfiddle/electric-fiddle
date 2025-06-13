@@ -81,6 +81,7 @@
     org.clojure/core.match {:mvn/version "1.1.0"}   ; staffly, todos
     org.apache.tika/tika-core {:mvn/version "1.24"} ; explorer: datafy-fs
     clj-jgit/clj-jgit {:mvn/version "1.0.2"}        ; blog
+    com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"} ; sakila
     }
    #_#_:override-deps                   ; uberjar sees only this one alias
    {com.hyperfiddle/electric {:local/root "../electric"}
