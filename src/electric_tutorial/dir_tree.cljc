@@ -6,19 +6,17 @@
 
 (e/defn Dir-tree* [handle search]
   (e/server
-    (cond
-      (.isDirectory handle)
-      (e/client
-        (dom/li (dom/text (e/server (.getName handle)))
+    (let [name_ (.getName handle)]
+      (cond
+        (.isDirectory handle)
+        (dom/li (dom/text name_)
           (dom/ul
-            (e/server
-              (let [children (.listFiles handle)]
-                (e/for [handle (e/diff-by identity children)]
-                  (Dir-tree* handle search)))))))
+            (let [children (.listFiles handle)]
+              (e/for [handle (e/diff-by identity children)]
+                (Dir-tree* handle search)))))
 
-      (and (.isFile handle) (includes-str? (.getName handle) search))
-      (e/client
-        (dom/li (dom/text (e/server (.getName handle))))))))
+        (and (.isFile handle) (includes-str? name_ search))
+        (dom/li (dom/text name_))))))
 
 (e/defn DirTree []
   (e/client
