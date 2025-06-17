@@ -3,7 +3,7 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.router4 :as r]
-            [dustingetz.entity-browser4 :refer [HfqlRoot]]
+            [hyperfiddle.entity-browser4 :refer [HfqlRoot]]
             #?(:clj [clojure.java.io :as io])
             #?(:clj dustingetz.datafy-git2)
             #?(:clj dustingetz.datafy-fs)))
@@ -16,7 +16,7 @@
 (declare css)
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
-    (binding [dustingetz.entity-browser4/*hfql-bindings (e/server {})] ; cannot be seen by user - not good enough for blogpost
+    (binding [hyperfiddle.entity-browser4/*hfql-bindings (e/server {})] ; cannot be seen by user - not good enough for blogpost
       (HfqlRoot {`(load-repo) []} `[(load-repo)])))) ; not good enough for blogpost - must improve naming and args are not user friendly.
 
 (def css "

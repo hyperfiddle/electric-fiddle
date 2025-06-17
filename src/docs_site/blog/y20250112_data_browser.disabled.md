@@ -39,7 +39,7 @@ Here is the [code as a gist](https://gist.github.com/dustingetz/5dafea5fab3b6480
 
 Lets take a quick look, the most interesting thing here, IMO, is that we're **storing a stack of breadcrumbs in the URL and using *actual recursion* to traverse it**:
 
-!fn-src[dustingetz.entity-browser4/AnonymousBlock]() <!-- Not the right example anymore, we picked the closest one. Blog post must be fixed or discarded. -->
+!fn-src[hyperfiddle.entity-browser4/AnonymousBlock]() <!-- Not the right example anymore, we picked the closest one. Blog post must be fixed or discarded. -->
 
 Lets focus on the recursion (the recursive call is on L8).
 

@@ -59,7 +59,7 @@
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
    `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
    `DatomicBrowser (e/fn [] (DatomicBrowser
-                              (e/server (dustingetz.entity-browser4/read-sitemap "hyperfiddle/datomic_browser.edn" (find-ns 'hyperfiddle.datomic-browser)))
+                              (e/server (hyperfiddle.entity-browser4/read-sitemap "hyperfiddle/datomic_browser.edn" (find-ns 'hyperfiddle.datomic-browser)))
                               '[(hyperfiddle.datomic-browser/attributes)]
                               (e/server (hyperfiddle.datomic-browser/ConnectDatomic (get-datomic-uri))))) ; default prod dataset is mbrainz
    ;; `db4/DatomicBrowser4 (e/fn [] (db4/DatomicBrowser4 datomic-browser.users-with-email-db/conn))

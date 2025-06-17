@@ -8,7 +8,7 @@
             [contrib.assert :as ca]
             #?(:clj [datomic.api :as d])
             [hyperfiddle.nav0 :refer [identify]]
-            [dustingetz.entity-browser4 :as eb]
+            [hyperfiddle.entity-browser4 :as eb]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj [dustingetz.datafy-jvm2])
             #?(:clj [clojure.java.io])
@@ -149,8 +149,8 @@ html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/h
 .Browser fieldset.entity table { grid-template-columns: 20em auto; }
 
 /* Explicit table height - there are alternatives */
-.Browser fieldset.dustingetz-entity-browser4__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
-.Browser fieldset.dustingetz-entity-browser4__block { height: fit-content; }
+.Browser fieldset.hyperfiddle-entity-browser4__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
+.Browser fieldset.hyperfiddle-entity-browser4__block { height: fit-content; }
 
 
 ")
