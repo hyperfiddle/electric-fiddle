@@ -42,7 +42,8 @@
   ([] (Staffly (e/server (ConnectDatomic)))) ; wait until runtime to inject
   ([datomic-conn]
    (e/server
-     (bindx [model/datomic-conn (check datomic-conn)
+     datomic-conn ; force connect effect so *db* and *schema* get initialized.
+     (bindx [model/datomic-conn (check datomic-conn) ; index page doesn't depend on conn, only *db*
              model/db (check model/*db*)
              model/schema (check model/*schema*)]
        (e/client
