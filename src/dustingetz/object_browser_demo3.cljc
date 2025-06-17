@@ -19,7 +19,7 @@
             [clojure.core.protocols :as ccp]
             [dustingetz.str :as strx]
             [clojure.walk]
-            #?(:clj [hyperfiddle.hfql :as hfql])
+            #?(:clj [hyperfiddle.hfql0 :as hfql])
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
