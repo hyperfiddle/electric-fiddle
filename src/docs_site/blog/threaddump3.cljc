@@ -16,7 +16,7 @@
 (declare css)
 (e/defn ThreadDump3 []
   (e/client (dom/style (dom/text css)) (dom/props {:class "ThreadDump3"})
-    (binding [hyperfiddle.entity-browser4/*hfql-bindings (e/server {})] ; cannot be seen by user - not good enough for blogpost
+    (binding [e/*bindings* {}] ; cannot be seen by user - not good enough for blogpost
       (HfqlRoot {`(load-repo) []} `[(load-repo)])))) ; not good enough for blogpost - must improve naming and args are not user friendly.
 
 (def css "

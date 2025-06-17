@@ -9,6 +9,7 @@
             #?(:clj [datomic.api :as d])
             [hyperfiddle.nav0 :refer [identify]]
             [hyperfiddle.entity-browser4 :as eb]
+            [hyperfiddle.sitemap :as sitemap]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj [dustingetz.datafy-jvm2])
             #?(:clj [clojure.java.io])
@@ -122,7 +123,7 @@
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))))
 
 #?(:clj (def sitemap-path "dustingetz/object_browser_demo3.edn"))
-#?(:clj (def sitemap (eb/read-sitemap sitemap-path *ns*)))
+#?(:clj (def sitemap (sitemap/read-sitemap sitemap-path *ns*)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 
 (declare css)
@@ -130,7 +131,7 @@
 #?(:clj (defn route-ns [o] (when (instance? clojure.lang.Namespace o) (list `find-ns (ns-name o))))) ; page affinity
 
 (e/defn ObjectBrowserDemo3 []
-  (binding [eb/*hfql-bindings (e/server {})
+  (binding [e/*bindings* {}
             eb/*sitemap (e/server sitemap)
             eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
             eb/*page-defaults (e/server [route-ns])
