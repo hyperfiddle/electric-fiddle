@@ -4,7 +4,7 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
             [electric-essay.tutorial-app :refer [Tutorial Examples]]
             [electric-essay.essay-app :refer [Essay]]
-            [hyperfiddle.datomic-browser :refer [DatomicBrowser ConnectDatomic]]
+            [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic]] ; require :hyperfiddle-starter alias
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [docs-site.blog.threaddump1 :refer [ThreadDump1]]
@@ -59,8 +59,8 @@
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
    `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
-   `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (read-sitemap "hyperfiddle/datomic_browser.edn" 'hyperfiddle.datomic-browser)
-                                        '[(hyperfiddle.datomic-browser/attributes)]
+   `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (read-sitemap "dustingetz/datomic_browser.edn" 'dustingetz.datomic-browser)
+                                        '[(dustingetz.datomic-browser/attributes)]
                                         (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
    ;; `db4/DatomicBrowser4 (e/fn [] (db4/DatomicBrowser4 datomic-browser.users-with-email-db/conn))
    `Unifhir1 Unifhir1
