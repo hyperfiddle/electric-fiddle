@@ -2,9 +2,11 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]))
 
-(e/defn BasicInput []
+(e/defn UncontrolledInput []
+  (dom/input (dom/props {:type "text"})
+    (dom/On "input" (fn [e] (-> e .-target .-value)) "")))
+
+(e/defn UncontrolledInputDemo []
   (e/client
-    (let [s (dom/input ; dom elements return their final child value
-              (dom/props {:type "text", :class "foo"})
-              (dom/On "input" (fn [event] (-> event .-target .-value)) ""))]
+    (let [s (UncontrolledInput)]
       (dom/pre (dom/text (pr-str s))))))

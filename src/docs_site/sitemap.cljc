@@ -75,7 +75,7 @@
 
 (e/defn DocsExamples []
   {
-   `electric-examples.inputs-basic/BasicInput electric-examples.inputs-basic/BasicInput
+   `electric-examples.inputs-basic/UncontrolledInputDemo electric-examples.inputs-basic/UncontrolledInputDemo
    `electric-examples.reactive-collections/ReactiveCollections electric-examples.reactive-collections/ReactiveCollections
    `electric-examples.discrete-events/ButtonClick electric-examples.discrete-events/ButtonClick
    `electric-examples.transaction/Transaction electric-examples.transaction/Transaction
