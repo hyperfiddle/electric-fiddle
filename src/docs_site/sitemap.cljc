@@ -59,7 +59,7 @@
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
    `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
-   `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (read-sitemap "dustingetz/datomic_browser.edn" 'dustingetz.datomic-browser)
+   `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (read-sitemap 'dustingetz.datomic-browser "dustingetz/datomic_browser.edn")
                                         '[(dustingetz.datomic-browser/attributes)]
                                         (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
    ;; `db4/DatomicBrowser4 (e/fn [] (db4/DatomicBrowser4 datomic-browser.users-with-email-db/conn))
