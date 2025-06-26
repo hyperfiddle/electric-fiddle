@@ -68,7 +68,7 @@
                 [t [`Editing-item id] {}]))))
         (when (= id (::editing state))
           (dom/span (dom/props {:class "input-load-mask"})
-            (Form! (Input! :task/description description :class "edit" :autofocus true)
+            (Form! (Input! :task/description description :class "edit" :autofocus true :maxlength 100)
               :commit (fn [{v :task/description}] [[`Edit-todo-desc id v] {id {:task/description v}}])
               :discard `[[Cancel-todo-edit-desc] {id {}}] ; todo guess :retractEntity
               :show-buttons false)))
@@ -97,7 +97,7 @@
 
 (e/defn CreateTodo []
   (dom/span (dom/props {:class "input-load-mask"})
-    (Form! (Input! :task/description "" :placeholder "What needs to be done?" :class "new-todo input-load-mask")
+    (Form! (Input! :task/description "" :placeholder "What needs to be done?" :class "new-todo input-load-mask" :maxlength 100)
       :genesis true
       :commit (fn [{:keys [task/description]}]
                 [[`Create-todo description] {:task/description description, :task/status :active}])

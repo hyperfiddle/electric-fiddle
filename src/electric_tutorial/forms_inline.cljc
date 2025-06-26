@@ -38,7 +38,7 @@
           (dom/dt (dom/text "str1"))
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/str1] :as form-fields}]
-                        (Input! :user/str1 str1 :required true))
+                        (Input! :user/str1 str1 :required true :maxlength 100))
                     :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields} unique-id]
                              [`Str1FormSubmit id str1]) ; command
                     :type :entity

@@ -7,7 +7,7 @@
   (Form! initial-form-fields
     (e/fn [{:keys [user/str1 user/num1 user/bool1] :as form-fields}]
       (e/amb ; concurrent individual edits!
-        (Input! :user/str1 str1) ; fields are named
+        (Input! :user/str1 str1 :maxlength 100) ; fields are named
         (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str)))
         (Checkbox! :user/bool1 bool1)))
     :type :entity

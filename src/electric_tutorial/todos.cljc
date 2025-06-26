@@ -47,7 +47,7 @@
 (e/declare show-buttons*)
 
 (e/defn TodoCreate []
-  (Form! (Input! ::create "" :placeholder "Buy milk") ; press enter
+  (Form! (Input! ::create "" :placeholder "Buy milk" :maxlength 100) ; press enter
     :genesis true ; immediately consume form, ready for next submit
     :commit (fn [{v ::create :as dirty-form} tempid]
               (prn 'TodoCreate-commit dirty-form)
@@ -63,7 +63,7 @@
           :commit (fn [{v :task/status}] [[`Toggle id (if v :done :active)]
                                           {id (-> m (dissoc ::pending) (assoc :task/status v))}])
           :show-buttons show-buttons* :auto-submit (not show-buttons*))
-        (Form! (Input! :task/description description)
+        (Form! (Input! :task/description description :maxlength 100)
           :name ::edit-desc
           :commit (fn [{v :task/description}] [[`Edit-todo-desc id v]
                                                {id (assoc m :task/description v)}])

@@ -62,7 +62,7 @@
 
 (e/defn SendMessageInput [username]
   (Form! nil (e/fn [_] (dom/props {:class "new-message"})
-               (Input! ::msg "" :disabled (nil? username) :placeholder (if username "Send message" "Login to chat")))
+               (Input! ::msg "" :disabled (nil? username) :placeholder (if username "Send message" "Login to chat") :maxlength 100))
     :genesis true ; immediately consume form, ready for next submit, each message get a globally unique id
     :Parse (e/fn [{:keys [::msg]} tempid]
              [`SendMessage (globally-unique-id tempid) username msg]))) ; form fields + generated globally unique id -> command
