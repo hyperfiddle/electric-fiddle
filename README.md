@@ -26,6 +26,10 @@ java -cp target/app.jar clojure.main -m prod
 # Docker
 docker build --build-arg VERSION=$(git rev-parse HEAD) -t electric3-starter-app:latest .
 docker run --rm -it -p 8080:8080 electric3-starter-app:latest
+
+
+# Fly
+fly deploy --remote-only --build-arg VERSION=$(git rev-parse HEAD)
 ```
 
 ## License
