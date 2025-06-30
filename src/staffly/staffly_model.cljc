@@ -2,7 +2,6 @@
   (:require [contrib.assert :refer [check]]
             #?(:clj [clojure.tools.logging :as log])
             #?(:clj [datomic.api :as d])
-            #?(:clj [dustingetz.datomic-contrib :as dx]) ; upgrade to 2
             [hyperfiddle.electric3 :as e]
             [missionary.core :as m]
             #?(:clj staffly.staffly-fixtures)))
@@ -12,11 +11,9 @@
 
 (def ^:dynamic *datomic-conn*)
 (def ^:dynamic *db*) ; todo reactive
-(def ^:dynamic *schema*)
 
 (e/declare datomic-conn)
 (e/declare db)
-(e/declare schema)
 
 (def staff-sarah [:staff/id 1001])
 (def venue-grand-concert [:venue/id 2003])
@@ -39,7 +36,6 @@
             (try
               (alter-var-root #'*datomic-conn* (fn [_] (create-test-db)))
               (alter-var-root #'*db* (constantly (d/db *datomic-conn*)))
-              (alter-var-root #'*schema* (constantly (m/? (dx/schema! *db*))))
               (check *datomic-conn*) (catch Exception e (log/error e) e)))))
 
 (comment (m/? (init-datomic)))
