@@ -6,9 +6,6 @@
             [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]] ; require :hyperfiddle-starter alias
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
-            [docs-site.blog.threaddump1 :refer [ThreadDump1]]
-            [docs-site.blog.threaddump2 :refer [ThreadDump2]]
-            [docs-site.blog.threaddump3 :refer [ThreadDump3]]
             [docs-site.blog.waveform0 :refer [Waveform0]]
             [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
@@ -39,9 +36,6 @@
 
 (e/defn BlogFiddles []
   {`BlogIndex (e/Partial BlogIndex blog-sitemap)
-   `ThreadDump1 ThreadDump1
-   `ThreadDump2 ThreadDump2
-   `ThreadDump3 ThreadDump3
    `Waveform0 Waveform0})
 
 (e/defn Utilities []
@@ -63,7 +57,6 @@
                                         (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
    ;; `db4/DatomicBrowser4 (e/fn [] (db4/DatomicBrowser4 datomic-browser.users-with-email-db/conn))
    `Unifhir1 Unifhir1
-   `ThreadDump3 ThreadDump3
    `DirectoryExplorer DirectoryExplorer})
 
 (e/defn TalkDemos-LC2025 [] ; works without :dustingetz alias
