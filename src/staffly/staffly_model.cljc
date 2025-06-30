@@ -2,7 +2,7 @@
   (:require [contrib.assert :refer [check]]
             #?(:clj [clojure.tools.logging :as log])
             #?(:clj [datomic.api :as d])
-            #?(:clj [dustingetz.datomic-contrib :as dx])
+            #?(:clj [dustingetz.datomic-contrib :as dx]) ; upgrade to 2
             [hyperfiddle.electric3 :as e]
             [missionary.core :as m]
             #?(:clj staffly.staffly-fixtures)))
