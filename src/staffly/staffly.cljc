@@ -42,13 +42,13 @@
   ([] (Staffly (e/server (ConnectDatomic)))) ; wait until runtime to inject
   ([datomic-conn]
    (e/server
-     datomic-conn ; force connect effect so *db* and *schema* get initialized.
-     (bindx [model/datomic-conn (check datomic-conn) ; index page doesn't depend on conn, only *db*
-             model/db (check model/*db*)]
-       (e/client
-         (forms/Service {`Restrict-staff-from-venue! Restrict-staff-from-venue!
-                         `Change-phone-confirmed! Change-phone-confirmed!}
-           (Page)))))))
+     (case datomic-conn ; force connect effect so *db* and *schema* get initialized.
+       (bindx [model/datomic-conn (check datomic-conn) ; index page doesn't depend on conn, only *db*
+               model/db (check model/*db*)]
+         (e/client
+           (forms/Service {`Restrict-staff-from-venue! Restrict-staff-from-venue!
+                           `Change-phone-confirmed! Change-phone-confirmed!}
+             (Page))))))))
 
 (e/defn Fiddles []
   {`Staffly Staffly
