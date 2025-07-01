@@ -30,7 +30,7 @@
            (merge
              (comptime-resource "electric-manifest.edn")
              {:host "0.0.0.0", :port 8080,
-              :resources-path "public/electric_starter_app"
+              :resources-path "public"
               ;; shadow-cljs build manifest path, to get the fingerprinted main.sha1.js file to ensure cache invalidation
               :manifest-path "public/electric_starter_app/js/manifest.edn"})]
        (log/info (pr-str config))
@@ -76,7 +76,7 @@
    (defn get-compiled-javascript-modules [manifest-path]
      (when-let [manifest (clojure.java.io/resource manifest-path)]
        (let [manifest-folder (when-let [folder-name (second (rseq (clojure.string/split manifest-path #"\/")))]
-                               (str "/" folder-name "/"))]
+                               (str folder-name "/"))]
          (->> (slurp manifest)
            (clojure.edn/read-string)
            (reduce (fn [r module] (assoc r (keyword "hyperfiddle.client.module" (name (:name module)))
@@ -91,7 +91,7 @@
      (fn [ring-req]
        (assert (string? (:resources-path config)))
        (assert (string? (:manifest-path config)))
-       (if-let [response (ring-response/resource-response (str (:resources-path config) "/index.prod.html"))]
+       (if-let [response (ring-response/resource-response (str (:resources-path config) "/electric_starter_app/index.prod.html"))]
          (if-let [module (get-compiled-javascript-modules (:manifest-path config))]
            (-> (ring-response/response (template (slurp (:body response)) (merge config module)))
              (ring-response/content-type "text/html")
