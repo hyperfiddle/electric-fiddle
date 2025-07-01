@@ -28,7 +28,7 @@
                      (fn [ring-request] ; 5. index page fallback
                          (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_starter_app"})
                            (ring-response/content-type "text/html")))
-                     (wrap-resource "public/electric_starter_app") ; 4. serve assets from disk.
+                     (wrap-resource "public") ; 4. serve assets from disk.
                      (wrap-content-type) ; 3. boilerplate – to server assets with correct mime/type.
                      (electric-ring/wrap-electric-websocket ; 2. install Electric server.
                        (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))) ; boot server-side Electric process
