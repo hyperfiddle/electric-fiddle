@@ -89,7 +89,7 @@
     com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}}}
 
   :hyperfiddle-starter ; so we can easily check for regressions
-  {:extra-deps {com.hyperfiddle/hyperfiddle-starter {:local/root "../hyperfiddle-starter-app"}}}
+  {:extra-deps {com.hyperfiddle/hyperfiddle-starter {:local/root "../hyperfiddle-starter-app2"}}}
 
   :dustingetz
   {:extra-deps
