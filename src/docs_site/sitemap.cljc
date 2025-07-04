@@ -3,7 +3,7 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
             [electric-essay.tutorial-app :refer [Tutorial Examples]]
             [electric-essay.essay-app :refer [Essay]]
-            [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]] ; require :hyperfiddle-starter alias
+            [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [docs-site.blog.waveform0 :refer [Waveform0]]
