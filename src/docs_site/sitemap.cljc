@@ -51,6 +51,7 @@
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
    `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
+   #_#_`datomic-browser.datomic-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect for readme @ https://github.com/hyperfiddle/electric-datomic-browser
    `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (e/server datomic-browser-sitemap)
                                         '[(dustingetz.datomic-browser/attributes)]
                                         (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
