@@ -38,9 +38,10 @@
           (dom/dt (dom/text "str1"))
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/str1] :as form-fields}]
-                        (Input! :user/str1 str1))
-                    :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields}]
+                        (Input! :user/str1 str1 :required true :maxlength 100))
+                    :Parse (e/fn [{:keys [user/str1] :as dirty-form-fields} unique-id]
                              [`Str1FormSubmit id str1]) ; command
+                    :type :entity
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
@@ -49,8 +50,9 @@
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/num1] :as form-fields}]
                         (Input! :user/num1 num1 :type "number" :Parse (e/fn [str] (parse-long str))))
-                    :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields}]
+                    :Parse (e/fn [{:keys [user/num1] :as dirty-form-fields} unique-id]
                              [`Num1FormSubmit id num1]) ; command
+                    :type :entity
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*))
@@ -59,23 +61,35 @@
           (dom/dd (Form! initial-form-fields
                       (e/fn Fields [{:keys [user/bool1] :as form-fields}]
                         (Checkbox! :user/bool1 bool1))
-                    :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields}]
-                             [`Bool1FormSubmit id bool1])
+                    :Parse (e/fn [{:keys [user/bool1] :as dirty-form-fields} unique-id]
+                             [`Bool1FormSubmit id bool1]) ; command
+                    :type :entity
                     :auto-submit auto-submit*
                     :show-buttons show-buttons*
                     :debug debug*)))))))
 
+(declare css)
+
 (e/defn Forms-inline []
+  (dom/style (dom/text css))
   (binding [effects* {`Str1FormSubmit Str1FormSubmit
                       `Num1FormSubmit Num1FormSubmit
                       `Bool1FormSubmit Bool1FormSubmit}
             debug* (Checkbox* false :label "debug")
-            slow* (Checkbox* true :label "latency")
-            fail* (Checkbox* true :label "failure")
-            show-buttons* (or (Checkbox* false :label "show-buttons") ::forms/smart)
+            slow* (Checkbox* false :label "latency")
+            fail* (Checkbox* false :label "failure")
+            show-buttons* (Checkbox* true :label "show-buttons")
             auto-submit* (Checkbox* false :label "auto-submit")]
     debug* fail* slow* auto-submit* show-buttons*
     (binding [!conn (e/server (ensure-conn!))]
       (let [db (e/server (e/watch !conn))]
         (Service
           (UserForm db 42))))))
+
+
+(def css "
+[aria-busy=true] {background-color: yellow;}
+[aria-invalid=true] {background-color: pink;}
+dt:has(+ dd input:required)::after {content: \"*\"; color: crimson; font-weight: 400;}
+dd:has(:invalid:required)::after {content: \"required\"; color: red; font-size: 0.85rem; padding: 0 0.75rem;}
+")

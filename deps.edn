@@ -21,9 +21,11 @@
                    io.github.clojure/tools.build
                    {:mvn/version "0.9.6"
                     :exclusions  [com.google.guava/guava ; Guava version conflict between tools.build and clojurescript.
-                                  org.slf4j/slf4j-nop    ; clashes with app logger
+                                  org.slf4j/slf4j-nop ; clashes with app logger
                                   ]}}
    :jvm-opts      ["-XX:-OmitStackTraceInFastThrow" ; For RCF
+                   ;; uncomment to get flow protocol violation checks, warnings..
+                   ;; "-Dhyperfiddle.electric.impl.missionary-util.wrap=true"
                    ]}
 
   :profile {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
@@ -32,15 +34,27 @@
                        "-XX:+UnlockDiagnosticVMOptions"
                        "-XX:+DebugNonSafepoints"]}
 
+  :jetty9
+  {:extra-deps {ring/ring                      {:mvn/version "1.9.6"}
+                ring/ring-jetty-adapter        {:mvn/version "1.8.2"}
+                ring/ring-servlet              {:mvn/version "1.8.2"}
+                ring-basic-authentication/ring-basic-authentication {:mvn/version "1.1.1"}
+                org.eclipse.jetty.websocket/websocket-server {:mvn/version "9.4.31.v20200723"} ; matching jetty version from ring-jetty-adapter
+                org.eclipse.jetty.websocket/websocket-servlet {:mvn/version "9.4.31.v20200723"}
+                org.eclipse.jetty/jetty-client {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                org.eclipse.jetty/jetty-http {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                org.eclipse.jetty/jetty-util {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                }}
+
   :build
   ;; use `clj -X:build build-client`, NOT -T! build/app classpath contamination cannot be prevented
-  {:extra-paths ["src-build"]
+  {:extra-paths ["src-build" "src-prod"]
    :ns-default  hyperfiddle.fiddle-build
    :extra-deps
    {thheller/shadow-cljs          {:mvn/version "2.26.2"}
     io.github.clojure/tools.build {:mvn/version "0.9.6"
                                    :exclusions  [com.google.guava/guava ; Guava version conflict between tools.build and clojurescript.
-                                                 org.slf4j/slf4j-nop    ; clashes with app logger
+                                                 org.slf4j/slf4j-nop ; clashes with app logger
                                                  ]}}}
 
   :prod
@@ -48,7 +62,7 @@
    :extra-deps {ring/ring-jetty-adapter {:mvn/version "1.11.0"}
                 com.google.javascript/closure-compiler-unshaded {:mvn/version "v20230802"}}} ; deps conflict
 
-  :jetty ; jetty http server, default in :dev and :prod
+  :jetty                          ; jetty http server, default in :dev and :prod
   {:extra-deps {ring/ring-jetty-adapter {:mvn/version "1.11.0"}}}
 
   :httpkit
@@ -58,24 +72,25 @@
 
   :electric-tutorial
   {:extra-deps
-   {backtick/backtick {:mvn/version "0.3.4"} ; staffly
+   {backtick/backtick {:mvn/version "0.3.4"}   ; staffly
     com.datomic/peer {:mvn/version "1.0.7075"} ; staffly, datomic browser
     datascript/datascript     {:mvn/version "1.6.1"}
     reagent/reagent           {:mvn/version "1.2.0"}
     markdown-clj/markdown-clj {:mvn/version "1.11.7"}
     io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}
-    org.clojure/core.match {:mvn/version "1.1.0"} ; staffly, todos
+    org.clojure/core.match {:mvn/version "1.1.0"}   ; staffly, todos
     org.apache.tika/tika-core {:mvn/version "1.24"} ; explorer: datafy-fs
-    clj-jgit/clj-jgit {:mvn/version "1.0.2"} ; blog
+    clj-jgit/clj-jgit {:mvn/version "1.0.2"}        ; blog
+    com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"} ; sakila
     }
-   #_#_:override-deps ; uberjar sees only this one alias
-   {com.hyperfiddle/electric {:local/root "vendor/electric"}
-    com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
-    com.hyperfiddle/hyperfiddle-contrib {:local/root "vendor/hyperfiddle-contrib"}}}
+   #_#_:override-deps                   ; uberjar sees only this one alias
+   {com.hyperfiddle/electric {:local/root "../electric"}
+    com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}
+    com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}}}
 
   :dustingetz
   {:extra-deps
-   { ; intentionally blank
+   {                                    ; intentionally blank
     com.cognitect.aws/api       {:mvn/version "0.8.711"}
     com.amazonaws/aws-java-sdk-s3 {:mvn/version "1.12.702"}
     com.cognitect/http-client     {:mvn/version "1.0.127"}
@@ -96,18 +111,19 @@
     com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"}
     org.postgresql/postgresql {:mvn/version "42.7.3"}
     #_#_com.datomic/peer {:mvn/version "1.0.7075"}
-    #_#_com.hyperfiddle/hfql {:local/root "vendor/hfql"}
+    #_#_com.hyperfiddle/hfql {:local/root "../hfql"}
     #_#_cheshire/cheshire {:mvn/version "5.12.0"}
     #_#_markdown-clj/markdown-clj {:mvn/version "1.11.7"}
     #_#_io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}}}
 
   :private
-  {:extra-paths ["src-private"]
-   :override-deps {com.hyperfiddle/electric {:local/root "vendor/electric"}
-                   com.hyperfiddle/hyperfiddle {:local/root "vendor/hyperfiddle"}
-                   com.hyperfiddle/hyperfiddle-contrib {:local/root "vendor/hyperfiddle-contrib"}
-                   com.hyperfiddle/hfql {:local/root "vendor/hfql"}
-                   com.hyperfiddle/rcf {:local/root "vendor/rcf"}}
+  {:override-deps {com.hyperfiddle/electric {:local/root "../electric"}
+                   com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}
+                   com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}
+                   com.hyperfiddle/electric-secret {:local/root "../electric-secret"}
+                   com.hyperfiddle/hfql {:local/root "../hfql"}
+                   com.hyperfiddle/rcf {:local/root "../rcf"}}
+   :extra-paths ["../scratch/src" "../scratch/resources"]
    :extra-deps
    {clj-python/libpython-clj {:mvn/version "2.026"}
     com.pitch/uix.core {:mvn/version "1.0.1"}
@@ -142,7 +158,7 @@
   {:extra-deps
    {com.xtdb/xtdb-core {:mvn/version "1.23.0"}
     com.xtdb/xtdb-rocksdb {:mvn/version "1.23.0"}}
-   :jvm-opts [;; the following option is required for JDK 16 and 17 (https://github.com/xtdb/xtdb/issues/1462)
+   :jvm-opts [ ;; the following option is required for JDK 16 and 17 (https://github.com/xtdb/xtdb/issues/1462)
               "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED"]}
   }
 

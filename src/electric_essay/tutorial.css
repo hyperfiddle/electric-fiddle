@@ -2,7 +2,7 @@
     .user-examples-code { max-width: 80ch; }
 }
 
-.user-examples-target form {
+:where(.user-examples-target form) {
     display: contents; /* we're nesting them */
     /* padding: 0.2rem; */ /* so we can see background-color */
 }
@@ -10,7 +10,7 @@
 /* forms3 with field and form validation injects a <p data-role="errormessage"> next to form controls.
    Silence it for current tutorials. Enable it if needed.
 */
-.user-examples-target form [data-role=errormessage] {
+:where(.user-examples-target form [data-role=errormessage]) {
     display: none;
 }
 

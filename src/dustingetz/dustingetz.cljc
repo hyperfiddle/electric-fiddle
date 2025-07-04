@@ -1,29 +1,26 @@
 (ns dustingetz.dustingetz
   (:require [hyperfiddle.electric3 :as e]
-            [dustingetz.easy-table :refer [DemoEasyTable]]
-            [dustingetz.edn-viewer0 :refer [EdnViewer0]]
             [dustingetz.file-watcher :refer [FileWatcherDemo]]
-            [dustingetz.object-browser-demo2 :refer [ObjectBrowserDemo2]]
+            [dustingetz.object-browser-demo3 :refer [ObjectBrowserDemo3]]
             [dustingetz.logic :refer [Logic]]
-            [dustingetz.london-talk-2024.webview-concrete :refer [WebviewConcrete]]
-            [dustingetz.london-talk-2024.webview-generic :refer [WebviewGeneric]]
-            [dustingetz.london-talk-2024.webview-dynamic :refer [WebviewDynamic]]
-            [dustingetz.london-talk-2024.webview-scroll :refer [WebviewScroll]]
-            [dustingetz.london-talk-2024.webview-scroll-dynamic :refer [WebviewScrollDynamic]]
-            [dustingetz.london-talk-2024.differential-tricks :refer [DifferentialTricks]]
             [dustingetz.metaobject :refer [DemoMetaobject]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
             [dustingetz.painter :refer [Painter]]
-            [dustingetz.threaddump :refer [ThreadDump]]
             [dustingetz.y-fac :refer [Y-Fac]]
-            [dustingetz.y-dir :refer [Y-dir]]))
+            [dustingetz.y-dir :refer [Y-dir]]
+
+            [dustingetz.talks.two-clocks :refer [TwoClocks]]
+            [dustingetz.talks.dir-tree :refer [DirTree]]
+            [dustingetz.talks.webview-concrete :refer [WebviewConcrete]]
+            [dustingetz.talks.lifecycle :refer [Lifecycle]]))
 
 (e/defn Fiddles []
   (merge
-    {`DemoEasyTable DemoEasyTable
-     `ThreadDump ThreadDump
-     `EdnViewer0 EdnViewer0}
+    {`TwoClocks TwoClocks
+     `DirTree DirTree
+     `WebviewConcrete WebviewConcrete
+     `Lifecycle Lifecycle}
     {`DemoMetaobject DemoMetaobject
      `Painter Painter
      `FileWatcherDemo FileWatcherDemo
@@ -32,10 +29,5 @@
      `MillionCheckboxes MillionCheckboxes
      `MillionCheckboxes2 MillionCheckboxes2
      `Logic Logic
-     `ObjectBrowserDemo2 ObjectBrowserDemo2}
-    {`WebviewConcrete WebviewConcrete
-     `WebviewGeneric WebviewGeneric
-     `WebviewDynamic WebviewDynamic
-     `WebviewScroll WebviewScroll
-     `WebviewScrollDynamic WebviewScrollDynamic
-     `DifferentialTricks DifferentialTricks}))
+     `ObjectBrowserDemo3 ObjectBrowserDemo3}
+    ))

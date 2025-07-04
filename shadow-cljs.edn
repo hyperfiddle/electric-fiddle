@@ -9,6 +9,8 @@
    :output-dir "resources/public/js"
    :asset-path "/js"
    :modules {:main {:entries [dev] :init-fn dev/start!}}
+   ;; uncomment to get flow protocol violation checks, warnings..
+   ;; :compiler-options {:closure-defines {hyperfiddle.electric.impl.missionary-util/wrap true}}
    :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)
                  (dev/pause-websocket-reconnect-while-compiling)
                  ]}

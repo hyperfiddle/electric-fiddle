@@ -55,7 +55,7 @@
         {:keys [user/str1 user/num1 user/bool1]} m]
     (reset! !m
       {:user/str1 (Input str1)
-       :user/num1 (-> (Input num1 :type "number") parse-long)
+       :user/num1 (-> (Input num1 :type "number") js/parseFloat)
        :user/bool1 (Checkbox bool1)})
     (dom/pre (dom/text (pr-str m)))))
 
@@ -63,7 +63,7 @@
   (let [m (e/with-cycle [m state0]
             (let [{:keys [user/str1 user/num1 user/bool1]} m]
               {:user/str1 (Input str1)
-               :user/num1 (-> (Input num1 :type "number") parse-long)
+               :user/num1 (-> (Input num1 :type "number") js/parseFloat)
                :user/bool1 (Checkbox bool1)}))]
     (dom/pre (dom/text (pr-str m)))))
 

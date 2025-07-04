@@ -1,31 +1,40 @@
-FROM clojure:openjdk-11-tools-deps AS datomic-fixtures
+# run from from monorepo root so that build context contains:
+# - .git : for object browser demo
+# - hyperfiddle-starter-app2: for datomic mbrainz setup
+# e.g. docker build -f electric-fiddle/src/docs_site/Dockerfile --build-arg VERSION=$(git rev-parse HEAD) ... 
+
+FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS datomic-fixtures
 WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
-#COPY state/datomic-pro-1.0.6735.zip state/datomic-pro-1.0.6735.zip
-#COPY state/mbrainz.tar state/mbrainz.tar
-COPY src/datomic_browser/datomic_fixtures.sh datomic_fixtures.sh
+COPY hyperfiddle-starter-app2/datomic_fixtures.sh datomic_fixtures.sh
+COPY hyperfiddle-starter-app2/datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
 RUN ./datomic_fixtures.sh
+# RUN ./datomic_fixtures_mbrainz_full.sh
+# Shaves 3Gb+ of docker image
+RUN rm state/*.tar
+RUN rm state/*.zip
 
 FROM node:14.7-stretch AS node-deps
 WORKDIR /app
-COPY package.json package.json
-RUN npm install
+COPY electric-fiddle/package.json package.json
 
-FROM clojure:openjdk-11-tools-deps AS build
+RUN PUPPETEER_SKIP_DOWNLOAD=true npm install
+
+FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS build
 WORKDIR /app
 COPY --from=node-deps /app/node_modules /app/node_modules
-# electric-user-version is computed from git sha during clj build
-COPY .git .git
-#COPY .m2 /root/.m2
-COPY shadow-cljs.edn shadow-cljs.edn
-COPY deps.edn deps.edn
-COPY src src
-COPY src-build src-build
-COPY src-prod src-prod
-COPY vendor vendor
-COPY resources resources
 
-ARG REBUILD=unknown
+# Rebuild if deps or commit version changes
+COPY electric-fiddle/deps.edn deps.edn
+ARG VERSION
+ENV VERSION=$VERSION
+
+COPY electric-fiddle/shadow-cljs.edn shadow-cljs.edn
+COPY electric-fiddle/src src
+COPY electric-fiddle/src-prod src-prod
+COPY electric-fiddle/src-build src-build
+COPY electric-fiddle/resources resources
+
 ARG HYPERFIDDLE_FIDDLE_NS
 ARG HYPERFIDDLE_FIDDLE_DEPS_ALIAS
 RUN clojure -A:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS -M -e ::ok         # preload
@@ -33,21 +42,25 @@ RUN clojure -A:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS -M -e ::ok   # preload
 RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
     :hyperfiddle.fiddle-build/fiddle-ns $HYPERFIDDLE_FIDDLE_NS \
     :hyperfiddle.fiddle-build/fiddle-deps-alias $HYPERFIDDLE_FIDDLE_DEPS_ALIAS \
+    :hyperfiddle.fiddle-build/version "\"$VERSION\"" \
     :hyperfiddle.fiddle-build/jar-name app.jar
-
-RUN mv .git git # bypass security
 
 FROM amazoncorretto:11 AS app
 WORKDIR /app
-RUN yum update -y && yum install -y procps
-COPY --from=build /app/git .git
-RUN echo -e "/state/\n/vendor/" > .gitignore
-COPY --from=build /app/target/app.jar app.jar
-COPY --from=datomic-fixtures /app/state state
-COPY src/datomic_browser/prod.sh prod.sh
+
 # add tutorial resources (md, css, dir trees used in demos)
+COPY --from=datomic-fixtures /app/state state
 COPY --from=build /app/src src
-COPY --from=build /app/vendor/electric/src vendor/electric/src
+
+# for jgit demo
+COPY .git git
+RUN mv git .git # bypass security
+RUN echo -e "/state/" > .gitignore 
+
+
+# Add app
+COPY --from=build /app/target/app.jar app.jar
+COPY hyperfiddle-starter-app2/run_datomic.sh run_datomic.sh
 
 EXPOSE 8080
-CMD ./prod.sh
+CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod

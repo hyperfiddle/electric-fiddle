@@ -39,5 +39,5 @@ primary_region = "ewr"
 
 [[vm]]
   memory = '4gb'
-  cpu_kind = 'performance'
-  cpus = 2
+  cpu_kind = 'shared'
+  cpus = 8

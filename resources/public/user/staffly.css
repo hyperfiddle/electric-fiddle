@@ -1,3 +1,6 @@
+@import url('/hyperfiddle/electric-forms.css');
+@import url('/hyperfiddle/electric-combobox.css');
+
 :root {
     --tw-sm:  640px;
     --tw-md:  768px;
@@ -17,10 +20,43 @@
     margin-right: auto;
     max-width: 80rem;
     padding: 0 1rem 0 1rem;
-    background-color: white;
     display: flex;
     flex-direction: column;
     flex-gap: 0.5rem;
+}
+
+.staffly fieldset { padding: 0; }
+
+.staffly fieldset .hyperfiddle-electric-forms5__table-picker td {
+    padding-left: 0.5em;
+}
+
+.staffly fieldset table {
+    width:100%;
+    background-color: white;
+    border-collapse: collapse;
+    display: grid;
+    grid-template-columns: repeat(var(--column-count, 1), 1fr);
+}
+
+.staffly fieldset table thead {
+    display: contents;
+}
+
+.staffly fieldset table thead tr {
+    display: contents;
+}
+.staffly fieldset table thead tr th{
+    background-color: #f2f2f2;
+    font-weight: 500;
+}
+
+.staffly fieldset table thead tr th:not(:first-child){
+    border-left: 1px lightgray solid;
+}
+.staffly fieldset table tbody  {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
 }
 
 @media (min-width: var(--tw-sm)){

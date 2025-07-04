@@ -2,7 +2,7 @@
 
 <div id="nav"></div>
 
-* very simple demo showing forms composing as values in a list
+Lists are a great test for true composition. Here we compose N forms in a list.
 
 !ns[electric-tutorial.form-list/FormList]()
 

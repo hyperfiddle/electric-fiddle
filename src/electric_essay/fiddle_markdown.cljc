@@ -30,14 +30,15 @@
 
 (e/defn Custom-markdown [extensions md-content]
   (e/client
-    (e/for [[t v] (e/server (e/diff-by {} (e/Offload #(parse-sections md-content))))]
+    (e/for [[t v] (e/server (e/diff-by {} (e/Offload #(parse-sections (or md-content "")))))]
       (case t
         (::directive) (let [[extension args] (parse-md-directive v)]
                         (if-let [F (get extensions extension)]
                           (e/Apply F args)
                           (dom/div (dom/text "Unsupported markdown directive: " (pr-str v)))))
         (::html) (dom/div (dom/props {:class "markdown-body user-examples-readme"})
-                   (set! (.-innerHTML dom/node) v))))))
+                   (set! (.-innerHTML dom/node) v)
+                   (e/amb))))))
 
 ; Extensions - optional
 

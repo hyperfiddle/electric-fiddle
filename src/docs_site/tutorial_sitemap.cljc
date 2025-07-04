@@ -32,6 +32,7 @@
             [electric-tutorial.svg :refer [SVG]]
             #_[electric-tutorial.timer :refer [Timer]]
             [electric-tutorial.explorer :refer [DirectoryExplorer]]
+            [electric-tutorial.explorer2 :refer [DirectoryExplorer2]]
             #_[electric-tutorial.heroicons-demo :refer [Heroicons]]))
 
 (def tutorial-sitemap
@@ -39,29 +40,29 @@
     ['two_clocks ; hello world
      'system_properties ; simple query/view topology
      'dir_tree ; complex topology
-     'fizzbuzz ; differential
+     #_'fizzbuzz ; differential
      ]]
    ["Tables"
     ['webview1 ; diffs, IO encapsulation
      'webview2 ; abstraction, lambda demo
      'webview_column_picker
-     'webview_diffs
+     #_'webview_diffs
      'explorer
      #_'scroll-seek]]
    ["Language"
     ['lifecycle ; components
-     'backpressure
+     #_'backpressure
      ]]
    ["Forms"
     ['inputs_local ; self contained
-     'amb
+     #_'amb
      'temperature2
      'token_explainer ; supersedes Toggle, introduce token and service
      'form_explainer ; forms-from-scratch-form
      'forms_inline ; forms3b-inline-submit
      'form_list
-     'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
-     'todos ; create-new, optimistic updates, service
+     #_'chat_monitor ; optimistic updates, uses e/amb & e/with-cycle*, adhoc service `Chat ; cookie, pending, security. InputSubmitCreate!
+     #_'todos ; create-new, optimistic updates, service
      'todomvc
      'todomvc_composed
      ]]
@@ -112,6 +113,7 @@
      `Counter Counter
      `SVG SVG
      `DirectoryExplorer DirectoryExplorer
+     `DirectoryExplorer2 DirectoryExplorer2
      #_#_`Heroicons Heroicons
      #_#_`ReagentInterop ReagentInterop
      }))

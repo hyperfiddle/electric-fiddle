@@ -1,4 +1,4 @@
-(ns electric-tutorial.todomvc-composed
+(ns electric-tutorial.todomvc-composed "http://localhost:8080/electric-tutorial.todomvc-composed!TodoMVC-composed/"
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms3 :refer [Service effects*]]
@@ -15,7 +15,7 @@
 
 (e/defn TodoMVC-composed []
   (e/client
-    (dom/link (dom/props {:rel :stylesheet, :href "/todomvc.css"}))
+    (dom/link (dom/props {:rel :stylesheet, :href "/user/todomvc.css"}))
     (dom/props {:class "todomvc" :style {:position "relative"}})
     (binding [!state (atom state0)]
       (binding [state (e/watch !state)]

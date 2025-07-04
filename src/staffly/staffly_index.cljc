@@ -5,13 +5,13 @@
             [contrib.data :refer [unqualify]]
             dustingetz.str
             #?(:clj [datomic.api :as d])
-            [dustingetz.easy-table :refer [EasyTable]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Input]]
+            [hyperfiddle.electric-forms5 :as forms]
             [hyperfiddle.ui.typeahead :refer [Typeahead]]
             [hyperfiddle.router4 :as r]
-            [staffly.staffly-model :as model]))
+            [staffly.staffly-model :as model]
+            [staffly.utils :refer [Table]]))
 
 (defn entity-type [m]
   (match m
@@ -88,27 +88,23 @@
                     (Field "type" (Typeahead ::staff ; initial value for fast load
                                     :Options (e/fn [s] (e/server (e/diff-by identity (entity-type-options s))))
                                     :option-label (fn [x] (some-> x name)))))]
-        #_(e/server (prn 'q search type_)) ; search is too slow, todo filter in memory w/ treelister
-        (e/server
-          (EasyTable "Index"
-            (fn query [search] (index search type_ :limit nil))
-            (e/fn [e]
-              (e/server
-                (let [type_ (e/server (some-> e entity-type))]
-                  (e/for [a (e/diff-by {} [:db/id ::entity-type])]
-                    (let [v (a e)]
-                      (dom/td
-                        (case a
-                          :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
-                          ::entity-type (dom/text (some-> type_ name))
-                          (dom/text (pr-str v)))))))))))))))
+        (Table "Index"
+          [:db/id ::entity-type]
+          (e/server  #(index % type_ :limit nil))
+          (e/fn [a e]
+            (let [type_ (e/server (some-> e entity-type))]
+              (let [v (a e)]
+                (dom/td
+                  (case a
+                    :db/id (r/link ['.. '.. [(some-> type_ unqualify) v]] (dom/text (some-> v pr-str)))
+                    ::entity-type (dom/text (some-> type_ name))
+                    (dom/text (pr-str v))))))))))))
 
 
-(def css "
-html:has(.staffly.dustingetz-EasyTable){height:100%; box-sizing: border-box;}
-.staffly.dustingetz-EasyTable{ position:relative; height:100%; }
+(def css (str forms/css "
 
-.staffly.dustingetz-EasyTable fieldset:has(> .Viewport) {flex: 1; max-height: 22rem;}
-.staffly.dustingetz-EasyTable .Viewport {height: 22rem}
-.staffly.dustingetz-EasyTable fieldset .Viewport table {grid-template-columns: 1fr 1fr;}
-")
+.staffly .hyperfiddle-electric-forms5__table-picker  { --min-row-count: 15; }
+.staffly .hyperfiddle-electric-forms5__table-picker table  { --column-count: 2; }
+
+
+"))

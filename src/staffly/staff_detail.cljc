@@ -1,14 +1,12 @@
 (ns staffly.staff-detail
   (:require #?(:clj [datomic.api :as d])
-            [dustingetz.easy-table :refer [EasyTable]]
-            [dustingetz.ui :refer
-             [Text EasyForm TagPickerReadOnly Debug]]
+            [dustingetz.ui :refer [EasyForm TagPickerReadOnly]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer
-             [Form! Checkbox!]]
+            [hyperfiddle.electric-forms5 :refer [Form! Checkbox! try-ok]]
             [hyperfiddle.router4 :as r]
-            [staffly.staffly-model :as model]))
+            [staffly.staffly-model :as model]
+            [staffly.utils :refer [Table]]))
 
 #?(:clj (defn staff-detail [e]
           (let [pat [:staff/id
@@ -19,6 +17,7 @@
                      :staff/events-worked
                      :staff/venue-rating
                      :staff/punctuality-score
+                     :staff/phone-confirmed
                      {:staff/roles ['*]}
                      {:staff/documents
                       [:document/id
@@ -54,6 +53,7 @@
    :staff/notify-method
    :staff/events-worked
    :staff/venue-rating
+   :staff/phone-confirmed
    :staff/punctuality-score
 
    ; tables
@@ -84,55 +84,64 @@
 
            :staff/documents (e/fn [x]
                               (e/server
-                                (EasyTable "documents" ; :grid-template-columns "2fr 3fr 2fr 1fr"
+                                (Table "documents"
+                                  [:document/type :document/name :document/expiry :document/status]
                                   (constantly x)
-                                  (e/fn [e]
-                                    (e/for [a (e/diff-by {} [:document/type :document/name :document/expiry :document/status])]
-                                      (let [v (a e)]
-                                        (dom/td
-                                          (dom/text
-                                            (case a
-                                              :document/expiry (e/client (some-> v .toLocaleDateString))
-                                              v)))))))))
+                                  (e/fn [a e]
+                                    (let [v (a e)]
+                                      (dom/td
+                                        (dom/text
+                                          (case a
+                                            :document/expiry (e/client (some-> v .toLocaleDateString))
+                                            v))))))))
 
            :staff/restrictions (e/fn [x]
                                  (e/server
-                                   (EasyTable "restrictions" ; :grid-template-columns "2fr 2fr 2fr 2fr"
+                                   (Table "restrictions"
+                                     [:restriction/venue :restriction/reason :restriction/scope :restriction/expires-at]
                                      (constantly x)
-                                     (e/fn [e]
-                                       (e/for [a (e/diff-by {} [:restriction/venue :restriction/reason :restriction/scope :restriction/expires-at])]
-                                         (let [v (a e)]
-                                           (dom/td
-                                             (dom/text
-                                               (case a
-                                                 :restriction/expires-at (e/client (some-> v .toLocaleDateString))
-                                                 :restriction/venue (:venue/name v) v)))))))))
+                                     (e/fn [a e]
+                                       (let [v (a e)]
+                                         (dom/td
+                                           (dom/text
+                                             (case a
+                                               :restriction/expires-at (e/client (some-> v .toLocaleDateString))
+                                               :restriction/venue (:venue/name v) v))))))))
            :staff/shifts (e/fn [x]
                            (e/server
-                             (EasyTable "shifts" ; :grid-template-columns "2fr 2fr 2fr 1fr"
+                             (Table "shifts" ; :grid-template-columns "2fr 2fr 2fr 1fr"
+                               [:shift/date :shift/venue :shift/role :shift/rating]
                                (constantly x)
-                               (e/fn [e]
-                                 (e/for [a (e/diff-by {} [:shift/date :shift/venue :shift/role :shift/rating])]
-                                   (let [v (a e)]
-                                     (dom/td
-                                       (dom/text
-                                         (case a
-                                           :shift/date (e/client (some-> v .toLocaleDateString))
-                                           :shift/venue (:venue/name v)
-                                           :shift/role (e/client (some-> v :db/ident name)) v)))))))))
+                               (e/fn [a e]
+                                 (let [v (a e)]
+                                   (dom/td
+                                     (dom/text
+                                       (case a
+                                         :shift/date (e/client (some-> v .toLocaleDateString))
+                                         :shift/venue (:venue/name v)
+                                         :shift/role (e/client (some-> v :db/ident name)) v))))))))
 
-           :sub/phone-confirmed (e/fn [x] (Form! (Checkbox! ::change-phone-confirmed x)
-                                            :commit (fn [{::keys []}] [])
-                                            :show-buttons :smart))
+           :staff/phone-confirmed (e/fn [x] (Form! {} (e/fn [_]  (Checkbox! ::phone-confirmed? x))
+                                              :Parse (e/fn [{::keys [phone-confirmed?]} _] [`Change-phone-confirmed! e phone-confirmed?])
+                                              :show-buttons true))
            }))
         #_(Debug x))))
 
+(e/defn Change-phone-confirmed! [e phone-confirmed?]
+  (e/server
+    (e/Offload-reset
+      #(try-ok (throw (ex-info "Not implemented yet" {}))
+         #_(change-phone-confirmed! e phone-confirmed?)))))
 
-(def css "
-html:has(.staffly dd.dustingetz-EasyTable){height:100%; box-sizing: border-box;}
-.staffly dd.dustingetz-EasyTable{ position:relative; height:100%; }
 
-.staffly dd.dustingetz-EasyTable fieldset:has(> .Viewport) {height: 100%; max-height: 22rem;}
-.staffly dd.dustingetz-EasyTable .Viewport {height: 10rem; position: relative;}
-.staffly dd.dustingetz-EasyTable fieldset .Viewport table {grid-template-columns: 1fr 1fr 1fr 1fr;}
-")
+(def css (str hyperfiddle.electric-forms5/css
+           staffly.utils/css
+           "
+.staffly .hyperfiddle-electric-forms5__table-picker  { --min-row-count: 5; }
+.staffly .hyperfiddle-electric-forms5__table-picker table  { --column-count: 4; }
+
+.staffly form:not(:has([aria-busy=true])) button {display: none;}
+.staffly form:not(:has([aria-invalid=true])) [data-role=errormessage] {display: none;}
+.staffly form [data-role=errormessage] {display: inline; margin: 0 1rem;}
+
+"))

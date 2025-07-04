@@ -16,16 +16,18 @@
                   (if t
                     (reset! !search (dom/On "input" #(-> % .-target .-value) ""))
                     (dom/props {:value (OptionLabel v-id)}))
-                  t))] ; controlled only when not focused
+                  t)) ; controlled only when not focused
+            is-open (some? t)]
 
-        (if (some? t)
-          (dom/ul
-            (e/server
-              (e/for [x (Options search)] ; x server
-                (dom/li (dom/text (OptionLabel x))
-                  (dom/On "click" (e/client ; dom/On will auto-site, but cc/fn doesn't transfer
-                                    (fn [e] (doto e (.stopPropagation) (.preventDefault))
-                                      (reset! !v-id x) (t))) nil))))))
+        (if is-open
+          (let [xs (Options search)]
+            (dom/ul
+              (e/server
+                (e/for [x xs] ; x server
+                  (dom/li (dom/text (OptionLabel x))
+                    (dom/On "click" (e/client ; dom/On will auto-site, but cc/fn doesn't transfer
+                                      (fn [e] (doto e (.stopPropagation) (.preventDefault))
+                                        (reset! !v-id x) (t))) nil)))))))
         v-id))))
 
 (def css "

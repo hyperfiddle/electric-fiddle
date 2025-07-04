@@ -1,7 +1,7 @@
 (ns electric-tutorial.chat-monitor
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.electric-forms3 :refer [Form! Input!]]))
+            [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Output SubmitButton! DiscardButton! Reconcile-by]]))
 
 (e/defn Login [username]
   (dom/div
@@ -25,84 +25,127 @@
     (e/for [[_ username] present]
       (dom/li (dom/text username)))))
 
-#?(:clj (defonce !db (atom (repeat 10 nil)))) ; multiplayer
-(e/defn Query-chats [] (e/server (e/diff-by :db/id (e/watch !db))))
+;; (def !db nil)
+#?(:clj (defonce !db (atom ()))) ; multiplayer
+(e/defn Query-chats [] (e/server (e/diff-by ::id (sort-by ::created-at (e/watch !db)))))
+(defn now! [] #?(:clj (java.util.Date.) :cljs (js/Date.)))
 #?(:clj (defn send-message! [msg] (swap! !db #(take 10 (cons msg %)))))
-(defn ->msg-record [username msg & [tempid]]
-  {:db/id (or tempid (random-uuid)) :username username :msg msg})
+(defn ->msg-record [id username msg]
+  {::id id ::username username ::msg msg
+   ::created-at (now!)}) ; sort key
 
+(defn globally-unique-id [tempid] (if (uuid? tempid) tempid (random-uuid))) ; reuse SendMessageInput's id if possible
 
-(e/defn Query-chats-optimistic [username edits]
-  (prn 'edits (e/as-vec edits))
-  ; Hack in optimistic updates; we'll formalize a better pattern in Todos tutorial
-  (let [server-xs (e/server (Query-chats)) ; reuse server query (differential!)
-        client-xs (e/for [[t cmd local-index] edits] ; cheap optimistic updates
-                    (let [m (get local-index t)] ; token as tempid convention
-                      (assoc m ::pending true)))]
-    ; todo reconcile records by id for count consistency and fix flicker
-    (e/amb client-xs server-xs))) ; e/amb is differential concat here
+(e/defn Message [server-message local-command]
+  (Form! (or server-message local-command) ; render message as-is, or guess from command
+      (e/fn [{:keys [::username ::msg]}]
+        (dom/props {:class "message"})
+        (dom/fieldset
+          (dom/span (dom/strong (dom/text username)))
+          (e/amb
+            (Output ::msg msg) ; would use `Input!` for an editable form - out of scope - <p> is valid too
+            (SubmitButton! :label "Retry")
+            (DiscardButton! :label "x"))))
+    :Parse (e/fn [{:keys [::username ::msg]} tempid] ; form fields + id -> command
+             [`SendMessage (globally-unique-id tempid) username msg])
+    :Unparse (when local-command ; must guess
+               (e/fn [[_SendMessage id username msg]] [(->msg-record id username msg) id])))) ; opposite of :Parse
 
-(e/defn Channel [msgs]
+(defn add-years [years date] (when date (doto date (.setFullYear (+ years (.getFullYear date))))))
+
+(e/defn Channel [server-messages local-commands]
   (dom/ul (dom/props {:class "channel"})
-    ; Our very naive optimistic update impl here means the query can return more
-    ; than 10 elements, so we use a css fixed height with overflow-y:clip so we
-    ; don't have to bother maintaining the length of the query.
-    (e/for [{:keys [username msg ::pending]} msgs] ; render list bottom up in CSS
-      (dom/li (dom/props {:style {:visibility (if (some? msg) "visible" "hidden")
-                                  :grid-template-columns "1fr 1fr"}})
-        (dom/props {:aria-busy pending})
-        (dom/span (dom/strong (dom/text username)) (dom/text " " msg))
-        (dom/span (dom/props {:style {:text-align "right"}})
-          (dom/text (if pending "pending" "ok")))))))
+    (e/for [[record command] (Reconcile-by ::id (fn [[_SendMessage id username msg]] id) ; correlate server record with local command
+                               ::created-at (fn [_command] (add-years 100 (now!))) ; sort - ensure local messages do not interleave with server messages (can't send a message in the past)
+                               server-messages local-commands)]
+      (dom/li (Message record command)))))
 
 (e/defn SendMessageInput [username]
-  (Form! (Input! ::msg "" :disabled (nil? username)
-           :placeholder (if username "Send message" "Login to chat"))
-    :show-buttons false ; enter to submit
-    :genesis true ; immediately consume form, ready for next submit
-    :commit (fn [{msg ::msg} tempid] (prn 'TodoCreate-commit msg)
-              [[`Create-todo username msg]
-               {tempid (->msg-record username msg tempid)}])))
+  (Form! nil (e/fn [_] (dom/props {:class "new-message"})
+               (Input! ::msg "" :disabled (nil? username) :placeholder (if username "Send message" "Login to chat") :maxlength 100))
+    :genesis true ; immediately consume form, ready for next submit, each message get a globally unique id
+    :Parse (e/fn [{:keys [::msg]} tempid]
+             [`SendMessage (globally-unique-id tempid) username msg]))) ; form fields + generated globally unique id -> command
 
-(e/defn ChatApp [username present edits]
+(e/defn ChatApp [username present]
+  (Present present)
+  (dom/hr)
   (e/amb
-    (Present present)
-    (dom/hr (e/amb)) ; silence nil
-    (Channel (Query-chats-optimistic username edits))
-    (SendMessageInput username)
+    (dom/div (dom/props {:class "chat-view"})
+      (Channel (e/server (Query-chats)) (SendMessageInput username)))
     (Login username)))
 
-(e/defn Create-todo [username msg]
+(def next-toggle (partial swap! (atom false) not))
+
+(e/defn SendMessage [id username msg]
   (e/server ; secure, validate command here
-    (let [record (->msg-record username msg)] ; secure
-      (e/Offload #(try (Thread/sleep 500) ; artificial latency
-                    (send-message! record) ::ok
-                    (catch Exception e (doto ::rejected (prn e))))))))
+    (let [record (->msg-record id username msg)] ; secure
+      (e/Offload #(try (Thread/sleep 1000) ; artificial latency
+                       (if (next-toggle)
+                         (throw (ex-info "failure" {}))
+                         (send-message! record)) ::ok
+                       (catch Exception e (doto ::rejected (prn e))))))))
 
 (declare css)
 (e/defn ChatMonitor []
   (dom/style (dom/text css))
   (let [username (e/server (get-in e/http-request [:cookies "username" :value]))
         present (e/server (Presence! !present username))
-        edits (e/with-cycle* first [edits (e/amb)] ; loop in-flight edits
-                (ChatApp username present edits))]
-    (prn 'edits (e/as-vec edits))
-    (e/for [[t [cmd & args] guess] (e/Filter some? edits)]
+        commands (ChatApp username present)]
+    (prn 'commands (e/as-vec commands))
+    (e/for [[t [cmd & args]] (e/diff-by first (e/as-vec commands))]
       (let [res (e/server
                   (case cmd
-                    `Create-todo (e/apply Create-todo args)
+                    `SendMessage (e/apply SendMessage args)
                     (prn ::unmatched-cmd)))]
         (case res
-          ::ok (t)
-          ::fail nil))))) ; for retry, we're not done yet - todo finish demo
+          ::ok (t) ; command accepted, queries will update
+          ::rejected (t ::rejected))))))
 
-; .user-examples-target.Chat [aria-busy=true] { background-color: yellow; }
 (def css "
-[aria-busy=true] {background-color: yellow;}
-.user-examples-target.ChatMonitor ul.channel li,
-.user-examples-target.Chat ul.channel li { display: grid; }
-.user-examples-target.Chat ul.channel,
-.user-examples-target.ChatMonitor ul.channel {
-    display: flex; flex-direction: column-reverse; /* bottom up */
-    height: 220px; overflow-y: clip; /* pending pushes up server records */
-    padding: 0; /* remove room for bullet in grid layout */ }")
+
+.chat-view { display: grid; grid-template-areas: \"channel\" \"new-message\"; overflow: hidden;}
+
+.chat-view .channel {
+  grid-area: channel;
+  min-height: 230px; /* 10 messages */
+  transition: height 0.5s ease;
+  z-index: 1;
+  display: flex; flex-direction: column; justify-content: end;
+  padding: 0;
+}
+
+.chat-view .channel li{
+  display: block;
+  margin: 0;
+}
+
+.chat-view .new-message {grid-area: new-message;}
+
+.chat-view .channel form.message:has([aria-busy=true]) {--background-color: yellow;}
+.chat-view .channel form.message:has([aria-invalid=true]) {--background-color: pink;}
+
+.chat-view .channel form.message:not(:has([aria-busy=true])) button {display: none;}
+
+.chat-view .channel form.message fieldset {display: contents;}
+.chat-view .channel form.message {display: grid; grid-template-columns: auto 1fr auto auto}
+.chat-view .channel form.message output {text-align: end; padding: 0 1rem;}
+
+.chat-view .channel form.message {
+  height: 23px;
+  position:relative;
+  --background-color: white;
+}
+
+.chat-view .channel form.message::after{ /* background */
+   z-index: -1;
+   content: \"\";
+   position: absolute;
+   width: 100%; height: 23px;
+   background-color: var(--background-color);
+}
+
+.channel form {display: unset;} /* address css conflict */
+.channel form.message fieldset {background-color: initial;} /* address css conflict */
+
+")
