@@ -14,13 +14,14 @@ java -cp target/app.jar clojure.main -m prod
 docker build \
 --build-arg HYPERFIDDLE_FIDDLE_NS=docs-site.sitemap \
 --build-arg HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial \
+--build-arg VERSION=$(git rev-parse HEAD) \
 -f electric-fiddle/src/docs_site/Dockerfile \
 -t electric-tutorial:latest .
 
 docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
 # fly deploy, from monorepo root
-fly deploy --remote-only --config electric-fiddle/src/docs_site/fly.toml --dockerfile electric-fiddle/src/docs_site/Dockerfile
+fly deploy --remote-only --config electric-fiddle/src/docs_site/fly.toml --dockerfile electric-fiddle/src/docs_site/Dockerfile --build-arg VERSION=$(git rev-parse HEAD)
 fly status
 fly scale show
 fly scale count 1 --region ewr
