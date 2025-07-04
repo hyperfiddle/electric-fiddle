@@ -23,8 +23,7 @@
             [electric-examples.simple-form]
             [hyperfiddle.router4 :as r]
             staffly.staffly
-            #?(:clj dustingetz.mbrainz)
-            #?(:clj datomic-browser.users-with-email-db)))
+            #?(:clj dustingetz.mbrainz)))
 
 (def blog-sitemap
   [["Blog"
@@ -55,7 +54,6 @@
    `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (e/server datomic-browser-sitemap)
                                         '[(dustingetz.datomic-browser/attributes)]
                                         (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
-   ;; `db4/DatomicBrowser4 (e/fn [] (db4/DatomicBrowser4 datomic-browser.users-with-email-db/conn))
    `Unifhir1 Unifhir1
    `DirectoryExplorer DirectoryExplorer})
 
