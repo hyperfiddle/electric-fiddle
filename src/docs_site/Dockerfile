@@ -8,8 +8,8 @@ WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
 COPY hyperfiddle-starter-app2/datomic_fixtures.sh datomic_fixtures.sh
 COPY hyperfiddle-starter-app2/datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
-RUN ./datomic_fixtures.sh
-# RUN ./datomic_fixtures_mbrainz_full.sh
+# RUN ./datomic_fixtures.sh
+RUN ./datomic_fixtures_mbrainz_full.sh
 # Shaves 3Gb+ of docker image
 RUN rm state/*.tar
 RUN rm state/*.zip
@@ -63,4 +63,5 @@ COPY --from=build /app/target/app.jar app.jar
 COPY hyperfiddle-starter-app2/run_datomic.sh run_datomic.sh
 
 EXPOSE 8080
-CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod
+# CMD ./run_datomic.sh && java -Dhyperfiddle.datomic.uri="datomic:dev://localhost:4334/mbrainz-1968-1973" -cp app.jar clojure.main -m prod
+CMD ./run_datomic.sh && java -Dhyperfiddle.datomic.uri="datomic:dev://localhost:4334/mbrainz-full" -cp app.jar clojure.main -m prod

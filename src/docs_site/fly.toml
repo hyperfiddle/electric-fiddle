@@ -38,6 +38,6 @@ primary_region = "ewr"
     timeout = "2s"
 
 [[vm]]
-  memory = '4gb'
-  cpu_kind = 'shared'
-  cpus = 8
+  memory = '8gb'
+  cpu_kind = 'performance'
+  cpus = 4
