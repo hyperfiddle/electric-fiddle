@@ -7,7 +7,6 @@
             [contrib.debug :as dbg]
             [contrib.assert :as ca]
             #?(:clj [datomic.api :as d])
-            [hyperfiddle.nav0 :refer [identify]]
             [hyperfiddle.entity-browser4 :as eb]
             [hyperfiddle.sitemap :as sitemap]
             #?(:clj [dustingetz.datafy-git2 :as git])
