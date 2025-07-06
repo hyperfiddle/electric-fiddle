@@ -1,11 +1,8 @@
-# Hyperfiddle demos monorepo — Electric Fiddle
+# Hyperfiddle demos repo — Electric Fiddle
 
-* tutorial app
-* explorer and datomic browser demos
-* dustingetz namespace
-* deploy infrastructure to deploy one namespace at a time with isolated classpath
+This is an **internal playground repo** where we host a lot of our demos, live examples, and little snippets. In its current form it's not intended for public use, but we leave it published so we can link to the source code of certain demos when we need to.
 
-For a minimalist starter example, see https://gitlab.com/hyperfiddle/electric3-starter-app.
+For a minimalist Electric starter repo, see https://gitlab.com/hyperfiddle/electric3-starter-app.
 
 ## Quick start
 
