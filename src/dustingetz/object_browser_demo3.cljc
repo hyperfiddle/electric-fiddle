@@ -7,7 +7,7 @@
             [contrib.debug :as dbg]
             [contrib.assert :as ca]
             #?(:clj [datomic.api :as d])
-            [hyperfiddle.entity-browser4 :as eb]
+            [hyperfiddle.navigator4 :as navigator]
             [hyperfiddle.sitemap :as sitemap]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj [dustingetz.datafy-jvm2])
@@ -131,16 +131,16 @@
 
 (e/defn ObjectBrowserDemo3 []
   (binding [e/*bindings* {}
-            eb/*sitemap (e/server sitemap)
-            eb/*sitemap-writer (e/server (sitemap-writer sitemap-path))
-            eb/*page-defaults (e/server [route-ns])
-            eb/*server-pretty (e/server (assoc eb/*server-pretty datomic.query.EntityMap (fn [em] (str "datomic.query.EntityMap" (pr-str em)))))
-            #_#_eb/Timing (e/fn [label f] (dustingetz.loader/Offload f {:label label}))] ; enable long-running queries monitoring
+            navigator/*sitemap (e/server sitemap)
+            navigator/*sitemap-writer (e/server (sitemap-writer sitemap-path))
+            navigator/*page-defaults (e/server [route-ns])
+            navigator/*server-pretty (e/server (assoc navigator/*server-pretty datomic.query.EntityMap (fn [em] (str "datomic.query.EntityMap" (pr-str em)))))
+            #_#_navigator/Timing (e/fn [label f] (dustingetz.loader/Offload f {:label label}))] ; enable long-running queries monitoring
     (dom/style (dom/text css))
-    (let [sitemap eb/*sitemap]
+    (let [sitemap navigator/*sitemap]
       (dom/style (dom/text css))
       (Index sitemap)
-      (eb/HfqlRoot sitemap `[(clojure-all-ns)]))))
+      (navigator/HfqlRoot sitemap `[(clojure-all-ns)]))))
 
 
 (def css "
@@ -149,8 +149,8 @@ html { scrollbar-gutter: stable; } /* prevent layout jump when scrollbar shows/h
 .Browser fieldset.entity table { grid-template-columns: 20em auto; }
 
 /* Explicit table height - there are alternatives */
-.Browser fieldset.hyperfiddle-entity-browser4__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
-.Browser fieldset.hyperfiddle-entity-browser4__block { height: fit-content; }
+.Browser fieldset.hyperfiddle-navigator4__block table { height: calc(16 * var(--row-height)); } /* 15 rows + header row */
+.Browser fieldset.hyperfiddle-navigator4__block { height: fit-content; }
 
 
 ")
