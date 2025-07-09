@@ -122,7 +122,7 @@
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))))
 
 #?(:clj (def sitemap-path "dustingetz/object_browser_demo3.edn"))
-#?(:clj (def sitemap (sitemap/read-sitemap *ns* sitemap-path)))
+#?(:clj (def sitemap (sitemap/read-sitemap (ns-name *ns*) sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 
 (declare css)
