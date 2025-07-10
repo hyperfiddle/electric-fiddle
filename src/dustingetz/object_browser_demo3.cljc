@@ -13,7 +13,6 @@
             #?(:clj [dustingetz.datafy-jvm2])
             #?(:clj [clojure.java.io])
             #?(:clj [dustingetz.datafy-fs :as fs])
-            #?(:clj dustingetz.datafy-clj)
             #?(:clj dustingetz.mbrainz)
             #?(:clj dustingetz.pg-sakila)
             [clojure.core.protocols :as ccp]
@@ -32,27 +31,6 @@
 
 (e/defn File [file-path]
   (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))
-
-;;;;;;;;
-;; NS ;;
-;;;;;;;;
-
-#?(:clj (defn clojure-all-ns [] (vec (sort-by ns-name (all-ns)))))
-
-#?(:clj (defn ns-doc [ns] (-> ns meta :doc)))
-#?(:clj (defn ns-publics* [_] '...))
-#?(:clj (defn public-vars [ns$] (->> ns$ find-ns ns-publics vals (sort-by symbol))))
-#?(:clj (defn var-detail [var$] (resolve var$)))
-
-(comment
-  (public-vars 'clojure.core)
-  (public-vars (find-ns 'clojure.core)))
-
-(e/defn Clojure-ns-vars [sym] (e/server (public-vars sym)))
-#?(:clj (defn var-name [vr] (-> vr symbol name symbol)))
-#?(:clj (defn var-doc [vr] (-> vr meta :doc)))
-#?(:clj (defn var-macro? [vr] (.isMacro ^clojure.lang.Var vr)))
-#?(:clj (defn var-arglists [vr] (->> vr meta :arglists (str/join " ") symbol))) ; lol
 
 ;;;;;;;;;;;;;
 ;; THREADS ;;
@@ -112,7 +90,6 @@
   (e/client
     (dom/props {:class "Index"})
     (dom/text "Nav: ")
-    (r/link ['. [[`clojure-all-ns]]] (dom/text "clojure.core"))
     (r/link ['. [[`dustingetz.datafy-git2/load-repo git-repo-path]]] (dom/text "git"))
     (r/link ['. [['clojure.java.io/file "./"]]] (dom/text "file"))
     (r/link ['. [[`thread-mx]]] (dom/text "thread-mx"))
@@ -127,20 +104,18 @@
 
 (declare css)
 
-#?(:clj (defn route-ns [o] (when (instance? clojure.lang.Namespace o) (list `find-ns (ns-name o))))) ; page affinity
-
 (e/defn ObjectBrowserDemo3 []
   (binding [e/*bindings* {}
             navigator/*sitemap (e/server sitemap)
             navigator/*sitemap-writer (e/server (sitemap-writer sitemap-path))
-            navigator/*page-defaults (e/server [route-ns])
+            #_#_navigator/*page-defaults (e/server [])
             navigator/*server-pretty (e/server (assoc navigator/*server-pretty datomic.query.EntityMap (fn [em] (str "datomic.query.EntityMap" (pr-str em)))))
             #_#_navigator/Timing (e/fn [label f] (dustingetz.loader/Offload f {:label label}))] ; enable long-running queries monitoring
     (dom/style (dom/text css))
     (let [sitemap navigator/*sitemap]
       (dom/style (dom/text css))
       (Index sitemap)
-      (navigator/HfqlRoot sitemap `[(clojure-all-ns)]))))
+      (navigator/HfqlRoot sitemap `[(clojure.java.io/file ".")]))))
 
 
 (def css "

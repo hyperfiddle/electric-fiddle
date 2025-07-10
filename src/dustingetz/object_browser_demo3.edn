@@ -1,18 +1,4 @@
 {
-;;;;;;;;;;;;;;;;
- ;; ns browser ;;
-;;;;;;;;;;;;;;;;
- clojure-all-ns (hfql/props [ns-name ns-doc]
-                  {::hfql/select (find-ns %)})
- find-ns [ns-name
-          ns-doc
-          meta                          ; nav to TreeView
-          (hfql/props ns-publics* {::hfql/select (public-vars %)})
-          ns-imports
-          ns-interns]
- public-vars (hfql/props [var-name var-doc]
-               {::hfql/select (var-detail %)})
- var-detail [var-name var-doc meta var-macro? var-arglists]
 
 ;;;;;;;;;;;;;;
  ;; threadmx ;;
