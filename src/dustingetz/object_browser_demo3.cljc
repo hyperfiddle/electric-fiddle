@@ -8,7 +8,6 @@
             [contrib.assert :as ca]
             #?(:clj [datomic.api :as d])
             [hyperfiddle.navigator4 :as navigator]
-            [hyperfiddle.sitemap :as sitemap]
             #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj [dustingetz.datafy-jvm2])
             #?(:clj [clojure.java.io])
@@ -99,7 +98,7 @@
     (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))))
 
 #?(:clj (def sitemap-path "dustingetz/object_browser_demo3.edn"))
-#?(:clj (def sitemap (sitemap/read-sitemap (ns-name *ns*) sitemap-path)))
+#?(:clj (def sitemap (hfql/read-sitemap (ns-name *ns*) sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
 
 (declare css)
