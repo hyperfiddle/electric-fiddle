@@ -85,18 +85,6 @@
    (try (dustingetz.datafy-git2/load-repo git-repo-path) ; memoized
         (catch Throwable _ (log/debug "Failed to preload git repo."))))
 
-(e/defn Index [_sitemap]
-  (e/client
-    (dom/props {:class "Index"})
-    (dom/text "Nav: ")
-    (r/link ['. [[`dustingetz.datafy-git2/load-repo git-repo-path]]] (dom/text "git"))
-    (r/link ['. [['clojure.java.io/file "./"]]] (dom/text "file"))
-    (r/link ['. [[`thread-mx]]] (dom/text "thread-mx"))
-    (r/link ['. [[`sakila]]] (dom/text "Sakila"))
-    (r/link ['. [[`datomic-entity dustingetz.mbrainz/lennon]]] (dom/text "datomic"))
-    #_(r/link ['. [[`Thread_ 0]]] (dom/text "Thread 0"))
-    (r/link ['. [[`class-view 'java.lang.management.ThreadMXBean]]] (dom/text "class"))))
-
 #?(:clj (def sitemap-path "dustingetz/object_browser_demo3.edn"))
 #?(:clj (def sitemap (hfql/read-sitemap (ns-name *ns*) sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
@@ -113,8 +101,9 @@
     (dom/style (dom/text css))
     (let [sitemap navigator/*sitemap]
       (dom/style (dom/text css))
-      (Index sitemap)
-      (navigator/HfqlRoot sitemap `[(clojure.java.io/file ".")]))))
+      (navigator/HfqlRoot sitemap `[(clojure.java.io/file ".")
+                                    (dustingetz.datafy-git2/load-repo ~git-repo-path)
+                                    (datomic-entity ~dustingetz.mbrainz/lennon)]))))
 
 
 (def css "
