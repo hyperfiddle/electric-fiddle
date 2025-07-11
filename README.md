@@ -1,6 +1,6 @@
 # Hyperfiddle demos repo — Electric Fiddle
 
-This is an **internal playground repo** where we host a lot of our demos, live examples, and little snippets. In its current form it's not intended for public use, but we leave it published so we can link to the source code of certain demos when we need to.
+This is an **internal playground repo** where we host a lot of our demos, live examples, and little snippets and deploy them to prod. In its current form it's **not intended for public use**. We only leave it published so we can link to the source code of certain demos when we need to.
 
 For a minimalist Electric starter repo, see https://gitlab.com/hyperfiddle/electric3-starter-app.
 
