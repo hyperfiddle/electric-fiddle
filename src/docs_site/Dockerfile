@@ -1,13 +1,13 @@
 # run from from monorepo root so that build context contains:
 # - .git : for object browser demo
-# - hyperfiddle-starter-app2: for datomic mbrainz setup
+# - datomic-browser: for datomic mbrainz setup
 # e.g. docker build -f electric-fiddle/src/docs_site/Dockerfile --build-arg VERSION=$(git rev-parse HEAD) ... 
 
 FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS datomic-fixtures
 WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
-COPY hyperfiddle-starter-app2/datomic_fixtures.sh datomic_fixtures.sh
-COPY hyperfiddle-starter-app2/datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
+COPY datomic-browser/datomic_fixtures.sh datomic_fixtures.sh
+COPY datomic-browser/datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
 # RUN ./datomic_fixtures.sh
 RUN ./datomic_fixtures_mbrainz_full.sh
 # Shaves 3Gb+ of docker image
@@ -60,7 +60,7 @@ RUN echo -e "/state/" > .gitignore
 
 # Add app
 COPY --from=build /app/target/app.jar app.jar
-COPY hyperfiddle-starter-app2/run_datomic.sh run_datomic.sh
+COPY datomic-browser/run_datomic.sh run_datomic.sh
 
 EXPOSE 8080
 # CMD ./run_datomic.sh && java -Dhyperfiddle.datomic.uri="datomic:dev://localhost:4334/mbrainz-1968-1973" -cp app.jar clojure.main -m prod

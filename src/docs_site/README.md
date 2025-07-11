@@ -20,6 +20,14 @@ docker build \
 
 docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
+# with sakila db, from monorepo root
+docker compose \
+-f compose.yml \
+build \
+--build-arg HYPERFIDDLE_FIDDLE_NS=docs-site.sitemap \
+--build-arg HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial \
+--build-arg VERSION=$(git rev-parse HEAD)
+
 # fly deploy, from monorepo root
 fly deploy --remote-only --config electric-fiddle/src/docs_site/fly.toml --dockerfile electric-fiddle/src/docs_site/Dockerfile --build-arg VERSION=$(git rev-parse HEAD)
 fly status

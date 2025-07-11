@@ -3,6 +3,10 @@ kill_signal = "SIGINT"
 kill_timeout = 5
 primary_region = "ewr"
 
+
+[build]
+compose.file = 'compose_docs_site.yml'
+
 [build.args]
   HYPERFIDDLE_FIDDLE_NS="docs-site.sitemap"
   HYPERFIDDLE_FIDDLE_DEPS_ALIAS="electric-tutorial"
