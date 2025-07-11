@@ -33,7 +33,7 @@
                      (electric-ring/wrap-electric-websocket ; 2. install Electric server.
                        (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))) ; boot server-side Electric process
                      (wrap-params)) ; 1. boilerplate – parse request URL parameters.
-                   {:host "localhost", :port 8080, :join? false
+                   {:host "0.0.0.0", :port 8080, :join? false
                     :configurator (fn [server] ; tune jetty
                                     (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
                                       (.getHandler server)
@@ -42,7 +42,7 @@
                                           (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60))
                                           (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024)) ; typical compressed message size is of a few KBs. Set to 100M for demo.
                                           (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))))}))  ; 100M - for demo.
-     (log/info "👉 http://localhost:8080")))
+     (log/info "👉 http://0.0.0.0:8080")))
 
 (declare browser-process)
 #?(:cljs ; client entrypoint
