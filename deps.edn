@@ -119,7 +119,7 @@
 
   :private
   {:override-deps {com.hyperfiddle/electric {:local/root "../electric"}
-                   com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}
+                   com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"} ; clj -X:deps prep :aliases "[:private]"
                    com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}
                    com.hyperfiddle/electric-secret {:local/root "../electric-secret"}
                    com.hyperfiddle/hfql {:local/root "../hfql"}
