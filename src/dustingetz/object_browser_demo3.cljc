@@ -93,17 +93,15 @@
 
 (e/defn ObjectBrowserDemo3 []
   (binding [e/*bindings* {}
-            navigator/*sitemap (e/server sitemap)
             navigator/*sitemap-writer (e/server (sitemap-writer sitemap-path))
             #_#_navigator/*page-defaults (e/server [])
             navigator/*server-pretty (e/server (assoc navigator/*server-pretty datomic.query.EntityMap (fn [em] (str "datomic.query.EntityMap" (pr-str em)))))
             #_#_navigator/Timing (e/fn [label f] (dustingetz.loader/Offload f {:label label}))] ; enable long-running queries monitoring
     (dom/style (dom/text css))
-    (let [sitemap navigator/*sitemap]
-      (dom/style (dom/text css))
-      (navigator/HfqlRoot sitemap `[(clojure.java.io/file ".")
-                                    (dustingetz.datafy-git2/load-repo ~git-repo-path)
-                                    (datomic-entity ~dustingetz.mbrainz/lennon)]))))
+    (navigator/HfqlRoot (e/server sitemap)
+      `[(clojure.java.io/file ".")
+        (dustingetz.datafy-git2/load-repo ~git-repo-path)
+        (datomic-entity ~dustingetz.mbrainz/lennon)])))
 
 
 (def css "
