@@ -3,6 +3,7 @@
     dustingetz.nav-jar
     dustingetz.nav-jvm
     dustingetz.nav-git
+    dustingetz.nav-hn
     [hyperfiddle.electric3 :as e]
     [hyperfiddle.electric-dom3 :as dom]
     [hyperfiddle.navigator4 :refer [HfqlRoot]]))
@@ -18,5 +19,7 @@
       (e/server (merge ; for hot reload, don't externalize a def
                   dustingetz.nav-jar/sitemap
                   dustingetz.nav-jvm/sitemap
-                  dustingetz.nav-git/sitemap))
+                  dustingetz.nav-git/sitemap
+                  dustingetz.nav-hn/sitemap
+                  ))
       index)))
