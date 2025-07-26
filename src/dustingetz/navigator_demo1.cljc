@@ -1,5 +1,6 @@
 (ns dustingetz.navigator-demo1
   (:require
+    dustingetz.nav-jar
     dustingetz.nav-jvm
     dustingetz.nav-git
     [hyperfiddle.electric3 :as e]
@@ -15,6 +16,7 @@
     (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser.css"})) ; TODO remove
     (HfqlRoot
       (e/server (merge ; for hot reload, don't externalize a def
+                  dustingetz.nav-jar/sitemap
                   dustingetz.nav-jvm/sitemap
                   dustingetz.nav-git/sitemap))
       index)))
