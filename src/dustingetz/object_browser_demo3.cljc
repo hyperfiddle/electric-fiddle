@@ -8,7 +8,6 @@
             [contrib.assert :as ca]
             #?(:clj [datomic.api :as d])
             [hyperfiddle.navigator4 :as navigator]
-            #?(:clj [dustingetz.datafy-git2 :as git])
             #?(:clj [dustingetz.datafy-jvm2])
             #?(:clj [clojure.java.io])
             #?(:clj [dustingetz.datafy-fs :as fs])
@@ -24,9 +23,6 @@
             [hyperfiddle.router4 :as r]
             #_[dustingetz.loader]
             #?(:clj [clojure.tools.logging :as log])))
-
-(e/defn GitRepo [repo-path]
-  (e/server (dustingetz.datafy-git2/load-repo repo-path)))
 
 (e/defn File [file-path]
   (e/server (clojure.java.io/file (dustingetz.datafy-fs/absolute-path file-path))))
@@ -78,13 +74,6 @@
 
 (e/defn Tap [])
 
-#?(:clj (defn file-exists? [path] (.exists (clojure.java.io/file path))))
-#?(:clj (def git-repo-path (first (filter file-exists? ["./.git" "../.git"]))))
-
-#?(:clj ;; preload git repo on jvm start to speed up prod. May fail harmlessly on local machines.
-   (try (dustingetz.datafy-git2/load-repo git-repo-path) ; memoized
-        (catch Throwable _ (log/debug "Failed to preload git repo."))))
-
 #?(:clj (def sitemap-path "dustingetz/object_browser_demo3.edn"))
 #?(:clj (def sitemap (hfql/read-sitemap (ns-name *ns*) sitemap-path)))
 #?(:clj (defn sitemap-writer [file-path] (fn [v] (spit file-path (strx/pprint-str v)))))
@@ -100,7 +89,6 @@
     (dom/style (dom/text css))
     (navigator/HfqlRoot (e/server sitemap)
       `[(clojure.java.io/file ".")
-        (dustingetz.datafy-git2/load-repo ~git-repo-path)
         (datomic-entity ~dustingetz.mbrainz/lennon)])))
 
 

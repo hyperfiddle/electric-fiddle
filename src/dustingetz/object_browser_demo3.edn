@@ -27,11 +27,6 @@
 
  thread-stack-trace [.getClassName .getMethodName .getLineNumber]
 
-;;;;;;;;;
- ;; git ;;
-;;;;;;;;;
-
- dustingetz.datafy-git2/load-repo []
 
 ;;;;;;;;;;;;;;
  ;; datomic  ;;
