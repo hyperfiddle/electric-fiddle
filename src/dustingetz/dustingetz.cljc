@@ -6,6 +6,7 @@
             [dustingetz.metaobject :refer [DemoMetaobject]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
+            [dustingetz.navigator-demo1 :refer [NavigatorDemo1]]
             [dustingetz.painter :refer [Painter]]
             [dustingetz.y-fac :refer [Y-Fac]]
             [dustingetz.y-dir :refer [Y-dir]]
@@ -17,6 +18,7 @@
 
 (e/defn Fiddles []
   (merge
+    {`NavigatorDemo1 NavigatorDemo1}
     {`TwoClocks TwoClocks
      `DirTree DirTree
      `WebviewConcrete WebviewConcrete
