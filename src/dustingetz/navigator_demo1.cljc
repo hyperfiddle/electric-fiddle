@@ -4,6 +4,7 @@
     dustingetz.nav-jvm
     dustingetz.nav-git
     dustingetz.nav-hn
+    dustingetz.nav-aws
     [hyperfiddle.electric3 :as e]
     [hyperfiddle.electric-dom3 :as dom]
     [hyperfiddle.navigator4 :refer [HfqlRoot]]))
@@ -21,5 +22,6 @@
                   dustingetz.nav-jvm/sitemap
                   dustingetz.nav-git/sitemap
                   dustingetz.nav-hn/sitemap
+                  dustingetz.nav-aws/sitemap
                   ))
       index)))
