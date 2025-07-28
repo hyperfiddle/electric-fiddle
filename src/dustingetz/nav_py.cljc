@@ -1,5 +1,4 @@
-(ns ^{:hyperfiddle.electric.impl.lang3/has-edef? true} ; enable server hot reloading
-  dustingetz.nav-py
+(ns dustingetz.nav-py
   (:require
     [contrib.assert :refer [check]]
     #_dustingetz.pyhf ; see also

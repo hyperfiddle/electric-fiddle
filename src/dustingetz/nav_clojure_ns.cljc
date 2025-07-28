@@ -1,5 +1,4 @@
-(ns ^{:hyperfiddle.electric.impl.lang3/has-edef? true} ; enable server hot reloading
-  dustingetz.nav-clojure-ns
+(ns dustingetz.nav-clojure-ns
   (:require #?(:clj [dustingetz.codeq-model :as q])
             [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]))
 

@@ -1,5 +1,4 @@
-(ns ^{:hyperfiddle.electric.impl.lang3/has-edef? true} ; enable server hot reloading
-  dustingetz.nav-jvm
+(ns dustingetz.nav-jvm
   #?(:clj (:import com.sun.management.ThreadMXBean
                    java.lang.management.ManagementFactory
                    java.lang.management.MemoryMXBean

@@ -1,5 +1,4 @@
-(ns ^{:hyperfiddle.electric.impl.lang3/has-edef? true} ; enable server hot reloading
-  dustingetz.nav-hn
+(ns dustingetz.nav-hn
   (:require
     #?(:clj [clj-http.client :as http])
     [contrib.data :refer [auto-props]]

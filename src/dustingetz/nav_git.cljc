@@ -1,5 +1,4 @@
-(ns ^{:hyperfiddle.electric.impl.lang3/has-edef? true} ; enable server hot reloading
-  dustingetz.nav-git
+(ns dustingetz.nav-git
   #?(:clj (:import (org.eclipse.jgit.api Git)
                    (org.eclipse.jgit.internal.storage.file FileRepository)
                    (org.eclipse.jgit.revwalk RevCommit)

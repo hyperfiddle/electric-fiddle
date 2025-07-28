@@ -1,5 +1,4 @@
-(ns ^{:hyperfiddle.electric.impl.lang3/has-edef? true} ; enable server hot reloading
-  dustingetz.nav-aws
+(ns dustingetz.nav-aws
   ;#?(:clj (:import (cognitect.aws.client.impl Client))) - really struggling to import this deftype as a class
   (:require
     #?(:clj [cognitect.aws.client.api :as aws])

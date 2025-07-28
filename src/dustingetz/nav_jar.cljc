@@ -1,5 +1,4 @@
-(ns ^{:hyperfiddle.electric.impl.lang3/has-edef? true} ; enable server hot reloading
-  dustingetz.nav-jar
+(ns dustingetz.nav-jar
   #?(:clj (:import [java.util.jar JarFile JarEntry]))
   (:require
     #?(:clj [dustingetz.fs2 :refer [path-filename]])
