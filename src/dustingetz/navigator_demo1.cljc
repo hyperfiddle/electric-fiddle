@@ -7,6 +7,7 @@
     dustingetz.nav-aws
     #_dustingetz.nav-py
     dustingetz.nav-clojure-ns
+    dustingetz.nav-auth0
     [hyperfiddle.electric3 :as e]
     [hyperfiddle.electric-dom3 :as dom]
     [hyperfiddle.navigator4 :refer [HfqlRoot]]))
@@ -27,5 +28,6 @@
                   dustingetz.nav-aws/sitemap
                   #_dustingetz.nav-py/sitemap
                   dustingetz.nav-clojure-ns/sitemap
+                  dustingetz.nav-auth0/sitemap
                   ))
       index)))
