@@ -109,6 +109,7 @@
     org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
     clj-jgit/clj-jgit {:mvn/version "1.0.2"}
     clj-http/clj-http {:mvn/version "3.12.3"}
+    com.squareup.okhttp3/okhttp {:mvn/version "4.11.0"} ; brings in kotlin
     com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"}
     org.postgresql/postgresql {:mvn/version "42.7.3"}
     #_#_com.datomic/peer {:mvn/version "1.0.7075"}
