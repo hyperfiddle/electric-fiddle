@@ -130,7 +130,8 @@
    {clj-python/libpython-clj {:mvn/version "2.026"}
     com.discord4j/discord4j-core {:mvn/version "3.3.0-RC2"}
     com.pitch/uix.core {:mvn/version "1.0.1"}
-    com.pitch/uix.dom {:mvn/version "1.0.1"}}}
+    com.pitch/uix.dom {:mvn/version "1.0.1"}
+    com.twitter/twitter-api-java-sdk {:mvn/version "2.0.3"}}}
 
   :xtdb
   {:extra-deps
