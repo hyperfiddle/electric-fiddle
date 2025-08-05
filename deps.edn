@@ -127,7 +127,8 @@
                    com.hyperfiddle/rcf {:local/root "../rcf"}}
    :extra-paths ["../scratch/src" "../scratch/resources"]
    :extra-deps
-   {clj-python/libpython-clj {:mvn/version "2.026"}
+   {clj-kondo/clj-kondo {:mvn/version "2025.07.28"} ; navigator demo
+    clj-python/libpython-clj {:mvn/version "2.026"}
     com.discord4j/discord4j-core {:mvn/version "3.3.0-RC2"}
     com.pitch/uix.core {:mvn/version "1.0.1"}
     com.pitch/uix.dom {:mvn/version "1.0.1"}
