@@ -8,6 +8,7 @@
     #_dustingetz.nav-py
     dustingetz.nav-clojure-ns
     #?(:clj [dustingetz.nav-auth0 :as auth0])
+    #?(:clj [dustingetz.nav-deps :as deps])
     #?(:clj [dustingetz.nav-twitter :as twitter])
     #?(:clj [dustingetz.nav-kondo :as kondo])
     [hyperfiddle.electric3 :as e]
@@ -26,6 +27,8 @@
              twitter/tweets []
              twitter/users []
              kondo/kondo []
+             deps/deps-project []
+             deps/mvn []
              })))
 
 (e/defn NavigatorDemo1 []
