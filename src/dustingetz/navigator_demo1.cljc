@@ -1,12 +1,13 @@
 (ns dustingetz.navigator-demo1
   (:require
-    dustingetz.nav-jar
-    dustingetz.nav-jvm
-    dustingetz.nav-git
-    dustingetz.nav-hn
-    dustingetz.nav-aws
-    #_dustingetz.nav-py
-    dustingetz.nav-clojure-ns
+    #?(:clj [dustingetz.nav-jar :as jar])
+    #?(:clj [dustingetz.nav-jvm :as jvm])
+    #?(:clj [dustingetz.nav-git :as git])
+    #?(:clj [dustingetz.nav-hn :as hn])
+    #?(:clj [dustingetz.nav-aws :as aws])
+    ;#?(:clj [dustingetz.nav-py :as py]) ; works
+    #?(:clj [dustingetz.nav-clojure-ns :as cljns])
+    #?(:clj [dustingetz.codeq-model :as q])
     #?(:clj [dustingetz.nav-auth0 :as auth0])
     #?(:clj [dustingetz.nav-deps :as deps])
     #?(:clj [dustingetz.nav-twitter :as twitter])
@@ -17,18 +18,38 @@
     [hyperfiddle.navigator4 :refer [HfqlRoot]]))
 
 #?(:clj (def index
-          `[]))
+          `[(git/load-repo ~git/git-repo-path)]))
 
 #?(:clj (def sitemap
           (hfql/sitemap
-            {auth0/auth0 [auth0/users]
-             twitter/twitter [(hfql/props .tweets {::hfql/select (twitter/tweets %)})
-                              (hfql/props .users {::hfql/select (twitter/users %)})]
-             twitter/tweets []
-             twitter/users []
+            {all-ns (hfql/props [ns-name] {::hfql/select (cljns/ns-publics2 %)})
+             cljns/ns-publics2 [symbol]
              kondo/kondo []
              deps/deps-project []
-             deps/mvn []
+             deps/mvn [.getUrl .getContentType .getAuthentication]
+             jar/list-project-jars [jar/jar-filename]
+             git/load-repo []
+             ;q/list-ns-decls [] ; codeq - depends on special datomic database
+             ;q/list-var-codeqs []
+
+             jvm/getThreadMXBean [jvm/getAllThreads]
+             jvm/getMemoryMXBean []
+             jvm/getRuntimeMXBean []
+             jvm/getOperatingSystemMXBean []
+
+             auth0/auth0 [auth0/users]
+
+             twitter/twitter [(hfql/props .tweets {::hfql/select (twitter/tweets %)})
+                              (hfql/props .users {::hfql/select (twitter/users %)})]
+
+             ;hn/hn [type hn/topstories hn/beststories hn/newstories] ; works but very slow
+
+             aws/aws-s3-us-east [aws/list-buckets aws/aws-ops]
+
+             ;py/py-hello-world []
+             ;py/py-environ []
+             ;py/py-os [py/cpu-count py/dir]
+             ;py/py-platform [py/dir]
              })))
 
 (e/defn NavigatorDemo1 []
@@ -36,13 +57,5 @@
     (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
     (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser.css"})) ; TODO remove
     (HfqlRoot
-      (e/server (merge ; for hot reload, don't externalize a def
-                  dustingetz.nav-jar/sitemap
-                  dustingetz.nav-jvm/sitemap
-                  dustingetz.nav-git/sitemap
-                  dustingetz.nav-hn/sitemap
-                  dustingetz.nav-aws/sitemap
-                  #_dustingetz.nav-py/sitemap
-                  dustingetz.nav-clojure-ns/sitemap
-                  sitemap))
+      (e/server (merge sitemap))
       index)))
