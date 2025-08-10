@@ -12,6 +12,7 @@
     #?(:clj [dustingetz.nav-deps :as deps])
     #?(:clj [dustingetz.nav-twitter :as twitter])
     #?(:clj [dustingetz.nav-kondo :as kondo])
+    #?(:clj [dustingetz.nav-reddit :as reddit])
     [hyperfiddle.electric3 :as e]
     [hyperfiddle.electric-dom3 :as dom]
     [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
@@ -38,7 +39,8 @@
              jvm/getOperatingSystemMXBean []
 
              auth0/auth0 [auth0/users]
-
+             reddit/me [.getUsername .listMultis .karma .trophies .about .prefs]
+             reddit/me-about [.getName .getLinkKarma .getCommentKarma]
              twitter/twitter [(hfql/props .tweets {::hfql/select (twitter/tweets %)})
                               (hfql/props .users {::hfql/select (twitter/users %)})]
 

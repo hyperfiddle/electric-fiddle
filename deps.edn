@@ -130,6 +130,7 @@
    {clj-kondo/clj-kondo {:mvn/version "2025.07.28"} ; navigator demo
     clj-python/libpython-clj {:mvn/version "2.026"}
     com.discord4j/discord4j-core {:mvn/version "3.3.0-RC2"}
+    com.github.mattbdean/JRAW {:mvn/version "1.1.0"} ; https://github.com/mattbdean/JRAW
     com.pitch/uix.core {:mvn/version "1.0.1"}
     com.pitch/uix.dom {:mvn/version "1.0.1"}
     com.twitter/twitter-api-java-sdk {:mvn/version "2.0.3"}}}
@@ -168,4 +169,6 @@
   }
 
  :mvn/repos
- {"clojars" {:url "https://repo.clojars.org/" :snapshots {:enabled true :update :always}}}}
+ {"clojars" {:url "https://repo.clojars.org/" :snapshots {:enabled true :update :always}}
+  "jitpack" {:url "https://jitpack.io"} ; for https://github.com/mattbdean/JRAW
+  }}
