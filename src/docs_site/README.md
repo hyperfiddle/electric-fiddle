@@ -40,6 +40,8 @@ fly scale count 1 --region hkg
 fly platform vm-sizes
 fly machine restart --skip-health-checks=false
 
+fly ssh console --machine 683240dc795718 --container docs_site
+
 ```
 
 # Diagnose issues on a specific machine
