@@ -1,6 +1,7 @@
 (ns docs-site.sitemap
   (:require [hyperfiddle.electric3 :as e]
             [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
+            [electric-fiddle.fiddle :refer [Fiddle]]
             [electric-essay.tutorial-app :refer [Tutorial Examples]]
             [electric-essay.essay-app :refer [Essay]]
             [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
@@ -85,6 +86,7 @@
   (merge
     {'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
      'examples (e/Partial Examples tutorial-sitemap "src/electric_examples/")
+     'fiddle (e/Partial Fiddle tutorial-sitemap "src/electric_examples/")
      'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")
      'demos (e/fn [] (binding [electric-fiddle.fiddle-index/pages (ListedDemos)] (FiddleIndex)))
      'fiddles FiddleIndex}
