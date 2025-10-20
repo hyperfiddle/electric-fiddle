@@ -22,7 +22,7 @@ docker run --rm -it -p 8080:8080 electric-tutorial:latest
 
 # with sakila db, from monorepo root
 docker compose \
--f compose.yml \
+-f compose_docs_site.yml \
 build \
 --build-arg HYPERFIDDLE_FIDDLE_NS=docs-site.sitemap \
 --build-arg HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial \
@@ -41,6 +41,18 @@ fly platform vm-sizes
 fly machine restart --skip-health-checks=false
 
 fly ssh console --machine 683240dc795718 --container docs_site
+
+
+# fly deploy, docker image built locally, from monorepo root
+# use this if fly builder is not available or if remote build fails (e.g. timeout)
+flyctl auth docker
+docker tag electric-tutorial:latest registry.fly.io/dawn-night-7975:latest
+docker push registry.fly.io/dawn-night-7975:latest
+flyctl deploy \
+  --app dawn-night-7975 \
+  --image registry.fly.io/dawn-night-7975:latest \
+  --config electric-fiddle/src/docs_site/fly.toml \
+  --wait-timeout "10m0s"
 
 ```
 
