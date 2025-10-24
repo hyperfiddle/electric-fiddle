@@ -10,7 +10,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :refer [Input*]]
             [hyperfiddle.electric-scroll0 :refer [Scroll-window IndexRing]]
-            [hyperfiddle.router4 :as router]))
+            [hyperfiddle.router5 :as router]))
 
 (def unicode-folder "\uD83D\uDCC2") ; 📂
 (e/declare base-path)

@@ -7,7 +7,7 @@
             [hyperfiddle.electric3-contrib :refer [Tap]]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :refer [Checkbox*]]
-            [hyperfiddle.router4 :as router]
+            [hyperfiddle.router5 :as router]
             [hyperfiddle.rcf :refer [tests]]))
 
 (defn flatten-nested ; claude generated this trash, now superseded

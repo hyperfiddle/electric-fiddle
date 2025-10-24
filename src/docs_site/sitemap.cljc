@@ -22,7 +22,7 @@
             [electric-examples.http-request]
             [electric-examples.simple-form-controls]
             [electric-examples.simple-form]
-            [hyperfiddle.router4 :as r]
+            [hyperfiddle.router5 :as r]
             [hyperfiddle.router5 :as router5]
             [hyperfiddle.history4 :as history]
             staffly.staffly

@@ -4,7 +4,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :as forms :refer [Form! Input! Checkbox! RadioPicker! try-ok #_FormStatus]]
             [hyperfiddle.ui.typeahead3 :as t :refer [Typeahead!]]
-            [hyperfiddle.router4 :as r]
+            [hyperfiddle.router5 :as r]
             [staffly.staffly-model :as model]
             [clojure.string :as str]
             [hyperfiddle.ui.wizard3 :as wiz :refer [Wizard]]

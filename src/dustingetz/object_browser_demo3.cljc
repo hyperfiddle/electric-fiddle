@@ -20,7 +20,7 @@
             [electric-fiddle.fiddle-index :refer [pages]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]
+            [hyperfiddle.router5 :as r]
             #_[dustingetz.loader]
             #?(:clj [clojure.tools.logging :as log])))
 

@@ -6,7 +6,7 @@
             #?(:clj [electric-essay.read-src :refer [read-ns-src-unreliable read-var-src-safe]])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r] ; for userland
+            [hyperfiddle.router5 :as r] ; for userland
             [hyperfiddle.rcf :refer [tests]]
             #?(:clj [markdown.core :refer [md-to-html-string]])))
 

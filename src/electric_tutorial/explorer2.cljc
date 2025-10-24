@@ -10,7 +10,7 @@
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [dustingetz.treelister3 :refer [treelist]]
             [dustingetz.str :refer [includes-str?]]
-            [hyperfiddle.router4 :as router]
+            [hyperfiddle.router5 :as router]
             [leonoel.util :as lu])
   #?(:clj (:import (java.io File))))
 

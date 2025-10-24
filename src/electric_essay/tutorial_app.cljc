@@ -8,7 +8,7 @@
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-svg3 :as svg]
-            [hyperfiddle.router4 :as r]))
+            [hyperfiddle.router5 :as r]))
 
 (defn index-essay-index [essay-index]
   (->> essay-index

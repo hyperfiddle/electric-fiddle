@@ -6,7 +6,7 @@
             [electric-essay.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]))
+            [hyperfiddle.router5 :as r]))
 
 (e/defn Essay [sitemap essay-md-folder]
   (e/client

@@ -1,7 +1,7 @@
 (ns hello-fiddle.hello-fiddle
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]))
+            [hyperfiddle.router5 :as r]))
 
 (e/defn Scratch []
   (e/client

@@ -9,7 +9,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :as forms]
             [hyperfiddle.ui.typeahead :refer [Typeahead]]
-            [hyperfiddle.router4 :as r]
+            [hyperfiddle.router5 :as r]
             [staffly.staffly-model :as model]
             [staffly.utils :refer [Table]]))
 

@@ -4,7 +4,7 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
-            [hyperfiddle.router4 :as r]
+            [hyperfiddle.router5 :as r]
             [hyperfiddle.electric-forms5 :as forms]
             [dustingetz.loader :refer [Loader]]
             [staffly.staffly-model :as model]
