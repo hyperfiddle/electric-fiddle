@@ -3,6 +3,8 @@
             [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
             [electric-essay.tutorial-app :refer [Tutorial Examples]]
             [electric-essay.essay-app :refer [Essay]]
+            [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
+            [dustingetz.datomic-browser2 :as datomic-browser2]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
             [docs-site.blog.waveform0 :refer [Waveform0]]
@@ -20,7 +22,11 @@
             [electric-examples.http-request]
             [electric-examples.simple-form-controls]
             [electric-examples.simple-form]
-            staffly.staffly))
+            [hyperfiddle.router4 :as r]
+            [hyperfiddle.router5 :as router5]
+            [hyperfiddle.history4 :as history]
+            staffly.staffly
+            #?(:clj dustingetz.mbrainz)))
 
 (def blog-sitemap
   [["Blog"
@@ -43,7 +49,19 @@
     ))
 
 (e/defn ListedDemos []
-  {`Unifhir1 Unifhir1
+  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
+   `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
+   #_#_`datomic-browser.datomic-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect for readme @ https://github.com/hyperfiddle/electric-datomic-browser
+   `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (e/server datomic-browser-sitemap)
+                                        '[(dustingetz.datomic-browser/attributes)]
+                                        (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
+   `datomic-browser2/DatomicBrowser (e/fn []
+                                      (e/server (datomic-browser2/DatomicBrowser (e/server datomic-browser2/datomic-browser-sitemap)
+                                                  '[(dustingetz.datomic-browser2/attributes)]
+                                                  (datomic-browser2/ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
+
+
+   `Unifhir1 Unifhir1
    `DirectoryExplorer DirectoryExplorer})
 
 (e/defn TalkDemos-LC2025 [] ; works without :dustingetz alias
