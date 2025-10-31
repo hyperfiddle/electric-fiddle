@@ -1,6 +1,7 @@
 (ns electric-tutorial.two-clocks
-  (:require [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]))
+  (:require
+   [hyperfiddle.electric3 :as e]
+   [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn TwoClocks []
   (e/client

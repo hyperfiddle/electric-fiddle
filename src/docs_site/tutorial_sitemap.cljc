@@ -67,9 +67,9 @@
      'todomvc_composed
      ]]
    #_["Datagrids"
-    [#_`Typeahead
-     #_`VirtualScroll
-     #_`Datagrid]]
+      [#_`Typeahead
+       #_`VirtualScroll
+       #_`Datagrid]]
    ["HFQL" [#_`wip.teeshirt-orders/Webview-HFQL]]
    ["Misc"
     ['counter ; on-all, progress, serializable lambda. Oddball demo, todo improve
