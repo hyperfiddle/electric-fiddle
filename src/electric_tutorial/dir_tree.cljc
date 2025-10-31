@@ -1,8 +1,9 @@
 (ns electric-tutorial.dir-tree
-  (:require #?(:clj clojure.java.io)
-            [dustingetz.str :refer [includes-str?]]
-            [hyperfiddle.electric3 :as e]
-            [hyperfiddle.electric-dom3 :as dom]))
+  (:require
+    #?(:clj clojure.java.io)
+    [dustingetz.str :refer [includes-str?]]
+    [hyperfiddle.electric3 :as e]
+    [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Dir-tree* [handle search]
   (e/server
@@ -21,6 +22,6 @@
 (e/defn DirTree []
   (e/client
     (let [search (dom/input (dom/On "input" #(-> % .-target .-value) ""))
-          handle (e/server (clojure.java.io/file "src/docs_site"))]
+          handle (e/server (clojure.java.io/file "./src"))]
       (dom/ul
         (Dir-tree* handle search)))))
