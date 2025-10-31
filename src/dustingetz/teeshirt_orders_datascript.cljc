@@ -1,8 +1,9 @@
 (ns dustingetz.teeshirt-orders-datascript
-  (:require dustingetz.str
-            [datascript.core :as d]
-            [datascript.impl.entity :refer [entity?]]
-            [hyperfiddle.rcf :refer [tests % tap]]))
+  (:require
+   [clojure.math :refer [pow]]
+   [datascript.core :as d]
+   [dustingetz.str :refer [abc-seq]]
+   [hyperfiddle.rcf :refer [tests]]))
 
 (def schema ; user orders a tee-shirt which has gender, shirt-size
   {:order/email      {#_#_:db/valueType :db.type/string, :db/cardinality :db.cardinality/one, :db/unique :db.unique/identity}
@@ -24,8 +25,16 @@
    {:db/id 8 :order/type :order/shirt-size :db/ident :order/womens-large :order/gender :order/female}])
 (def fixtures-alice-bob-charlie
   [{:db/id 9,  :order/email "alice@example.com",   :order/gender :order/female,  :order/shirt-size :order/womens-large, :order/tags  [:a :b :c]}
-   {:db/id 10, :order/email "bob@example.com",     :order/gender :order/male,    :order/shirt-size :order/mens-large,   :order/tags  [:b]}
+   {:db/id 10, :order/email "bobby@example.com",     :order/gender :order/male,    :order/shirt-size :order/mens-large,   :order/tags  [:b]}
    {:db/id 11, :order/email "charlie@example.com", :order/gender :order/male,    :order/shirt-size :order/mens-medium}])
+
+(declare shirt-sizes)
+(defn fixtures-abc-seq [db]
+  (map (fn [email n]
+         (let [gender (rand-nth [:order/male :order/female]) size (rand-nth (shirt-sizes db gender ""))]
+           {:db/id n, :order/email (str email "@example.com") :order/gender gender :order/shirt-size size}))
+    (abc-seq 3 (pow 26 3)) ;; aaa through zzz
+    (range 12 (+ 12 (pow 26 3)))))
 
 (def male    1 #_:order/male   #_17592186045418)
 (def female  2 #_:order/female #_17592186045419)
@@ -43,6 +52,7 @@
                         @(d/transact conn fixtures-genders)
                         @(d/transact conn fixtures-shirt-sizes)
                         @(d/transact conn fixtures-alice-bob-charlie)
+                        @(d/transact conn (fixtures-abc-seq (d/db conn)))
                         conn)))
 
 (def test-db (delay @@test-conn))
@@ -61,11 +71,12 @@
         db (or ?email-search "")))))
 
 (tests
-  (teeshirt-orders @test-db "bob") := [10]
-  (teeshirt-orders @test-db "" [:order/email]) := [9 10 11]
-  (teeshirt-orders @test-db "" [:db/id]) := [9 10 11]
-  (teeshirt-orders @test-db "" [:order/shirt-size :db/ident]) := [10 11 9]
-  (teeshirt-orders @test-db "" [:order/gender :db/ident]) := [9 10 11])
+  (:db/id (nth (fixtures-abc-seq (ensure-db!)) 300)) := 312
+  (:order/email (nth (fixtures-abc-seq (ensure-db!)) 300)) := "alo@example.com"
+  (teeshirt-orders @test-db "bobby") := [10]
+  (count (teeshirt-orders @test-db "" [:order/email])) := 17579
+  (teeshirt-orders @test-db "" [:db/id]) := (range 9 17588)
+  )
 
 (defn genders
   ([db] (genders db nil))
