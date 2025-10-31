@@ -1,9 +1,10 @@
 (ns electric-tutorial.typeahead
   (:require
-    [dustingetz.str :refer [includes-str? abc-seq]]
-    [hyperfiddle.electric-scroll0 :refer [Raster]]
-    [hyperfiddle.electric3 :as e]
-    [hyperfiddle.electric-dom3 :as dom]))
+   [clojure.math :refer [pow]]
+   [dustingetz.str :refer [includes-str? abc-seq]]
+   [hyperfiddle.electric-scroll0 :refer [Raster]]
+   [hyperfiddle.electric3 :as e]
+   [hyperfiddle.electric-dom3 :as dom]))
 
 (e/defn Typeahead [v-id options-fn-S Option-label]
   (e/client
@@ -22,7 +23,7 @@
         (when is-open
           (let [xs! (e/server (e/Offload (partial options-fn-S search)))]
             (dom/ul
-              (e/for [i (Raster 0 20)] ; no virtual scroll - typeahead UX is filter biased
+              (e/for [i (Raster 0 15)] ; no virtual scroll - typeahead UX is filter biased
                 (when-some [x (e/server (nth xs! i nil))]
                   (dom/li (e/server (Option-label x))
                     (dom/On "click" (fn [e] (doto e (.stopPropagation) (.preventDefault))
@@ -34,7 +35,7 @@
 (declare css)
 (e/defn TypeaheadDemo []
   (dom/style (dom/text css))
-  (let [xs! (e/server (abc-seq 3 17576)) ;; from "aaa" to "zzz"
+  (let [xs! (e/server (abc-seq 3 (pow 26 3))) ;; from "aaa" to "zzz"
         x (Typeahead ""
             (e/server (fn options [search] (filter #(includes-str? % search) xs!)))
             (e/fn Option-label [x] (dom/text (e/server (str x)))))]
@@ -43,8 +44,8 @@
 (def css "
 /* layout */
 .Typeahead { position: relative; }
-.Typeahead ul { position: absolute; max-height: 200px; overflow: hidden; }
+.Typeahead ul { position: absolute; overflow: hidden; }
  /* cosmetic */
 .Typeahead ul { background: white; border: 1px solid #ccc; list-style: none; padding: 0; }
-.Typeahead li { padding: 8px; cursor: pointer; }
-.Typeahead li:hover { background: #f5f5f5; }")
+.Typeahead li { padding: 2px 6px; cursor: pointer; }
+.Typeahead li:hover { background: #ddd; }")
