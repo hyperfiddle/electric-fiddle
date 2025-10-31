@@ -84,13 +84,13 @@
 
 (e/defn Fiddles []
   (merge
-    {'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
-     'examples (e/Partial Examples tutorial-sitemap "src/electric_examples/")
+    {#_#_'tutorial (e/Partial Tutorial tutorial-sitemap "src/electric_tutorial/")
+     #_#_'examples (e/Partial Examples tutorial-sitemap "src/electric_examples/")
      'fiddle (e/Partial Fiddle tutorial-sitemap "src/electric_examples/")
-     'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")
-     'demos (e/fn [] (binding [electric-fiddle.fiddle-index/pages (ListedDemos)] (FiddleIndex)))
+     #_#_'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")
+     #_#_'demos (e/fn [] (binding [electric-fiddle.fiddle-index/pages (ListedDemos)] (FiddleIndex)))
      'fiddles FiddleIndex}
-    (TutorialFiddles)
+    (TutorialFiddles) ; it's a google doc now
     (BlogFiddles)
     (ListedDemos)
     (SecretDemos)
@@ -101,4 +101,4 @@
 (e/defn ProdMain [ring-req]
   ; keep /tutorial/ in the URL
   (FiddleMain ring-req (Fiddles)
-    :default '(tutorial)))
+    #_#_:default '(tutorial))) ; todo electric kwargs don't pass all the way down
