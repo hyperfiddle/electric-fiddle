@@ -8,7 +8,7 @@ For a minimalist Electric starter repo, see https://gitlab.com/hyperfiddle/elect
 
 ```sh
 npm install
-#clj -X:deps prep :aliases "[:private]"   # for private monorepo only
+#clj -X:deps prep :aliases "[:private]" :force true # for private monorepo only
 clj -A:dev:private:electric-tutorial:dustingetz -X dev/-main
 ...
 [:dev] Compiling ...
