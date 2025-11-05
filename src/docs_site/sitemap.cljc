@@ -49,6 +49,8 @@
     (staffly.staffly/Fiddles)
     ))
 
+#?(:clj (defn get-datomic-uri [] (or (System/getProperty "hyperfiddle.datomic.uri") dustingetz.mbrainz/mbrainz-lite-uri)))
+
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
    `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
