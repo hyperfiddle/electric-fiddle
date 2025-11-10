@@ -27,7 +27,7 @@
             [hyperfiddle.router5 :as router5]
             [hyperfiddle.history4 :as history]
             staffly.staffly
-            #?(:clj dustingetz.mbrainz)))
+            #?(:clj [dustingetz.mbrainz :refer [mbrainz-uri!]])))
 
 (def blog-sitemap
   [["Blog"
@@ -49,7 +49,7 @@
     (staffly.staffly/Fiddles)
     ))
 
-#?(:clj (defn get-datomic-uri [] (or (System/getProperty "hyperfiddle.datomic.uri") dustingetz.mbrainz/mbrainz-lite-uri)))
+#?(:clj (defn get-datomic-uri [] (or (System/getProperty "hyperfiddle.datomic.uri") (mbrainz-uri!))))
 
 (e/defn ListedDemos []
   {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
