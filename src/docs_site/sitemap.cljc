@@ -60,7 +60,7 @@
                                         (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
    `datomic-browser2/DatomicBrowser (e/fn []
                                       (e/server (datomic-browser2/DatomicBrowser (e/server datomic-browser2/datomic-browser-sitemap)
-                                                  '[(dustingetz.datomic-browser2/attributes)]
+                                                  ['attributes]
                                                   (datomic-browser2/ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
 
 
