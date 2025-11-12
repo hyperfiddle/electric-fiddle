@@ -1,6 +1,6 @@
-{:deps  {com.hyperfiddle/electric       {:mvn/version "v3-alpha-47b55e68"}
-         com.hyperfiddle/hyperfiddle    {:mvn/version "v0-alpha-47b55e68"}
-         com.hyperfiddle/hyperfiddle-contrib {:mvn/version "v0-alpha-47b55e68"}
+{:deps  {com.hyperfiddle/electric       {:mvn/version "v3-alpha-00120400"}
+         com.hyperfiddle/hyperfiddle    {:mvn/version "v0-alpha-00120400"}
+         com.hyperfiddle/hyperfiddle-contrib {:mvn/version "v0-alpha-00120400"}
          com.hyperfiddle/rcf            {:git/url "https://github.com/hyperfiddle/rcf" :git/sha "7105b43231140de6f2f39ce38611c9f6c9dfc976"}
          org.clojure/clojure            {:mvn/version "1.12.0"}
          org.clojure/clojurescript      {:mvn/version "1.11.121"}
