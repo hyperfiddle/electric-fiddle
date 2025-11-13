@@ -9,6 +9,7 @@
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
    #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   #?(:cljs [hyperfiddle.electric-client3 :as electric-client])
 
    #?(:clj clojure.edn)
    #?(:clj clojure.java.io)
@@ -60,7 +61,8 @@
 #?(:cljs ; client entrypoint
    (defn ^:export -main []
      ;; client-side electric process boot happens here
-     ((electric-starter-app.main/electric-boot nil)  ; boot client-side Electric process
+     ((electric-client/reload-when-stale ; hard-reload the page to fetch new assets when a new server version is deployed
+        (electric-starter-app.main/electric-boot nil))  ; boot client-side Electric process
       #(js/console.log "Reactor success:" %)
       #(js/console.error "Reactor failure:" %))))
 
