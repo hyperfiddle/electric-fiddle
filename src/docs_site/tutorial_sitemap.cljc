@@ -138,7 +138,6 @@
      `SVG SVG
      `DirectoryExplorer DirectoryExplorer
      `DirectoryExplorer2 DirectoryExplorer2
-     #_#_`Heroicons Heroicons
      #_#_`ReagentInterop ReagentInterop
      }))
 

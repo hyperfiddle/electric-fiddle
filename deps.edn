@@ -154,12 +154,6 @@
     clj-jgit/clj-jgit {:mvn/version "1.0.2"} ; git browser
     }}
 
-  :heroicons
-  {:extra-deps
-   {com.hyperfiddle/heroicons-electric {:mvn/version "0327158"}}}
-  :heroicons-local-deps
-  {:extra-paths ["vendor/heroicons-electric/target/gen"]} ; make sure you run the build script inside the submodule
-
   :xtdb-demo ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-demo:...`
   {:extra-deps
    {com.xtdb/xtdb-core {:mvn/version "1.23.0"}
