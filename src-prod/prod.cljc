@@ -5,6 +5,7 @@
 
    #?(:clj [ring.adapter.jetty :as ring])
    #?(:clj [ring.util.response :as ring-response])
+   #?(:clj [ring.middleware.not-modified :refer [wrap-not-modified]])
    #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
@@ -18,7 +19,7 @@
 
 (defmacro comptime-resource [filename] (some-> filename clojure.java.io/resource slurp clojure.edn/read-string))
 
-(declare wrap-prod-index-page)
+(declare wrap-prod-index-page wrap-ensure-cache-bust-on-server-deployment)
 
 #?(:clj ; server entrypoint
    (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
@@ -41,6 +42,8 @@
            (wrap-prod-index-page config) ; defined below
            (wrap-resource (:resources-path config))
            (wrap-content-type)
+           (wrap-not-modified)
+           (wrap-ensure-cache-bust-on-server-deployment)
            (electric-ring/wrap-electric-websocket (fn [ring-request] (electric-starter-app.main/electric-boot ring-request)))
            (electric-ring/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync.
            (wrap-params))
@@ -85,6 +88,12 @@
                                     (str manifest-folder (:output-name module)))) {}))))))
 
 #?(:clj
+   (defn wrap-ensure-cache-bust-on-server-deployment [next-handler]
+     (fn [ring-req]
+       (-> (next-handler ring-req)
+         (ring-response/update-header "Cache-Control" (fn [cache-control] (or cache-control "public, max-age=0, must-revalidate")))))))
+
+#?(:clj
    (defn wrap-prod-index-page
      "Serves `index.prod.html` with injected javascript modules from `manifest.edn`.
   `manifest.edn` is generated at client build time and contains javascript modules
@@ -97,8 +106,7 @@
          (if-let [module (get-compiled-javascript-modules (:manifest-path config))]
            (-> (ring-response/response (template (slurp (:body response)) (merge config module)))
              (ring-response/content-type "text/html")
-             (ring-response/header "Cache-Control" "no-store")
-             (ring-response/header "Last-Modified" (get-in response [:headers "Last-Modified"])))
+             (ring-response/header "Cache-Control" "no-store")) ; never cache – this is dynamically generated content.
            (-> (ring-response/not-found (pr-str ::missing-shadow-build-manifest)) ; can't inject js modules
              (ring-response/content-type "text/plain")))
          ;; else – index.prod.html wasn't not found on classpath
