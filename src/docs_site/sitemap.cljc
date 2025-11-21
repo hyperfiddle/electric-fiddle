@@ -4,7 +4,6 @@
             [electric-fiddle.fiddle :refer [Fiddle]]
             [electric-essay.tutorial-app :refer [Tutorial Examples]]
             [electric-essay.essay-app :refer [Essay]]
-            [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
             [dustingetz.datomic-browser2 :as datomic-browser2]
             [docs-site.blog.index :refer [BlogIndex]]
             [dustingetz.unifhir1 :refer [Unifhir1]]
@@ -52,12 +51,9 @@
 #?(:clj (defn get-datomic-uri [] (or (System/getProperty "hyperfiddle.datomic.uri") (mbrainz-uri!))))
 
 (e/defn ListedDemos []
-  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect
-   `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
+  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(datomic-browser2/DatomicBrowser)]))   ; redirect
+   `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(datomic-browser2/DatomicBrowser)])) ; redirect
    #_#_`datomic-browser.datomic-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect for readme @ https://github.com/hyperfiddle/electric-datomic-browser
-   `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (e/server datomic-browser-sitemap)
-                                        '[(dustingetz.datomic-browser/attributes)]
-                                        (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
    `datomic-browser2/DatomicBrowser (e/fn []
                                       (e/server (datomic-browser2/DatomicBrowser (e/server datomic-browser2/datomic-browser-sitemap)
                                                   ['attributes]
