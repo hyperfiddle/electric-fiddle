@@ -18,7 +18,7 @@
 
 (e/defn Fiddles []
   (merge
-    {`NavigatorDemo1 NavigatorDemo1}
+    ;; {`NavigatorDemo1 NavigatorDemo1}
     {`TwoClocks TwoClocks
      `DirTree DirTree
      `WebviewConcrete WebviewConcrete

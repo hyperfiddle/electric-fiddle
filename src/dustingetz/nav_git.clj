@@ -1,13 +1,13 @@
 (ns dustingetz.nav-git
   (:import (org.eclipse.jgit.api Git)
-           (org.eclipse.jgit.internal.storage.file FileRepository)
-           (org.eclipse.jgit.revwalk RevCommit)
-           (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository PersonIdent))
+    (org.eclipse.jgit.internal.storage.file FileRepository)
+    (org.eclipse.jgit.revwalk RevCommit)
+    (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository PersonIdent))
   (:require
     [clj-jgit.porcelain :as git]
     clj-jgit.util
-    [hyperfiddle.hfql0 :as hfql]))
-
+    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+    [hyperfiddle.hfql2.protocols :as hfqlp]))
 
 ; re-export wrappers for convenience - one API not two
 (def load-repo (memoize git/load-repo))
@@ -47,18 +47,10 @@
 
 ;; preload to optimize page load in prod
 (try (load-project-git-repo) ; memoized
-     (catch Throwable _))
-
-(extend-protocol hfql/Identifiable
-  Git (-identify [^Git x] (repo-id x))
-  FileRepository (-identify [^FileRepository x] (.getIdentifier x))
-  Ref (-identify [^Ref x] (Repository/shortenRefName (.getName x)))
-  ObjectId (-identify [^ObjectId x] (.getName x))
-  RevCommit (-identify [^RevCommit x] (commit-short-name x))
-  PersonIdent (-identify [^PersonIdent x] (.getEmailAddress x)))
+  (catch Throwable _))
 
 (comment
-  (require '[hyperfiddle.hfql0 :refer [identify]])
+  (require '[hyperfiddle.hfql2 :refer [identify]])
   (def x (load-repo "./"))
   (identify x) := "./.git"
 
@@ -92,34 +84,30 @@
     (datafy x) (nav x :object-id (:object-id x))
     (identify x)) := "12b7acf4d68519b8fa98a31828b5f725abaf80e0")
 
-(extend-protocol hfql/Suggestable
-  Git
-  (-suggest [_]
-    (hfql/pull-spec [.getRepository
-                     git/git-status
-                     git/git-branch-current
-                     branch-list
-                     log]))
-  RevCommit
-  (-suggest [_]
-    (hfql/pull-spec [#_.getName
-                     commit-short-name
-                     .getShortMessage
-                     {.getAuthorIdent .getName}
-                     #_{.getCommitterIdent .getName}]))
-  PersonIdent
-  (-suggest [_]
-    (hfql/pull-spec [.getName
-                     .getEmailAddress
-                     .getWhen
-                     .getTimeZone]))
-  Ref
-  (-suggest [_]
-    (hfql/pull-spec [ref-short-name
-                     #_ref-commit
-                     ref-commit-short
-                     ref-type
-                     #_.getObjectId]))
-  ObjectId
-  (-suggest [_]
-    (hfql/pull-spec [str .getName])))
+(extend-type FileRepository
+  hfqlp/Identifiable (identify [^FileRepository x] (.getIdentifier x)))
+
+(extend-type PersonIdent
+  hfqlp/Identifiable (identify [x] (.getEmailAddress x))
+  hfqlp/Suggestable (suggest [_] (hfql [.getName
+                                        .getEmailAddress
+                                        .getWhen
+                                        .getTimeZone])))
+
+(extend-type ObjectId
+  hfqlp/Identifiable (identify [^ObjectId x] (.getName x))
+  hfqlp/Suggestable (suggest [_] (hfql [str .getName])))
+
+(extend-type RevCommit
+  hfqlp/Identifiable (identify [x] (commit-short-name x))
+  hfqlp/Suggestable (suggest [_] (hfql [commit-short-name
+                                        .getShortMessage
+                                        {.getAuthorIdent .getName}])))
+
+(extend-type Git
+  hfqlp/Identifiable (identify [^Git x] (repo-id x))
+  hfqlp/Suggestable (suggest [_] (hfql [.getRepository])))
+
+(extend-type Ref
+  hfqlp/Identifiable (identify [^Ref x] (Repository/shortenRefName (.getName x)))
+  hfqlp/Suggestable (suggest [_] (hfql [ref-short-name ref-commit-short ref-type])))

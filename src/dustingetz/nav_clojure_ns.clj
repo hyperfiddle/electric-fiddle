@@ -1,5 +1,7 @@
 (ns dustingetz.nav-clojure-ns
-  (:require [hyperfiddle.hfql0 :as hfql]))
+  (:require
+   [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+   [hyperfiddle.hfql2.protocols :as hfqlp]))
 
 (defn doc [!x] (-> !x meta :doc))
 (defn author [!x] (-> !x meta :author))
@@ -7,9 +9,9 @@
 (defn var-arglists [!var] (->> !var meta :arglists seq pr-str))
 
 (extend-type clojure.lang.Namespace
-           hfql/Identifiable (-identify [ns] (ns-name ns))
-           hfql/Suggestable (-suggest [_] (hfql/pull-spec [ns-name doc author ns-publics2 meta])))
+  hfqlp/Identifiable (identify [ns] (ns-name ns))
+  hfqlp/Suggestable (suggest [_] (hfql [ns-name doc author ns-publics2 meta])))
 
 (extend-type clojure.lang.Var
-  hfql/Identifiable (-identify [ns] (symbol ns))
-  hfql/Suggestable (-suggest [_] (hfql/pull-spec [symbol var-arglists doc meta])))
+  hfqlp/Identifiable (identify [ns] (symbol ns))
+  hfqlp/Suggestable (suggest [_] (hfql [symbol var-arglists doc meta])))

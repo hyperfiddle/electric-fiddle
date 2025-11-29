@@ -3,7 +3,8 @@
   (:require
     [cognitect.aws.client.api :as aws]
     [contrib.assert :refer [check]]
-    [hyperfiddle.hfql0 :as hfql]))
+    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+    [hyperfiddle.hfql2.protocols :as hfqlp]))
 
 (defprotocol IAWS
   (aws-ops [o]))
@@ -28,6 +29,8 @@
 
 (defn aws-s3-us-east [] (S3. (aws/client {:api :s3 :region "us-east-1"})))
 
-(extend-protocol hfql/Suggestable
-  S3 (-suggest [_] (hfql/pull-spec [list-buckets :service :api :region :endpoint type]))
-  S3Bucket (-suggest [_] (hfql/pull-spec [type pr-str list-object-versions])))
+(extend-type S3
+  hfqlp/Suggestable (suggest [_] (hfql [list-buckets :service :api :region :endpoint type])))
+
+(extend-type S3Bucket
+  hfqlp/Suggestable (suggest [_] (hfql [type pr-str list-object-versions])))

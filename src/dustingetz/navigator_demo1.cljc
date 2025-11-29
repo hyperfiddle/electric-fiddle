@@ -1,63 +1,147 @@
 (ns dustingetz.navigator-demo1
   (:require
-    #?(:clj [dustingetz.nav-jar :as jar])
-    #?(:clj [dustingetz.nav-jvm :as jvm])
-    #?(:clj [dustingetz.nav-git :as git])
-    #?(:clj [dustingetz.nav-hn :as hn])
-    #?(:clj [dustingetz.nav-aws :as aws])
-    ;#?(:clj [dustingetz.nav-py :as py]) ; works
-    #?(:clj [dustingetz.nav-clojure-ns :as cljns])
-    #?(:clj [dustingetz.codeq-model :as q])
-    #?(:clj [dustingetz.nav-auth0 :as auth0])
-    #?(:clj [dustingetz.nav-deps :as deps])
-    #?(:clj [dustingetz.nav-twitter :as twitter])
-    #?(:clj [dustingetz.nav-kondo :as kondo])
-    #?(:clj [dustingetz.nav-reddit :as reddit])
-    [hyperfiddle.electric3 :as e]
+    #?(:clj [dustingetz.fs2 :as fs])
+    #?(:clj [dustingetz.nav-clojure-ns])
+    #?(:clj [clj-jgit.porcelain :as git])
+    #?(:clj [clj-kondo.core :as kondo])
+    #?(:clj [clojure.tools.deps :as deps])
+    #?(:clj [clojure.tools.deps.util.maven :as mvn])
+    #?(:clj [dustingetz.nav-jvm :as nav-jvm])
+    #?(:clj dustingetz.nav-jar)
+    #?(:clj dustingetz.nav-py)
+    #?(:clj [dustingetz.nav-aws :as nav-aws])
+    #?(:clj [dustingetz.nav-git :as nav-git])
+    #?(:clj [clojure.java.io :as io])
     [hyperfiddle.electric-dom3 :as dom]
-    [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
-    [hyperfiddle.navigator4 :refer [HfqlRoot]]))
+    [hyperfiddle.electric-forms5 :refer [Checkbox*]]
+    [hyperfiddle.electric3 :as e]
+    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+    [hyperfiddle.hfql2.protocols :as hfqlp]
+    [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]))
 
-#?(:clj (def index
-          `[(git/load-repo ~git/git-repo-path)]))
+#?(:clj
+   (def datomic-browser-sitemap
+     {'file
+      (hfql {(io/file ".")
+             [java.io.File/.getName
+              {java.io.File/.listFiles {* ...}}
+              type]})
 
-#?(:clj (def sitemap
-          (hfql/sitemap
-            {all-ns (hfql/props [ns-name] {::hfql/select (cljns/ns-publics2 %)})
-             cljns/ns-publics2 [symbol]
-             kondo/kondo []
-             deps/deps-project []
-             deps/mvn [.getUrl .getContentType .getAuthentication]
-             jar/list-project-jars [jar/jar-filename]
-             git/load-repo []
-             ;q/list-ns-decls [] ; codeq - depends on special datomic database
-             ;q/list-var-codeqs []
+      'load-repo
+      (hfql {(git/load-repo "../")
+             [.getRepository
+              git/git-branch-current
+              git/git-status
+              nav-git/branch-list
+              nav-git/log]})
 
-             jvm/getThreadMXBean [jvm/getAllThreads]
-             jvm/getMemoryMXBean []
-             jvm/getRuntimeMXBean []
-             jvm/getOperatingSystemMXBean []
+      'py-hello-world
+      (hfql []
+            ;; TODO: Why not `:directory-contents`?
+            (dissoc (dustingetz.nav-py/py-hello-world) :dustingetz.nav-py/directory-contents))
 
-             auth0/auth0 [auth0/users]
-             reddit/me [.getUsername .listMultis .karma .trophies .about .prefs]
-             reddit/me-about [.getName .getLinkKarma .getCommentKarma]
-             twitter/twitter [(hfql/props .tweets {::hfql/select (twitter/tweets %)})
-                              (hfql/props .users {::hfql/select (twitter/users %)})]
+      'py-environ
+      (hfql {(dustingetz.nav-py/py-environ)
+             []})
 
-             ;hn/hn [type hn/topstories hn/beststories hn/newstories] ; works but very slow
+      'py-os-dir
+      (hfql {(dustingetz.nav-py/py-os)
+             [dustingetz.nav-py/dir]})
 
-             aws/aws-s3-us-east [aws/list-buckets aws/aws-ops]
+      'py-os-cpu-count
+      (hfql {(dustingetz.nav-py/py-os)
+             [dustingetz.nav-py/cpu-count]})
 
-             ;py/py-hello-world []
-             ;py/py-environ []
-             ;py/py-os [py/cpu-count py/dir]
-             ;py/py-platform [py/dir]
-             })))
+      'py-platform
+      (hfql [dustingetz.nav-py/dir] (dustingetz.nav-py/py-platform))
 
-(e/defn NavigatorDemo1 []
-  (e/client
-    (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-    (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser.css"})) ; TODO remove
-    (HfqlRoot
-      (e/server (merge sitemap))
-      index)))
+      'jvm
+      (hfql {*
+             [.getThreadId
+              .getThreadName]}
+            (nav-jvm/getAllThreads (nav-jvm/getThreadMXBean)))
+
+      'list-project-jars
+      (hfql {(dustingetz.nav-jar/list-project-jars)
+             {* [dustingetz.nav-jar/jar-filename
+                 dustingetz.nav-jar/jar-manifest
+                 .getName
+                 .getVersion
+                 dustingetz.nav-jar/jar-entries
+                 type]}})
+
+      'deps
+      (hfql []
+        (deps/slurp-deps (fs/maybe-file "deps.edn")))
+
+      'mvn
+      (hfql [.getUrl .getContentType .getAuthentication identity type]
+        (mvn/remote-repo ["sonatype-oss-public" {:url "https://oss.sonatype.org/content/groups/public/"}]))
+
+      'kondo
+      (hfql [{:analysis [* (fn namespace-usages [m]
+                             (map #(hfql/identifiable (juxt :from :to) %)  (get m :namespace-usages)))]}]
+        (kondo/run! {:lint ["src"]
+                     :config {:analysis true}}))
+
+      'getMemoryMXBean
+      (hfql [.getHeapMemoryUsage
+             .getNonHeapMemoryUsage
+             .getObjectPendingFinalizationCount]
+        (nav-jvm/getMemoryMXBean))
+
+      'getOperatingSystemMXBean
+      (hfql [.getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad
+             type]
+        (nav-jvm/getOperatingSystemMXBean))
+
+      'getRuntimeMXBean
+      (hfql [.getLibraryPath .getPid .getSystemProperties .getUptime type]
+        (nav-jvm/getRuntimeMXBean))
+
+      'getThreadMXBean
+      (hfql [{nav-jvm/getAllThreads {* [type
+                                        .getLockInfo
+                                        .getThreadName
+                                        .getThreadState
+                                        .getWaitedCount
+                                        .getWaitedTime
+                                        .getThreadId]}}
+             .findDeadlockedThreads
+             type]
+        (nav-jvm/getThreadMXBean))
+
+      'aws
+      (hfql [nav-aws/list-buckets
+             nav-aws/aws-ops
+             type]
+        (nav-aws/aws-s3-us-east))
+
+      'ns
+      (hfql [dustingetz.nav-clojure-ns/ns-publics2]
+        *ns*)}))
+
+(e/defn NavigatorDemo1 [sitemap entrypoints]
+  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
+  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
+  (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute,
+                                                          :inset-block-start "1dvw",
+                                                          :inset-inline-end "1dvw"}})
+  (e/server (HfqlRoot sitemap entrypoints)))
+
+;; Identifiable, Suggestable
+
+#?(:clj (extend-type java.io.File
+          hfqlp/Identifiable (identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
+          hfqlp/Suggestable (suggest [o] (hfql [java.io.File/.getName
+                                                java.io.File/.getPath
+                                                java.io.File/.getAbsolutePath
+                                                {java.io.File/.listFiles {* ...}}]))))
+
+#?(:clj (extend-type clojure.lang.Namespace
+          hfqlp/Identifiable (identify [ns] `(find-ns ~(ns-name ns)))
+          hfqlp/Suggestable (suggest [_] (hfql [ns-name ns-publics meta]))))
+
+#?(:clj (extend-type clojure.lang.Var
+          hfqlp/Identifiable (identify [ns] `(find-var ~(symbol ns)))
+          hfqlp/Suggestable (suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))

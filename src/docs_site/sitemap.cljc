@@ -1,32 +1,30 @@
 (ns docs-site.sitemap
-  (:require [hyperfiddle.electric3 :as e]
-            [electric-fiddle.fiddle-index :refer [FiddleMain FiddleIndex]]
-            [electric-fiddle.fiddle :refer [Fiddle]]
-            [electric-essay.tutorial-app :refer [Tutorial Examples]]
-            [electric-essay.essay-app :refer [Essay]]
-            [dustingetz.datomic-browser2 :as datomic-browser2]
-            [docs-site.blog.index :refer [BlogIndex]]
-            [dustingetz.unifhir1 :refer [Unifhir1]]
-            [docs-site.blog.waveform0 :refer [Waveform0]]
-            [docs-site.tutorial-sitemap :refer [TutorialFiddles tutorial-sitemap]]
-            [electric-tutorial.explorer :refer [DirectoryExplorer]]
-            [dustingetz.object-browser-demo3 :as ob]
-            [dustingetz.talks.two-clocks]
-            [dustingetz.talks.dir-tree]
-            [dustingetz.talks.webview-concrete]
-            [dustingetz.talks.lifecycle]
-            [electric-examples.inputs-basic]
-            [electric-examples.reactive-collections]
-            [electric-examples.discrete-events]
-            [electric-examples.transaction]
-            [electric-examples.http-request]
-            [electric-examples.simple-form-controls]
-            [electric-examples.simple-form]
-            [hyperfiddle.router5 :as r]
-            [hyperfiddle.router5 :as router5]
-            [hyperfiddle.history4 :as history]
-            staffly.staffly
-            #?(:clj [dustingetz.mbrainz :refer [mbrainz-uri!]])))
+  (:require
+    #?(:clj [dustingetz.mbrainz :refer [mbrainz-uri!]]) ;; [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
+ ;; [dustingetz.datomic-browser2 :as datomic-browser2]
+    [docs-site.blog.index :refer [BlogIndex]]
+    [docs-site.blog.waveform0 :refer [Waveform0]]
+    [docs-site.tutorial-sitemap :refer [tutorial-sitemap TutorialFiddles]]
+    dustingetz.navigator-demo1
+    [dustingetz.object-browser-demo3 :as ob]
+    [dustingetz.talks.dir-tree]
+    [dustingetz.talks.lifecycle]
+    [dustingetz.talks.two-clocks]
+    [dustingetz.talks.webview-concrete]
+    [dustingetz.unifhir1 :refer [Unifhir1]]
+    [electric-examples.discrete-events]
+    [electric-examples.http-request]
+    [electric-examples.inputs-basic]
+    [electric-examples.reactive-collections]
+    [electric-examples.simple-form]
+    [electric-examples.simple-form-controls]
+    [electric-examples.transaction]
+    [electric-fiddle.fiddle :refer [Fiddle]] ;; [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
+    [electric-fiddle.fiddle-index :refer [FiddleIndex FiddleMain]]
+    [electric-tutorial.explorer :refer [DirectoryExplorer]]
+    [hyperfiddle.electric3 :as e]
+    [hyperfiddle.router5 :as r]
+    staffly.staffly))
 
 (def blog-sitemap
   [["Blog"
@@ -45,20 +43,27 @@
 
 (e/defn SecretDemos []
   (merge
-    (staffly.staffly/Fiddles)
-    ))
+    (staffly.staffly/Fiddles)))
 
 #?(:clj (defn get-datomic-uri [] (or (System/getProperty "hyperfiddle.datomic.uri") (mbrainz-uri!))))
 
 (e/defn ListedDemos []
-  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(datomic-browser2/DatomicBrowser)]))   ; redirect
-   `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(datomic-browser2/DatomicBrowser)])) ; redirect
-   #_#_`datomic-browser.datomic-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)]))   ; redirect for readme @ https://github.com/hyperfiddle/electric-datomic-browser
-   `datomic-browser2/DatomicBrowser (e/fn []
-                                      (e/server (datomic-browser2/DatomicBrowser (e/server datomic-browser2/datomic-browser-sitemap)
-                                                  ['attributes]
-                                                  (datomic-browser2/ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
-
+  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
+   `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
+   #_#_`datomic-browser.datomic-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect for readme @ https://github.com/hyperfiddle/electric-datomic-browser
+   ;; `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (e/server datomic-browser-sitemap)
+   ;;                                                    '[(dustingetz.datomic-browser/attributes)]
+   ;;                                                    (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
+   ;; `datomic-browser2/DatomicBrowser (e/fn []
+   ;;                                    (e/server (datomic-browser2/DatomicBrowser (e/server datomic-browser2/datomic-browser-sitemap)
+   ;;                                                                               ['attributes]
+   ;;                                                                               (datomic-browser2/ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
+   
+   `dustingetz.navigator-demo1/NavigatorDemo1
+   (e/server (e/fn
+               ([] (dustingetz.navigator-demo1/NavigatorDemo1
+                     (e/server dustingetz.navigator-demo1/datomic-browser-sitemap)
+                     ['file]))))
 
    `Unifhir1 Unifhir1
    `DirectoryExplorer DirectoryExplorer})
@@ -70,15 +75,13 @@
    `dustingetz.talks.lifecycle/Lifecycle dustingetz.talks.lifecycle/Lifecycle})
 
 (e/defn DocsExamples []
-  {
-   `electric-examples.inputs-basic/UncontrolledInputDemo electric-examples.inputs-basic/UncontrolledInputDemo
+  {`electric-examples.inputs-basic/UncontrolledInputDemo electric-examples.inputs-basic/UncontrolledInputDemo
    `electric-examples.reactive-collections/ReactiveCollections electric-examples.reactive-collections/ReactiveCollections
    `electric-examples.discrete-events/ButtonClick electric-examples.discrete-events/ButtonClick
    `electric-examples.transaction/Transaction electric-examples.transaction/Transaction
    `electric-examples.http-request/HttpRequest electric-examples.http-request/HttpRequest
    `electric-examples.simple-form-controls/SimpleFormControls electric-examples.simple-form-controls/SimpleFormControls
-   `electric-examples.simple-form/SimpleForm electric-examples.simple-form/SimpleForm
-   })
+   `electric-examples.simple-form/SimpleForm electric-examples.simple-form/SimpleForm})
 
 (e/defn Fiddles []
   (merge
@@ -88,7 +91,7 @@
      #_#_'blog (e/Partial Essay blog-sitemap "src/docs_site/blog/")
      #_#_'demos (e/fn [] (binding [electric-fiddle.fiddle-index/pages (ListedDemos)] (FiddleIndex)))
      'fiddles FiddleIndex}
-    (TutorialFiddles) ; it's a google doc now
+    (TutorialFiddles)                    ; it's a google doc now
     (BlogFiddles)
     (ListedDemos)
     (SecretDemos)

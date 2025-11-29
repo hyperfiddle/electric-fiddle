@@ -1,11 +1,14 @@
 (ns dustingetz.nav-jvm
-  (:import com.sun.management.ThreadMXBean
-           java.lang.management.ManagementFactory
-           java.lang.management.MemoryMXBean
-           java.lang.management.OperatingSystemMXBean
-           java.lang.management.RuntimeMXBean
-           java.lang.management.ThreadInfo)
-  (:require [hyperfiddle.hfql0 :as hfql]))
+  (:require
+    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+    [hyperfiddle.hfql2.protocols :as hfqlp])
+  (:import
+    com.sun.management.ThreadMXBean
+    java.lang.management.ManagementFactory
+    java.lang.management.MemoryMXBean
+    java.lang.management.OperatingSystemMXBean
+    java.lang.management.RuntimeMXBean
+    java.lang.management.ThreadInfo))
 
 (defn getPlatformManagementInterfaces [] (vec (ManagementFactory/getPlatformManagementInterfaces)))
 (defn getPlatformMXBean [clazz] (ManagementFactory/getPlatformMXBean clazz))
@@ -18,10 +21,12 @@
   (getPlatformMXBean "java.lang.management.ThreadMXBean")
   (getPlatformMXBean "com.sun.management.ThreadMXBean") ; identical
 
-  ; this sitemap needs unquote, i.e. to resolve % as a route
-  {getPlatformManagementInterfaces (hfql/props [] {::hfql/select (resolve-class %)})
-   resolve-class [getPlatformMXBean]
-   getPlatformMXBean2 [type]})
+  ;; this sitemap needs unquote, i.e. to resolve % as a route
+  ;; TODO: Broken in hfql2?
+  ;; {getPlatformManagementInterfaces (hfql/props [] {::hfql/select (resolve-class %)})
+  ;;  resolve-class [getPlatformMXBean]
+  ;;  getPlatformMXBean2 [type]}
+  :-)
 
 (defn getThreadMXBean [] (ManagementFactory/getThreadMXBean)) ; todo hfql syntax
 (defn getMemoryMXBean [] (ManagementFactory/getMemoryMXBean))
@@ -33,19 +38,24 @@
 
 (comment
   (getAllThreads (getThreadMXBean))
-  (resolve-thread 1)
-  )
+  (resolve-thread 1))
 
-(extend-protocol hfql/Identifiable
-  com.sun.management.ThreadMXBean (-identify [x] (-> x .getObjectName str))
-  java.lang.management.MemoryMXBean (-identify [x] (-> x .getObjectName str))
-  java.lang.management.OperatingSystemMXBean (-identify [x] (-> x .getObjectName str))
-  java.lang.management.RuntimeMXBean (-identify [x] (-> x .getObjectName str))
-  java.lang.management.ThreadInfo (-identify [x] (.getThreadId x)))
+(extend-type com.sun.management.ThreadMXBean
+  hfqlp/Identifiable (identify [x] (-> x .getObjectName str))
+  hfqlp/Suggestable (suggest [o] (hfql [type .findDeadlockedThreads])))
 
-(extend-protocol hfql/Suggestable
-  com.sun.management.ThreadMXBean (-suggest [x] (hfql/pull-spec [type .findDeadlockedThreads]))
-  java.lang.management.MemoryMXBean (-suggest [x] (hfql/pull-spec [type .getHeapMemoryUsage .getNonHeapMemoryUsage .getObjectPendingFinalizationCount]))
-  java.lang.management.OperatingSystemMXBean (-suggest [x] (hfql/pull-spec [type .getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad]))
-  java.lang.management.RuntimeMXBean (-suggest [x] (hfql/pull-spec [type .getLibraryPath .getSystemProperties .getUptime .getPid]))
-  java.lang.management.ThreadInfo (-suggest [x] (hfql/pull-spec [type .getThreadId .getLockInfo .getThreadName .getThreadState .getWaitedCount .getWaitedTime])))
+(extend-type java.lang.management.MemoryMXBean
+  hfqlp/Identifiable (identify [x] (-> x .getObjectName str))
+  hfqlp/Suggestable (suggest [o] (hfql [type .getHeapMemoryUsage .getNonHeapMemoryUsage .getObjectPendingFinalizationCount])))
+
+(extend-type java.lang.management.OperatingSystemMXBean
+  hfqlp/Identifiable (identify [x] (-> x .getObjectName str))
+  hfqlp/Suggestable (suggest [o] (hfql [type .getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad])))
+
+(extend-type java.lang.management.ThreadInfo
+  hfqlp/Identifiable (identify [x] (.getThreadId x))
+  hfqlp/Suggestable (suggest [o] (hfql [type .getThreadId .getLockInfo .getThreadName .getThreadState .getWaitedCount .getWaitedTime])))
+
+(extend-type java.lang.management.MemoryMXBean
+  hfqlp/Identifiable (identify [x] (-> x .getObjectName str))
+  hfqlp/Suggestable (suggest [x] (hfql [type])))
