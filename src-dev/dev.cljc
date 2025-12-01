@@ -11,7 +11,8 @@
    #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   ;; #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring]) ; jetty 10+
+   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; :jetty9 alias
    ))
 
 (comment (-main)) ; repl entrypoint
@@ -30,12 +31,13 @@
                            (ring-response/content-type "text/html")))
                      (wrap-resource "public") ; 4. serve assets from disk.
                      (wrap-content-type) ; 3. boilerplate – to server assets with correct mime/type.
-                     (electric-ring/wrap-electric-websocket ; 2. install Electric server.
+                     #_(electric-ring/wrap-electric-websocket ; 2. install Electric server.
                        (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))) ; boot server-side Electric process
-                     (wrap-params)) ; 1. boilerplate – parse request URL parameters.
+                     #_(wrap-params)) ; 1. boilerplate – parse request URL parameters.
                    {:host "0.0.0.0", :port 8080, :join? false
                     :configurator (fn [server] ; tune jetty
-                                    (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
+                                    (electric-jetty9-ws-install server "/" (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))) ; :jetty9 alias
+                                    #_(org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
                                       (.getHandler server)
                                       (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
                                         (accept [_this _servletContext wsContainer]

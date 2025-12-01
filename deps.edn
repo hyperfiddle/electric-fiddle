@@ -10,6 +10,12 @@
            {:extra-paths ["src-build"]
             :ns-default  build
             :extra-deps  {thheller/shadow-cljs          {:mvn/version "2.26.2"}
-                          io.github.clojure/tools.build {:mvn/version "0.10.8"}}}}
+                          io.github.clojure/tools.build {:mvn/version "0.10.8"}}}
+           :jetty9 {:override-deps {ring/ring {:mvn/version "1.9.6"}}
+                    :extra-deps    {ring/ring-jetty-adapter                       {:mvn/version "1.8.2"}
+                                    ring/ring-servlet                             {:mvn/version "1.8.2"}
+                                    org.eclipse.jetty.websocket/websocket-server  {:mvn/version "9.4.31.v20200723"} ; matching jetty version from ring-jetty-adapter
+                                    org.eclipse.jetty.websocket/websocket-servlet {:mvn/version "9.4.31.v20200723"}}}
+           :private {:override-deps {com.hyperfiddle/electric {:local/root "../electric"}}}}
  :mvn/repos
  {"clojars" {:url "https://repo.clojars.org/" :snapshots {:enabled true :update :always}}}}
