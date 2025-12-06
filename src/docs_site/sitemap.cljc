@@ -58,12 +58,9 @@
    ;;                                    (e/server (datomic-browser2/DatomicBrowser (e/server datomic-browser2/datomic-browser-sitemap)
    ;;                                                                               ['attributes]
    ;;                                                                               (datomic-browser2/ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
-   
+
    `dustingetz.navigator-demo1/NavigatorDemo1
-   (e/server (e/fn
-               ([] (dustingetz.navigator-demo1/NavigatorDemo1
-                     (e/server dustingetz.navigator-demo1/datomic-browser-sitemap)
-                     ['file]))))
+   (e/server (e/fn [] (dustingetz.navigator-demo1/NavigatorDemo1 (e/server dustingetz.navigator-demo1/sitemap) ['file])))
 
    `Unifhir1 Unifhir1
    `DirectoryExplorer DirectoryExplorer})

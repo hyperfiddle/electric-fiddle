@@ -3,8 +3,7 @@
     [contrib.assert :refer [check]]
     #_dustingetz.pyhf ; see also
     [libpython-clj2.require :refer [require-python]]
-    [libpython-clj2.python :refer [py. py.. py.-] :as py]
-    [hyperfiddle.hfql0 :as hfql]))
+    [libpython-clj2.python :refer [py. py.. py.-] :as py]))
 
 #_(def py (delay ))
 (require-python '[builtins :as python] #_#_'[os] '[platform])
@@ -24,7 +23,7 @@
      ::platform (get environ "PLATFORM")
      ::user (get environ "USER")
      ::path (py. os "getenv" "PATH") #_(py. os "path" "abspath" ".")
-     ::directory-contents (py. os "listdir" ".") ; List java.lang.String
+     #_#_::directory-contents (py. os "listdir" ".") ; List java.lang.String -- crashes navigator
      ::process-id (py. os "getpid")}))
 
 (comment (py-hello-world))
@@ -40,7 +39,3 @@
 
 #_(defn dir [o] (for [x (py/dir o)] {::var x ::val (str (py. o "__getattribute__" x))}))
 (defn dir [o] (into {} (for [x (py/dir o)] [x (str (py. o "__getattribute__" x))])))
-
-(extend-protocol hfql/Suggestable
-  #_#_HNClient (-suggest [_] (hfql/pull-spec [type]))
-  )

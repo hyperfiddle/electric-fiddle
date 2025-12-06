@@ -20,7 +20,7 @@
     [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]))
 
 #?(:clj
-   (def datomic-browser-sitemap
+   (def sitemap
      {'file
       (hfql {(io/file ".")
              [java.io.File/.getName
@@ -36,13 +36,10 @@
               nav-git/log]})
 
       'py-hello-world
-      (hfql []
-            ;; TODO: Why not `:directory-contents`?
-            (dissoc (dustingetz.nav-py/py-hello-world) :dustingetz.nav-py/directory-contents))
+      (hfql {(dustingetz.nav-py/py-hello-world) []})
 
       'py-environ
-      (hfql {(dustingetz.nav-py/py-environ)
-             []})
+      (hfql {(dustingetz.nav-py/py-environ) []})
 
       'py-os-dir
       (hfql {(dustingetz.nav-py/py-os)
@@ -53,13 +50,14 @@
              [dustingetz.nav-py/cpu-count]})
 
       'py-platform
-      (hfql [dustingetz.nav-py/dir] (dustingetz.nav-py/py-platform))
+      (hfql {(dustingetz.nav-py/py-platform)
+             [dustingetz.nav-py/dir]})
 
       'jvm
-      (hfql {*
-             [.getThreadId
-              .getThreadName]}
-            (nav-jvm/getAllThreads (nav-jvm/getThreadMXBean)))
+      (hfql {(nav-jvm/getAllThreads (nav-jvm/getThreadMXBean))
+             {*
+              [.getThreadId
+               .getThreadName]}})
 
       'list-project-jars
       (hfql {(dustingetz.nav-jar/list-project-jars)
@@ -71,55 +69,53 @@
                  type]}})
 
       'deps
-      (hfql []
-        (deps/slurp-deps (fs/maybe-file "deps.edn")))
+      (hfql {(deps/slurp-deps (fs/maybe-file "deps.edn")) []})
 
       'mvn
-      (hfql [.getUrl .getContentType .getAuthentication identity type]
-        (mvn/remote-repo ["sonatype-oss-public" {:url "https://oss.sonatype.org/content/groups/public/"}]))
+      (hfql {(mvn/remote-repo ["sonatype-oss-public" {:url "https://oss.sonatype.org/content/groups/public/"}])
+             [.getUrl .getContentType .getAuthentication identity type]})
 
       'kondo
-      (hfql [{:analysis [* (fn namespace-usages [m]
-                             (map #(hfql/identifiable (juxt :from :to) %)  (get m :namespace-usages)))]}]
-        (kondo/run! {:lint ["src"]
-                     :config {:analysis true}}))
+      (hfql {(kondo/run! {:lint ["src"] :config {:analysis true}})
+             [{:analysis [* (fn namespace-usages [m]
+                              (->> (get m :namespace-usages)
+                                   (map #(hfql/identifiable (juxt :from :to) %))))]}]})
 
       'getMemoryMXBean
-      (hfql [.getHeapMemoryUsage
-             .getNonHeapMemoryUsage
-             .getObjectPendingFinalizationCount]
-        (nav-jvm/getMemoryMXBean))
+      (hfql {(nav-jvm/getMemoryMXBean)
+             [.getHeapMemoryUsage
+              .getNonHeapMemoryUsage
+              .getObjectPendingFinalizationCount]})
 
       'getOperatingSystemMXBean
-      (hfql [.getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad
-             type]
-        (nav-jvm/getOperatingSystemMXBean))
+      (hfql {(nav-jvm/getOperatingSystemMXBean)
+             [.getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad type]})
 
       'getRuntimeMXBean
-      (hfql [.getLibraryPath .getPid .getSystemProperties .getUptime type]
-        (nav-jvm/getRuntimeMXBean))
+      (hfql {(nav-jvm/getRuntimeMXBean)
+             [.getLibraryPath .getPid .getSystemProperties .getUptime type]})
 
       'getThreadMXBean
-      (hfql [{nav-jvm/getAllThreads {* [type
-                                        .getLockInfo
-                                        .getThreadName
-                                        .getThreadState
-                                        .getWaitedCount
-                                        .getWaitedTime
-                                        .getThreadId]}}
-             .findDeadlockedThreads
-             type]
-        (nav-jvm/getThreadMXBean))
+      (hfql {(nav-jvm/getThreadMXBean)
+             [{nav-jvm/getAllThreads {* [type
+                                         .getLockInfo
+                                         .getThreadName
+                                         .getThreadState
+                                         .getWaitedCount
+                                         .getWaitedTime
+                                         .getThreadId]}}
+              .findDeadlockedThreads
+              type]})
 
       'aws
-      (hfql [nav-aws/list-buckets
-             nav-aws/aws-ops
-             type]
-        (nav-aws/aws-s3-us-east))
+      (hfql {(nav-aws/aws-s3-us-east)
+             [nav-aws/list-buckets
+              nav-aws/aws-ops
+              type]})
 
       'ns
-      (hfql [dustingetz.nav-clojure-ns/ns-publics2]
-        *ns*)}))
+      (hfql {(find-ns 'clojure.core #_(ns-name *ns*))
+             [dustingetz.nav-clojure-ns/ns-publics2]})}))
 
 (e/defn NavigatorDemo1 [sitemap entrypoints]
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
