@@ -1,23 +1,23 @@
 (ns dustingetz.navigator-demo1
   (:require
-    #?(:clj [dustingetz.fs2 :as fs])
-    #?(:clj [dustingetz.nav-clojure-ns])
-    #?(:clj [clj-jgit.porcelain :as git])
-    #?(:clj [clj-kondo.core :as kondo])
-    #?(:clj [clojure.tools.deps :as deps])
-    #?(:clj [clojure.tools.deps.util.maven :as mvn])
-    #?(:clj [dustingetz.nav-jvm :as nav-jvm])
-    #?(:clj dustingetz.nav-jar)
-    #?(:clj dustingetz.nav-py)
-    #?(:clj [dustingetz.nav-aws :as nav-aws])
-    #?(:clj [dustingetz.nav-git :as nav-git])
-    #?(:clj [clojure.java.io :as io])
-    [hyperfiddle.electric-dom3 :as dom]
-    [hyperfiddle.electric-forms5 :refer [Checkbox*]]
-    [hyperfiddle.electric3 :as e]
-    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-    [hyperfiddle.hfql2.protocols :as hfqlp]
-    [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]))
+   #?(:clj [dustingetz.fs2 :as fs])
+   #?(:clj [dustingetz.nav-clojure-ns])
+   #?(:clj [clj-jgit.porcelain :as git])
+   #?(:clj [clj-kondo.core :as kondo])
+   #?(:clj [clojure.tools.deps :as deps])
+   #?(:clj [clojure.tools.deps.util.maven :as mvn])
+   #?(:clj [dustingetz.nav-jvm :as nav-jvm])
+   #?(:clj dustingetz.nav-jar)
+   #?(:clj dustingetz.nav-py)
+   #?(:clj [dustingetz.nav-aws :as nav-aws])
+   #?(:clj [dustingetz.nav-git :as nav-git])
+   #?(:clj [clojure.java.io :as io])
+   [hyperfiddle.electric-dom3 :as dom]
+   [hyperfiddle.electric-forms5 :refer [Checkbox*]]
+   [hyperfiddle.electric3 :as e]
+   [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+   [hyperfiddle.hfql2.protocols :as hfqlp]
+   [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]))
 
 #?(:clj
    (def sitemap
@@ -79,7 +79,7 @@
       (hfql {(kondo/run! {:lint ["src"] :config {:analysis true}})
              [{:analysis [* (fn namespace-usages [m]
                               (->> (get m :namespace-usages)
-                                   (map #(hfql/identifiable (juxt :from :to) %))))]}]})
+                                (map #(hfql/identifiable (juxt :from :to) %))))]}]})
 
       'getMemoryMXBean
       (hfql {(nav-jvm/getMemoryMXBean)

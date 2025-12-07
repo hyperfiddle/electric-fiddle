@@ -1,13 +1,14 @@
 (ns dustingetz.nav-git
-  (:import (org.eclipse.jgit.api Git)
-    (org.eclipse.jgit.internal.storage.file FileRepository)
-    (org.eclipse.jgit.revwalk RevCommit)
-    (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository PersonIdent))
+  (:import
+   (org.eclipse.jgit.api Git)
+   (org.eclipse.jgit.internal.storage.file FileRepository)
+   (org.eclipse.jgit.revwalk RevCommit)
+   (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository PersonIdent))
   (:require
-    [clj-jgit.porcelain :as git]
-    clj-jgit.util
-    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-    [hyperfiddle.hfql2.protocols :as hfqlp]))
+   [clj-jgit.porcelain :as git]
+   clj-jgit.util
+   [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+   [hyperfiddle.hfql2.protocols :as hfqlp]))
 
 ; re-export wrappers for convenience - one API not two
 (def load-repo (memoize git/load-repo))

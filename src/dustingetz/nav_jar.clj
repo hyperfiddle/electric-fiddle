@@ -1,9 +1,9 @@
 (ns dustingetz.nav-jar
   (:import [java.util.jar JarFile JarEntry])
   (:require
-    [dustingetz.fs2 :refer [path-filename]]
-    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-    [hyperfiddle.hfql2.protocols :as hfqlp]))
+   [dustingetz.fs2 :refer [path-filename]]
+   [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+   [hyperfiddle.hfql2.protocols :as hfqlp]))
 
 (defn list-project-jars []
   (let [cp (System/getProperty "java.class.path")]

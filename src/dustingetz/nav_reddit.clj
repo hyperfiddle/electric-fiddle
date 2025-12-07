@@ -1,12 +1,12 @@
 (ns dustingetz.nav-reddit
   (:import
-    (net.dean.jraw RedditClient)
-    (net.dean.jraw.models Account)
-    (net.dean.jraw.http OkHttpNetworkAdapter UserAgent)
-    (net.dean.jraw.oauth OAuthHelper Credentials))
+   (net.dean.jraw RedditClient)
+   (net.dean.jraw.models Account)
+   (net.dean.jraw.http OkHttpNetworkAdapter UserAgent)
+   (net.dean.jraw.oauth OAuthHelper Credentials))
   (:require
-    [contrib.assert :refer [check]]
-    [contrib.template :refer [comptime-resource]]))
+   [contrib.assert :refer [check]]
+   [contrib.template :refer [comptime-resource]]))
 
 (def config (comptime-resource "dustingetz/nav_reddit.edn"))
 

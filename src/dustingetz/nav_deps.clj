@@ -1,8 +1,9 @@
 (ns dustingetz.nav-deps
-  (:require [clojure.tools.deps :as deps]
-            [clojure.tools.deps.util.maven :as mvn]
-            [contrib.assert :refer [check]]
-            [dustingetz.fs2 :as fs]))
+  (:require
+   [clojure.tools.deps :as deps]
+   [clojure.tools.deps.util.maven :as mvn]
+   [contrib.assert :refer [check]]
+   [dustingetz.fs2 :as fs]))
 
 (defn deps-project
   ([] (deps-project "deps.edn"))

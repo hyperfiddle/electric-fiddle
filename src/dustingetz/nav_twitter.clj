@@ -1,14 +1,16 @@
 (ns dustingetz.nav-twitter
-  (:import (java.security MessageDigest)
-           [java.util Base64]
-           [com.twitter.clientlib TwitterCredentialsOAuth2]
-           [com.twitter.clientlib.api TwitterApi TweetsApi BookmarksApi]
-           [java.util HashSet])
-  (:require clj-http.client
-            cheshire.core
-            [dustingetz.caching-http-client :as http]
-            [clojure.string :as str]
-            [contrib.template :refer [comptime-resource]]))
+  (:import
+   (java.security MessageDigest)
+   [java.util Base64]
+   [com.twitter.clientlib TwitterCredentialsOAuth2]
+   [com.twitter.clientlib.api TwitterApi TweetsApi BookmarksApi]
+   [java.util HashSet])
+  (:require
+   clj-http.client
+   cheshire.core
+   [dustingetz.caching-http-client :as http]
+   [clojure.string :as str]
+   [contrib.template :refer [comptime-resource]]))
 
 (declare !!test-twitter)
 

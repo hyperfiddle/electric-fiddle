@@ -1,10 +1,10 @@
 (ns dustingetz.nav-aws
   ;#?(:clj (:import (cognitect.aws.client.impl Client))) - really struggling to import this deftype as a class
   (:require
-    [cognitect.aws.client.api :as aws]
-    [contrib.assert :refer [check]]
-    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-    [hyperfiddle.hfql2.protocols :as hfqlp]))
+   [cognitect.aws.client.api :as aws]
+   [contrib.assert :refer [check]]
+   [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+   [hyperfiddle.hfql2.protocols :as hfqlp]))
 
 (defprotocol IAWS
   (aws-ops [o]))

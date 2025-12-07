@@ -1,9 +1,9 @@
 (ns dustingetz.nav-py
   (:require
-    [contrib.assert :refer [check]]
-    #_dustingetz.pyhf ; see also
-    [libpython-clj2.require :refer [require-python]]
-    [libpython-clj2.python :refer [py. py.. py.-] :as py]))
+   [contrib.assert :refer [check]]
+   #_dustingetz.pyhf ; see also
+   [libpython-clj2.require :refer [require-python]]
+   [libpython-clj2.python :refer [py. py.. py.-] :as py]))
 
 #_(def py (delay ))
 (require-python '[builtins :as python] #_#_'[os] '[platform])

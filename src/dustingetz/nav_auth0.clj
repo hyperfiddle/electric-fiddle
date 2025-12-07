@@ -1,15 +1,15 @@
 (ns dustingetz.nav-auth0
   (:require
-    clj-http.client
-    [dustingetz.caching-http-client :as http]
-    clojure.data.json
-    cheshire.core
-    [clojure.spec.alpha :as s]
-    [clojure.walk :refer [keywordize-keys]]
-    [contrib.data :refer [auto-props]]
-    [contrib.template :refer [comptime-resource]]
-    [contrib.assert :refer [check]]
-    [hyperfiddle.hfql0 :as hfql]))
+   clj-http.client
+   [dustingetz.caching-http-client :as http]
+   clojure.data.json
+   cheshire.core
+   [clojure.spec.alpha :as s]
+   [clojure.walk :refer [keywordize-keys]]
+   [contrib.data :refer [auto-props]]
+   [contrib.template :refer [comptime-resource]]
+   [contrib.assert :refer [check]]
+   [hyperfiddle.hfql0 :as hfql]))
 
 ; https://auth0.com/docs/api/management/v2
 (defprotocol Entity

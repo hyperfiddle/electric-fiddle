@@ -1,6 +1,7 @@
 (ns dustingetz.nav-kondo
-  (:require [clj-kondo.core :as kondo]
-            [contrib.assert :refer [check]]))
+  (:require
+   [clj-kondo.core :as kondo]
+   [contrib.assert :refer [check]]))
 
 (def !kondo (kondo/run! {:lint ["src"]
                          :config {:analysis true}}))

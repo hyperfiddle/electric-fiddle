@@ -1,14 +1,14 @@
 (ns dustingetz.nav-jvm
   (:require
-    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-    [hyperfiddle.hfql2.protocols :as hfqlp])
+   [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+   [hyperfiddle.hfql2.protocols :as hfqlp])
   (:import
-    com.sun.management.ThreadMXBean
-    java.lang.management.ManagementFactory
-    java.lang.management.MemoryMXBean
-    java.lang.management.OperatingSystemMXBean
-    java.lang.management.RuntimeMXBean
-    java.lang.management.ThreadInfo))
+   com.sun.management.ThreadMXBean
+   java.lang.management.ManagementFactory
+   java.lang.management.MemoryMXBean
+   java.lang.management.OperatingSystemMXBean
+   java.lang.management.RuntimeMXBean
+   java.lang.management.ThreadInfo))
 
 (defn getPlatformManagementInterfaces [] (vec (ManagementFactory/getPlatformManagementInterfaces)))
 (defn getPlatformMXBean [clazz] (ManagementFactory/getPlatformMXBean clazz))
