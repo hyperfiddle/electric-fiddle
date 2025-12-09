@@ -1,7 +1,7 @@
 (ns docs-site.sitemap
   (:require
-    #?(:clj [dustingetz.mbrainz :refer [mbrainz-uri!]]) ;; [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
- ;; [dustingetz.datomic-browser2 :as datomic-browser2]
+    #?(:clj [dustingetz.mbrainz :refer [datomic-uri mbrainz-uri!]]) ;; [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
+    [dustingetz.datomic-browser2 :as datomic-browser2]
     [docs-site.blog.index :refer [BlogIndex]]
     [docs-site.blog.waveform0 :refer [Waveform0]]
     [docs-site.tutorial-sitemap :refer [tutorial-sitemap TutorialFiddles]]
@@ -48,16 +48,11 @@
 #?(:clj (defn get-datomic-uri [] (or (System/getProperty "hyperfiddle.datomic.uri") (mbrainz-uri!))))
 
 (e/defn ListedDemos []
-  {'datomic-browser.mbrainz-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
-   `datomic-browser.datomic-browser4/DatomicBrowser4 (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect
-   #_#_`datomic-browser.datomic-browser/DatomicBrowser (e/fn [& _] (r/ReplaceState! ['/ `(DatomicBrowser)])) ; redirect for readme @ https://github.com/hyperfiddle/electric-datomic-browser
-   ;; `DatomicBrowser (e/fn [] (e/server (DatomicBrowser (e/server datomic-browser-sitemap)
-   ;;                                                    '[(dustingetz.datomic-browser/attributes)]
-   ;;                                                    (ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
-   ;; `datomic-browser2/DatomicBrowser (e/fn []
-   ;;                                    (e/server (datomic-browser2/DatomicBrowser (e/server datomic-browser2/datomic-browser-sitemap)
-   ;;                                                                               ['attributes]
-   ;;                                                                               (datomic-browser2/ConnectDatomic (get-datomic-uri))))) ; default prod demo dataset is mbrainz
+  {
+   `datomic-browser2/DatomicBrowser (e/fn []
+                                      (e/server (datomic-browser2/BrowseDatomicByURI (e/server datomic-browser2/sitemap)
+                                                  ['databases]
+                                                  (str datomic-uri "*"))))
 
    `dustingetz.navigator-demo1/NavigatorDemo1
    (e/server (e/fn [] (dustingetz.navigator-demo1/NavigatorDemo1 (e/server dustingetz.navigator-demo1/sitemap) ['file])))
