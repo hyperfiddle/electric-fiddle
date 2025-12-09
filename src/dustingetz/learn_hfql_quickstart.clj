@@ -136,7 +136,7 @@
 
   (def xs (->> (list-project-jars)
             (filter #(clojure.string/includes? (str %) "clojure"))))
-  (hfql/pull (hfql {xs {* [.getName {.entries enumeration-seq}]}})) ; todo HFQL should understand java.util.Enumeration natively
+  (hfql/pull (hfql {* [.getName {.entries {* .getName}} ]} xs))
   )
 
 (tests
