@@ -1,4 +1,4 @@
-(ns dustingetz.learn-hfql
+(ns dustingetz.learn-hfql-protocols-scratch
   (:require
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
    [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]))
