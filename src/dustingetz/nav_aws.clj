@@ -30,7 +30,7 @@
 (defn aws-s3-us-east [] (S3. (aws/client {:api :s3 :region "us-east-1"})))
 
 (extend-type S3
-  hfqlp/Suggestable (suggest [_] (hfql [list-buckets :service :api :region :endpoint type])))
+  hfqlp/Suggestable (-suggest [_] (hfql [list-buckets :service :api :region :endpoint type])))
 
 (extend-type S3Bucket
-  hfqlp/Suggestable (suggest [_] (hfql [type pr-str list-object-versions])))
+  hfqlp/Suggestable (-suggest [_] (hfql [type pr-str list-object-versions])))

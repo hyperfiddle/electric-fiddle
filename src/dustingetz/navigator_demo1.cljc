@@ -128,16 +128,16 @@
 ;; Identifiable, Suggestable
 
 #?(:clj (extend-type java.io.File
-          hfqlp/Identifiable (identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
-          hfqlp/Suggestable (suggest [o] (hfql [java.io.File/.getName
-                                                java.io.File/.getPath
-                                                java.io.File/.getAbsolutePath
-                                                {java.io.File/.listFiles {* ...}}]))))
+          hfqlp/Identifiable (-identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
+          hfqlp/Suggestable (-suggest [o] (hfql [java.io.File/.getName
+                                                 java.io.File/.getPath
+                                                 java.io.File/.getAbsolutePath
+                                                 {java.io.File/.listFiles {* ...}}]))))
 
 #?(:clj (extend-type clojure.lang.Namespace
-          hfqlp/Identifiable (identify [ns] `(find-ns ~(ns-name ns)))
-          hfqlp/Suggestable (suggest [_] (hfql [ns-name ns-publics meta]))))
+          hfqlp/Identifiable (-identify [ns] `(find-ns ~(ns-name ns)))
+          hfqlp/Suggestable (-suggest [_] (hfql [ns-name ns-publics meta]))))
 
 #?(:clj (extend-type clojure.lang.Var
-          hfqlp/Identifiable (identify [ns] `(find-var ~(symbol ns)))
-          hfqlp/Suggestable (suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
+          hfqlp/Identifiable (-identify [ns] `(find-var ~(symbol ns)))
+          hfqlp/Suggestable (-suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))

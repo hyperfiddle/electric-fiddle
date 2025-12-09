@@ -9,9 +9,9 @@
 (defn var-arglists [!var] (->> !var meta :arglists seq pr-str))
 
 (extend-type clojure.lang.Namespace
-  hfqlp/Identifiable (identify [ns] (ns-name ns))
-  hfqlp/Suggestable (suggest [_] (hfql [ns-name doc author ns-publics2 meta])))
+  hfqlp/Identifiable (-identify [ns] (ns-name ns))
+  hfqlp/Suggestable (-suggest [_] (hfql [ns-name doc author ns-publics2 meta])))
 
 (extend-type clojure.lang.Var
-  hfqlp/Identifiable (identify [ns] (symbol ns))
-  hfqlp/Suggestable (suggest [_] (hfql [symbol var-arglists doc meta])))
+  hfqlp/Identifiable (-identify [ns] (symbol ns))
+  hfqlp/Suggestable (-suggest [_] (hfql [symbol var-arglists doc meta])))

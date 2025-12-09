@@ -1,30 +1,30 @@
 (ns dustingetz.learn-hfql-protocols-scratch
   (:require
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-   [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]))
+   [hyperfiddle.hfql2.protocols :refer [Identifiable -hfql-resolve Navigable Suggestable ComparableRepresentation]]))
 
 (set! clojure.core/*print-namespace-maps* false) ; better REPL print indentation
 
 #?(:clj (extend-type java.io.File
-          Identifiable (identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
-          Suggestable (suggest [o] (hfql [java.io.File/.getName
-                                          java.io.File/.getPath
-                                          java.io.File/.getAbsolutePath
-                                          {java.io.File/.listFiles {* ...}}]))))
+          Identifiable (-identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
+          Suggestable (-suggest [o] (hfql [java.io.File/.getName
+                                           java.io.File/.getPath
+                                           java.io.File/.getAbsolutePath
+                                           {java.io.File/.listFiles {* ...}}]))))
 
-#?(:clj (defmethod hfql-resolve 'clojure.java.io/file [[_ file-path-str]] (clojure.java.io/file file-path-str)))
+#?(:clj (defmethod -hfql-resolve 'clojure.java.io/file [[_ file-path-str]] (clojure.java.io/file file-path-str)))
 
 #?(:clj (extend-type clojure.lang.Namespace
-          Identifiable (identify [ns] `(find-ns ~(ns-name ns)))
-          Suggestable (suggest [_] (hfql [ns-name ns-publics meta]))))
+          Identifiable (-identify [ns] `(find-ns ~(ns-name ns)))
+          Suggestable (-suggest [_] (hfql [ns-name ns-publics meta]))))
 
-#?(:clj (defmethod hfql-resolve `find-ns [[_ ns-sym]] (find-ns ns-sym)))
+#?(:clj (defmethod -hfql-resolve `find-ns [[_ ns-sym]] (find-ns ns-sym)))
 
 #?(:clj (extend-type clojure.lang.Var
-          Identifiable (identify [ns] `(find-var ~(symbol ns)))
-          Suggestable (suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
+          Identifiable (-identify [ns] `(find-var ~(symbol ns)))
+          Suggestable (-suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
 
-#?(:clj (defmethod hfql-resolve `find-var [[_ var-sym]] (find-var var-sym)))
+#?(:clj (defmethod -hfql-resolve `find-var [[_ var-sym]] (find-var var-sym)))
 
 (comment
   (def !x (clojure.java.io/file "../hyperfiddle/src"))

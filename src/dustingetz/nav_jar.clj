@@ -17,36 +17,36 @@
 (defn jar-jmanifest-entries [!jar-manifest] (into {} (seq (.entrySet !jar-manifest))))
 
 (extend-type java.util.jar.JarFile$JarFileEntry
-  hfqlp/Identifiable (identify [x] (-> x str))
-  hfqlp/Suggestable (suggest [_] (hfql [.getName
-                                        .getSize
-                                        .getCompressedSize
-                                        type])))
+  hfqlp/Identifiable (-identify [x] (-> x str))
+  hfqlp/Suggestable (-suggest [_] (hfql [.getName
+                                         .getSize
+                                         .getCompressedSize
+                                         type])))
 
 (extend-type java.util.jar.JarFile
-  hfqlp/Identifiable (identify [x] `(jar-by-path ~(.getName x)))
-  hfqlp/Suggestable (suggest [_] (hfql [.getName
-                                        jar-filename
-                                        jar-manifest
-                                        .getVersion
-                                        jar-entries
-                                        type])))
+  hfqlp/Identifiable (-identify [x] `(jar-by-path ~(.getName x)))
+  hfqlp/Suggestable (-suggest [_] (hfql [.getName
+                                         jar-filename
+                                         jar-manifest
+                                         .getVersion
+                                         jar-entries
+                                         type])))
 
 (extend-type java.util.jar.Manifest
-  hfqlp/Suggestable (suggest [_] (hfql [.getMainAttributes #_.getEntries type])))
+  hfqlp/Suggestable (-suggest [_] (hfql [.getMainAttributes #_.getEntries type])))
 
 (extend-type java.util.jar.JarFile$JarFileEntry
-  hfqlp/Suggestable (suggest [_] (hfql [.getName .getSize type])))
+  hfqlp/Suggestable (-suggest [_] (hfql [.getName .getSize type])))
 
 (extend-type java.util.jar.Attributes
-  hfqlp/Suggestable (suggest [_] (hfql [.values jar-jmanifest-entries type])))
+  hfqlp/Suggestable (-suggest [_] (hfql [.values jar-jmanifest-entries type])))
 
 ;; TODO: Crashes
 ;; #?(:clj (extend-type java.util.jar.Attributes$Name
-;;           hfqlp/Identifiable (identify [x] (str x))))
+;;           hfqlp/Identifiable (-identify [x] (str x))))
 
 (extend-type java.util.jar.Attributes$Name
-  hfqlp/Suggestable (suggest [_] (hfql [.toString])))
+  hfqlp/Suggestable (-suggest [_] (hfql [.toString])))
 
-(defmethod hfqlp/hfql-resolve 'dustingetz.nav-jar/jar-by-path [[_ jar-path]]
+(defmethod hfqlp/-hfql-resolve 'dustingetz.nav-jar/jar-by-path [[_ jar-path]]
   (JarFile. (clojure.java.io/file jar-path)))
