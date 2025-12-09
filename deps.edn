@@ -83,6 +83,9 @@
     clj-jgit/clj-jgit {:mvn/version "1.0.2"}        ; blog
     com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"} ; sakila
     org.postgresql/postgresql {:mvn/version "42.7.3"} ; sakila
+    clj-kondo/clj-kondo {:mvn/version "2025.07.28"} ; navigator demo
+    clj-python/libpython-clj {:mvn/version "2.026"} ; navigator demo
+    org.clojure/tools.deps {:mvn/version "0.26.1553"} ; navigator demo
     }
    #_#_:override-deps                   ; uberjar sees only this one alias
    {com.hyperfiddle/electric {:local/root "../electric"}
@@ -127,9 +130,7 @@
                    com.hyperfiddle/rcf {:local/root "../rcf"}}
    :extra-paths ["../scratch/src" "../scratch/resources"]
    :extra-deps
-   {clj-kondo/clj-kondo {:mvn/version "2025.07.28"} ; navigator demo
-    clj-python/libpython-clj {:mvn/version "2.026"}
-    com.discord4j/discord4j-core {:mvn/version "3.3.0-RC2"}
+   {com.discord4j/discord4j-core {:mvn/version "3.3.0-RC2"}
     com.github.mattbdean/JRAW {:mvn/version "1.1.0"} ; https://github.com/mattbdean/JRAW
     com.pitch/uix.core {:mvn/version "1.0.1"}
     com.pitch/uix.dom {:mvn/version "1.0.1"}

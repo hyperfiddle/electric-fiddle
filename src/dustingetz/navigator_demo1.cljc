@@ -28,7 +28,7 @@
               type]})
 
       'load-repo
-      (hfql {(git/load-repo "../")
+      (hfql {(git/load-repo nav-git/git-repo-path)
              [.getRepository
               git/git-branch-current
               git/git-status

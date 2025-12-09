@@ -6,6 +6,8 @@
 FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS datomic-fixtures
 WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
+# cleanup APT cache
+RUN rm -rf /var/lib/apt/lists/*
 COPY datomic-browser/datomic_fixtures.sh datomic_fixtures.sh
 COPY datomic-browser/datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
 # RUN ./datomic_fixtures.sh
@@ -23,6 +25,10 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true npm install
 FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS build
 WORKDIR /app
 COPY --from=node-deps /app/node_modules /app/node_modules
+# install python for libpython-clj navigator demo
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 python3-dev python3-venv
+# cleanup APT cache
+RUN rm -rf /var/lib/apt/lists/*
 
 # Rebuild if deps or commit version changes
 COPY electric-fiddle/deps.edn deps.edn
@@ -48,9 +54,18 @@ RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
 FROM amazoncorretto:11 AS app
 WORKDIR /app
 
+# install python for libpython-clj navigator demo
+RUN yum update -y && \
+    yum install -y \
+    python3 \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
 # add tutorial resources (md, css, dir trees used in demos)
 COPY --from=datomic-fixtures /app/state state
 COPY --from=build /app/src src
+# for navigator deps demo
+COPY --from=build /app/deps.edn deps.edn
 
 # for jgit demo
 COPY .git git
