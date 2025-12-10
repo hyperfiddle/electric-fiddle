@@ -10,7 +10,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 RUN rm -rf /var/lib/apt/lists/*
 COPY datomic-browser/datomic_fixtures.sh datomic_fixtures.sh
 COPY datomic-browser/datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
-# RUN ./datomic_fixtures.sh
+RUN ./datomic_fixtures.sh
 RUN ./datomic_fixtures_mbrainz_full.sh
 # Shaves 3Gb+ of docker image
 RUN rm state/*.tar
