@@ -33,9 +33,8 @@
   hfqlp/Suggestable (-suggest [_] (hfql [.getName
                                          jar-filename
                                          jar-manifest
-                                         .getVersion
-                                         jar-entries
-                                         type])))
+                                         {.getVersion [.major .minor .feature]}
+                                         jar-entries])))
 
 (extend-type java.util.jar.Manifest
   hfqlp/Suggestable (-suggest [_] (hfql [.getMainAttributes #_.getEntries type])))
@@ -55,3 +54,6 @@
 
 (defmethod hfqlp/-hfql-resolve 'dustingetz.nav-jar/jar-by-path [[_ jar-path]]
   (JarFile. (clojure.java.io/file jar-path)))
+
+(def sitemap
+  {`jar (hfql {(list-project-jars) {* [*]}})})
