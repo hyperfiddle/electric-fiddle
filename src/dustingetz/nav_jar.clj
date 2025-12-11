@@ -1,7 +1,9 @@
 (ns dustingetz.nav-jar
-  (:import [java.util.jar JarFile JarEntry])
+  (:import
+   [java.io File]
+   [java.util.jar JarFile JarEntry])
   (:require
-   [dustingetz.fs2 :refer [path-filename]]
+   [contrib.assert :refer [check]]
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
    [hyperfiddle.hfql2.protocols :as hfqlp]))
 
@@ -10,6 +12,9 @@
     (->> (clojure.string/split cp #"[;:]")
       (filter #(.endsWith % ".jar"))
       (map #(JarFile. (clojure.java.io/file %))))))
+
+(defn path-filename [filepath-str]
+  (when filepath-str (.getName (check (File. filepath-str))))) ; doesn't have to exist
 
 (defn jar-entries [!jar] (enumeration-seq (.entries !jar)))
 (defn jar-manifest [!jar] (some->> !jar .getManifest .getMainAttributes .entrySet seq (into {})))
