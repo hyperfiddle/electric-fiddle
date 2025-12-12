@@ -41,21 +41,21 @@
   (resolve-thread 1))
 
 (extend-type com.sun.management.ThreadMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str))
+  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [o] (hfql [type .findDeadlockedThreads])))
 
 (extend-type java.lang.management.MemoryMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str))
+  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [o] (hfql [type .getHeapMemoryUsage .getNonHeapMemoryUsage .getObjectPendingFinalizationCount])))
 
 (extend-type java.lang.management.OperatingSystemMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str))
+  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [o] (hfql [type .getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad])))
 
 (extend-type java.lang.management.ThreadInfo
-  hfqlp/Identifiable (-identify [x] (.getThreadId x))
+  hfqlp/Identifiable (-identify [x] (.getThreadId x)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [o] (hfql [type .getThreadId .getLockInfo .getThreadName .getThreadState .getWaitedCount .getWaitedTime])))
 
 (extend-type java.lang.management.MemoryMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str))
+  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [x] (hfql [type])))

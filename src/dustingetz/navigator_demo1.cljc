@@ -134,6 +134,8 @@
                                                  java.io.File/.getAbsolutePath
                                                  {java.io.File/.listFiles {* ...}}]))))
 
+#?(:clj (defmethod hfqlp/-hfql-resolve `clojure.java.io/file [[_ file-path-str]] (clojure.java.io/file file-path-str)))
+
 #?(:clj (extend-type clojure.lang.Namespace
           hfqlp/Identifiable (-identify [ns] `(find-ns ~(ns-name ns)))
           hfqlp/Suggestable (-suggest [_] (hfql [ns-name ns-publics meta]))))

@@ -86,29 +86,29 @@
     (identify x)) := "12b7acf4d68519b8fa98a31828b5f725abaf80e0")
 
 (extend-type FileRepository
-  hfqlp/Identifiable (-identify [^FileRepository x] (.getIdentifier x)))
+  hfqlp/Identifiable (-identify [^FileRepository x] (.getIdentifier x))) ; wrong impl, must be replaced with a symbolic constructor call
 
 (extend-type PersonIdent
-  hfqlp/Identifiable (-identify [x] (.getEmailAddress x))
+  hfqlp/Identifiable (-identify [x] (.getEmailAddress x)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [_] (hfql [.getName
                                         .getEmailAddress
                                         .getWhen
                                         .getTimeZone])))
 
 (extend-type ObjectId
-  hfqlp/Identifiable (-identify [^ObjectId x] (.getName x))
+  hfqlp/Identifiable (-identify [^ObjectId x] (.getName x)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [_] (hfql [str .getName])))
 
 (extend-type RevCommit
-  hfqlp/Identifiable (-identify [x] (commit-short-name x))
+  hfqlp/Identifiable (-identify [x] (commit-short-name x)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [_] (hfql [commit-short-name
                                         .getShortMessage
                                         {.getAuthorIdent .getName}])))
 
 (extend-type Git
-  hfqlp/Identifiable (-identify [^Git x] (repo-id x))
+  hfqlp/Identifiable (-identify [^Git x] (repo-id x)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [_] (hfql [.getRepository])))
 
 (extend-type Ref
-  hfqlp/Identifiable (-identify [^Ref x] (Repository/shortenRefName (.getName x)))
+  hfqlp/Identifiable (-identify [^Ref x] (Repository/shortenRefName (.getName x))) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [_] (hfql [ref-short-name ref-commit-short ref-type])))

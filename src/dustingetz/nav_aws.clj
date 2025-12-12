@@ -19,7 +19,11 @@
 (defrecord S3Bucket [!s3 bucket-name]
   IS3Bucket
   (list-objects [o] (aws/invoke !s3 {:op :ListObjects :request {:Bucket (check bucket-name)}}))
-  (list-object-versions [o] (aws/invoke !s3 {:op :ListObjectVersions :Bucket (check bucket-name)})))
+  (list-object-versions [o] (try (aws/invoke !s3 {:op :ListObjectVersions :Bucket (check bucket-name)})
+                                 (catch Throwable t ; G added this to diagnose a crash
+                                   (prn {:op :ListObjectVersions :Bucket bucket-name} bucket-name t)
+                                   (prn t)
+                                   (throw t)))))
 
 (defrecord S3 [!s3]
   IAWS

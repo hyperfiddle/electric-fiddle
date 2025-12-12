@@ -22,7 +22,7 @@
 (defn jar-jmanifest-entries [!jar-manifest] (into {} (seq (.entrySet !jar-manifest))))
 
 (extend-type java.util.jar.JarFile$JarFileEntry
-  hfqlp/Identifiable (-identify [x] (-> x str))
+  hfqlp/Identifiable (-identify [x] (-> x str))  ; wrong impl, must be replaced by a symbolic constructor call
   hfqlp/Suggestable (-suggest [_] (hfql [.getName
                                          .getSize
                                          .getCompressedSize
@@ -49,7 +49,7 @@
 ;; #?(:clj (extend-type java.util.jar.Attributes$Name
 ;;           hfqlp/Identifiable (-identify [x] (str x))))
 
-(extend-type java.util.jar.Attributes$Name
+(extend-type java.util.jar.Attributes$Name ; TODO implement Identifiable as a symbolic constructor
   hfqlp/Suggestable (-suggest [_] (hfql [.toString])))
 
 (defmethod hfqlp/-hfql-resolve 'dustingetz.nav-jar/jar-by-path [[_ jar-path]]
