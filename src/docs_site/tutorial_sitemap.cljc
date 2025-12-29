@@ -24,7 +24,7 @@
    [electric-tutorial.svg :refer [SVG]]
    [electric-tutorial.system-properties :refer [SystemProperties]]
    electric-tutorial.table-window
-   electric-tutorial.table-raster
+   electric-tutorial.table-repaint
    electric-tutorial.table-tape
    [electric-tutorial.temperature-converter :refer [TemperatureConverter]]
    [electric-tutorial.temperature2 :refer [Temperature2]]
@@ -112,7 +112,7 @@
      }
     {
      `electric-tutorial.table-window/TableWindow electric-tutorial.table-window/TableWindow
-     `electric-tutorial.table-raster/TableRaster electric-tutorial.table-raster/TableRaster
+     `electric-tutorial.table-repaint/TableRepaint electric-tutorial.table-repaint/TableRepaint
      `electric-tutorial.table-tape/TableTape electric-tutorial.table-tape/TableTape
      }
 

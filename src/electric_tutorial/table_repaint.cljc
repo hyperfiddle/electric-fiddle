@@ -1,9 +1,9 @@
-(ns electric-tutorial.table-raster
+(ns electric-tutorial.table-repaint
   (:require
     [contrib.data :refer [clamp-left]]
     [dustingetz.str :refer [abc-seq]]
     [hyperfiddle.electric-dom3 :as dom]
-    [hyperfiddle.electric-scroll0 :refer [Raster Scroll-window]]
+    [hyperfiddle.electric-scroll0 :refer [Repaint Scroll-window]]
     [hyperfiddle.electric3 :as e]))
 
 (def row-height 24)
@@ -15,13 +15,13 @@
           occluded-rows-height (clamp-left (* row-height (- row-count limit)) 0)]
       (dom/props {:style {:--offset offset :--row-height (str row-height "px")}})
       (dom/table
-        (e/for [i (Raster offset limit)]
+        (e/for [i (Repaint offset limit)]
           (let [x (e/server (nth xs! i nil))]
             (dom/tr (dom/text x)))))
       (dom/div (dom/props {:style {:height (str occluded-rows-height "px")}})))))
 
 (declare css)
-(e/defn TableRaster []
+(e/defn TableRepaint []
   (dom/style (dom/text css))
   (dom/div (dom/props {:class "App"})
     (VirtualScroll (e/server (abc-seq 1 500)))))
