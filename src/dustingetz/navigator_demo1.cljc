@@ -32,7 +32,7 @@
              [.getRepository
               git/git-branch-current
               git/git-status
-              nav-git/branch-list
+              {nav-git/branch-list {* [* nav-git/ref-log]}}
               nav-git/log]})
 
       'py-hello-world
@@ -123,7 +123,9 @@
   (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute,
                                                           :inset-block-start "1dvw",
                                                           :inset-inline-end "1dvw"}})
-  (e/server (HfqlRoot sitemap entrypoints)))
+  (e/server
+    (binding [e/*bindings* {#'nav-git/*repo-path* nav-git/git-repo-path}] ; DI
+      (HfqlRoot sitemap entrypoints))))
 
 ;; Identifiable, Suggestable
 
