@@ -28,7 +28,7 @@
   ;;  getPlatformMXBean2 [type]}
   :-)
 
-(defn getThreadMXBean [] (ManagementFactory/getThreadMXBean)) ; todo hfql syntax
+(defn getThreadMXBean [] (ManagementFactory/getThreadMXBean)) ; TODO hfql syntax
 (defn getMemoryMXBean [] (ManagementFactory/getMemoryMXBean))
 (defn getRuntimeMXBean [] (ManagementFactory/getRuntimeMXBean))
 (defn getOperatingSystemMXBean [] (ManagementFactory/getOperatingSystemMXBean))
@@ -41,21 +41,16 @@
   (resolve-thread 1))
 
 (extend-type com.sun.management.ThreadMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [o] (hfql [type .findDeadlockedThreads])))
 
 (extend-type java.lang.management.MemoryMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [o] (hfql [type .getHeapMemoryUsage .getNonHeapMemoryUsage .getObjectPendingFinalizationCount])))
 
 (extend-type java.lang.management.OperatingSystemMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
   hfqlp/Suggestable (-suggest [o] (hfql [type .getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad])))
 
 (extend-type java.lang.management.ThreadInfo
-  hfqlp/Identifiable (-identify [x] (.getThreadId x)) ; wrong impl, must be replaced with a symbolic constructor call
-  hfqlp/Suggestable (-suggest [o] (hfql [type .getThreadId .getLockInfo .getThreadName .getThreadState .getWaitedCount .getWaitedTime])))
+  hfqlp/Identifiable (-identify [x] `(resolve-thread ~(.getThreadId x))) ; wrong impl, must be replaced with a symbolic constructor call
+  hfqlp/Suggestable (-suggest [o] (hfql [.getThreadId .getThreadName .getLockInfo .getThreadState .getWaitedCount .getWaitedTime])))
 
-(extend-type java.lang.management.MemoryMXBean
-  hfqlp/Identifiable (-identify [x] (-> x .getObjectName str)) ; wrong impl, must be replaced with a symbolic constructor call
-  hfqlp/Suggestable (-suggest [x] (hfql [type])))
+(defmethod hfqlp/-hfql-resolve `resolve-thread [[_ thread-id]] (resolve-thread thread-id))
