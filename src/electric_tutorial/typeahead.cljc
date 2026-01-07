@@ -2,7 +2,7 @@
   (:require
    [clojure.math :refer [pow]]
    [dustingetz.str :refer [includes-str? abc-seq]]
-   [hyperfiddle.electric-scroll0 :refer [Raster]]
+   [hyperfiddle.electric-scroll0 :refer [Repaint]]
    [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]))
 
@@ -23,7 +23,7 @@
         (when is-open
           (let [xs! (e/server (e/Offload (partial options-fn-S search)))]
             (dom/ul
-              (e/for [i (Raster 0 15)] ; no virtual scroll - typeahead UX is filter biased
+              (e/for [i (Repaint 0 15)] ; no virtual scroll - typeahead UX is filter biased
                 (when-some [x (e/server (nth xs! i nil))]
                   (dom/li (e/server (Option-label x))
                     (dom/On "click" (fn [e] (doto e (.stopPropagation) (.preventDefault))
