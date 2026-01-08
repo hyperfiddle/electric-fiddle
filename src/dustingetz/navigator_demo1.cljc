@@ -77,7 +77,8 @@
 
       'kondo
       (hfql {(kondo/run! {:lint ["src"] :config {:analysis true}})
-             [{:analysis [* (fn namespace-usages [m] ; FIXME hfql bug where [:analysis] works but [{:analysis [*]} receives the wrong % in scope (the parent).
+             [*
+              {:analysis [* (fn namespace-usages [m] ; FIXME extra `namespace-usages` column is lost due to the UI navigator reshaping this step as a key×value list.
                               (->> (get m :namespace-usages)
                                 (map #(hfql/identifiable (juxt :from :to) %))))]}]})
 
