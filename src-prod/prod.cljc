@@ -8,7 +8,8 @@
             #?(:cljs hyperfiddle.electric-client3)
 
             #?(:clj prod-fiddle-config)
-            load-prod-fiddles!))
+            load-prod-fiddles!)
+  (:import [missionary Cancelled]))
 
 ;#?(:clj (alias 'build (create-ns 'hyperfiddle.fiddle-build)))
 
@@ -46,7 +47,7 @@
      (defn ^:dev/after-load ^:export start! []
        (set! reactor ((e/boot-client {} (inject-user-main) (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request
                       #(js/console.log "Reactor success:" %)
-                      #(js/console.error "Reactor failure:" %))))
+                      #(when-not (instance? Cancelled %) (js/console.error "Reactor failure:" %)))))
 
      (defn ^:dev/before-load stop! []
        (when reactor (reactor)) ; teardown

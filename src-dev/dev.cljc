@@ -7,7 +7,8 @@
     [hyperfiddle.rcf :as rcf]
 
     #?(:clj dev-fiddle-config)
-    load-dev-fiddles!))
+    load-dev-fiddles!)
+  (:import [missionary Cancelled]))
 
 (comment (-main)) ; repl entrypoint
 
@@ -72,7 +73,7 @@
      (defn ^:dev/after-load ^:export start! []
        (set! reactor ((e/boot-client {} DevMain (e/server (e/amb))) ; symmetric with e/boot-server: same arity - no-value hole in place of server-only ring-request
                        #(js/console.log "Reactor success:" %)
-                       #(js/console.error "Reactor failure:" %)))
+                       #(when-not (instance? Cancelled %) (js/console.error "Reactor failure:" %))))
        (hyperfiddle.rcf/enable!))
 
      (defn ^:dev/before-load stop! []
