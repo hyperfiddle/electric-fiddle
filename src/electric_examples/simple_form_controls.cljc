@@ -17,9 +17,9 @@
     (e/client
       (dom/div (dom/props {:style {:display :flex, :flex-direction :column, :align-items :start}})
         (dom/p (dom/text "Count: " (e/server (e/watch !counter))))
-        (let [[token error] (Button!* :label "Add 1")
-              fail?   (dom/div (Checkbox* true :label "Failure"))
-              latency (dom/div (-> (Input* 500 :label "Latency (ms) " :type "number" :min 0) (parse-long) (or 0)))]
+        (let [fail?   (dom/div (Checkbox* true :label "Failure"))
+              latency (dom/div (-> (Input* 500 :label "Latency (ms) " :type "number" :min 0) (parse-long) (or 0)))
+              [token error] (Button!* :label "Add 1")]
           fail? latency ; force lazy let bindings
           (dom/span (dom/text " " error))
           (when (some? token)
