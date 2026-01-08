@@ -13,7 +13,9 @@
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
    ;; #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring]) ; jetty 10+
    #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; :jetty9 alias
-   ))
+   )
+  (:import [missionary Cancelled])
+  )
 
 (comment (-main)) ; repl entrypoint
 
@@ -52,7 +54,7 @@
      (set! browser-process
        ((electric-starter-app.main/electric-boot nil) ; boot client-side Electric process
         #(js/console.log "Reactor success:" %)
-        #(js/console.error "Reactor failure:" %)))))
+        #(when-not (instance? Cancelled %) (js/console.error "Reactor failure:" %))))))
 
 #?(:cljs
    (defn ^:dev/before-load stop! [] ; for hot code reload at dev time

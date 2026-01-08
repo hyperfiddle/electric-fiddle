@@ -14,8 +14,8 @@
 
    #?(:clj clojure.edn)
    #?(:clj clojure.java.io)
-   #?(:clj [clojure.tools.logging :as log])
-   ))
+   #?(:clj [clojure.tools.logging :as log]))
+  (:import [missionary Cancelled]))
 
 (defmacro comptime-resource [filename] (some-> filename clojure.java.io/resource slurp clojure.edn/read-string))
 
@@ -67,7 +67,7 @@
      ((electric-client/reload-when-stale ; hard-reload the page to fetch new assets when a new server version is deployed
         (electric-starter-app.main/electric-boot nil))  ; boot client-side Electric process
       #(js/console.log "Reactor success:" %)
-      #(js/console.error "Reactor failure:" %))))
+      #(when-not (instance? Cancelled %) (js/console.error "Reactor failure:" %)))))
 
 
 #?(:clj
