@@ -6,10 +6,12 @@
             [dustingetz.metaobject :refer [DemoMetaobject]]
             [dustingetz.million-checkboxes :refer [MillionCheckboxes]]
             [dustingetz.million-checkboxes2 :refer [MillionCheckboxes2]]
-            [dustingetz.navigator-demo1 :refer [NavigatorDemo1]]
+            #_[dustingetz.navigator-demo1 :refer [NavigatorDemo1]]
             [dustingetz.painter :refer [Painter]]
             [dustingetz.y-fac :refer [Y-Fac]]
             [dustingetz.y-dir :refer [Y-dir]]
+
+            [dustingetz.y2026.nav-codeq :refer [NavCodeq]]
 
             [dustingetz.talks.two-clocks :refer [TwoClocks]]
             [dustingetz.talks.dir-tree :refer [DirTree]]
@@ -31,5 +33,6 @@
      `MillionCheckboxes MillionCheckboxes
      `MillionCheckboxes2 MillionCheckboxes2
      `Logic Logic
-     `ObjectBrowserDemo3 ObjectBrowserDemo3}
+     `ObjectBrowserDemo3 ObjectBrowserDemo3
+     `NavCodeq NavCodeq}
     ))

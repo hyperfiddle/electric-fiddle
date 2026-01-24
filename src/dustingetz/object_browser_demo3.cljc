@@ -89,7 +89,7 @@
     (dom/style (dom/text css))
     (navigator/HfqlRoot (e/server sitemap)
       `[(clojure.java.io/file ".")
-        (datomic-entity ~dustingetz.mbrainz/lennon)])))
+        #_(datomic-entity ~dustingetz.mbrainz/lennon)])))
 
 
 (def css "
