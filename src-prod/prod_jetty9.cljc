@@ -8,6 +8,7 @@
    #?(:clj [ring.middleware.not-modified :refer [wrap-not-modified]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
+   #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :as electric-jetty9]) ; jetty 9
    #?(:cljs [hyperfiddle.electric-client3 :as electric-client])
 
@@ -46,7 +47,11 @@
          {:host (:host config), :port (:port config), :join? false
           :configurator (fn [server]
                           (electric-jetty9/electric-jetty9-ws-install server "/"
-                            (fn [ring-request] (electric-starter-app.main/electric-boot ring-request)))
+                            (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))
+                            (fn [next-handler]
+                              (-> next-handler
+                                (electric-jetty9/wrap-reject-stale-client config)
+                                (wrap-params))))
                           ;; Gzip served assets
                           (.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
                                                 (.setMinGzipSize 1024)
