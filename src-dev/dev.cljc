@@ -33,14 +33,9 @@
                        (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))) ; boot server-side Electric process
                      (wrap-params)) ; 1. boilerplate – parse request URL parameters.
                    {:host "0.0.0.0", :port 8080, :join? false
-                    :configurator (fn [server] ; tune jetty
-                                    (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
-                                      (.getHandler server)
-                                      (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
-                                        (accept [_this _servletContext wsContainer]
-                                          (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60))
-                                          (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024)) ; typical compressed message size is of a few KBs. Set to 100M for demo.
-                                          (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))))}))  ; 100M - for demo.
+                    :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
+                    :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
+                    :ws-max-text-size (* 100 1024 1024)}))  ; 100M - for demo.
      (log/info "👉 http://0.0.0.0:8080")))
 
 (declare browser-process)

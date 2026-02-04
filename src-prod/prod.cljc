@@ -47,14 +47,10 @@
            (electric-ring/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync.
            (wrap-params))
          {:host (:host config), :port (:port config), :join? false
-          :configurator (fn [server] ; Tune limits
-                          (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
-                            (.getHandler server)
-                            (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
-                              (accept [_this _servletContext wsContainer]
-                                (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60))
-                                (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024))  ; 100M - for demo
-                                (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))) ; 100M - for demo
+          :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
+          :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
+          :ws-max-text-size (* 100 1024 1024)   ; 100MB - for demo
+          :configurator (fn [server]
                           ;; Gzip served assets
                           (.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
                                                 (.setMinGzipSize 1024)
