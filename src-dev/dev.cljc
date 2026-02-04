@@ -11,9 +11,7 @@
    #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
-   )
-  (:import [missionary Cancelled]))
+   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])))
 
 (comment (-main)) ; repl entrypoint
 
@@ -49,9 +47,7 @@
 #?(:cljs ; client entrypoint
    (defn ^:dev/after-load ^:export -main []
      (set! browser-process
-       ((electric-starter-app.main/electric-boot nil) ; boot client-side Electric process
-        #(js/console.log "Reactor success:" %)
-        #(when-not (instance? Cancelled %) (js/console.error "Reactor failure:" %))))))
+       ((electric-starter-app.main/electric-boot nil)))))  ; boot client-side Electric process
 
 #?(:cljs
    (defn ^:dev/before-load stop! [] ; for hot code reload at dev time

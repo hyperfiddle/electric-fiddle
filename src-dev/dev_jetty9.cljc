@@ -10,9 +10,7 @@
    #?(:clj [ring.util.response :as ring-response])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
-   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]])
-   )
-  (:import [missionary Cancelled]))
+   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]])))
 
 (comment (-main)) ; repl entrypoint
 
@@ -39,9 +37,7 @@
 #?(:cljs ; client entrypoint
    (defn ^:dev/after-load ^:export -main []
      (set! browser-process
-       ((electric-starter-app.main/electric-boot nil) ; boot client-side Electric process
-        #(js/console.log "Reactor success:" %)
-        #(when-not (instance? Cancelled %) (js/console.error "Reactor failure:" %))))))
+       ((electric-starter-app.main/electric-boot nil)))))  ; boot client-side Electric process
 
 #?(:cljs
    (defn ^:dev/before-load stop! [] ; for hot code reload at dev time
