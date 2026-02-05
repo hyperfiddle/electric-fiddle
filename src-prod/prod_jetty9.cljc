@@ -1,15 +1,15 @@
-(ns prod ; jetty 10+ – the default
-  #?(:cljs (:require-macros [prod :refer [comptime-resource]]))
+(ns prod-jetty9 ; run with `clj -M:prod:jetty9 -m prod-jetty9`
+  #?(:cljs (:require-macros [prod-jetty9 :refer [comptime-resource]]))
   (:require
    electric-starter-app.main
 
    #?(:clj [ring.adapter.jetty :as ring])
    #?(:clj [ring.util.response :as ring-response])
    #?(:clj [ring.middleware.not-modified :refer [wrap-not-modified]])
-   #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   #?(:clj [ring.middleware.params :refer [wrap-params]])
+   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :as electric-jetty9]) ; jetty 9
    #?(:cljs [hyperfiddle.electric-client3 :as electric-client])
 
    #?(:clj clojure.edn)
@@ -42,15 +42,15 @@
            (wrap-resource (:resources-path config))
            (wrap-content-type)
            (wrap-not-modified)
-           (wrap-ensure-cache-bust-on-server-deployment)
-           (electric-ring/wrap-electric-websocket (fn [ring-request] (electric-starter-app.main/electric-boot ring-request)))
-           (electric-ring/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync.
-           (wrap-params))
+           (wrap-ensure-cache-bust-on-server-deployment))
          {:host (:host config), :port (:port config), :join? false
-          :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
-          :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
-          :ws-max-text-size (* 100 1024 1024)   ; 100MB - for demo
           :configurator (fn [server]
+                          (electric-jetty9/electric-jetty9-ws-install server "/"
+                            (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))
+                            (fn [next-handler]
+                              (-> next-handler
+                                (electric-jetty9/wrap-reject-stale-client config)
+                                (wrap-params))))
                           ;; Gzip served assets
                           (.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
                                                 (.setMinGzipSize 1024)
