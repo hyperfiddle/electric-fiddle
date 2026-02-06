@@ -21,7 +21,7 @@
 (declare wrap-prod-index-page wrap-ensure-cache-bust-on-server-deployment)
 
 #?(:clj ; server entrypoint
-   (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
+   (defn -main [& {:strs [http-port] :as args}] ; clojure.main entrypoint, args are strings
      (let [config
            ;; Client and server versions must match in prod (dev is not concerned)
            ;; `src-build/build.clj` will compute the common version and store it in `resources/electric-manifest.edn`
@@ -30,7 +30,7 @@
            ;; The client's version is injected in the compiled .js file.
            (merge
              (comptime-resource "electric-manifest.edn")
-             {:host "0.0.0.0", :port 8080,
+             {:host "0.0.0.0", :port (or (some-> http-port parse-long) 8080),
               :resources-path "public"
               ;; shadow-cljs build manifest path, to get the fingerprinted main.sha1.js file to ensure cache invalidation
               :manifest-path "public/electric_starter_app/js/manifest.edn"})]
