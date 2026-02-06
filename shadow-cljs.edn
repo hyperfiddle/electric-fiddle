@@ -9,4 +9,9 @@
          :output-dir "resources/public/electric_starter_app/js"
          :asset-path "/electric_starter_app/js"
          :modules {:main {:entries [prod] :init-fn prod/-main}}
-         :module-hash-names true}}}
+         :module-hash-names true}
+  :prod-jetty9 {:target :browser
+                :output-dir "resources/public/electric_starter_app/js"
+                :asset-path "/electric_starter_app/js"
+                :modules {:main {:entries [prod-jetty9] :init-fn prod-jetty9/-main}}
+                :module-hash-names true}}}
