@@ -42,6 +42,6 @@ compose.file = 'compose_docs_site.yml'
     timeout = "2s"
 
 [[vm]]
-  memory = '16gb'
-  cpu_kind = 'performance'
-  cpus = 8
+  memory = '8gb'
+  cpu_kind = 'shared'
+  cpus = 4
