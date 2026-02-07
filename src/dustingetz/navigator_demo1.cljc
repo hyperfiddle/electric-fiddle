@@ -119,8 +119,8 @@
               type]})
 
       'ns
-      (hfql {(find-ns 'clojure.core #_(ns-name *ns*))
-             [dustingetz.nav-clojure-ns/ns-publics2]})}))
+      (hfql {(all-ns) #_(find-ns 'clojure.core #_(ns-name *ns*))
+             {* [ns-name ns-publics]}})}))
 
 (e/defn NavigatorDemo1 [sitemap entrypoints]
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
@@ -143,11 +143,3 @@
                                                  {java.io.File/.listFiles {* ...}}]))))
 
 #?(:clj (defmethod hfqlp/-hfql-resolve `clojure.java.io/file [[_ file-path-str]] (clojure.java.io/file file-path-str)))
-
-#?(:clj (extend-type clojure.lang.Namespace
-          hfqlp/Identifiable (-identify [ns] `(find-ns ~(ns-name ns)))
-          hfqlp/Suggestable (-suggest [_] (hfql [ns-name ns-publics meta]))))
-
-#?(:clj (extend-type clojure.lang.Var
-          hfqlp/Identifiable (-identify [ns] `(find-var ~(symbol ns)))
-          hfqlp/Suggestable (-suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
