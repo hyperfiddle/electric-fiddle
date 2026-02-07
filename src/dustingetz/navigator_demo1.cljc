@@ -19,6 +19,8 @@
    [hyperfiddle.hfql2.protocols :as hfqlp]
    [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]))
 
+#?(:clj (defn http-req [] e/http-request))
+
 #?(:clj
    (def sitemap
      {'file
@@ -26,6 +28,8 @@
              [java.io.File/.getName
               {java.io.File/.listFiles {* ...}}
               type]})
+
+      'http-req (hfql {(http-req) [*]})
 
       'load-repo
       (hfql {(git/load-repo nav-git/git-repo-path)
@@ -125,7 +129,8 @@
                                                           :inset-block-start "1dvw",
                                                           :inset-inline-end "1dvw"}})
   (e/server
-    (binding [e/*bindings* {#'nav-git/*repo-path* nav-git/git-repo-path}] ; DI
+    (binding [e/*bindings* {#'e/http-request e/http-request
+                            #'nav-git/*repo-path* nav-git/git-repo-path}] ; DI
       (HfqlRoot sitemap entrypoints))))
 
 ;; Identifiable, Suggestable
