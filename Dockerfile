@@ -1,4 +1,4 @@
-FROM node:14.7-stretch AS node-deps
+FROM node:18-bookworm-slim AS node-deps
 WORKDIR /app
 COPY package.json package.json
 RUN npm install
