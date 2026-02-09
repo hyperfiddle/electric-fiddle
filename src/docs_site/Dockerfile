@@ -46,10 +46,10 @@ ARG HYPERFIDDLE_FIDDLE_DEPS_ALIAS
 RUN clojure -A:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS -M -e ::ok         # preload
 RUN clojure -A:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS -M -e ::ok   # preload
 RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
-    :hyperfiddle.fiddle-build/fiddle-ns $HYPERFIDDLE_FIDDLE_NS \
-    :hyperfiddle.fiddle-build/fiddle-deps-alias $HYPERFIDDLE_FIDDLE_DEPS_ALIAS \
-    :hyperfiddle.fiddle-build/version "\"$VERSION\"" \
-    :hyperfiddle.fiddle-build/jar-name app.jar
+    :build/fiddle-ns $HYPERFIDDLE_FIDDLE_NS \
+    :build/fiddle-deps-alias $HYPERFIDDLE_FIDDLE_DEPS_ALIAS \
+    :version "\"$VERSION\"" \
+    :build/jar-name app.jar
 
 FROM amazoncorretto:11 AS app
 WORKDIR /app

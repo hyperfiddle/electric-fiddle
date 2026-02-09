@@ -10,7 +10,7 @@
 .shadow-cljs
 node_modules
 #/report.html
-/resources/public/js
+/resources/public/electric_fiddle/js
 /resources/electric-manifest.edn
 /target
 /yarn-error.log

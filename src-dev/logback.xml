@@ -10,10 +10,12 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <!-- org.eclipse.jetty, datomic -->
-    <logger name="datomic" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
-    <logger name="electric-fiddle" level="DEBUG" additivity="false"><appender-ref ref="STDOUT" /></logger>
-    <logger name="dustingetz" level="DEBUG" additivity="false"><appender-ref ref="STDOUT" /></logger>
-    <logger name="hyperfiddle" level="INFO" additivity="false"><appender-ref ref="STDOUT" /></logger>
     <logger name="hyperfiddle.electric-ring-adapter3" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="hyperfiddle.electric.shadow-cljs.hooks3" level="DEBUG" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="org.eclipse.jetty" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="datomic" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+
+    <logger name="io.undertow" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="org.jboss" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="org.xnio" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
 </configuration>

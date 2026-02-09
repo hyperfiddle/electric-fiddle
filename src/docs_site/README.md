@@ -3,11 +3,11 @@
 ```
 # prod build, from electric-fiddle
 npm install
-clojure -X:build:prod:electric-tutorial build-client :hyperfiddle.fiddle-build/fiddle-ns docs-site.sitemap :debug false :verbose false :optimize true
+clojure -X:build:prod:electric-tutorial build-client :build/fiddle-ns docs-site.sitemap :debug false :verbose false :optimize true
 clj -M:prod:electric-tutorial -m prod
 
 # uberjar, from electric-fiddle
-clojure -X:build:prod:electric-tutorial uberjar :hyperfiddle.fiddle-build/fiddle-ns docs-site.sitemap :hyperfiddle.fiddle-build/fiddle-deps-alias electric-tutorial :hyperfiddle.fiddle-build/jar-name "app.jar"
+clojure -X:build:prod:electric-tutorial uberjar :build/fiddle-ns docs-site.sitemap :build/fiddle-deps-alias electric-tutorial :build/jar-name "app.jar"
 java -cp target/app.jar clojure.main -m prod
 
 # docker, from monorepo root

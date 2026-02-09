@@ -1,5 +1,5 @@
-(ns prod ; jetty 10+ – the default
-  #?(:cljs (:require-macros [prod :refer [comptime-resource inject-user-main]]))
+(ns prod-jetty9 ; run with `clj -M:prod:jetty9 -m prod-jetty9`
+  #?(:cljs (:require-macros [prod-jetty9 :refer [comptime-resource inject-user-main]]))
   (:require
    ;; electric-fiddle: dynamic fiddle-ns resolution
    [contrib.assert :refer [check]]
@@ -11,11 +11,11 @@
    #?(:clj [ring.adapter.jetty :as ring])
    #?(:clj [ring.util.response :as ring-response])
    #?(:clj [ring.middleware.not-modified :refer [wrap-not-modified]])
-   #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
+   #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.cookies :as cookies])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :as electric-jetty9]) ; jetty 9
    #?(:cljs [hyperfiddle.electric-client3 :as electric-client])
 
    [hyperfiddle.electric3 :as e]
@@ -65,17 +65,19 @@
              (wrap-not-modified)
              (wrap-ensure-cache-bust-on-server-deployment)
              (middleware/wrap-demo-router)                 ; electric-fiddle: auth routing
-             (electric-ring/wrap-electric-websocket        ; install Electric server
-               (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#))))) ; boot server-side Electric process
-             (middleware/wrap-authenticated-request)       ; electric-fiddle: authenticate before opening websocket
+             (middleware/wrap-authenticated-request)       ; electric-fiddle: authenticate
              (cookies/wrap-cookies)                        ; electric-fiddle: makes cookies available
-             (electric-ring/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync
              (wrap-params))                               ; boilerplate – parse request URL parameters
            {:host (:host config), :port (:port config), :join? false
-            :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
-            :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
-            :ws-max-text-size (* 100 1024 1024)   ; 100MB - for demo
             :configurator (fn [server]
+                            (electric-jetty9/electric-jetty9-ws-install server "/"
+                              (eval `(fn [ring-req#] (e/boot-server {} ~entrypoint (e/server ring-req#)))) ; boot server-side Electric process
+                              (fn [next-handler] ; electric-fiddle: WS middleware
+                                (-> next-handler
+                                  (middleware/wrap-authenticated-request) ; electric-fiddle: authenticate before opening websocket
+                                  (cookies/wrap-cookies)                  ; electric-fiddle: makes cookies available to Electric app
+                                  (electric-jetty9/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync
+                                  (wrap-params))))
                             ;; Gzip served assets
                             (.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
                                                   (.setMinGzipSize 1024)
@@ -128,5 +130,5 @@
              (ring-response/header "Cache-Control" "no-store")) ; never cache – this is dynamically generated content.
            (-> (ring-response/not-found (pr-str ::missing-shadow-build-manifest)) ; can't inject js modules
              (ring-response/content-type "text/plain")))
-         ;; else – index.prod.html wasn't found on classpath
+         ;; else – index.prod.html was not found on classpath
          (next-handler ring-req)))))

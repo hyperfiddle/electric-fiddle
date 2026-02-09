@@ -3,21 +3,37 @@
  :builds
  {:dev
   {:target :browser
-   :devtools {:watch-dir "resources/public" ; live reload CSS
+   :devtools {:watch-dir "resources/public/electric_fiddle" ; live reload CSS
               :loader-mode :default ; faster reload
               :hud #{:errors :progress}}
-   :output-dir "resources/public/js"
-   :asset-path "/js"
-   :modules {:main {:entries [dev] :init-fn dev/start!}}
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
+   :modules {:main {:entries [dev] :init-fn dev/-main}}
    ;; uncomment to get flow protocol violation checks, warnings..
    ;; :compiler-options {:closure-defines {hyperfiddle.electric.impl.missionary-util/wrap true}}
    :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)
-                 (dev/pause-websocket-reconnect-while-compiling)
-                 ]}
+                 (dev/pause-websocket-reconnect-while-compiling)]}
+  :dev-jetty9
+  {:target :browser
+   :devtools {:watch-dir "resources/public/electric_fiddle"
+              :loader-mode :default
+              :hud #{:errors :progress}}
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
+   :modules {:main {:entries [dev-jetty9] :init-fn dev-jetty9/-main}}
+   :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)
+                 (dev-jetty9/pause-websocket-reconnect-while-compiling)]}
   :prod
   {:target :browser
-   :output-dir "resources/public/js"
-   :asset-path "/js"
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
    :module-hash-names true
    :modules {:main {:entries [prod]
-                    :init-fn prod/start!}}}}}
+                    :init-fn prod/-main}}}
+  :prod-jetty9
+  {:target :browser
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
+   :module-hash-names true
+   :modules {:main {:entries [prod-jetty9]
+                    :init-fn prod-jetty9/-main}}}}}

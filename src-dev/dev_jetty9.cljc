@@ -1,4 +1,4 @@
-(ns dev ; jetty 10+ – the default
+(ns dev-jetty9 ; require :jetty9 deps alias
   (:require
    ;; electric-fiddle: multi-fiddle boot
    [electric-fiddle.fiddle-index :refer [FiddleMain]]
@@ -17,7 +17,7 @@
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
    #?(:clj [ring.middleware.cookies :as cookies])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]])
 
    [hyperfiddle.electric3 :as e]
    #?(:cljs hyperfiddle.electric-client3)
@@ -48,7 +48,7 @@
      (log/info "Starting Electric compiler and server...")
 
      (shadow-cljs-compiler-server/start!)
-     (shadow-cljs-compiler/watch :dev)
+     (shadow-cljs-compiler/watch :dev-jetty9)
 
      (def server (ring/run-jetty
                    (-> ; ring middlewares – applied bottom up:
@@ -58,16 +58,19 @@
                      (wrap-resource "public")            ; serve assets from disk
                      (wrap-content-type)                  ; boilerplate – to serve assets with correct mime/type
                      (middleware/wrap-demo-router)         ; electric-fiddle: auth routing
-                     (electric-ring/wrap-electric-websocket ; install Electric server
-                       (fn [ring-request] (e/boot-server {} DevMain (e/server ring-request)))) ; boot server-side Electric process
                      (middleware/wrap-authenticated-request) ; electric-fiddle: authenticate before opening websocket
                      (cookies/wrap-cookies)                ; electric-fiddle: makes cookies available to Electric app
-                     (middleware/wrap-allow-ws-connect (fn [_] (not @!cljs-is-compiling))) ; electric-fiddle: gate WS during compilation
                      (wrap-params))                       ; boilerplate – parse request URL parameters
                    {:host "0.0.0.0", :port 8080, :join? false
-                    :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
-                    :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
-                    :ws-max-text-size (* 100 1024 1024)}))  ; 100MB - for demo
+                    :configurator (fn [server]
+                                    (electric-jetty9-ws-install server "/"
+                                      (fn [ring-request] (e/boot-server {} DevMain (e/server ring-request)))
+                                      (fn [next-handler] ; electric-fiddle: WS middleware
+                                        (-> next-handler
+                                          (middleware/wrap-authenticated-request)
+                                          (cookies/wrap-cookies)
+                                          (middleware/wrap-allow-ws-connect (fn [_] (not @!cljs-is-compiling))) ; electric-fiddle: gate WS during compilation
+                                          (wrap-params)))))}))
      (log/info "👉 http://0.0.0.0:8080")))
 
 (declare browser-process)
