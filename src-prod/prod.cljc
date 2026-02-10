@@ -38,7 +38,7 @@
 (defmacro inject-user-main [] (symbol (name prod-fiddle-config/*comptime-prod-fiddle-ns*) "ProdMain"))
 
 #?(:clj ; server entrypoint
-   (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
+   (defn -main [& {:strs [http-port] :as args}] ; clojure.main entrypoint, args are strings
      (let [config
            ;; Client and server versions must match in prod (dev is not concerned)
            ;; `src-build/build.clj` will compute the common version and store it in `resources/electric-manifest.edn`
@@ -48,7 +48,7 @@
            (merge
              (comptime-resource "electric-manifest.edn")
              args
-             {:host "0.0.0.0", :port 8080,
+             {:host "0.0.0.0", :port (or (some-> http-port parse-long) 8080),
               :resources-path "public"
               ;; shadow-cljs build manifest path, to get the fingerprinted main.sha1.js file to ensure cache invalidation
               :manifest-path "public/electric_fiddle/js/manifest.edn"})]

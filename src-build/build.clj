@@ -19,7 +19,7 @@ application classpath to be available"
   (let [{:keys [::fiddle-ns] :as config}
         (-> config
           (update ::fiddle-ns (comp not-empty str)) ; coerce, -X under bash evals as symbol unless shell quoted
-          (dissoc ::version)
+          (dissoc ::version :shadow-build)
           (assoc :hyperfiddle/electric-user-version version))]
     (log/info 'build-client (pr-str config))
     (b/delete {:path "resources/public/electric_fiddle/js"})

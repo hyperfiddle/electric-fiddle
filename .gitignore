@@ -2,10 +2,10 @@
 # git config --global core.excludesfile
 # git config --global core.excludesfile ~/.gitignore
 # see also: https://gist.github.com/subfuzion/db7f57fff2fb6998a16c
-.clj-kondo
 .clj-kondo/.cache
 .cpcache
 .lsp
+.idea
 .nrepl-port
 .shadow-cljs
 node_modules

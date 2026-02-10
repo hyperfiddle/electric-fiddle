@@ -1,7 +1,7 @@
 {:builds
  {:dev
   {:target :browser
-   :devtools {:watch-dir "resources/public/electric_fiddle" ; live reload CSS
+   :devtools {:watch-dir "resources/public" ; live reload CSS
               :loader-mode :default ; faster reload
               :hud #{:errors :progress}}
    :output-dir "resources/public/electric_fiddle/js"
@@ -13,7 +13,7 @@
                  (dev/pause-websocket-reconnect-while-compiling)]}
   :dev-jetty9
   {:target :browser
-   :devtools {:watch-dir "resources/public/electric_fiddle"
+   :devtools {:watch-dir "resources/public"
               :loader-mode :default
               :hud #{:errors :progress}}
    :output-dir "resources/public/electric_fiddle/js"
