@@ -43,32 +43,36 @@
        nil)
      build-state))
 
+#?(:clj (defn next-available-port-from [start] (first (filter #(try (doto (java.net.ServerSocket. %) .close) % (catch Exception _ (println (format "Port %s already taken" %)) nil)) (iterate inc start)))))
+
 #?(:clj ; server entrypoint
    (defn -main [& args]
-     (log/info "Starting Electric compiler and server...")
+     (let [{:keys [http-port]} (first args)
+           http-port (or http-port (next-available-port-from 8080))]
+       (log/info "Starting Electric compiler and server...")
 
-     (shadow-cljs-compiler-server/start!)
-     (shadow-cljs-compiler/watch :dev)
+       (shadow-cljs-compiler-server/start!)
+       (shadow-cljs-compiler/watch :dev)
 
-     (def server (ring/run-jetty
-                   (-> ; ring middlewares – applied bottom up:
-                     (fn [ring-request] ; index page fallback
-                       (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_fiddle"})
-                         (ring-response/content-type "text/html")))
-                     (wrap-resource "public")            ; serve assets from disk
-                     (wrap-content-type)                  ; boilerplate – to serve assets with correct mime/type
-                     (middleware/wrap-demo-router)         ; electric-fiddle: auth routing
-                     (electric-ring/wrap-electric-websocket ; install Electric server
-                       (fn [ring-request] (e/boot-server {} DevMain (e/server ring-request)))) ; boot server-side Electric process
-                     (middleware/wrap-authenticated-request) ; electric-fiddle: authenticate before opening websocket
-                     (cookies/wrap-cookies)                ; electric-fiddle: makes cookies available to Electric app
-                     (middleware/wrap-allow-ws-connect (fn [_] (not @!cljs-is-compiling))) ; electric-fiddle: gate WS during compilation
-                     (wrap-params))                       ; boilerplate – parse request URL parameters
-                   {:host "0.0.0.0", :port 8080, :join? false
-                    :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
-                    :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
-                    :ws-max-text-size (* 100 1024 1024)}))  ; 100MB - for demo
-     (log/info "👉 http://0.0.0.0:8080")))
+       (def server (ring/run-jetty
+                     (-> ; ring middlewares – applied bottom up:
+                       (fn [ring-request] ; index page fallback
+                         (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_fiddle"})
+                           (ring-response/content-type "text/html")))
+                       (wrap-resource "public")            ; serve assets from disk
+                       (wrap-content-type)                  ; boilerplate – to serve assets with correct mime/type
+                       (middleware/wrap-demo-router)         ; electric-fiddle: auth routing
+                       (electric-ring/wrap-electric-websocket ; install Electric server
+                         (fn [ring-request] (e/boot-server {} DevMain (e/server ring-request)))) ; boot server-side Electric process
+                       (middleware/wrap-authenticated-request) ; electric-fiddle: authenticate before opening websocket
+                       (cookies/wrap-cookies)                ; electric-fiddle: makes cookies available to Electric app
+                       (middleware/wrap-allow-ws-connect (fn [_] (not @!cljs-is-compiling))) ; electric-fiddle: gate WS during compilation
+                       (wrap-params))                       ; boilerplate – parse request URL parameters
+                     {:host "0.0.0.0", :port http-port, :join? false
+                      :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
+                      :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
+                      :ws-max-text-size (* 100 1024 1024)}))  ; 100MB - for demo
+       (log/info (format "👉 http://0.0.0.0:%s" http-port)))))
 
 (declare browser-process)
 #?(:cljs ; client entrypoint

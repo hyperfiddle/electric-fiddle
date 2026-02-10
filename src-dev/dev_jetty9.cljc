@@ -43,35 +43,39 @@
        nil)
      build-state))
 
+#?(:clj (defn next-available-port-from [start] (first (filter #(try (doto (java.net.ServerSocket. %) .close) % (catch Exception _ (println (format "Port %s already taken" %)) nil)) (iterate inc start)))))
+
 #?(:clj ; server entrypoint
    (defn -main [& args]
-     (log/info "Starting Electric compiler and server...")
+     (let [{:keys [http-port]} (first args)
+           http-port (or http-port (next-available-port-from 8080))]
+       (log/info "Starting Electric compiler and server...")
 
-     (shadow-cljs-compiler-server/start!)
-     (shadow-cljs-compiler/watch :dev-jetty9)
+       (shadow-cljs-compiler-server/start!)
+       (shadow-cljs-compiler/watch :dev-jetty9)
 
-     (def server (ring/run-jetty
-                   (-> ; ring middlewares – applied bottom up:
-                     (fn [ring-request] ; index page fallback
-                       (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_fiddle"})
-                         (ring-response/content-type "text/html")))
-                     (wrap-resource "public")            ; serve assets from disk
-                     (wrap-content-type)                  ; boilerplate – to serve assets with correct mime/type
-                     (middleware/wrap-demo-router)         ; electric-fiddle: auth routing
-                     (middleware/wrap-authenticated-request) ; electric-fiddle: authenticate before opening websocket
-                     (cookies/wrap-cookies)                ; electric-fiddle: makes cookies available to Electric app
-                     (wrap-params))                       ; boilerplate – parse request URL parameters
-                   {:host "0.0.0.0", :port 8080, :join? false
-                    :configurator (fn [server]
-                                    (electric-jetty9-ws-install server "/"
-                                      (fn [ring-request] (e/boot-server {} DevMain (e/server ring-request)))
-                                      (fn [next-handler] ; electric-fiddle: WS middleware
-                                        (-> next-handler
-                                          (middleware/wrap-authenticated-request)
-                                          (cookies/wrap-cookies)
-                                          (middleware/wrap-allow-ws-connect (fn [_] (not @!cljs-is-compiling))) ; electric-fiddle: gate WS during compilation
-                                          (wrap-params)))))}))
-     (log/info "👉 http://0.0.0.0:8080")))
+       (def server (ring/run-jetty
+                     (-> ; ring middlewares – applied bottom up:
+                       (fn [ring-request] ; index page fallback
+                         (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_fiddle"})
+                           (ring-response/content-type "text/html")))
+                       (wrap-resource "public")            ; serve assets from disk
+                       (wrap-content-type)                  ; boilerplate – to serve assets with correct mime/type
+                       (middleware/wrap-demo-router)         ; electric-fiddle: auth routing
+                       (middleware/wrap-authenticated-request) ; electric-fiddle: authenticate before opening websocket
+                       (cookies/wrap-cookies)                ; electric-fiddle: makes cookies available to Electric app
+                       (wrap-params))                       ; boilerplate – parse request URL parameters
+                     {:host "0.0.0.0", :port http-port, :join? false
+                      :configurator (fn [server]
+                                      (electric-jetty9-ws-install server "/"
+                                        (fn [ring-request] (e/boot-server {} DevMain (e/server ring-request)))
+                                        (fn [next-handler] ; electric-fiddle: WS middleware
+                                          (-> next-handler
+                                            (middleware/wrap-authenticated-request)
+                                            (cookies/wrap-cookies)
+                                            (middleware/wrap-allow-ws-connect (fn [_] (not @!cljs-is-compiling))) ; electric-fiddle: gate WS during compilation
+                                            (wrap-params)))))}))
+       (log/info (format "👉 http://0.0.0.0:%s" http-port)))))
 
 (declare browser-process)
 #?(:cljs ; client entrypoint
