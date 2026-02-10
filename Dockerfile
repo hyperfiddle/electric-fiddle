@@ -6,6 +6,8 @@ RUN npm install
 FROM clojure:temurin-17-tools-deps-1.12.0.1501 AS build
 WORKDIR /app
 COPY --from=node-deps /app/node_modules /app/node_modules
+# install python for libpython-clj navigator demo
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 python3-dev && rm -rf /var/lib/apt/lists/*
 COPY deps.edn deps.edn
 
 ARG HYPERFIDDLE_FIDDLE_DEPS_ALIAS
@@ -31,6 +33,8 @@ RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
 
 FROM amazoncorretto:17 AS app
 WORKDIR /app
+# install python for libpython-clj navigator demo
+RUN yum update -y && yum install -y python3 && yum clean all && rm -rf /var/cache/yum
 COPY --from=build /app/target/app.jar app.jar
 
 EXPOSE 8080

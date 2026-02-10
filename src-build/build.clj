@@ -47,8 +47,9 @@ application classpath to be available"
   [{:keys [::fiddle-ns ; shell string read as symbol
            ::fiddle-deps-alias ; shell string read as symbol (NOT keyword)
            optimize debug verbose ::jar-name, ::skip-client
-           version]
-    :or {optimize true, debug false, verbose false, skip-client false, version electric-user-version}
+           version aliases shadow-build]
+    :or {optimize true, debug false, verbose false, skip-client false, version electric-user-version,
+         aliases [:prod], shadow-build :prod}
     :as args}]
   ; careful, shell quote escaping combines poorly with clj -X arg parsing, strings read as symbols
   (log/info 'uberjar (pr-str args))
@@ -57,12 +58,12 @@ application classpath to be available"
   (when-not skip-client
     (build-client {::fiddle-ns (check some? fiddle-ns) ; pass unparsed, build-client also can be invoked from shell
                    :optimize optimize, :debug debug, :verbose verbose
-                   :version version}))
+                   :version version, :shadow-build shadow-build}))
 
   (b/copy-dir {:target-dir class-dir :src-dirs ["src" "src-prod" "resources"]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
                    (format "electric-fiddle-%s.jar" version))
-        aliases [:prod (keyword (name (check some? fiddle-deps-alias)))]]
+        aliases (into aliases [(keyword (name (check some? fiddle-deps-alias)))])]
     (log/info 'uberjar "included aliases:" aliases)
     (b/uber {:class-dir class-dir
              :uber-file (str "target/" jar-name)
