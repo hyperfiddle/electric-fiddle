@@ -3,7 +3,7 @@
 # - datomic-browser: for datomic mbrainz setup
 # e.g. docker build -f electric-fiddle/src/docs_site/Dockerfile --build-arg VERSION=$(git rev-parse HEAD) ... 
 
-FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS datomic-fixtures
+FROM clojure:temurin-17-tools-deps-1.12.0.1501 AS datomic-fixtures
 WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
 # cleanup APT cache
@@ -16,13 +16,13 @@ RUN ./datomic_fixtures_mbrainz_small.sh
 RUN rm state/*.tar
 RUN rm state/*.zip
 
-FROM node:14.7-stretch AS node-deps
+FROM node:18-bookworm-slim AS node-deps
 WORKDIR /app
 COPY electric-fiddle/package.json package.json
 
 RUN PUPPETEER_SKIP_DOWNLOAD=true npm install
 
-FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS build
+FROM clojure:temurin-17-tools-deps-1.12.0.1501 AS build
 WORKDIR /app
 COPY --from=node-deps /app/node_modules /app/node_modules
 # install python for libpython-clj navigator demo
@@ -51,13 +51,12 @@ RUN clojure -X:build:prod:$HYPERFIDDLE_FIDDLE_DEPS_ALIAS uberjar \
     :version "\"$VERSION\"" \
     :build/jar-name app.jar
 
-FROM amazoncorretto:11 AS app
+FROM amazoncorretto:17 AS app
 WORKDIR /app
 
 # install python for libpython-clj navigator demo
 RUN yum update -y && \
-    yum install -y \
-    python3 \
+    yum install -y python3 && \
     yum clean all && \
     rm -rf /var/cache/yum
 
