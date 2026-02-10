@@ -74,7 +74,10 @@
                                             (middleware/wrap-authenticated-request)
                                             (cookies/wrap-cookies)
                                             (middleware/wrap-allow-ws-connect (fn [_] (not @!cljs-is-compiling))) ; electric-fiddle: gate WS during compilation
-                                            (wrap-params)))))}))
+                                            (wrap-params)))
+                                        {:ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
+                                         :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
+                                         :ws-max-text-size (* 100 1024 1024)}))})) ; 100MB - for demo
        (log/info (format "👉 http://0.0.0.0:%s" http-port)))))
 
 (declare browser-process)

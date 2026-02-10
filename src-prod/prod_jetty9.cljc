@@ -77,7 +77,10 @@
                                   (middleware/wrap-authenticated-request) ; electric-fiddle: authenticate before opening websocket
                                   (cookies/wrap-cookies)                  ; electric-fiddle: makes cookies available to Electric app
                                   (electric-jetty9/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync
-                                  (wrap-params))))
+                                  (wrap-params)))
+                              {:ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
+                               :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
+                               :ws-max-text-size (* 100 1024 1024)}) ; 100MB - for demo
                             ;; Gzip served assets
                             (.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
                                                   (.setMinGzipSize 1024)
