@@ -1,6 +1,4 @@
-{:nrepl {:port 9001}
- :npm-deps {:install false}
- :builds
+{:builds
  {:dev
   {:target :browser
    :devtools {:watch-dir "resources/public/electric_fiddle" ; live reload CSS
@@ -36,4 +34,6 @@
    :asset-path "/electric_fiddle/js"
    :module-hash-names true
    :modules {:main {:entries [prod-jetty9]
-                    :init-fn prod-jetty9/-main}}}}}
+                    :init-fn prod-jetty9/-main}}}}
+ :nrepl false ; not needed for the demo – less verbose boot
+ :npm-deps {:install false}}
