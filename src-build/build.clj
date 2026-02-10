@@ -20,7 +20,7 @@ application classpath to be available"
         (-> config
           (update ::fiddle-ns (comp not-empty str)) ; coerce, -X under bash evals as symbol unless shell quoted
           (dissoc ::version)
-          (assoc :hyperfiddle.electric-ring-adapter3/electric-user-version version))]
+          (assoc :hyperfiddle/electric-user-version version))]
     (log/info 'build-client (pr-str config))
     (b/delete {:path "resources/public/electric_fiddle/js"})
     (b/delete {:path "resources/electric-manifest.edn"})

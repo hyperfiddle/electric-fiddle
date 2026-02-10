@@ -53,7 +53,7 @@
               ;; shadow-cljs build manifest path, to get the fingerprinted main.sha1.js file to ensure cache invalidation
               :manifest-path "public/electric_fiddle/js/manifest.edn"})]
        (log/info (pr-str config))
-       (assert (string? (:hyperfiddle.electric-ring-adapter3/electric-user-version config)))
+       (assert (string? (:hyperfiddle/electric-user-version config)))
        ;; electric-fiddle: dynamic entrypoint resolution from fiddle-ns
        (let [user-ns (check (ensure-ns-required! (symbol (check string? (:build/fiddle-ns config)))))
              entrypoint (check (ensure-resolved! (symbol (name user-ns) "ProdMain")))]
