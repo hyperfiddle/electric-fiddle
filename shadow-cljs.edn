@@ -5,6 +5,12 @@
          :asset-path "/electric_starter_app/js"
          :modules {:main {:entries [dev] :init-fn dev/-main}}
          :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)]}
+  :dev-jetty9 {:target :browser
+               :devtools {:loader-mode :default, :watch-dir "resources/public"}
+               :output-dir "resources/public/electric_starter_app/js"
+               :asset-path "/electric_starter_app/js"
+               :modules {:main {:entries [dev-jetty9] :init-fn dev-jetty9/-main}}
+               :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)]}
   :prod {:target :browser
          :output-dir "resources/public/electric_starter_app/js"
          :asset-path "/electric_starter_app/js"

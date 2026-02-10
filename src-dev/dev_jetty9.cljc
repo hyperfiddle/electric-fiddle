@@ -19,7 +19,7 @@
      (log/info "Starting Electric compiler and server...")
 
      (shadow-cljs-compiler-server/start!)
-     (shadow-cljs-compiler/watch :dev)
+     (shadow-cljs-compiler/watch :dev-jetty9)
 
      (def server (ring/run-jetty
                    (-> ; ring middlewares – applied bottom up:
