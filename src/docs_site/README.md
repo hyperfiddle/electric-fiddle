@@ -30,6 +30,9 @@ build \
 
 # fly deploy, from monorepo root
 fly deploy --remote-only --config electric-fiddle/src/docs_site/fly.toml --dockerfile electric-fiddle/src/docs_site/Dockerfile --build-arg VERSION=$(git rev-parse HEAD)
+# If build succeeds but deployment fails (internal fly registry error, happens sometimes)
+fly deploy --app dawn-night-7975 --image registry.fly.io/dawn-night-7975:<VERSION> --config electric-fiddle/src/docs_site/fly.toml --wait-timeout "10m0s"
+
 fly status
 fly scale show
 fly scale count 1 --region ewr
