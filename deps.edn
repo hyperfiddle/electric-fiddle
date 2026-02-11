@@ -1,21 +1,152 @@
-{:deps    {com.hyperfiddle/electric       {:mvn/version "v3-alpha-SNAPSHOT"}
-           org.clojure/clojure            {:mvn/version "1.12.0"}
-           org.clojure/clojurescript      {:mvn/version "1.11.121"}
-           ring/ring                      {:mvn/version "1.15.3"} ; to serve the app
-           ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
- :paths   ["src" "resources"]
- :aliases {:dev {:extra-paths ["src-dev"] :extra-deps  {thheller/shadow-cljs {:mvn/version "2.26.2"}}}
-           :prod {:extra-paths ["src-prod"]}
-           :build ; use `clj -X:prod:build build-client`, NOT -T!
-           {:extra-paths ["src-build"]
-            :ns-default  build
-            :extra-deps  {thheller/shadow-cljs          {:mvn/version "2.26.2"}
-                          io.github.clojure/tools.build {:mvn/version "0.10.8"}}}
-           :jetty9 {:override-deps {ring/ring {:mvn/version "1.9.6"}}
-                    :extra-deps    {ring/ring-jetty-adapter                       {:mvn/version "1.8.2"}
-                                    ring/ring-servlet                             {:mvn/version "1.8.2"}
-                                    org.eclipse.jetty.websocket/websocket-server  {:mvn/version "9.4.31.v20200723"} ; matching jetty version from ring-jetty-adapter
-                                    org.eclipse.jetty.websocket/websocket-servlet {:mvn/version "9.4.31.v20200723"}}}
-           :private {:override-deps {com.hyperfiddle/electric {:local/root "../electric"}}}}
+{:deps  {com.hyperfiddle/hyperfiddle    {:mvn/version "v0-alpha-8834e77c"}
+         com.hyperfiddle/hyperfiddle-contrib {:mvn/version "v0-alpha-86cef0fb"}
+         com.hyperfiddle/rcf            {:git/url "https://github.com/hyperfiddle/rcf" :git/sha "7105b43231140de6f2f39ce38611c9f6c9dfc976"}
+         org.clojure/clojure            {:mvn/version "1.12.0"}
+         org.clojure/clojurescript      {:mvn/version "1.11.121"}
+         ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
+         ring/ring                      {:mvn/version "1.15.3"}
+         ring-basic-authentication/ring-basic-authentication {:mvn/version "1.2.0"}
+         }
+
+ :paths ["src" "resources"]
+
+ :aliases
+ {:dev
+  {:extra-paths   ["src-dev"]
+   :extra-deps    {binaryage/devtools   {:mvn/version "1.0.7"}
+                   thheller/shadow-cljs {:mvn/version "2.26.2"}
+                   ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
+   :jvm-opts      ["-XX:-OmitStackTraceInFastThrow" ; For RCF
+                   ;; uncomment to get flow protocol violation checks, warnings..
+                   ;; "-Dhyperfiddle.electric.impl.missionary-util.wrap=true"
+                   ]}
+
+  :profile {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
+                         com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.2.2"}}
+            :jvm-opts ["-Djdk.attach.allowAttachSelf"
+                       "-XX:+UnlockDiagnosticVMOptions"
+                       "-XX:+DebugNonSafepoints"]}
+
+  :jetty9
+  {:override-deps {ring/ring {:mvn/version "1.9.6"}}
+   :extra-deps {ring/ring-jetty-adapter        {:mvn/version "1.8.2"}
+                ring/ring-servlet              {:mvn/version "1.8.2"}
+                ring-basic-authentication/ring-basic-authentication {:mvn/version "1.1.1"}
+                org.eclipse.jetty.websocket/websocket-server {:mvn/version "9.4.31.v20200723"} ; matching jetty version from ring-jetty-adapter
+                org.eclipse.jetty.websocket/websocket-servlet {:mvn/version "9.4.31.v20200723"}
+                org.eclipse.jetty/jetty-client {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                org.eclipse.jetty/jetty-http {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                org.eclipse.jetty/jetty-util {:mvn/version "9.4.31.v20200723"} ; need to override because of tools.build version
+                }}
+
+  :build
+  ;; use `clj -X:build build-client`, NOT -T! build/app classpath contamination cannot be prevented
+  {:extra-paths ["src-build" "src-prod"]
+   :ns-default  build
+   :extra-deps
+   {thheller/shadow-cljs          {:mvn/version "2.26.2"}
+    io.github.clojure/tools.build {:mvn/version "0.10.8"}}}
+
+  :prod
+  {:extra-paths ["src-prod"]
+   :extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}}
+
+  ;; Userland aliases
+
+  :electric-tutorial
+  {:extra-deps
+   {backtick/backtick {:mvn/version "0.3.4"}   ; staffly
+    com.datomic/peer {:mvn/version "1.0.7075"} ; staffly, datomic browser
+    datascript/datascript     {:mvn/version "1.6.1"}
+    reagent/reagent           {:mvn/version "1.2.0"}
+    markdown-clj/markdown-clj {:mvn/version "1.11.7"}
+    io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}
+    org.clojure/core.match {:mvn/version "1.1.0"}   ; staffly, todos
+    org.apache.tika/tika-core {:mvn/version "1.24"} ; explorer: datafy-fs
+    clj-jgit/clj-jgit {:mvn/version "1.0.2"}        ; blog
+    com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"} ; sakila
+    org.postgresql/postgresql {:mvn/version "42.7.3"} ; sakila
+    clj-kondo/clj-kondo {:mvn/version "2025.07.28"} ; navigator demo
+    clj-python/libpython-clj {:mvn/version "2.026"} ; navigator demo
+    org.clojure/tools.deps {:mvn/version "0.26.1553"} ; navigator demo
+    }
+   #_#_:override-deps                   ; uberjar sees only this one alias
+   {com.hyperfiddle/electric {:local/root "../electric"}
+    com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}
+    com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}}}
+
+  :dustingetz
+  {:extra-deps
+   {                                    ; intentionally blank
+    com.cognitect.aws/api       {:mvn/version "0.8.711"}
+    com.amazonaws/aws-java-sdk-s3 {:mvn/version "1.12.702"}
+    com.cognitect/http-client     {:mvn/version "1.0.127"}
+    com.cognitect.aws/endpoints   {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/autoscaling {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/dynamodb    {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/ec2         {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/iam         {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/lambda      {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/s3          {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/ssm         {:mvn/version "871.2.29.35"}
+    com.cognitect.aws/sts         {:mvn/version "871.2.29.35"}
+
+    hawk/hawk {:mvn/version "0.2.11"}
+    org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
+    clj-jgit/clj-jgit {:mvn/version "1.0.2"}
+    clj-http/clj-http {:mvn/version "3.12.3"}
+    com.squareup.okhttp3/okhttp {:mvn/version "4.11.0"} ; brings in kotlin
+    com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"}
+    org.postgresql/postgresql {:mvn/version "42.7.3"}
+    #_#_com.datomic/peer {:mvn/version "1.0.7075"}
+    #_#_com.hyperfiddle/hfql {:local/root "../hfql"}
+    cheshire/cheshire {:mvn/version "5.12.0"} ; hacker news
+    #_#_markdown-clj/markdown-clj {:mvn/version "1.11.7"}
+    #_#_io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}}}
+
+  :private
+  {:override-deps {com.hyperfiddle/electric {:local/root "../electric"}
+                   com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"} ; clj -X:deps prep :aliases "[:private]"
+                   com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}
+                   com.hyperfiddle/electric-secret {:local/root "../electric-secret"}
+                   com.hyperfiddle/hfql {:local/root "../hfql"}
+                   com.hyperfiddle/rcf {:local/root "../rcf"}}
+   :extra-paths ["../scratch/src" "../scratch/resources"]
+   :extra-deps
+   {com.discord4j/discord4j-core {:mvn/version "3.3.0-RC2"}
+    com.github.mattbdean/JRAW {:mvn/version "1.1.0"} ; https://github.com/mattbdean/JRAW
+    com.pitch/uix.core {:mvn/version "1.0.1"}
+    com.pitch/uix.dom {:mvn/version "1.0.1"}
+    com.twitter/twitter-api-java-sdk {:mvn/version "2.0.3"}}}
+
+  :xtdb
+  {:extra-deps
+   {com.xtdb/xtdb-core {:mvn/version "2.0.0-beta5"}
+    com.xtdb/xtdb-jdbc {:mvn/version "2.0.0-beta5"}
+    org.postgresql/postgresql {:mvn/version "42.7.3"}
+    com.github.seancorfield/next.jdbc {:mvn/version "1.3.955"}
+    #_#_com.xtdb/xtdb-datasets {:mvn/version "2.0.0-SNAPSHOT"}}
+   :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
+              "-Dio.netty.tryReflectionSetAccessible=true"]}
+
+  :datagrid
+  {:extra-deps
+   {com.hyperfiddle/heroicons-electric {:mvn/version "79c4d15" :exclusions [com.hyperfiddle/electric]}
+    org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
+    metosin/malli {:mvn/version "0.14.0"}
+    com.datomic/peer {:mvn/version "1.0.7075"}
+    clj-jgit/clj-jgit {:mvn/version "1.0.2"} ; git browser
+    }}
+
+  :xtdb-demo ; process must be started with `XTDB_ENABLE_BYTEUTILS_SHA1=true clj -A:xtdb-demo:...`
+  {:extra-deps
+   {com.xtdb/xtdb-core {:mvn/version "1.23.0"}
+    com.xtdb/xtdb-rocksdb {:mvn/version "1.23.0"}}
+   :jvm-opts [ ;; the following option is required for JDK 16 and 17 (https://github.com/xtdb/xtdb/issues/1462)
+              "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED"]}
+  }
+
  :mvn/repos
- {"clojars" {:url "https://repo.clojars.org/" :snapshots {:enabled true :update :always}}}}
+ {"clojars" {:url "https://repo.clojars.org/" :snapshots {:enabled true :update :always}}
+  "jitpack" {:url "https://jitpack.io"} ; for https://github.com/mattbdean/JRAW
+  }}

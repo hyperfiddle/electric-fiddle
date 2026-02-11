@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# Test script for starter-app jetty 10+ and jetty 9 setups
+# Test script for electric-fiddle jetty 10+ and jetty 9 setups
 # Runs each server sequentially, opens browser for manual verification.
 #
 # Usage: 
@@ -115,7 +115,7 @@ stop_server() {
 }
 
 # Build aliases string
-BASE_ALIASES="dev"
+BASE_ALIASES="dev:electric-tutorial:dustingetz"
 if [[ -n "$EXTRA_ALIASES" ]]; then
     for alias in $EXTRA_ALIASES; do
         alias="${alias#:}"  # Strip leading colon if present
@@ -124,7 +124,7 @@ if [[ -n "$EXTRA_ALIASES" ]]; then
 fi
 
 echo "========================================"
-echo "Starter App Jetty Setup Tests"
+echo "Electric Fiddle Jetty Setup Tests"
 echo "========================================"
 echo "Aliases: $BASE_ALIASES"
 echo "Browser: $OPEN_BROWSER"
@@ -167,7 +167,7 @@ if $OPEN_BROWSER; then
     echo "Opening browser: http://localhost:$PORT"
     open "http://localhost:$PORT" 2>/dev/null || xdg-open "http://localhost:$PORT" 2>/dev/null || true
     echo ""
-    echo "Verify the clock is ticking, then press Enter to continue to Jetty 9 test..."
+    echo "Verify fiddles load correctly, then press Enter to continue to Jetty 9 test..."
     read -r
 fi
 
@@ -201,7 +201,7 @@ if $OPEN_BROWSER; then
     echo "Opening browser: http://localhost:$PORT"
     open "http://localhost:$PORT" 2>/dev/null || xdg-open "http://localhost:$PORT" 2>/dev/null || true
     echo ""
-    echo "Verify the clock is ticking, then press Enter to finish..."
+    echo "Verify fiddles load correctly, then press Enter to finish..."
     read -r
 fi
 

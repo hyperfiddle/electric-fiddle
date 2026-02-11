@@ -1,17 +1,39 @@
 {:builds
- {:dev  {:target :browser
-         :devtools {:loader-mode :default, :watch-dir "resources/public"}
-         :output-dir "resources/public/electric_starter_app/js"
-         :asset-path "/electric_starter_app/js"
-         :modules {:main {:entries [dev] :init-fn dev/-main}}
-         :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)]}
-  :prod {:target :browser
-         :output-dir "resources/public/electric_starter_app/js"
-         :asset-path "/electric_starter_app/js"
-         :modules {:main {:entries [prod] :init-fn prod/-main}}
-         :module-hash-names true}
-  :prod-jetty9 {:target :browser
-                :output-dir "resources/public/electric_starter_app/js"
-                :asset-path "/electric_starter_app/js"
-                :modules {:main {:entries [prod-jetty9] :init-fn prod-jetty9/-main}}
-                :module-hash-names true}}}
+ {:dev
+  {:target :browser
+   :devtools {:watch-dir "resources/public" ; live reload CSS
+              :loader-mode :default ; faster reload
+              :hud #{:errors :progress}}
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
+   :modules {:main {:entries [dev] :init-fn dev/-main}}
+   ;; uncomment to get flow protocol violation checks, warnings..
+   ;; :compiler-options {:closure-defines {hyperfiddle.electric.impl.missionary-util/wrap true}}
+   :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)
+                 (dev/pause-websocket-reconnect-while-compiling)]}
+  :dev-jetty9
+  {:target :browser
+   :devtools {:watch-dir "resources/public"
+              :loader-mode :default
+              :hud #{:errors :progress}}
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
+   :modules {:main {:entries [dev-jetty9] :init-fn dev-jetty9/-main}}
+   :build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)
+                 (dev-jetty9/pause-websocket-reconnect-while-compiling)]}
+  :prod
+  {:target :browser
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
+   :module-hash-names true
+   :modules {:main {:entries [prod]
+                    :init-fn prod/-main}}}
+  :prod-jetty9
+  {:target :browser
+   :output-dir "resources/public/electric_fiddle/js"
+   :asset-path "/electric_fiddle/js"
+   :module-hash-names true
+   :modules {:main {:entries [prod-jetty9]
+                    :init-fn prod-jetty9/-main}}}}
+ :nrepl false ; not needed for the demo – less verbose boot
+ :npm-deps {:install false}}

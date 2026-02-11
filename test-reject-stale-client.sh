@@ -29,10 +29,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Build aliases
-BUILD_ALIASES="build:prod"
-RUN_ALIASES_JETTY10="prod"
-RUN_ALIASES_JETTY9="prod:jetty9"
+# Build aliases – electric-fiddle needs fiddle-specific aliases
+BUILD_ALIASES="build:prod:electric-tutorial"
+RUN_ALIASES_JETTY10="prod:electric-tutorial"
+RUN_ALIASES_JETTY9="prod:jetty9:electric-tutorial"
 if [[ -n "$EXTRA_ALIASES" ]]; then
     for alias in $EXTRA_ALIASES; do
         alias="${alias#:}"
@@ -41,6 +41,8 @@ if [[ -n "$EXTRA_ALIASES" ]]; then
         RUN_ALIASES_JETTY9="${RUN_ALIASES_JETTY9}:${alias}"
     done
 fi
+
+FIDDLE_NS="docs-site.sitemap"
 
 PORT=8080
 SERVER_PID=""
@@ -79,7 +81,7 @@ build_client() {
     local version="$1"
     echo ""
     echo "Building client with version: $version"
-    clj -X:$BUILD_ALIASES build-client :version "\"$version\""
+    clj -X:$BUILD_ALIASES build-client :build/fiddle-ns $FIDDLE_NS :version "\"$version\""
     echo "Client built with version $version"
 }
 

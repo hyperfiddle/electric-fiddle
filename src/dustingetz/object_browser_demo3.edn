@@ -1,0 +1,50 @@
+{
+
+;;;;;;;;;;;;;;
+ ;; threadmx ;;
+;;;;;;;;;;;;;;
+ thread-mx [thread-count
+            (hfql/props get-all-threads {::hfql/select (threads-info)})
+            get-deadlocked-threads
+            ]
+ threads-info (hfql/props
+                [.getThreadName
+                 {.getThreadState str}
+                 .getThreadId
+                 .getBlockedTime
+                 .getWaitedTime
+                 .getLockInfo
+                 dustingetz.datafy-jvm2/threadinfo-cpu-time]
+                {::hfql/select (thread-info %)})
+ thread-info [.getThreadName
+              {.getThreadState str}
+              .getThreadId
+              (hfql/props get-stack-trace {::hfql/select (thread-stack-trace %)})
+              .getBlockedTime
+              .getWaitedTime
+              .getLockInfo
+              dustingetz.datafy-jvm2/threadinfo-cpu-time]
+
+ thread-stack-trace [.getClassName .getMethodName .getLineNumber]
+
+
+;;;;;;;;;;;;;;
+ ;; datomic  ;;
+;;;;;;;;;;;;;;
+
+ datomic-entity []
+
+;;;;;;;;;;;
+ ;; class ;;
+;;;;;;;;;;;
+
+ class-view []
+
+;;;;;;;;;;
+ ;; file ;;
+;;;;;;;;;;
+
+ clojure.java.io/file []
+
+ sakila []
+ }
