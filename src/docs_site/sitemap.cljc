@@ -55,7 +55,7 @@
                                                   (str datomic-uri "*"))))
 
    `dustingetz.navigator-demo1/NavigatorDemo1
-   (e/server (e/fn [] (dustingetz.navigator-demo1/NavigatorDemo1 (e/server dustingetz.navigator-demo1/sitemap) ['file])))
+   (e/server (e/fn [] (dustingetz.navigator-demo1/NavigatorDemo1 (e/server dustingetz.navigator-demo1/sitemap) ['pages])))
 
    `Unifhir1 Unifhir1
    `DirectoryExplorer DirectoryExplorer})

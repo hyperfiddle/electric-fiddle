@@ -17,13 +17,32 @@
    [hyperfiddle.electric3 :as e]
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
    [hyperfiddle.hfql2.protocols :as hfqlp]
-   [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]))
+   [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]
+   #?(:clj [contrib.data :refer [filter-vals]])))
+
+#?(:clj (declare sitemap))
+
+#?(:clj
+   (defn pages
+     "All navigable HFQL pages in the current sitemap."
+     []
+     (->> sitemap
+       (filter-vals hfql/fullfilled?)
+       (keys)
+       (sort)
+       (mapv (fn [sym]
+               (with-meta (fn [] sym)
+                 {`hfqlp/-identify (fn [_] sym)}))))))
 
 #?(:clj (defn http-req [] e/http-request))
 
 #?(:clj
    (def sitemap
-     {'file
+     {
+      'pages
+      (hfql {(pages) {* [^{::hfql/link '% ::hfql/label 'page} #(%)]}})
+
+      'file
       (hfql {(io/file ".")
              [java.io.File/.getName
               {java.io.File/.listFiles {* ...}}
