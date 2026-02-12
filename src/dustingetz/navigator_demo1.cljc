@@ -1,14 +1,14 @@
 (ns dustingetz.navigator-demo1
   (:require
+   ;; Aggregators — bring in all demo sitemaps
+   #?(:clj [dustingetz.nav-demos :as nav-demos])
+   #?(:clj [dustingetz.desktop-demos :as desktop-demos])
+   ;; Inline sitemap dependencies (namespaces referenced directly below)
    #?(:clj [dustingetz.fs2 :as fs])
-   #?(:clj [dustingetz.nav-clojure-ns])
    #?(:clj [clj-jgit.porcelain :as git])
    #?(:clj [clj-kondo.core :as kondo])
    #?(:clj [clojure.tools.deps :as deps])
    #?(:clj [clojure.tools.deps.util.maven :as mvn])
-   #?(:clj [dustingetz.nav-jvm :as nav-jvm])
-   #?(:clj dustingetz.nav-jar)
-   #?(:clj dustingetz.nav-py)
    #?(:clj [dustingetz.nav-aws :as nav-aws])
    #?(:clj [dustingetz.nav-git :as nav-git])
    #?(:clj [clojure.java.io :as io])
@@ -76,12 +76,6 @@
       (hfql {(dustingetz.nav-py/py-platform)
              [dustingetz.nav-py/dir]})
 
-      'jvm
-      (hfql {(nav-jvm/getAllThreads (nav-jvm/getThreadMXBean))
-             {*
-              [.getThreadId
-               .getThreadName]}})
-
       'list-project-jars
       (hfql {(dustingetz.nav-jar/list-project-jars)
              {* [dustingetz.nav-jar/jar-filename
@@ -105,14 +99,6 @@
                               (->> (get m :namespace-usages)
                                 (map #(hfql/identifiable (juxt :from :to) %))))]}]})
 
-      'getMemoryMXBean (hfql {(nav-jvm/getMemoryMXBean) []})
-      'getOperatingSystemMXBean (hfql {(nav-jvm/getOperatingSystemMXBean) []})
-      'getRuntimeMXBean (hfql {(nav-jvm/getRuntimeMXBean) []})
-
-      'getThreadMXBean
-      (hfql {(nav-jvm/getThreadMXBean)
-             []})
-
       'aws
       (hfql {(nav-aws/aws-s3-us-east)
              [nav-aws/list-buckets
@@ -123,6 +109,9 @@
       (hfql {(all-ns) #_(find-ns 'clojure.core #_(ns-name *ns*))
              {* [ns-name ns-publics]}})}))
 
+#?(:clj (def sitemap-extended
+          (merge nav-demos/sitemap
+                 desktop-demos/sitemap)))
 (e/defn NavigatorDemo1 []
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
@@ -132,7 +121,7 @@
   (e/server
     (binding [e/*bindings* {#'e/http-request e/http-request
                             #'nav-git/*repo-path* nav-git/git-repo-path}] ; DI
-      (HfqlRoot sitemap '[pages]))))
+      (HfqlRoot (merge sitemap sitemap-extended) []))))
 
 ;; Identifiable, Suggestable
 
