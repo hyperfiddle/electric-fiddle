@@ -40,17 +40,22 @@
   (getAllThreads (getThreadMXBean))
   (resolve-thread 1))
 
-(extend-type com.sun.management.ThreadMXBean
-  hfqlp/Suggestable (-suggest [o] (hfql [type .findDeadlockedThreads])))
+(comment
+  (def !x (ManagementFactory/getOperatingSystemMXBean))
+  (hfql/pull (hfql {!x [*]}))
+  )
 
-(extend-type java.lang.management.MemoryMXBean
-  hfqlp/Suggestable (-suggest [o] (hfql [type .getHeapMemoryUsage .getNonHeapMemoryUsage .getObjectPendingFinalizationCount])))
+;; (extend-type com.sun.management.ThreadMXBean
+;;   hfqlp/Suggestable (-suggest [o] (hfql [type .findDeadlockedThreads])))
 
-(extend-type java.lang.management.OperatingSystemMXBean
-  hfqlp/Suggestable (-suggest [o] (hfql [type .getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad])))
+;; (extend-type java.lang.management.MemoryMXBean
+;;   hfqlp/Suggestable (-suggest [o] (hfql [type .getHeapMemoryUsage .getNonHeapMemoryUsage .getObjectPendingFinalizationCount])))
 
-(extend-type java.lang.management.ThreadInfo
-  hfqlp/Identifiable (-identify [x] `(resolve-thread ~(.getThreadId x))) ; wrong impl, must be replaced with a symbolic constructor call
-  hfqlp/Suggestable (-suggest [o] (hfql [.getThreadId .getThreadName .getLockInfo .getThreadState .getWaitedCount .getWaitedTime])))
+;; (extend-type java.lang.management.OperatingSystemMXBean
+;;   hfqlp/Suggestable (-suggest [o] (hfql [type .getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad])))
 
-(defmethod hfqlp/-hfql-resolve `resolve-thread [[_ thread-id]] (resolve-thread thread-id))
+;; (extend-type java.lang.management.ThreadInfo
+;;   hfqlp/Identifiable (-identify [x] `(resolve-thread ~(.getThreadId x))) ; wrong impl, must be replaced with a symbolic constructor call
+;;   hfqlp/Suggestable (-suggest [o] (hfql [.getThreadId .getThreadName .getLockInfo .getThreadState .getWaitedCount .getWaitedTime])))
+
+;; (defmethod hfqlp/-hfql-resolve `resolve-thread [[_ thread-id]] (resolve-thread thread-id))

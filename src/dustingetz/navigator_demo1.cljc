@@ -86,31 +86,13 @@
                               (->> (get m :namespace-usages)
                                 (map #(hfql/identifiable (juxt :from :to) %))))]}]})
 
-      'getMemoryMXBean
-      (hfql {(nav-jvm/getMemoryMXBean)
-             [.getHeapMemoryUsage
-              .getNonHeapMemoryUsage
-              .getObjectPendingFinalizationCount]})
-
-      'getOperatingSystemMXBean
-      (hfql {(nav-jvm/getOperatingSystemMXBean)
-             [.getArch .getAvailableProcessors .getCpuLoad .getSystemCpuLoad type]})
-
-      'getRuntimeMXBean
-      (hfql {(nav-jvm/getRuntimeMXBean)
-             [.getLibraryPath .getPid .getSystemProperties .getUptime type]})
+      'getMemoryMXBean (hfql {(nav-jvm/getMemoryMXBean) []})
+      'getOperatingSystemMXBean (hfql {(nav-jvm/getOperatingSystemMXBean) []})
+      'getRuntimeMXBean (hfql {(nav-jvm/getRuntimeMXBean) []})
 
       'getThreadMXBean
       (hfql {(nav-jvm/getThreadMXBean)
-             [{nav-jvm/getAllThreads {* [type
-                                         .getLockInfo
-                                         .getThreadName
-                                         .getThreadState
-                                         .getWaitedCount
-                                         .getWaitedTime
-                                         .getThreadId]}}
-              .findDeadlockedThreads
-              type]})
+             []})
 
       'aws
       (hfql {(nav-aws/aws-s3-us-east)
