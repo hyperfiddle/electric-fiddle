@@ -4,21 +4,21 @@ This is an **internal playground repo** where we host a lot of our demos, live e
 
 For a minimalist Electric starter repo, see https://gitlab.com/hyperfiddle/electric3-starter-app.
 
-## Links
-
-* Electric github with source code: https://github.com/hyperfiddle/electric
-* Tutorial: https://electric.hyperfiddle.net/
-
 ## Getting started — dev setup
 
-* Shell: `clj -A:dev:private:electric-tutorial:dustingetz -X dev/-main`
-* Login instructions will be printed
-* REPL: `:dev:private:electric-tutorial:dustingetz` deps aliases, `(dev/-main)` at the REPL to start dev build
-* App will start on http://localhost:8080
-* Hot code reloading works: edit -> save -> see app reload in browser
-
-> [!WARNING]
-> Electric dev environments must run **one single JVM** that is shared by both the Clojure REPL and shadow-cljs ClojureScript compilation process! Electric uses a custom hot code reloading strategy to ensure that the Electric frontend and backend processes (DAGs) stay in sync as you change one or the other. This starter repo achieves this by booting shadow from the dev entrypoint [src-dev/dev.cljc](src-dev/dev.cljc). I believe this is compatible with both Calva and Cursive's "happy path" shadow-cljs support. For other editors, watch out as your boot sequence may run shadow-cljs in a second process! You will experience undefined behavior.
+```sh
+npm install
+#clj -X:deps prep :aliases "[:private]" :force true # for private monorepo only
+clj -X:build:private compile-java # for spring framework demos
+clj -A:dev:private:electric-tutorial:dustingetz -X dev/-main
+...
+[:dev] Compiling ...
+Please sign up or login to activate:  https://hyperfiddle-auth.fly.dev/login?redirect-uri=http%3A%2F%2Flocalhost%3A8081
+...
+INFO  electric-fiddle.server-jetty: 👉 http://0.0.0.0:8080
+```
+* note: two deps aliases, you must include them both
+* note: Electric login is required for dev builds
 
 ## "Fiddle" classpath infrastructure (optional)
 
