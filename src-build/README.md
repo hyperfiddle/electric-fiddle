@@ -3,22 +3,22 @@
 ## Uberjar (Jetty 10+)
 
 ```shell
-clojure -X:prod:build uberjar :version '"'$(git rev-parse HEAD)'"' :build/jar-name '"electric-starter-app.jar"'
-java -cp target/electric-starter-app.jar clojure.main -m prod
+clojure -X:build:prod:electric-tutorial uberjar :build/fiddle-ns docs-site.sitemap :build/fiddle-deps-alias :electric-tutorial :version '"'$(git rev-parse HEAD)'"'
+java -cp target/electric-fiddle-*.jar clojure.main -m prod
 ```
 
 ## Uberjar (Jetty 9)
 
 ```shell
-clojure -X:jetty9:prod:build uberjar :version '"'$(git rev-parse HEAD)'"' :shadow-build :prod-jetty9 :aliases '[:jetty9 :prod]' :build/jar-name '"electric-starter-app.jar"'
-java -cp target/electric-starter-app.jar clojure.main -m prod-jetty9
+clojure -X:jetty9:build:prod:electric-tutorial uberjar :build/fiddle-ns docs-site.sitemap :build/fiddle-deps-alias :electric-tutorial :shadow-build :prod-jetty9 :aliases '[:jetty9 :prod :electric-tutorial]' :version '"'$(git rev-parse HEAD)'"'
+java -cp target/electric-fiddle-*.jar clojure.main -m prod-jetty9
 ```
 
 ## Docker
 
 ```shell
-docker build --build-arg VERSION=$(git rev-parse HEAD) -t electric-starter-app:latest .
-docker run --rm -it -p 8080:8080 electric-starter-app:latest
+docker build --build-arg HYPERFIDDLE_FIDDLE_NS=docs-site.sitemap --build-arg HYPERFIDDLE_FIDDLE_DEPS_ALIAS=electric-tutorial --build-arg VERSION=$(git rev-parse HEAD) -t electric-fiddle:latest .
+docker run --rm -it -p 8080:8080 electric-fiddle:latest
 ```
 
 ## Fly

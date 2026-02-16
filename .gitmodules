@@ -1,0 +1,27 @@
+[submodule "vendor/hfql"]
+	path = vendor/hfql
+	url = git@gitlab.com:hyperfiddle/hfql.git
+[submodule "vendor/electric"]
+	path = vendor/electric
+	url = git@gitlab.com:hyperfiddle/electric.git
+[submodule "vendor/rcf"]
+	path = vendor/rcf
+	url = git@gitlab.com:hyperfiddle/rcf.git
+[submodule "heroicons-electric"]
+	path = vendor/heroicons-electric
+	url = git@gitlab.com:hyperfiddle/heroicons-electric.git
+[submodule "vendor/hyperfiddle"]
+	path = vendor/hyperfiddle
+	url = git@gitlab.com:hyperfiddle/hyperfiddle.git
+[submodule "src-private"]
+	path = src-private
+	url = git@gitlab.com:hyperfiddle/scratch.git
+[submodule "vendor/electric3-starter-app"]
+	path = vendor/electric3-starter-app
+	url = git@gitlab.com:hyperfiddle/electric3-starter-app.git
+[submodule "vendor/electric-datomic-browser"]
+	path = vendor/electric-datomic-browser
+	url = git@gitlab.com:hyperfiddle/electric-datomic-browser.git
+[submodule "vendor/hyperfiddle-contrib"]
+	path = vendor/hyperfiddle-contrib
+	url = git@gitlab.com:hyperfiddle/hyperfiddle-contrib.git
