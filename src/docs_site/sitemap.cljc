@@ -1,7 +1,7 @@
 (ns docs-site.sitemap
   (:require
-    #?(:clj [dustingetz.mbrainz :refer [datomic-uri mbrainz-uri!]]) ;; [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
-    [dustingetz.datomic-browser2 :as datomic-browser2]
+    #?(:clj [dustingetz.nav-datomic :as nav])
+    [hyperfiddle.navigator6 :refer [HfqlRoot]]
     [docs-site.blog.index :refer [BlogIndex]]
     [docs-site.blog.waveform0 :refer [Waveform0]]
     [docs-site.tutorial-sitemap :refer [tutorial-sitemap TutorialFiddles]]
@@ -45,14 +45,10 @@
   (merge
     (staffly.staffly/Fiddles)))
 
-#?(:clj (defn get-datomic-uri [] (or (System/getProperty "hyperfiddle.datomic.uri") (mbrainz-uri!))))
-
 (e/defn ListedDemos []
   {
-   `datomic-browser2/DatomicBrowser (e/fn []
-                                      (e/server (datomic-browser2/BrowseDatomicByURI (e/server datomic-browser2/sitemap)
-                                                  ['databases]
-                                                  (str datomic-uri "*"))))
+   `DatomicBrowser (e/fn [] (e/server (let [datomic-uri (or (System/getProperty "hyperfiddle.datomic.uri") "datomic:dev://localhost:4334/*")]
+                                        (HfqlRoot nav/rich-sitemap ['databases] (nav/make-setup-fn datomic-uri)))))
 
    `dustingetz.navigator-demo1/NavigatorDemo1
    (e/server (e/fn [] (dustingetz.navigator-demo1/NavigatorDemo1 (e/server dustingetz.navigator-demo1/sitemap) ['pages])))
