@@ -11,7 +11,7 @@
             [dustingetz.y-fac :refer [Y-Fac]]
             [dustingetz.y-dir :refer [Y-dir]]
 
-            [dustingetz.y2026.nav-codeq :refer [NavCodeq]]
+            #_[dustingetz.y2026.nav-codeq :refer [NavCodeq]] ; TODO: NavCodeq needs updating for nav-datomic refactor
 
             [dustingetz.talks.two-clocks :refer [TwoClocks]]
             [dustingetz.talks.dir-tree :refer [DirTree]]
@@ -33,6 +33,5 @@
      `MillionCheckboxes MillionCheckboxes
      `MillionCheckboxes2 MillionCheckboxes2
      `Logic Logic
-     `ObjectBrowserDemo3 ObjectBrowserDemo3
-     `NavCodeq NavCodeq}
+     `ObjectBrowserDemo3 ObjectBrowserDemo3}
     ))
