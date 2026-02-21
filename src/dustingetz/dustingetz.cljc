@@ -1,6 +1,5 @@
 (ns dustingetz.dustingetz
   (:require [hyperfiddle.electric3 :as e]
-            [dustingetz.file-watcher :refer [FileWatcherDemo]]
             [dustingetz.object-browser-demo3 :refer [ObjectBrowserDemo3]]
             [dustingetz.logic :refer [Logic]]
             [dustingetz.metaobject :refer [DemoMetaobject]]
@@ -27,7 +26,6 @@
      `Lifecycle Lifecycle}
     {`DemoMetaobject DemoMetaobject
      `Painter Painter
-     `FileWatcherDemo FileWatcherDemo
      `Y-Fac Y-Fac
      `Y-dir Y-dir
      `MillionCheckboxes MillionCheckboxes
