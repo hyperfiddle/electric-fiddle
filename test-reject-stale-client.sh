@@ -9,7 +9,7 @@ set -e
 #
 # Examples:
 #   ./test-reject-stale-client.sh                # Run with default aliases
-#   ./test-reject-stale-client.sh -- :private    # Add :private alias
+#   ./test-reject-stale-client.sh -- :local      # Add :local alias (monorepo overrides)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"

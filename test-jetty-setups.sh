@@ -13,8 +13,8 @@ set -e
 #
 # Examples:
 #   ./test-jetty-setups.sh                      # Run with default aliases (dev)
-#   ./test-jetty-setups.sh -- :private          # Add :private alias
-#   ./test-jetty-setups.sh -- :private :foo     # Add multiple aliases
+#   ./test-jetty-setups.sh -- :local             # Add :local alias (monorepo overrides)
+#   ./test-jetty-setups.sh -- :local :private   # Add multiple aliases
 #   ./test-jetty-setups.sh --no-browser         # Automated mode, no browser
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

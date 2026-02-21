@@ -8,9 +8,9 @@ For a minimalist Electric starter repo, see https://gitlab.com/hyperfiddle/elect
 
 ```sh
 npm install
-#clj -X:deps prep :aliases "[:private]" :force true # for private monorepo only
-clj -X:build:private compile-java # for spring framework demos
-clj -A:dev:private:electric-tutorial:dustingetz -X dev/-main
+#clj -X:deps prep :aliases "[:local]" :force true # for private monorepo only
+clj -X:build:local compile-java # for spring framework demos
+clj -A:dev:local:private:electric-tutorial:dustingetz -X dev/-main
 ...
 [:dev] Compiling ...
 Please sign up or login to activate:  https://hyperfiddle-auth.fly.dev/login?redirect-uri=http%3A%2F%2Flocalhost%3A8081
