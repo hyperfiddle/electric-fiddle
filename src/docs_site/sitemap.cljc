@@ -1,7 +1,5 @@
 (ns docs-site.sitemap
   (:require
-    #?(:clj [dustingetz.nav-datomic :as nav])
-    [hyperfiddle.navigator6 :refer [HfqlRoot]]
     [docs-site.blog.index :refer [BlogIndex]]
     [docs-site.blog.waveform0 :refer [Waveform0]]
     [docs-site.tutorial-sitemap :refer [tutorial-sitemap TutorialFiddles]]
@@ -46,10 +44,7 @@
     (staffly.staffly/Fiddles)))
 
 (e/defn ListedDemos []
-  {
-   `DatomicBrowser (e/fn [] (e/server (let [datomic-uri (or (System/getProperty "hyperfiddle.datomic.uri") "datomic:dev://localhost:4334/*")]
-                                        (HfqlRoot nav/rich-sitemap ['databases] (nav/make-setup-fn datomic-uri)))))
-
+  {;; DatomicBrowser is now a standalone system agent at datomic.clojure.net
    `dustingetz.navigator-demo1/NavigatorDemo1
    (e/server (e/fn [] (dustingetz.navigator-demo1/NavigatorDemo1 (e/server dustingetz.navigator-demo1/sitemap) ['pages])))
 

@@ -8,7 +8,7 @@
          ring-basic-authentication/ring-basic-authentication {:mvn/version "1.2.0"}
          }
 
- :paths ["src" "resources" "../datomic-browser/src"]
+ :paths ["src" "resources"]
 
  :aliases
  {:dev
@@ -55,9 +55,11 @@
   ;; Userland aliases
 
   :electric-tutorial
-  {:extra-deps
+  {:extra-paths ["../datomic-browser/src"]
+   :extra-deps
    {backtick/backtick {:mvn/version "0.3.4"}   ; staffly
-    com.datomic/peer {:mvn/version "1.0.7075"} ; staffly, datomic browser
+    com.datomic/peer {:mvn/version "1.0.7075"} ; staffly, object-browser-demo, datomic agent
+    com.hyperfiddle/hyperfiddle-agent {:mvn/version "v0-alpha-SNAPSHOT"} ; datomic agent connect!
     datascript/datascript     {:mvn/version "1.6.1"}
     reagent/reagent           {:mvn/version "1.2.0"}
     markdown-clj/markdown-clj {:mvn/version "1.11.7"}

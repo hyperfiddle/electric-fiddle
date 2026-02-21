@@ -1,5 +1,6 @@
 (ns build
   (:require [clojure.string :as str]
+            [clojure.java.io :as io]
             [clojure.tools.build.api :as b]
             [clojure.tools.logging :as log]
             [contrib.assert :refer [check]]
@@ -60,14 +61,28 @@ application classpath to be available"
                    :optimize optimize, :debug debug, :verbose verbose
                    :version version, :shadow-build shadow-build}))
 
-  (b/copy-dir {:target-dir class-dir :src-dirs ["src" "src-prod" "resources"]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
                    (format "electric-fiddle-%s.jar" version))
-        aliases (into aliases [(keyword (name (check some? fiddle-deps-alias)))])]
+        aliases (into aliases [(keyword (name (check some? fiddle-deps-alias)))])
+        basis (b/create-basis {:project "deps.edn" :aliases aliases})]
     (log/info 'uberjar "included aliases:" aliases)
+    ;; Copy all source/resource dirs from basis classpath into class-dir.
+    ;; (:paths basis) only has base project paths; alias :extra-paths and
+    ;; :local/root src dirs appear in :classpath-roots. Filter to directories
+    ;; (skip jars — b/uber handles those from the basis).
+    ;; Copy dependency dirs first, then this project's dirs last so our files
+    ;; (e.g. electric-manifest.edn) take priority over deps with same-named files.
+    (let [all-dirs (filterv #(.isDirectory (io/file %)) (:classpath-roots basis))
+          project-dirs (set (concat (:paths basis) (get-in basis [:argmap :extra-paths])))
+          dep-dirs (filterv (complement project-dirs) all-dirs)
+          own-dirs (filterv project-dirs all-dirs)]
+      (log/info 'uberjar "copying dep src-dirs:" dep-dirs)
+      (log/info 'uberjar "copying project src-dirs:" own-dirs)
+      (b/copy-dir {:target-dir class-dir :src-dirs dep-dirs})
+      (b/copy-dir {:target-dir class-dir :src-dirs own-dirs}))
     (b/uber {:class-dir class-dir
              :uber-file (str "target/" jar-name)
-             :basis     (b/create-basis {:project "deps.edn" :aliases aliases})})
+             :basis     basis})
     (log/info jar-name)))
 
 ; clj -X:build:prod:electric-tutorial build-client :build/fiddle-ns docs-site.sitemap :debug true

@@ -38,7 +38,7 @@
 (defmacro inject-user-main [] (symbol (name prod-fiddle-config/*comptime-prod-fiddle-ns*) "ProdMain"))
 
 #?(:clj ; server entrypoint
-   (defn -main [& {:strs [http-port] :as args}] ; clojure.main entrypoint, args are strings
+   (defn -main [& {:strs [http-port proxy-port] :as args}] ; clojure.main entrypoint, args are strings
      (let [config
            ;; Client and server versions must match in prod (dev is not concerned)
            ;; `src-build/build.clj` will compute the common version and store it in `resources/electric-manifest.edn`
@@ -80,7 +80,26 @@
                             (.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
                                                   (.setMinGzipSize 1024)
                                                   (.setHandler (.getHandler server)))))}))
-       )))
+
+       ;; ── Connect datomic agent to cloud proxy ─────────────────────
+       ;; When proxy-port is set, connect a datomic browser agent to the
+       ;; cloud proxy so it's accessible at datomic.clojure.net.
+       ;; This runs in the electric-fiddle process because it already has
+       ;; datomic on the classpath.
+       (when-let [pp (some-> proxy-port parse-long)]
+         (let [agent-ns 'hyperfiddle.navigator-agent
+               nav-ns   'dustingetz.nav-datomic]
+           (require agent-ns nav-ns)
+           (let [connect!     (ns-resolve agent-ns 'connect!)
+                 rich-sitemap (deref (ns-resolve nav-ns 'rich-sitemap))
+                 make-setup   (ns-resolve nav-ns 'make-setup-fn)
+                 datomic-uri  (or (System/getProperty "hyperfiddle.datomic.uri")
+                                  "datomic:dev://localhost:4334/mbrainz-1968-1973")]
+             (def datomic-agent
+               (connect! (str "ws://localhost:" pp "/agent?id=datomic")
+                         rich-sitemap
+                         (make-setup datomic-uri)))
+             (log/info (format "Datomic agent connected to proxy on port %s" pp))))))))
 
 #?(:cljs ; client entrypoint
    (defn ^:export -main []
