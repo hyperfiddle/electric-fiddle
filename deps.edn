@@ -15,7 +15,8 @@
   {:extra-paths   ["src-dev"]
    :extra-deps    {binaryage/devtools   {:mvn/version "1.0.7"}
                    thheller/shadow-cljs {:mvn/version "2.26.2"}
-                   ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
+                   ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
+                   com.hyperfiddle/hyperfiddle-agent {:mvn/version "v0-alpha-SNAPSHOT"}}
    :jvm-opts      ["-XX:-OmitStackTraceInFastThrow" ; For RCF
                    ;; uncomment to get flow protocol violation checks, warnings..
                    ;; "-Dhyperfiddle.electric.impl.missionary-util.wrap=true"

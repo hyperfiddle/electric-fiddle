@@ -89,3 +89,12 @@
   (shadow-cljs-compiler-server/stop!)
   (.stop server) ; stop jetty server
   )
+
+;; Auto-connect REPL agent to production cloud proxy
+#?(:clj
+   (do
+     (require '[hyperfiddle.navigator-agent :as agent])
+     (try
+       (def repl-agent (agent/repl-agent! {} #()))
+       (comment (agent/disconnect! repl-agent))
+       (catch Exception e (def debug-e e) (println "[user] REPL agent failed, error at: " `debug-e)))))
