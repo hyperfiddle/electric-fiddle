@@ -83,9 +83,10 @@
 
        ;; ── Connect datomic agent to cloud proxy ─────────────────────
        ;; When proxy-port is set, connect a datomic browser agent to the
-       ;; cloud proxy so it's accessible at datomic.clojure.net.
+       ;; cloud proxy so it's accessible at datomic-browser.clojure.net.
        ;; This runs in the electric-fiddle process because it already has
-       ;; datomic on the classpath.
+       ;; datomic on the classpath. :regional registers a bare alias for
+       ;; local routing; the qualified name includes Fly region + machine.
        (when-let [pp (some-> proxy-port parse-long)]
          (let [agent-ns 'hyperfiddle.navigator-agent
                nav-ns   'dustingetz.nav-datomic]
@@ -94,12 +95,18 @@
                  rich-sitemap (deref (ns-resolve nav-ns 'rich-sitemap))
                  make-setup   (ns-resolve nav-ns 'make-setup-fn)
                  datomic-uri  (or (System/getProperty "hyperfiddle.datomic.uri")
-                                  "datomic:dev://localhost:4334/mbrainz-1968-1973")]
+                                  "datomic:dev://localhost:4334/mbrainz-1968-1973")
+                 region       (System/getenv "FLY_REGION")
+                 machine      (System/getenv "FLY_MACHINE_ID")
+                 qualified    (if (and region machine)
+                                (str "datomic-browser-" region "-" machine)
+                                "datomic-browser")]
              (def datomic-agent
-               (connect! (str "ws://localhost:" pp "/agent?id=datomic")
+               (connect! (str "ws://localhost:" pp "/agent?id=" qualified)
                          rich-sitemap
-                         (make-setup datomic-uri)))
-             (log/info (format "Datomic agent connected to proxy on port %s" pp))))))))
+                         (make-setup datomic-uri)
+                         :regional "datomic-browser"))
+             (log/info (format "Datomic agent connected to proxy on port %s as %s" pp qualified))))))))
 
 #?(:cljs ; client entrypoint
    (defn ^:export -main []
