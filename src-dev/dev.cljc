@@ -18,6 +18,8 @@
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
    #?(:clj [ring.middleware.cookies :as cookies])
    #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   #?(:clj [hyperfiddle.navigator-agent :as agent])
+   #?(:clj [dustingetz.nav-demo-agents :as demo-agents])
 
    [hyperfiddle.electric3 :as e]
    #?(:cljs hyperfiddle.electric-client3)
@@ -72,7 +74,12 @@
                       :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
                       :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
                       :ws-max-text-size (* 100 1024 1024)}))  ; 100MB - for demo
-       (log/info (format "👉 http://0.0.0.0:%s" http-port)))))
+       (log/info (format "👉 http://0.0.0.0:%s" http-port))
+
+       ;; Start nav demo agents (local proxy on port 8090)
+       (try
+         (def demo-agents (agent/serve! (demo-agents/load-all-sitemaps) nil :port 8090))
+         (catch Exception e (println "[user] Nav demo agents failed:" (.getMessage e)))))))
 
 (declare browser-process)
 #?(:cljs ; client entrypoint
@@ -92,9 +99,7 @@
 
 ;; Auto-connect REPL agent to production cloud proxy
 #?(:clj
-   (do
-     (require '[hyperfiddle.navigator-agent :as agent])
-     (try
-       (def repl-agent (agent/repl-agent! {} #()))
-       (comment (agent/disconnect! repl-agent))
-       (catch Exception e (def debug-e e) (println "[user] REPL agent failed, error at: " `debug-e)))))
+   (try
+     (def repl-agent (agent/repl-agent! {} #()))
+     (comment (agent/disconnect! repl-agent))
+     (catch Exception e (def debug-e e) (println "[user] REPL agent failed, error at: " `debug-e))))

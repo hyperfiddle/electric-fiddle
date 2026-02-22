@@ -63,6 +63,7 @@
     datascript/datascript     {:mvn/version "1.6.1"}
     reagent/reagent           {:mvn/version "1.2.0"}
     markdown-clj/markdown-clj {:mvn/version "1.11.7"}
+    clj-commons/clj-yaml {:mvn/version "1.0.27"} ; override transitive from markdown-clj; 1.0.27 supports snakeyaml 2.x
     io.github.nextjournal/clojure-mode {:git/sha "5d88847aecd253e047f36565e0455bfec7f4964d"}
     org.clojure/core.match {:mvn/version "1.1.0"}   ; staffly, todos
     org.apache.tika/tika-core {:mvn/version "1.24"} ; explorer: datafy-fs
@@ -72,6 +73,7 @@
     clj-kondo/clj-kondo {:mvn/version "2025.07.28"} ; navigator demo
     clj-python/libpython-clj {:mvn/version "2.026"} ; navigator demo
     org.clojure/tools.deps {:mvn/version "0.26.1553"} ; navigator demo
+    org.clojure/data.json {:mvn/version "2.5.1"} ; solana, docker, wikipedia, github demos
     }
    #_#_:override-deps                   ; uberjar sees only this one alias
    {com.hyperfiddle/electric {:local/root "../electric"}
