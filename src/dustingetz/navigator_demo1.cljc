@@ -123,7 +123,8 @@
       (hfql {(all-ns) #_(find-ns 'clojure.core #_(ns-name *ns*))
              {* [ns-name ns-publics]}})}))
 
-(e/defn NavigatorDemo1 []
+(e/defn NavigatorDemo1
+  [sitemap defaults]
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
   (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute,
@@ -132,7 +133,7 @@
   (e/server
     (binding [e/*bindings* {#'e/http-request e/http-request
                             #'nav-git/*repo-path* nav-git/git-repo-path}] ; DI
-      (HfqlRoot sitemap ['pages]))))
+      (HfqlRoot sitemap defaults))))
 
 ;; Identifiable, Suggestable
 
