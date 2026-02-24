@@ -3,7 +3,7 @@
     [docs-site.blog.index :refer [BlogIndex]]
     [docs-site.blog.waveform0 :refer [Waveform0]]
     [docs-site.tutorial-sitemap :refer [tutorial-sitemap TutorialFiddles]]
-    dustingetz.navigator-demo1
+    [dustingetz.navigator-demo1 :refer [NavigatorDemo1]]
     [dustingetz.object-browser-demo3 :as ob]
     [dustingetz.talks.dir-tree]
     [dustingetz.talks.lifecycle]
@@ -45,9 +45,7 @@
 
 (e/defn ListedDemos []
   {;; DatomicBrowser is now a standalone system agent at datomic.clojure.net
-   `dustingetz.navigator-demo1/NavigatorDemo1
-   (e/server (e/fn [] (dustingetz.navigator-demo1/NavigatorDemo1 (e/server dustingetz.navigator-demo1/sitemap) ['pages])))
-
+   `NavigatorDemo1 NavigatorDemo1
    `Unifhir1 Unifhir1
    `DirectoryExplorer DirectoryExplorer})
 

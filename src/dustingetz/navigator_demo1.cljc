@@ -132,7 +132,7 @@
   (e/server
     (binding [e/*bindings* {#'e/http-request e/http-request
                             #'nav-git/*repo-path* nav-git/git-repo-path}] ; DI
-      (HfqlRoot sitemap []))))
+      (HfqlRoot sitemap ['pages]))))
 
 ;; Identifiable, Suggestable
 
