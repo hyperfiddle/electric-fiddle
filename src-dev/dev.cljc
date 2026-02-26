@@ -98,8 +98,9 @@
   )
 
 ;; Auto-connect REPL agent to production cloud proxy
-#?(:clj
-   (try
-     (def repl-agent (agent/repl-agent! {} #()))
-     (comment (agent/disconnect! repl-agent))
-     (catch Exception e (def debug-e e) (println "[user] REPL agent failed, error at: " `debug-e))))
+(comment
+  #?(:clj
+     (try
+       (def repl-agent (agent/repl-agent! {} #()))
+       (comment (agent/disconnect! repl-agent))
+       (catch Exception e (def debug-e e) (println "[user] REPL agent failed, error at: " `debug-e)))))
