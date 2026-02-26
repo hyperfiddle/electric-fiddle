@@ -3,7 +3,7 @@
    (org.eclipse.jgit.api Git)
    (org.eclipse.jgit.internal.storage.file FileRepository)
    (org.eclipse.jgit.revwalk RevCommit)
-   (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository PersonIdent))
+   (org.eclipse.jgit.lib Constants ObjectId ObjectIdRef Ref Repository RepositoryBuilder PersonIdent))
   (:require
    [clj-jgit.porcelain :as git]
    [clj-jgit.querying :refer [find-rev-commit]]
@@ -15,7 +15,18 @@
 (def ^:dynamic *repo-path*) ; DI
 
 ; re-export wrappers for convenience - one API not two
-(def load-repo (memoize git/load-repo))
+; worktree-aware: in a git worktree .git is a file, not a directory
+(defn- load-repo* [path]
+  (let [git-file (clojure.java.io/file path)]
+    (if (.isDirectory git-file)
+      (git/load-repo path)
+      (-> (RepositoryBuilder.)
+          (.setWorkTree (.getParentFile git-file))
+          (.readEnvironment)
+          (.findGitDir)
+          (.build)
+          (Git.)))))
+(def load-repo (memoize load-repo*))
 #_(def log git/git-log)
 #_(def branch-list git/git-branch-list)
 
