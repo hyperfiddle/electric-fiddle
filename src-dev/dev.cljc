@@ -55,8 +55,11 @@
            ;; Each port auto-finds next free one from its default, so parallel worktrees just work
            http-port   (or http-port   (next-available-port-from 8080))
            shadow-port (or shadow-port (next-available-port-from 9630))
-           nrepl-port  (or nrepl-port  (next-available-port-from 9500))
-           agent-port  (or agent-port  (next-available-port-from 8090))]
+           agent-port  (or agent-port  (next-available-port-from 8090))
+           ;; nREPL: let shadow-cljs bind it (port 0 = OS-assigned free port).
+           ;; We can't reliably probe-then-pass because shadow binds asynchronously.
+           ;; Shadow writes the actual port to .shadow-cljs/nrepl.port for editor discovery.
+           nrepl-port  (or nrepl-port 0)]
        (log/info "Starting Electric compiler and server...")
 
        ;; Load shadow-cljs.edn then override ports so each worktree gets its own
