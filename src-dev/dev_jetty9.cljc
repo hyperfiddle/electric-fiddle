@@ -9,6 +9,7 @@
    ;; standard starter-app requires
    #?(:clj [shadow.cljs.devtools.api :as shadow-cljs-compiler])
    #?(:clj [shadow.cljs.devtools.server :as shadow-cljs-compiler-server])
+   #?(:clj [shadow.cljs.devtools.config :as shadow-config])
    #?(:clj [clojure.tools.logging :as log])
 
    #?(:clj [ring.adapter.jetty :as ring])
@@ -47,11 +48,21 @@
 
 #?(:clj ; server entrypoint
    (defn -main [& args]
-     (let [{:keys [http-port]} (first args)
-           http-port (or http-port (next-available-port-from 8080))]
+     (let [{:keys [http-port shadow-port nrepl-port]} (first args)
+           ;; Each port auto-finds next free one from its default, so parallel worktrees just work
+           http-port   (or http-port   (next-available-port-from 8080))
+           shadow-port (or shadow-port (next-available-port-from 9630))
+           ;; nREPL: let shadow-cljs bind it (port 0 = OS-assigned free port).
+           ;; We can't reliably probe-then-pass because shadow binds asynchronously.
+           ;; Shadow writes the actual port to .shadow-cljs/nrepl.port for editor discovery.
+           nrepl-port  (or nrepl-port 0)]
        (log/info "Starting Electric compiler and server...")
 
-       (shadow-cljs-compiler-server/start!)
+       ;; Load shadow-cljs.edn then override ports so each worktree gets its own
+       (shadow-cljs-compiler-server/start!
+         (assoc (shadow-config/load-cljs-edn)
+           :http  {:port shadow-port}
+           :nrepl {:port nrepl-port}))
        (shadow-cljs-compiler/watch :dev-jetty9)
 
        (def server (ring/run-jetty
@@ -78,7 +89,8 @@
                                         {:ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
                                          :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
                                          :ws-max-text-size (* 100 1024 1024)}))})) ; 100MB - for demo
-       (log/info (format "👉 http://0.0.0.0:%s" http-port)))))
+       (log/info (format "👉 http://0.0.0.0:%s  shadow: %s  nrepl: see .shadow-cljs/nrepl.port"
+                   http-port shadow-port)))))
 
 (declare browser-process)
 #?(:cljs ; client entrypoint
