@@ -9,6 +9,7 @@
    ;; standard starter-app requires
    #?(:clj [shadow.cljs.devtools.api :as shadow-cljs-compiler])
    #?(:clj [shadow.cljs.devtools.server :as shadow-cljs-compiler-server])
+   #?(:clj [shadow.cljs.devtools.config :as shadow-config])
    #?(:clj [clojure.tools.logging :as log])
 
    #?(:clj [ring.adapter.jetty :as ring])
@@ -50,11 +51,19 @@
 
 #?(:clj ; server entrypoint
    (defn -main [& args]
-     (let [{:keys [http-port]} (first args)
-           http-port (or http-port (next-available-port-from 8080))]
+     (let [{:keys [http-port shadow-port nrepl-port agent-port]} (first args)
+           ;; Each port auto-finds next free one from its default, so parallel worktrees just work
+           http-port   (or http-port   (next-available-port-from 8080))
+           shadow-port (or shadow-port (next-available-port-from 9630))
+           nrepl-port  (or nrepl-port  (next-available-port-from 9500))
+           agent-port  (or agent-port  (next-available-port-from 8090))]
        (log/info "Starting Electric compiler and server...")
 
-       (shadow-cljs-compiler-server/start!)
+       ;; Load shadow-cljs.edn then override ports so each worktree gets its own
+       (shadow-cljs-compiler-server/start!
+         (assoc (shadow-config/load-cljs-edn)
+           :http  {:port shadow-port}
+           :nrepl {:port nrepl-port}))
        (shadow-cljs-compiler/watch :dev)
 
        (def server (ring/run-jetty
@@ -75,12 +84,11 @@
                       :ws-idle-timeout (* 60 1000)          ; 60 seconds in milliseconds
                       :ws-max-binary-size (* 100 1024 1024) ; 100MB - for demo
                       :ws-max-text-size (* 100 1024 1024)}))  ; 100MB - for demo
-       (log/info (format "👉 http://0.0.0.0:%s" http-port))
 
-       ;; Start nav demo agents (local proxy on port 8090)
+       ;; Start nav demo agents (local proxy)
        (try
          (let [sitemaps (demo-agents/load-all-sitemaps)]
-           (def demo-agents (agent/serve! sitemaps nil :port 8090))
+           (def demo-agents (agent/serve! sitemaps nil :port agent-port))
            (hfql-repl/set-ctx! {:sitemap sitemaps}))
          (catch Exception e (println "[user] Nav demo agents failed:" (.getMessage e)))))))
 

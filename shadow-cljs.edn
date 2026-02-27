@@ -35,5 +35,6 @@
    :module-hash-names true
    :modules {:main {:entries [prod-jetty9]
                     :init-fn prod-jetty9/-main}}}}
- :nrepl false ; not needed for the demo – less verbose boot
+ ;; nREPL port is configured programmatically in dev.cljc (auto-finds free port for parallel worktree workflows)
+ ;; :nrepl false
  :npm-deps {:install false}}
