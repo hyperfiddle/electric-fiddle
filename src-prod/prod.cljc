@@ -101,14 +101,14 @@
                                  "datomic:dev://localhost:4334/mbrainz-1968-1973")]
              (def datomic-agent
                (agent/connect! (str "ws://localhost:" pp "/agent?id=" (qualify "datomic-browser"))
-                               nav-datomic/rich-sitemap
+                               nav-datomic/sitemap
                                (nav-datomic/make-setup-fn datomic-uri)
                                :regional "datomic-browser"))
              (log/info (format "Datomic agent connected to proxy as %s" (qualify "datomic-browser"))))
 
            ;; ── nav demo agents (*.clojure.net) ───────────────────────
            (demo-agents/connect-all!
-             agent/connect! (str "ws://localhost:" pp "/agent") qualify)))))
+             agent/connect! (str "ws://localhost:" pp "/agent") qualify))))))
 
 #?(:cljs ; client entrypoint
    (defn ^:export -main []
