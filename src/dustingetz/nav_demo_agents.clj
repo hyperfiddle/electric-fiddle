@@ -5,16 +5,16 @@
 
 (def demos
   [{:ns-sym 'dustingetz.nav-weather      :agent-id "weather"}
-   {:ns-sym 'dustingetz.nav-jvm           :agent-id "jvm"}
+   #_{:ns-sym 'dustingetz.nav-jvm           :agent-id "jvm"}
    {:ns-sym 'dustingetz.nav-jvm-deep      :agent-id "jvm-deep"}
-   {:ns-sym 'dustingetz.nav-processes     :agent-id "processes"}
-   {:ns-sym 'dustingetz.nav-git-explorer  :agent-id "git"}
+   #_{:ns-sym 'dustingetz.nav-processes     :agent-id "processes"}
+   #_{:ns-sym 'dustingetz.nav-git-explorer  :agent-id "git"}
    {:ns-sym 'dustingetz.nav-bgp           :agent-id "bgp"}
    {:ns-sym 'dustingetz.nav-disk          :agent-id "disk"}
-   {:ns-sym 'dustingetz.nav-maven         :agent-id "maven"}
+   #_{:ns-sym 'dustingetz.nav-maven         :agent-id "maven"}
    {:ns-sym 'dustingetz.nav-satellites    :agent-id "satellites"}
    {:ns-sym 'dustingetz.nav-earthquake    :agent-id "earthquakes"}
-   {:ns-sym 'dustingetz.nav-wikipedia     :agent-id "wikipedia"}])
+   #_{:ns-sym 'dustingetz.nav-wikipedia     :agent-id "wikipedia"}])
 
 (defn load-all-sitemaps
   "Require all demo namespaces and merge their sitemaps."
