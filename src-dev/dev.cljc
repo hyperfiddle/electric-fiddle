@@ -20,6 +20,7 @@
    #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
    #?(:clj [hyperfiddle.navigator-agent :as agent])
    #?(:clj [dustingetz.nav-demo-agents :as demo-agents])
+   #?(:clj [hyperfiddle.hfql-repl :as hfql-repl])
 
    [hyperfiddle.electric3 :as e]
    #?(:cljs hyperfiddle.electric-client3)
@@ -78,7 +79,9 @@
 
        ;; Start nav demo agents (local proxy on port 8090)
        (try
-         (def demo-agents (agent/serve! (demo-agents/load-all-sitemaps) nil :port 8090))
+         (let [sitemaps (demo-agents/load-all-sitemaps)]
+           (def demo-agents (agent/serve! sitemaps nil :port 8090))
+           (hfql-repl/set-ctx! {:sitemap sitemaps}))
          (catch Exception e (println "[user] Nav demo agents failed:" (.getMessage e)))))))
 
 (declare browser-process)
