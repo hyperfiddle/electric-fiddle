@@ -19,7 +19,7 @@
 
 (e/defn Page []
   (dom/props {:class "staffly"})
-  (dom/link (dom/props {:rel :stylesheet, :href "/user/staffly.css"}))
+  (dom/link (dom/props {:rel :stylesheet, :href "/electric_fiddle/user/staffly.css"}))
   (let [[page] r/route]
     (when-not page (r/ReplaceState! ['. [:index]]))
     (r/pop
