@@ -1,7 +1,7 @@
 (ns dustingetz.nav-hn
   (:require
     [clj-http.client :as http]
-    [contrib.data :refer [auto-props]]
+    [dustingetz.data :refer [auto-props]]
     [hyperfiddle.hfql0 :as hfql]))
 
 (defprotocol HN

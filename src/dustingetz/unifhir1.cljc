@@ -1,7 +1,7 @@
 (ns dustingetz.unifhir1
   (:require [clojure.string :as str]
-            [contrib.data :refer [clamp-left subgroup-by]]
-            [contrib.template :refer [comptime-resource]]
+            [dustingetz.data :refer [clamp-left subgroup-by]]
+            [dustingetz.template :refer [comptime-resource]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :refer [Input*]]

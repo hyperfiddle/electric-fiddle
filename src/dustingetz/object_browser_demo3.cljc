@@ -4,8 +4,8 @@
                    [java.lang.management ThreadInfo]
                    [com.sun.management ThreadMXBean]))
   (:require [clojure.string :as str]
-            [contrib.debug :as dbg]
-            [contrib.assert :as ca]
+            [dustingetz.debug :as dbg]
+            [dustingetz.check :as ca]
             #?(:clj [datomic.api :as d])
             [hyperfiddle.navigator4 :as navigator]
             #?(:clj [dustingetz.datafy-jvm2])

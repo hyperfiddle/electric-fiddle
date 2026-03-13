@@ -1,7 +1,7 @@
 (ns electric-tutorial.webview-virtualscroll
   (:require
     #?(:clj [dustingetz.teeshirt-orders-datascript :refer [ensure-db! genders shirt-sizes teeshirt-orders]])
-    [contrib.data :refer [clamp-left]]
+    [dustingetz.data :refer [clamp-left]]
     [datascript.core :as d]
     [electric-tutorial.typeahead :refer [Typeahead]]
     [hyperfiddle.electric-dom3 :as dom]

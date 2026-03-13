@@ -1,10 +1,10 @@
 ;; FIXME revisit under v3
-(ns contrib.electric-goog-history
+(ns dustingetz.electric-goog-history
   #?(:cljs
      (:import goog.history.Html5History
               goog.history.Html5History.TokenTransformer
               goog.history.EventType))
-  (:require [contrib.cljs-target :refer [do-browser]]
+  (:require [dustingetz.cljs-target :refer [do-browser]]
             #?(:cljs goog.events)
             [hyperfiddle.electric :as e]
             [hyperfiddle.electric-dom2 :as dom]

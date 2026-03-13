@@ -2,7 +2,7 @@
   ;#?(:clj (:import (cognitect.aws.client.impl Client))) - really struggling to import this deftype as a class
   (:require
    [cognitect.aws.client.api :as aws]
-   [contrib.assert :refer [check]]
+   [dustingetz.check :refer [check]]
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
    [hyperfiddle.hfql2.protocols :as hfqlp]))
 

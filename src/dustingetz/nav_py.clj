@@ -1,6 +1,6 @@
 (ns dustingetz.nav-py
   (:require
-   [contrib.assert :refer [check]]
+   [dustingetz.check :refer [check]]
    #_dustingetz.pyhf ; see also
    [libpython-clj2.require :refer [require-python]]
    [libpython-clj2.python :refer [py. py.. py.-] :as py]))

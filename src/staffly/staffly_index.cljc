@@ -2,7 +2,7 @@
   (:require #?(:clj [backtick :refer [template]])
             [clojure.core.match :refer [match]]
             clojure.set
-            [contrib.data :refer [unqualify]]
+            [dustingetz.data :refer [unqualify]]
             dustingetz.str
             #?(:clj [datomic.api :as d])
             [hyperfiddle.electric3 :as e]

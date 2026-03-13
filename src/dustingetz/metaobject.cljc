@@ -1,6 +1,6 @@
 (ns dustingetz.metaobject
   "https://github.com/NikolaySuslov/electric-objmodel"
-  (:require [contrib.assert :refer [check]]
+  (:require [dustingetz.check :refer [check]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.incseq :as i]))

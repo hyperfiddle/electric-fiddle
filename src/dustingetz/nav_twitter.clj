@@ -10,7 +10,7 @@
    cheshire.core
    [dustingetz.caching-http-client :as http]
    [clojure.string :as str]
-   [contrib.template :refer [comptime-resource]]))
+   [dustingetz.template :refer [comptime-resource]]))
 
 (declare !!test-twitter)
 

@@ -1,5 +1,5 @@
 (ns staffly.staffly-model
-  (:require [contrib.assert :refer [check]]
+  (:require [dustingetz.check :refer [check]]
             #?(:clj [clojure.tools.logging :as log])
             #?(:clj [datomic.api :as d])
             [hyperfiddle.electric3 :as e]

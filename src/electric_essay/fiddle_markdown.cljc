@@ -1,7 +1,7 @@
 (ns electric-essay.fiddle-markdown
   (:refer-clojure :exclude [#?(:cljs Fn)])
   (:require [clojure.string :as str]
-            [contrib.electric-codemirror :refer [CodeMirror]] ; extensions only
+            [dustingetz.electric-codemirror :refer [CodeMirror]] ; extensions only
             [electric-fiddle.fiddle-index :refer [FiddleIndex pages]] ; why
             #?(:clj [electric-essay.read-src :refer [read-ns-src-unreliable read-var-src-safe]])
             [hyperfiddle.electric3 :as e]

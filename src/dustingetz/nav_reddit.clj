@@ -5,8 +5,8 @@
    (net.dean.jraw.http OkHttpNetworkAdapter UserAgent)
    (net.dean.jraw.oauth OAuthHelper Credentials))
   (:require
-   [contrib.assert :refer [check]]
-   [contrib.template :refer [comptime-resource]]))
+   [dustingetz.check :refer [check]]
+   [dustingetz.template :refer [comptime-resource]]))
 
 (def config (comptime-resource "dustingetz/nav_reddit.edn"))
 

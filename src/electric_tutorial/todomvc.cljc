@@ -1,5 +1,5 @@
 (ns electric-tutorial.todomvc
-  (:require [contrib.data :refer [unqualify]]
+  (:require [dustingetz.data :refer [unqualify]]
             #?(:clj [datascript.core :as d])
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]

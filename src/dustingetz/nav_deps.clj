@@ -2,7 +2,7 @@
   (:require
    [clojure.tools.deps :as deps]
    [clojure.tools.deps.util.maven :as mvn]
-   [contrib.assert :refer [check]]
+   [dustingetz.check :refer [check]]
    [dustingetz.fs2 :as fs]))
 
 (defn deps-project

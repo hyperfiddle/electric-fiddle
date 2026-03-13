@@ -18,7 +18,7 @@
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
    [hyperfiddle.hfql2.protocols :as hfqlp]
    [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]
-   #?(:clj [contrib.data :refer [filter-vals]])))
+   #?(:clj [dustingetz.data :refer [filter-vals]])))
 
 #?(:clj (declare sitemap))
 

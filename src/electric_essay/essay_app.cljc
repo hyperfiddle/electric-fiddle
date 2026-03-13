@@ -2,7 +2,7 @@
   (:require clojure.edn
             #?(:clj [clojure.java.io :as io])
             clojure.string
-            [contrib.clojurex :refer [#?(:clj slurp-safe)]]
+            [dustingetz.clojurex :refer [#?(:clj slurp-safe)]]
             [electric-essay.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]

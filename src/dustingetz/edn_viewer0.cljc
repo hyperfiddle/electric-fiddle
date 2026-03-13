@@ -2,7 +2,7 @@
   "used in /blog/y20250109_datafy"
   (:require [clojure.datafy :refer [datafy]]
             [clojure.core.protocols :refer [nav]]
-            [contrib.data :refer [unqualify]]
+            [dustingetz.data :refer [unqualify]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric3-contrib :refer [Tap]]
             [hyperfiddle.electric-dom3 :as dom]

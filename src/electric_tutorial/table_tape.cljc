@@ -1,6 +1,6 @@
 (ns electric-tutorial.table-tape
   (:require
-    [contrib.data :refer [clamp-left]]
+    [dustingetz.data :refer [clamp-left]]
     [dustingetz.str :refer [abc-seq]]
     [hyperfiddle.electric-dom3 :as dom]
     [hyperfiddle.electric-scroll0 :refer [Scroll-window Tape]]

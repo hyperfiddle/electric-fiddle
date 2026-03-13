@@ -1,7 +1,7 @@
 (ns electric-fiddle.fiddle
   (:require
     #?(:clj [clojure.java.io :as io])
-    [contrib.clojurex :refer [#?(:clj slurp-safe)]]
+    [dustingetz.clojurex :refer [#?(:clj slurp-safe)]]
     [electric-essay.fiddle-markdown :refer [Ns]]
     [electric-fiddle.fiddle-index :refer [NotFoundPage pages]]
     [hyperfiddle.electric3 :as e]

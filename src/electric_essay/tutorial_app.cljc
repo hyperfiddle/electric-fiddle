@@ -2,8 +2,8 @@
   (:require clojure.edn
             #?(:clj [clojure.java.io :as io])
             clojure.string
-            [contrib.data :refer [index-by]]
-            [contrib.clojurex :refer [#?(:clj slurp-safe)]]
+            [dustingetz.data :refer [index-by]]
+            [dustingetz.clojurex :refer [#?(:clj slurp-safe)]]
             [electric-essay.fiddle-markdown :refer [Custom-markdown Fiddle-markdown-extensions]]
             [hyperfiddle.electric3 :as e]
             [hyperfiddle.electric-dom3 :as dom]

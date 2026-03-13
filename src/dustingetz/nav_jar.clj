@@ -3,7 +3,7 @@
    [java.io File]
    [java.util.jar JarFile JarEntry])
   (:require
-   [contrib.assert :refer [check]]
+   [dustingetz.check :refer [check]]
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
    [hyperfiddle.hfql2.protocols :as hfqlp]))
 

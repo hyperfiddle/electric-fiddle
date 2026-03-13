@@ -3,7 +3,7 @@
             [clojure.java.io :as io]
             [clojure.tools.build.api :as b]
             [clojure.tools.logging :as log]
-            [contrib.assert :refer [check]]
+            [dustingetz.check :refer [check]]
             [shadow.cljs.devtools.api :as shadow-api]
             [shadow.cljs.devtools.server :as shadow-server]
             prod-fiddle-config))

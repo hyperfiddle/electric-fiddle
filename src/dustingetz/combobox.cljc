@@ -1,5 +1,5 @@
 (ns dustingetz.combobox
-  (:require [contrib.data :refer [auto-props]]
+  (:require [dustingetz.data :refer [auto-props]]
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric3 :as e]))
 

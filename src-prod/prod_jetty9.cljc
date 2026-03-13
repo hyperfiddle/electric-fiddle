@@ -2,7 +2,7 @@
   #?(:cljs (:require-macros [prod-jetty9 :refer [comptime-resource inject-user-main]]))
   (:require
    ;; electric-fiddle: dynamic fiddle-ns resolution
-   [contrib.assert :refer [check]]
+   [dustingetz.check :refer [check]]
    #?(:clj [electric-fiddle.ring-middleware :as middleware]) ; electric-fiddle: auth middleware
    #?(:clj prod-fiddle-config)
    load-prod-fiddles!

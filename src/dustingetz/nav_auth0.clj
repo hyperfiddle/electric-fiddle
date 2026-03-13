@@ -6,9 +6,9 @@
    cheshire.core
    [clojure.spec.alpha :as s]
    [clojure.walk :refer [keywordize-keys]]
-   [contrib.data :refer [auto-props]]
-   [contrib.template :refer [comptime-resource]]
-   [contrib.assert :refer [check]]
+   [dustingetz.data :refer [auto-props]]
+   [dustingetz.template :refer [comptime-resource]]
+   [dustingetz.check :refer [check]]
    [hyperfiddle.hfql0 :as hfql]))
 
 ; https://auth0.com/docs/api/management/v2

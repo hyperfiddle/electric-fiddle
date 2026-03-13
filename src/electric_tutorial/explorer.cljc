@@ -1,8 +1,8 @@
 (ns electric-tutorial.explorer "http://localhost:8080/electric-tutorial.explorer!DirectoryExplorer/''"
   (:require [clojure.datafy :refer [datafy]]
             #?(:clj clojure.java.io)
-            [contrib.assert :refer [check]]
-            [contrib.data :refer [clamp-left]]
+            [dustingetz.check :refer [check]]
+            [dustingetz.data :refer [clamp-left]]
             [dustingetz.str :refer [includes-str?]]
             [dustingetz.datafy-fs #?(:clj :as :cljs :as-alias) fs]
             [dustingetz.treelister3 :refer [treelist]]

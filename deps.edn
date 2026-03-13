@@ -98,7 +98,7 @@
     com.cognitect.aws/sts         {:mvn/version "871.2.29.35"}
 
     hawk/hawk {:mvn/version "0.2.11"}
-    org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
+    org.apache.tika/tika-core {:mvn/version "1.24"} ; for dustingetz.datafy-fs file type detection
     clj-jgit/clj-jgit {:mvn/version "1.0.2"}
     clj-http/clj-http {:mvn/version "3.12.3"}
     com.squareup.okhttp3/okhttp {:mvn/version "4.11.0"} ; brings in kotlin
@@ -141,7 +141,7 @@
   :datagrid
   {:extra-deps
    {com.hyperfiddle/heroicons-electric {:mvn/version "79c4d15" :exclusions [com.hyperfiddle/electric]}
-    org.apache.tika/tika-core {:mvn/version "1.24"} ; for contrib.datafy-fs file type detection
+    org.apache.tika/tika-core {:mvn/version "1.24"} ; for dustingetz.datafy-fs file type detection
     metosin/malli {:mvn/version "0.14.0"}
     com.datomic/peer {:mvn/version "1.0.7075"}
     clj-jgit/clj-jgit {:mvn/version "1.0.2"} ; git browser
