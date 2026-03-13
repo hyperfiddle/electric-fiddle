@@ -10,6 +10,9 @@
 
 (def electric-user-version (b/git-process {:git-args "describe --tags --long --always --dirty"}))
 
+
+(defn clean [_opts] (b/delete {:path "target"}))
+
 (defn build-client "
 invoke like: clj -X:build:prod build-client`
 Note: do not use `clj -T`, because Electric shadow compilation requires
@@ -23,6 +26,7 @@ application classpath to be available"
           (dissoc ::version :shadow-build)
           (assoc :hyperfiddle/electric-user-version version))]
     (log/info 'build-client (pr-str config))
+
     (b/delete {:path "resources/public/electric_fiddle/js"})
     (b/delete {:path "resources/electric-manifest.edn"})
 
