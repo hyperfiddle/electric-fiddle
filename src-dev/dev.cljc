@@ -20,7 +20,7 @@
    #?(:clj [ring.middleware.cookies :as cookies])
    #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
    #?(:clj [hyperfiddle.navigator-agent :as agent])
-   #?(:clj [dustingetz.nav-demo-agents :as demo-agents])
+   #?(:clj [dustingetz.nav-demos :as nav-demos])
    #?(:clj [hyperfiddle.hfql-repl :as hfql-repl])
 
    [hyperfiddle.electric3 :as e]
@@ -90,8 +90,8 @@
 
        ;; Start nav demo agents (local proxy)
        (try
-         (let [sitemaps (demo-agents/load-all-sitemaps)]
-           (def demo-agents (agent/serve! sitemaps nil :port agent-port))
+         (let [sitemaps nav-demos/sitemap]
+           (def demo-agent (agent/serve! sitemaps nil :port agent-port))
            (hfql-repl/set-ctx! {:sitemap sitemaps}))
          (catch Exception e (println "[user] Nav demo agents failed:" (.getMessage e)))))))
 

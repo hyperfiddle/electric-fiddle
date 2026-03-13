@@ -18,7 +18,7 @@
    #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
    #?(:clj [hyperfiddle.navigator-agent :as agent])
    #?(:clj [dustingetz.nav-datomic :as nav-datomic])
-   #?(:clj [dustingetz.nav-demo-agents :as demo-agents])
+   #?(:clj [dustingetz.nav-nav-demos :as nav-demos])
    #?(:cljs [hyperfiddle.electric-client3 :as electric-client])
 
    [hyperfiddle.electric3 :as e]
@@ -106,9 +106,12 @@
                                :regional "datomic-browser"))
              (log/info (format "Datomic agent connected to proxy as %s" (qualify "datomic-browser"))))
 
-           ;; ── nav demo agents (*.clojure.net) ───────────────────────
-           (demo-agents/connect-all!
-             agent/connect! (str "ws://localhost:" pp "/agent") qualify))))))
+           ;; ── demo agent (demo.clojure.net) ────────────────────────
+           ;; Single merged agent with all nav demos, nav-clj-ns, nav-file, all-ns
+           (def demo-agent
+             (nav-demos/connect-demo-agent!
+               (str "ws://localhost:" pp "/agent") qualify))
+           (log/info (format "Demo agent connected to proxy as %s" (qualify "demo"))))))))
 
 #?(:cljs ; client entrypoint
    (defn ^:export -main []
