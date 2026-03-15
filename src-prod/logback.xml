@@ -1,5 +1,7 @@
 <!-- Options: http://logback.qos.ch/manual/layouts.html -->
 <configuration>
+    <!-- Suppress logback's own internal status messages at startup -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%highlight(%-5level) %logger: %msg%n</pattern>
@@ -9,4 +11,16 @@
     <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
+
+    <!-- Ring adapter at INFO — shows WebSocket connection events, useful for debugging -->
+    <logger name="hyperfiddle.electric-ring-adapter3" level="INFO" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <!-- Jetty at WARN — its INFO is startup/lifecycle noise, not request logs -->
+    <logger name="org.eclipse.jetty" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="datomic" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="io.undertow" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="org.jboss" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="org.xnio" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="libpython-clj2" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="tech.v3" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="org.springframework" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
 </configuration>
